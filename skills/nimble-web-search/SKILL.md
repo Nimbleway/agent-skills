@@ -1,8 +1,8 @@
 ---
 name: nimble-web-search
 description: >
-  Use Nimble Search API to perform intelligent web searches with 8 specialized focus modes (general, coding, news, academic, shopping, social, geo, location).
-  This skill should be used when you need to search the web, find current information, discover URLs, research topics, or gather up-to-date data.
+  Real-time web intelligence powered by Nimble Search API. Perform intelligent web searches with 8 specialized focus modes (general, coding, news, academic, shopping, social, geo, location).
+  This skill provides real-time search results when you need to search the web, find current information, discover URLs, research topics, or gather up-to-date data.
 
   Example triggers: "search for React Server Components", "find recent news about AI", "look up academic papers on quantum computing",
   "search for coding examples of async patterns", "find shopping results for laptops", "discover social media posts about climate change"
@@ -12,16 +12,18 @@ triggers:
   - look up
   - research topic
   - web search
+  - real-time search
   - discover URLs
   - find recent
   - search the web
   - get latest information
+  - real-time data
 version: 0.1.0
 ---
 
 # Nimble Web Search
 
-Perform intelligent web searches using Nimble Search API with specialized focus modes and AI-powered result synthesis.
+Real-time web intelligence using Nimble Search API with specialized focus modes and AI-powered result synthesis.
 
 ## Prerequisites
 
@@ -76,7 +78,22 @@ fi
 
 ## Overview
 
-Nimble Search provides advanced web search capabilities with 8 specialized focus modes optimized for different types of queries. The API can generate LLM-powered answers, extract deep content, discover relevant URLs, and filter results by domain and date.
+Nimble Search provides real-time web intelligence with 8 specialized focus modes optimized for different types of queries. Get instant access to current web data with AI-powered answer generation, deep content extraction, URL discovery, and smart filtering by domain and date.
+
+**Recommended Defaults:**
+- `focus`: `"general"` - Broad web search (change to specific mode for targeted results)
+- `deep_search`: `false` - Fast response with titles/descriptions (set `true` only when full content needed)
+- `max_results`: `10` - Balanced speed and coverage
+
+### Quick Start
+
+Use the wrapper script for the simplest experience:
+
+```bash
+./scripts/search.sh '{"query": "React hooks"}'
+```
+
+The script automatically handles authentication, tracking headers, and output formatting. Focus defaults to "general", add `"focus": "coding"` for technical results.
 
 ## Core Capabilities
 
@@ -85,11 +102,11 @@ Nimble Search provides advanced web search capabilities with 8 specialized focus
 Choose the appropriate focus mode based on your query type:
 
 1. **general** - Default mode for broad web searches
-2. **coding** - Technical documentation, code examples, programming resources
-3. **news** - Recent news articles, current events, breaking stories
+2. **coding** - Real-time access to technical documentation, code examples, programming resources
+3. **news** - Real-time news articles, current events, breaking stories
 4. **academic** - Research papers, scholarly articles, academic resources
-5. **shopping** - Product searches, e-commerce results, price comparisons
-6. **social** - Social media posts, discussions, community content
+5. **shopping** - Real-time product searches, e-commerce results, price comparisons
+6. **social** - Real-time social media posts, discussions, trending community content
 7. **geo** - Location-based searches, geographic information
 8. **location** - Local business searches, place-specific queries
 
@@ -108,10 +125,11 @@ Choose the appropriate focus mode based on your query type:
 - Best for: Resource gathering, link building, research preparation
 
 **Deep Content Extraction**
-- **Default:** `deep_search=false` for fastest response (titles, descriptions, URLs only)
-- **Optional:** `deep_search=true` to extract full page content when needed
-- Available formats: markdown, plain_text, simplified_html
-- Use deep search only for: Detailed content analysis, archiving, comprehensive text extraction
+- **Default (Recommended):** `deep_search=false` - Fastest response, returns titles, descriptions, and URLs
+- **Optional:** `deep_search=true` - Slower, extracts full page content
+- **Important:** Most use cases work perfectly with `deep_search=false` (the default)
+- Available formats when deep_search=true: markdown, plain_text, simplified_html
+- Only enable deep search for: Detailed content analysis, archiving, or comprehensive text extraction needs
 
 **Domain Filtering**
 - Include specific domains (e.g., github.com, stackoverflow.com)
@@ -120,126 +138,160 @@ Choose the appropriate focus mode based on your query type:
 - Best for: Targeted research, brand monitoring, competitive analysis
 
 **Time Filtering**
-- **Recommended:** Use `time_range` for simple recency filtering (hour, day, week, month, year)
+- **Recommended:** Use `time_range` for real-time recency filtering (hour, day, week, month, year)
 - **Alternative:** Use `start_date`/`end_date` for precise date ranges (YYYY-MM-DD)
 - Note: `time_range` and date filters are mutually exclusive
-- Best for: News monitoring, recent developments, temporal analysis
+- Best for: Real-time news monitoring, recent developments, temporal analysis
 
 ## Usage Patterns
 
+All examples below use the `./scripts/search.sh` wrapper for simplicity. For raw API usage, see the [API Integration](#api-integration) section.
+
 ### Basic Search
 
-Use when you need simple web search results:
+Simplest search with just a query (uses defaults: focus=general, deep_search=false):
 
+```bash
+./scripts/search.sh '{"query": "React Server Components tutorial"}'
 ```
-Query: "React Server Components tutorial"
-Focus: coding
-Max Results: 5
-Answer: false (just URLs)
+
+For technical content, specify coding focus:
+
+```bash
+./scripts/search.sh '{
+  "query": "React Server Components tutorial",
+  "focus": "coding"
+}'
 ```
 
 ### Research with AI Summary
 
-Use when you need synthesized information:
+Get synthesized insights from multiple sources:
 
-```
-Query: "impact of AI on software development 2026"
-Focus: general
-Max Results: 10
-Answer: true (generate LLM answer)
-Include Content: true (for deeper analysis)
+```bash
+./scripts/search.sh '{
+  "query": "impact of AI on software development 2026",
+  "include_answer": true
+}'
 ```
 
 ### Domain-Specific Search
 
-Use when targeting specific sources:
+Target specific authoritative sources:
 
+```bash
+./scripts/search.sh '{
+  "query": "async await patterns",
+  "focus": "coding",
+  "include_domains": ["github.com", "stackoverflow.com", "dev.to"],
+  "max_results": 8
+}'
 ```
-Query: "async await patterns"
-Focus: coding
-Domains: ["github.com", "stackoverflow.com", "dev.to"]
-Max Results: 8
-```
 
-### News Monitoring
+### Real-Time News Monitoring
 
-Use for current events and breaking news:
+Track current events and breaking news as they happen:
 
-```
-Query: "latest developments in quantum computing"
-Focus: news
-Time Range: week (last 7 days)
-Max Results: 15
-Answer: true (summarize recent developments)
+```bash
+./scripts/search.sh '{
+  "query": "latest developments in quantum computing",
+  "focus": "news",
+  "time_range": "week",
+  "max_results": 15,
+  "include_answer": true
+}'
 ```
 
 ### Academic Research
 
-Use for scholarly content:
+Find and synthesize scholarly content (note: deep_search rarely needed):
 
+```bash
+./scripts/search.sh '{
+  "query": "machine learning interpretability methods",
+  "focus": "academic",
+  "max_results": 20,
+  "include_answer": true
+}'
 ```
-Query: "machine learning interpretability methods"
-Focus: academic
-Max Results: 20
-Deep Content: true (full paper abstracts)
-Answer: true (synthesize findings)
-```
 
-### Shopping Research
+Only add `"deep_search": true` if you need full paper content extracted.
 
-Use for product searches and comparisons:
+### Real-Time Shopping Research
 
-```
-Query: "best mechanical keyboards for programming"
-Focus: shopping
-Max Results: 10
-Answer: true (compare options)
+Compare products and current prices:
+
+```bash
+./scripts/search.sh '{
+  "query": "best mechanical keyboards for programming",
+  "focus": "shopping",
+  "max_results": 10,
+  "include_answer": true
+}'
 ```
 
 ## Parallel Search Strategies
 
 ### When to Use Parallel Searches
 
-Run multiple searches in parallel when:
+Run multiple real-time searches in parallel when:
 - **Comparing perspectives**: Search the same topic across different focus modes
 - **Multi-faceted research**: Investigate different aspects of a topic simultaneously
 - **Competitive analysis**: Search multiple domains or competitors at once
-- **Time-sensitive monitoring**: Track multiple topics or keywords concurrently
-- **Cross-validation**: Verify information across different source types
+- **Real-time monitoring**: Track multiple topics or keywords concurrently
+- **Cross-validation**: Verify information across different source types in real-time
 
 ### Implementation Methods
 
-**Method 1: xargs for Controlled Parallelism (Recommended)**
-```bash
-# Define search queries in a file or array
-cat queries.txt | xargs -n1 -P3 -I{} curl -X POST \
-  -H "Authorization: Bearer $NIMBLE_API_KEY" \
-  -H "Content-Type: application/json" \
-  -d '{"query": "{}", "focus": "general", "max_results": 10}' \
-  https://nimble-retriever.webit.live/search
-```
+**Method 1: Background Processes (Recommended)**
 
-**Method 2: Background Processes for Simple Cases**
+Run multiple searches concurrently using the wrapper script:
+
 ```bash
-# Start multiple searches concurrently
-curl [search1] > result1.json &
-curl [search2] > result2.json &
-curl [search3] > result3.json &
+# Start multiple searches in parallel
+./scripts/search.sh '{"query": "React", "focus": "coding"}' > react_coding.json &
+./scripts/search.sh '{"query": "React", "focus": "news"}' > react_news.json &
+./scripts/search.sh '{"query": "React", "focus": "academic"}' > react_academic.json &
 
 # Wait for all to complete
 wait
 
-# Process results
-jq '.results' result*.json
+# Combine results
+jq -s '.' react_*.json > combined_results.json
 ```
 
-**Method 3: Native curl --parallel**
+**Method 2: Loop with xargs (Controlled Parallelism)**
+
+Process multiple queries with rate limiting:
+
 ```bash
-# For multiple endpoints or URL variations
-curl --parallel --parallel-max 5 \
-  -d @search1.json https://api/search \
-  -d @search2.json https://api/search \
-  -d @search3.json https://api/search
+# Create queries file
+cat > queries.txt <<EOF
+{"query": "AI frameworks", "focus": "coding"}
+{"query": "AI regulation", "focus": "news"}
+{"query": "AI research", "focus": "academic"}
+EOF
+
+# Run with max 3 parallel processes
+cat queries.txt | xargs -n1 -P3 -I{} ./scripts/search.sh '{}'
+```
+
+**Method 3: Focus Mode Comparison**
+
+Search the same query across different focus modes:
+
+```bash
+QUERY="artificial intelligence trends"
+
+for focus in "general" "coding" "news" "academic"; do
+  (
+    ./scripts/search.sh "{\"query\": \"$QUERY\", \"focus\": \"$focus\"}" \
+      > "${focus}_results.json"
+  ) &
+done
+
+wait
+echo "All searches complete!"
 ```
 
 ### Best Practices for Parallel Execution
@@ -250,9 +302,7 @@ curl --parallel --parallel-max 5 \
 
 2. **Error Handling**: Capture and handle failures gracefully
    ```bash
-   parallel_search() {
-     curl [...] || echo "Failed: $1" >> errors.log
-   }
+   ./scripts/search.sh '{"query": "test"}' || echo "Search failed" >> errors.log
    ```
 
 3. **Result Aggregation**: Combine results after all searches complete
@@ -267,9 +317,13 @@ curl --parallel --parallel-max 5 \
 4. **Progress Tracking**: Monitor completion status
    ```bash
    echo "Running 5 parallel searches..."
-   # ... parallel execution ...
+
+   for i in {1..5}; do
+     ./scripts/search.sh "{\"query\": \"query$i\"}" > "result$i.json" &
+   done
+
    wait
-   echo "All searches complete"
+   echo "All searches complete!"
    ```
 
 ### Example: Multi-Perspective Research
@@ -285,12 +339,11 @@ mkdir -p "$OUTPUT_DIR"
 # Run searches in parallel across different focus modes
 for focus in "general" "coding" "news" "academic"; do
   (
-    curl -X POST \
-      -H "Authorization: Bearer $NIMBLE_API_KEY" \
-      -H "Content-Type: application/json" \
-      -d "{\"query\": \"$QUERY\", \"focus\": \"$focus\", \"max_results\": 10}" \
-      https://nimble-retriever.webit.live/search \
-      > "$OUTPUT_DIR/${focus}_results.json"
+    ./scripts/search.sh "{
+      \"query\": \"$QUERY\",
+      \"focus\": \"$focus\",
+      \"max_results\": 10
+    }" > "$OUTPUT_DIR/${focus}_results.json"
   ) &
 done
 
@@ -325,6 +378,8 @@ echo "✓ Multi-perspective search complete"
 
 ## API Integration
 
+**Note:** For most use cases, use the `./scripts/search.sh` wrapper script shown in [Usage Patterns](#usage-patterns). The raw API examples below are for advanced users who need direct API access or custom integration.
+
 ### Required Configuration
 
 **Before making any API request, always validate the API key is configured:**
@@ -354,19 +409,24 @@ POST https://nimble-retriever.webit.live/search
 
 ```json
 {
-  "query": "search query string",
-  "focus": "general|coding|news|academic|shopping|social|geo|location",
-  "max_results": 10,
-  "include_answer": false,
-  "deep_search": false,
-  "output_format": "markdown|plain_text|simplified_html",
-  "include_domains": ["domain1.com", "domain2.com"],
-  "exclude_domains": ["domain3.com"],
-  "time_range": "hour|day|week|month|year",
-  "start_date": "2026-01-01",
-  "end_date": "2026-12-31"
+  "query": "search query string",  // REQUIRED
+  "focus": "general",  // OPTIONAL: default "general" | coding|news|academic|shopping|social|geo|location
+  "max_results": 10,  // OPTIONAL: default 10 (range: 1-100)
+  "include_answer": false,  // OPTIONAL: default false
+  "deep_search": false,  // OPTIONAL: default false (RECOMMENDED: keep false for speed)
+  "output_format": "markdown",  // OPTIONAL: default "markdown" | plain_text|simplified_html
+  "include_domains": ["domain1.com"],  // OPTIONAL: default [] (no filter)
+  "exclude_domains": ["domain3.com"],  // OPTIONAL: default [] (no filter)
+  "time_range": "week",  // OPTIONAL: hour|day|week|month|year
+  "start_date": "2026-01-01",  // OPTIONAL: Use time_range OR start_date/end_date (not both)
+  "end_date": "2026-12-31"  // OPTIONAL
 }
 ```
+
+**Key Defaults:**
+- `focus`: `"general"` - Change to specific mode for targeted results
+- `deep_search`: `false` - Keep false unless you need full page content
+- `max_results`: `10` - Balanced speed and coverage
 
 ### Response Format
 
@@ -399,8 +459,8 @@ POST https://nimble-retriever.webit.live/search
 - Framework guides
 
 **Use `news` for:**
-- Current events
-- Breaking stories
+- Real-time current events
+- Breaking stories as they happen
 - Recent announcements
 - Trending topics
 - Time-sensitive information
@@ -420,11 +480,11 @@ POST https://nimble-retriever.webit.live/search
 - Buying guides
 
 **Use `social` for:**
-- Social media monitoring
-- Community discussions
-- User-generated content
-- Trending hashtags
-- Public sentiment
+- Real-time social media monitoring
+- Live community discussions
+- Current user-generated content
+- Trending hashtags and topics
+- Real-time public sentiment
 
 **Use `geo` for:**
 - Geographic information
@@ -463,18 +523,23 @@ POST https://nimble-retriever.webit.live/search
 
 ### Content Extraction
 
-**Use deep content extraction when:**
-- Performing detailed analysis
-- Archiving content
-- Need full text for processing
-- Building datasets
-- Comprehensive research
+**Default (Recommended): `deep_search=false`**
 
-**Skip content extraction when:**
-- Only need summaries
-- Speed is important
-- Just collecting URLs
-- Previewing options
+The default setting works for 95% of use cases:
+- ✅ Fastest response times
+- ✅ Returns titles, descriptions, URLs
+- ✅ Works perfectly with `include_answer=true`
+- ✅ Sufficient for research, comparisons, and URL discovery
+
+**Only use `deep_search=true` when you specifically need:**
+- Full page content extraction
+- Archiving complete articles
+- Processing full text for analysis
+- Building comprehensive datasets
+
+**Performance impact:**
+- `deep_search=false`: ~1-3 seconds
+- `deep_search=true`: ~5-15 seconds (significantly slower)
 
 ## Error Handling
 
@@ -505,13 +570,14 @@ POST https://nimble-retriever.webit.live/search
 
 ## Performance Tips
 
-1. **Start Simple**: Begin with basic searches, add features as needed
-2. **Choose Right Focus**: Proper focus mode dramatically improves relevance
-3. **Optimize Result Count**: More results = longer processing time
-4. **Domain Filtering**: Pre-filter sources for faster, more relevant results
-5. **Batch Queries**: Group related searches to minimize API calls
-6. **Cache Results**: Store results locally when appropriate
-7. **Progressive Enhancement**: Start with URLs, add content/answers if needed
+1. **Use Defaults**: Keep `deep_search=false` (default) for 5-10x faster responses
+2. **Start Simple**: Begin with just `{"query": "..."}` - defaults work great
+3. **Choose Right Focus**: Proper focus mode dramatically improves relevance (default: "general")
+4. **Optimize Result Count**: Default of 10 results balances speed and coverage
+5. **Domain Filtering**: Pre-filter sources for faster, more relevant results
+6. **Avoid Deep Search**: Only enable `deep_search=true` when you truly need full content
+7. **Batch Queries**: Group related searches to minimize API calls
+8. **Cache Results**: Store results locally when appropriate
 
 ## Integration Examples
 
@@ -525,9 +591,41 @@ See `references/` directory for detailed documentation:
 - `search-strategies.md` - Advanced search patterns
 - `api-reference.md` - Full API documentation
 
-## Validation
+## Scripts
 
-Use the validation script to test your API configuration:
+### search.sh - Main Search Wrapper
+
+The recommended way to use the Nimble Search API:
+
+```bash
+./scripts/search.sh '{"query": "your search", "focus": "coding"}'
+```
+
+**Features:**
+- Automatic authentication with `$NIMBLE_API_KEY`
+- Platform detection (claude-code, github-copilot, vscode, cli)
+- Request tracking headers for analytics
+- JSON validation and error handling
+- Formatted output with `jq`
+
+**Usage:**
+```bash
+# Basic search
+./scripts/search.sh '{"query": "React hooks"}'
+
+# With all options
+./scripts/search.sh '{
+  "query": "AI frameworks",
+  "focus": "coding",
+  "max_results": 15,
+  "include_answer": true,
+  "include_domains": ["github.com"]
+}'
+```
+
+### validate-query.sh - API Configuration Test
+
+Test your API configuration and connectivity:
 
 ```bash
 ./scripts/validate-query.sh "test query" general
