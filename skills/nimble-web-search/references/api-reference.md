@@ -507,7 +507,7 @@ def nimble_search_debug(query, **kwargs):
 
 ## Support
 
-- Documentation: https://docs.nimbleway.com/search-api
+- Documentation: https://docs.nimbleway.com/nimble-sdk/search-api
 - API Status: https://status.nimbleway.com
 - Support: support@nimbleway.com
 - Community: https://community.nimbleway.com

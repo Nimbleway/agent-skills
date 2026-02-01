@@ -328,7 +328,7 @@ MIT License - see [LICENSE](LICENSE) file for details.
 - **Skills CLI**: https://www.npmjs.com/package/skills - Official package manager
 - **Nimble Search API**: https://www.nimbleway.com/ - Advanced search API
 - **GitHub Repository**: https://github.com/Nimbleway/agent-skills - Source code
-- **API Documentation**: https://docs.nimbleway.com/search-api - API reference
+- **API Documentation**: https://docs.nimbleway.com/nimble-sdk/search-api - API reference
 
 ---
 
