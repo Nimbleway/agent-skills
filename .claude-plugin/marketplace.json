@@ -18,11 +18,12 @@
         "name": "Nimble",
         "email": "support@nimbleway.com"
       },
-      "homepage": "https://github.com/Nimbleway/skills",
-      "repository": "https://github.com/Nimbleway/skills",
+      "homepage": "https://github.com/Nimbleway/agent-skills",
+      "repository": "https://github.com/Nimbleway/agent-skills",
       "license": "MIT",
       "keywords": [
         "agent-skills",
+        "nimble-web-search",
         "web-search",
         "search",
         "nimble",
@@ -33,6 +34,7 @@
       ],
       "category": "external-integrations",
       "tags": [
+        "nimble-web-search",
         "web-search",
         "data-retrieval",
         "agents",

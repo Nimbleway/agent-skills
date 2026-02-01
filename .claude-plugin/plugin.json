@@ -9,12 +9,13 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/Nimbleway/skills"
+    "url": "https://github.com/Nimbleway/agent-skills"
   },
   "license": "MIT",
   "skills": "./skills/",
   "keywords": [
     "agent-skills",
+    "nimble-web-search",
     "web-search",
     "search",
     "nimble",
