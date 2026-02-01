@@ -80,20 +80,52 @@ fi
 
 Nimble Search provides real-time web intelligence with 8 specialized focus modes optimized for different types of queries. Get instant access to current web data with AI-powered answer generation, deep content extraction, URL discovery, and smart filtering by domain and date.
 
-**Recommended Defaults:**
-- `focus`: `"general"` - Broad web search (change to specific mode for targeted results)
-- `deep_search`: `false` - Fast response with titles/descriptions (set `true` only when full content needed)
-- `max_results`: `10` - Balanced speed and coverage
+**IMPORTANT: Always Specify These Parameters**
+
+When using this skill, **always explicitly set** the following parameters in your requests:
+
+- `deep_search`: **Default to `false`** for 5-10x faster responses
+  - **Use `false` (FAST MODE - 1-3 seconds):** For 95% of use cases - URL discovery, research, comparisons, answer generation
+  - **Use `true` (DEEP MODE - 5-15 seconds):** Only when you specifically need full page content extracted for archiving or detailed analysis
+
+- `focus`: **Default to `"general"`** for broad searches
+  - Change to specific mode (`coding`, `news`, `academic`, `shopping`, `social`, `geo`, `location`) for targeted results
+
+- `max_results`: **Default to `10`** - Balanced speed and coverage
+
+**Performance Awareness:** By explicitly setting `deep_search: false`, you're choosing fast mode and should expect results in 1-3 seconds. If you set `deep_search: true`, expect 5-15 seconds response time.
 
 ### Quick Start
 
 Use the wrapper script for the simplest experience:
 
 ```bash
-./scripts/search.sh '{"query": "React hooks"}'
+# ALWAYS specify deep_search explicitly
+./scripts/search.sh '{
+  "query": "React hooks",
+  "deep_search": false
+}'
 ```
 
-The script automatically handles authentication, tracking headers, and output formatting. Focus defaults to "general", add `"focus": "coding"` for technical results.
+The script automatically handles authentication, tracking headers, and output formatting.
+
+### When to Use Each Mode
+
+**Use `deep_search: false` (FAST MODE - 1-3 seconds) - Default for 95% of cases:**
+- ✅ Finding URLs and discovering resources
+- ✅ Research and topic exploration
+- ✅ Answer generation and summaries
+- ✅ Product comparisons
+- ✅ News monitoring
+- ✅ Any time you DON'T need full article text
+
+**Use `deep_search: true` (DEEP MODE - 5-15 seconds) - Only when specifically needed:**
+- 📄 Archiving full article content
+- 📄 Extracting complete documentation
+- 📄 Building text datasets
+- 📄 Processing full page content for analysis
+
+**Decision Rule:** If you're not sure, use `deep_search: false`. You can always re-run with `true` if needed.
 
 ## Core Capabilities
 
@@ -149,40 +181,46 @@ All examples below use the `./scripts/search.sh` wrapper for simplicity. For raw
 
 ### Basic Search
 
-Simplest search with just a query (uses defaults: focus=general, deep_search=false):
-
-```bash
-./scripts/search.sh '{"query": "React Server Components tutorial"}'
-```
-
-For technical content, specify coding focus:
+Quick search in fast mode (ALWAYS specify deep_search explicitly):
 
 ```bash
 ./scripts/search.sh '{
   "query": "React Server Components tutorial",
-  "focus": "coding"
+  "deep_search": false
+}'
+```
+
+For technical content, specify coding focus (still fast mode):
+
+```bash
+./scripts/search.sh '{
+  "query": "React Server Components tutorial",
+  "focus": "coding",
+  "deep_search": false
 }'
 ```
 
 ### Research with AI Summary
 
-Get synthesized insights from multiple sources:
+Get synthesized insights from multiple sources (fast mode works great with answer generation):
 
 ```bash
 ./scripts/search.sh '{
   "query": "impact of AI on software development 2026",
+  "deep_search": false,
   "include_answer": true
 }'
 ```
 
 ### Domain-Specific Search
 
-Target specific authoritative sources:
+Target specific authoritative sources (fast mode):
 
 ```bash
 ./scripts/search.sh '{
   "query": "async await patterns",
   "focus": "coding",
+  "deep_search": false,
   "include_domains": ["github.com", "stackoverflow.com", "dev.to"],
   "max_results": 8
 }'
@@ -190,41 +228,55 @@ Target specific authoritative sources:
 
 ### Real-Time News Monitoring
 
-Track current events and breaking news as they happen:
+Track current events and breaking news as they happen (fast mode):
 
 ```bash
 ./scripts/search.sh '{
   "query": "latest developments in quantum computing",
   "focus": "news",
+  "deep_search": false,
   "time_range": "week",
   "max_results": 15,
   "include_answer": true
 }'
 ```
 
-### Academic Research
+### Academic Research - Fast Mode (Recommended)
 
-Find and synthesize scholarly content (note: deep_search rarely needed):
+Find and synthesize scholarly content using fast mode:
 
 ```bash
 ./scripts/search.sh '{
   "query": "machine learning interpretability methods",
   "focus": "academic",
+  "deep_search": false,
   "max_results": 20,
   "include_answer": true
 }'
 ```
 
-Only add `"deep_search": true` if you need full paper content extracted.
+**When to use deep mode:** Only use `"deep_search": true` if you need full paper content extracted for archiving:
+
+```bash
+./scripts/search.sh '{
+  "query": "machine learning interpretability methods",
+  "focus": "academic",
+  "deep_search": true,
+  "max_results": 5,
+  "output_format": "markdown"
+}'
+```
+**Note:** Deep mode is 5-15x slower. Use only when specifically needed.
 
 ### Real-Time Shopping Research
 
-Compare products and current prices:
+Compare products and current prices (fast mode):
 
 ```bash
 ./scripts/search.sh '{
   "query": "best mechanical keyboards for programming",
   "focus": "shopping",
+  "deep_search": false,
   "max_results": 10,
   "include_answer": true
 }'

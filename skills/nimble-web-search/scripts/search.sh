@@ -65,6 +65,10 @@ if ! echo "$JSON_INPUT" | jq -e '.query' >/dev/null 2>&1; then
     exit 1
 fi
 
+# Add performance-optimized defaults if not specified
+# deep_search defaults to false for 5-10x faster responses
+JSON_WITH_DEFAULTS=$(echo "$JSON_INPUT" | jq '. + {deep_search: (.deep_search // false)}')
+
 # Auto-detect platform
 detect_platform() {
     if [ -n "${CLAUDE_CODE_VERSION:-}" ]; then
@@ -89,4 +93,4 @@ curl -s -X POST "$API_URL" \
     -H "User-Agent: nimble-agent-skill/$SKILL_VERSION" \
     -H "X-Client-Source: agent-skill" \
     -H "X-Nimble-Request-Origin: $PLATFORM" \
-    -d "$JSON_INPUT" | jq .
+    -d "$JSON_WITH_DEFAULTS" | jq .
