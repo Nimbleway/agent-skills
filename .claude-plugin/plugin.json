@@ -1,0 +1,31 @@
+{
+  "name": "nimble-web",
+  "version": "0.1.0",
+  "description": "Advanced web search skill powered by Nimble Search API. Built on Agent Skills open standard for cross-platform compatibility. Features 8 specialized focus modes with AI-powered answer generation.",
+  "author": {
+    "name": "Nimble",
+    "email": "support@nimbleway.com",
+    "url": "https://www.nimbleway.com"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Nimbleway/skills"
+  },
+  "license": "MIT",
+  "skills": "./skills/",
+  "keywords": [
+    "agent-skills",
+    "web-search",
+    "search",
+    "nimble",
+    "focus-modes",
+    "ai-search",
+    "cross-platform",
+    "open-standard"
+  ],
+  "categories": [
+    "web",
+    "research",
+    "productivity"
+  ]
+}

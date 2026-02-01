@@ -1,0 +1,44 @@
+{
+  "name": "nimble-web",
+  "owner": {
+    "name": "Nimble",
+    "email": "support@nimbleway.com"
+  },
+  "metadata": {
+    "description": "Advanced web search skill for AI agents - 8 specialized focus modes with AI-powered answer generation",
+    "version": "0.1.0"
+  },
+  "plugins": [
+    {
+      "name": "nimble-web",
+      "source": "./",
+      "description": "Advanced web search powered by Nimble Search API. Features 8 specialized focus modes (general, coding, news, academic, shopping, social, geo, location) with AI-powered answer generation and smart result filtering.",
+      "version": "0.1.0",
+      "author": {
+        "name": "Nimble",
+        "email": "support@nimbleway.com"
+      },
+      "homepage": "https://github.com/Nimbleway/skills",
+      "repository": "https://github.com/Nimbleway/skills",
+      "license": "MIT",
+      "keywords": [
+        "agent-skills",
+        "web-search",
+        "search",
+        "nimble",
+        "focus-modes",
+        "ai-search",
+        "agents",
+        "research"
+      ],
+      "category": "external-integrations",
+      "tags": [
+        "web-search",
+        "data-retrieval",
+        "agents",
+        "research",
+        "focus-modes"
+      ]
+    }
+  ]
+}
