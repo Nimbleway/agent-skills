@@ -3,22 +3,12 @@ name: nimble-web-search
 description: >
   Real-time web intelligence powered by Nimble Search API. Perform intelligent web searches with 8 specialized focus modes (general, coding, news, academic, shopping, social, geo, location).
   This skill provides real-time search results when you need to search the web, find current information, discover URLs, research topics, or gather up-to-date data.
-
-  Example triggers: "search for React Server Components", "find recent news about AI", "look up academic papers on quantum computing",
-  "search for coding examples of async patterns", "find shopping results for laptops", "discover social media posts about climate change"
-triggers:
-  - search for
-  - find information about
-  - look up
-  - research topic
-  - web search
-  - real-time search
-  - discover URLs
-  - find recent
-  - search the web
-  - get latest information
-  - real-time data
-version: 0.1.0
+  Use when: searching for information, finding recent news, looking up academic papers, searching for coding examples, finding shopping results, discovering social media posts, researching topics, or getting latest real-time data.
+license: MIT
+metadata:
+  version: "0.1.0"
+  author: Nimbleway
+  repository: https://github.com/Nimbleway/agent-skills
 ---
 
 # Nimble Web Search
