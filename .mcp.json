@@ -1,0 +1,9 @@
+{
+  "nimble-mcp-server": {
+    "command": "npx",
+    "args": [
+      "-y", "mcp-remote@latest", "http://localhost:9000/mcp",
+      "--header", "Authorization:Bearer 2dfcf9ff91c446429ab9df7c49eb84f26ff179bf70dc451f80139eff05717989"
+    ]
+  }
+}
