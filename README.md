@@ -1,335 +1,206 @@
-# Nimble Web - Agent Skills
+# Nimble Web Data Toolkit
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![Agent Skills](https://img.shields.io/badge/Agent-Skills-blue)](https://agentskills.io)
-[![Skills CLI](https://img.shields.io/badge/Skills-CLI-orange)](https://www.npmjs.com/package/skills)
-[![Version](https://img.shields.io/badge/version-0.1.0-green)](https://github.com/Nimbleway/agent-skills)
+[![Version](https://img.shields.io/badge/version-0.3.0-green)](https://github.com/Nimbleway/agent-skills)
 
-Advanced web search skills powered by Nimble Search API. Built on the open-source [Agent Skills](https://agentskills.io) standard for cross-platform agent compatibility.
+Search the web and extract structured data with Nimble agents. One plugin for Claude Code, Cursor, and Vercel Agent Skills.
 
-Features 8 specialized focus modes (general, coding, news, academic, shopping, social, geo, location) with AI-powered answer generation and smart result filtering.
+## Skills
 
-**Quick Install:**
-```bash
-npx skills add Nimbleway/agent-skills
-```
-
-## About Agent Skills
-
-This skill follows the [Agent Skills](https://agentskills.io) open-source standard, making it compatible with multiple AI agent platforms. Install using the [Skills CLI](https://www.npmjs.com/package/skills) - the standard package manager for the Agent Skills ecosystem.
-
-**Agent Skills Benefits:**
-- 🔌 **Cross-Platform** - Works with any agent platform that supports Skills
-- 📦 **Easy Installation** - Use the Skills CLI package manager
-- 📖 **Open Standard** - Community-driven, vendor-neutral specification
-- 🔄 **Reusable** - Write once, use across different agent systems
-- 🌐 **Growing Ecosystem** - Part of the thriving Agent Skills community
-
-## Features
-
-### 🔍 **8 Specialized Focus Modes**
-- **General** - Broad web searches
-- **Coding** - Programming resources, documentation, code examples
-- **News** - Current events, recent articles, breaking news
-- **Academic** - Research papers, scholarly content
-- **Shopping** - Product searches, price comparisons
-- **Social** - Social media content, community discussions
-- **Geo** - Geographic information, regional data
-- **Location** - Local business, place-specific queries
-
-### 🤖 **AI-Powered Features**
-- **Answer Generation** - Claude-powered synthesis of search results
-- **Smart Filtering** - Domain and date-based result filtering
-- **Result Optimization** - Customizable result limits and formats
-
-### 📦 **Components**
-
-**1 Skill**
-- `nimble-web-search` - Intelligent web search with 8 focus modes
+| Skill | Description |
+|-------|-------------|
+| **nimble-web-search** | Real-time web search with 8 focus modes (general, coding, news, academic, shopping, social, geo, location) |
+| **nimble-agents** | Find, generate, and run agents for structured data from any website. Requires MCP server. |
 
 ## Installation
 
 ### Prerequisites
 
-**Nimble API Key Required** - Get your key at https://www.nimbleway.com/
+1. **Nimble API Key** — [Sign up](https://app.nimbleway.com/signup) and get your key from Account Settings > API Keys.
 
-Set the `NIMBLE_API_KEY` environment variable using your platform's method:
+2. Set the environment variable:
+   ```bash
+   export NIMBLE_API_KEY="your-api-key-here"
+   ```
+   Or add to `~/.claude/settings.json`:
+   ```json
+   { "env": { "NIMBLE_API_KEY": "your-api-key-here" } }
+   ```
 
-<details>
-<summary><strong>Claude Code</strong></summary>
+### Claude Code
 
-Add to `~/.claude/settings.json`:
+**Option A: Plugin install (recommended)**
+
+```bash
+claude plugin install nimble@nimble-plugin-marketplace
+```
+
+Or load locally during development:
+
+```bash
+claude --plugin-dir /path/to/agent-skills
+```
+
+**Option B: MCP-only (no plugin)**
+
+```bash
+claude mcp add --transport http nimble-mcp-server https://mcp.nimbleway.com/mcp \
+  --header "Authorization: Bearer ${NIMBLE_API_KEY}"
+```
+
+This gives you the 5 agent MCP tools but not the skills.
+
+### Cursor
+
+**Option A: Marketplace (once published)**
+
+In Cursor chat:
+```
+/add-plugin nimble
+```
+
+**Option B: Local plugin directory**
+
+Clone and point Cursor at it:
+```bash
+git clone https://github.com/Nimbleway/agent-skills.git
+```
+
+Open the `agent-skills` folder in Cursor. The plugin system reads:
+- `.cursor-plugin/plugin.json` — plugin metadata
+- `skills/` — both skills (auto-discovered)
+- `rules/` — Cursor rules (auto-loaded)
+- `mcp.json` — MCP server connection
+
+**Option C: MCP-only (no plugin)**
+
+Add to `.cursor/mcp.json` or `~/.cursor/mcp.json`:
 ```json
 {
-  "env": {
-    "NIMBLE_API_KEY": "your-api-key-here"
+  "mcpServers": {
+    "nimble-mcp-server": {
+      "url": "https://mcp.nimbleway.com/mcp",
+      "headers": {
+        "Authorization": "Bearer YOUR_API_KEY"
+      }
+    }
   }
 }
 ```
-</details>
 
-<details>
-<summary><strong>VS Code / GitHub Copilot</strong></summary>
-
-- Add skills to `.github/skills/` in your repository
-- Configure API key using GitHub Actions secrets in the copilot environment
-- Or set as environment variable in your shell
-</details>
-
-<details>
-<summary><strong>Shell / Terminal</strong></summary>
-
-```bash
-export NIMBLE_API_KEY="your-api-key-here"
-```
-
-Or add to your shell profile (~/.bashrc, ~/.zshrc):
-```bash
-echo 'export NIMBLE_API_KEY="your-api-key-here"' >> ~/.zshrc
-```
-</details>
-
-<details>
-<summary><strong>Any Platform</strong></summary>
-
-The skill checks for the `NIMBLE_API_KEY` environment variable regardless of how you set it. Use your platform's recommended method for configuring environment variables.
-</details>
-
-### Install with Skills CLI
-
-Install using the official [Skills CLI](https://www.npmjs.com/package/skills):
+### Vercel Agent Skills CLI
 
 ```bash
 npx skills add Nimbleway/agent-skills
 ```
 
-That's it! The skill will be installed and ready to use.
-
-### Alternative: Manual Installation
+This installs both skills into your project. To verify:
 
 ```bash
-# Clone the repository
-git clone https://github.com/Nimbleway/agent-skills.git
-
-# Configure your API key in ~/.claude/settings.json
-# See Prerequisites section above
+npx skills add Nimbleway/agent-skills --list
 ```
 
-### Platform-Specific Installation
+> **Note:** The agents skill requires the Nimble MCP server. After installing via `npx skills`, you still need to connect the MCP server manually:
+>
+> ```bash
+> claude mcp add --transport http nimble-mcp-server https://mcp.nimbleway.com/mcp \
+>   --header "Authorization: Bearer ${NIMBLE_API_KEY}"
+> ```
 
-**Claude Code:**
-```bash
-cc --plugin-dir /path/to/skills
-```
+## How It Works
 
-**Other Agent Platforms:**
-Most Agent Skills-compatible platforms support the standard Skills directory structure. Refer to your platform's documentation for specific installation instructions.
+### Platform File Mapping
 
-### Configuration
+| Aspect | Claude Code | Cursor | Vercel `npx skills` |
+|--------|------------|--------|---------------------|
+| Plugin config | `.claude-plugin/` | `.cursor-plugin/` | N/A (reads `skills/`) |
+| MCP config | `.mcp.json` (flat format) | `mcp.json` (`mcpServers` wrapper) | Manual setup |
+| Rules | N/A | `rules/*.mdc` | N/A |
+| Skills | `skills/` (shared) | `skills/` (shared) | `skills/` (shared) |
+| Install | `claude --plugin-dir` | `/add-plugin` or open folder | `npx skills add` |
 
-1. Copy `.env.example` to `.env`:
-   ```bash
-   cp .env.example .env
-   ```
+All three platforms read the same `skills/` directory. Platform-specific files coexist without interference.
 
-2. Add your API key to `.env`:
-   ```bash
-   NIMBLE_API_KEY=your-api-key-here
-   ```
+### MCP Tools
 
-3. (Optional) Customize defaults in `.env`
+The agents skill uses these MCP tools (provided by the Nimble MCP server):
+
+| Tool | Description |
+|------|-------------|
+| `nimble_agents_list` | Browse agents |
+| `nimble_agents_get` | Get agent details and schema |
+| `nimble_agents_generate` | Create custom agents via natural language |
+| `nimble_agents_run` | Execute agents |
+| `nimble_agents_publish` | Save generated agents for reuse |
 
 ## Quick Start
 
-The nimble-web-search skill activates automatically when you ask relevant questions:
+### Web Search
+
+Ask your AI agent to search the web — the `nimble-web-search` skill activates automatically:
 
 ```
 "Search for recent AI developments"
-→ Triggers nimble-web-search skill
-
-"Find information about React Server Components"
-→ Triggers nimble-web-search skill
-
+"Find React Server Components documentation"
 "Look up the latest news on quantum computing"
-→ Triggers nimble-web-search skill
 ```
 
-## API Reference
+### Structured Extraction
 
-### Search API
-
-```bash
-curl -X POST https://nimble-retriever.webit.live/search \
-  -H "Authorization: Bearer $NIMBLE_API_KEY" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "query": "search query",
-    "focus": "coding",
-    "max_results": 10,
-    "include_answer": true
-  }'
-```
-
-## Skills Documentation
-
-### nimble-web-search
-
-**Trigger phrases:** "search for", "find information about", "look up", "research topic"
-
-**Use when:**
-- Need to search the web
-- Find current information
-- Discover URLs
-- Research topics
-
-**Documentation:** See `skills/nimble-web-search/SKILL.md`
-
-## Configuration
-
-### API Configuration
-
-Edit `config/api-config.json` to customize:
-- API endpoints
-- Focus modes
-- Parsing formats
-- Rate limits
-- Defaults
-
-### Environment Variables
-
-Set in `.env`:
-- `NIMBLE_API_KEY` - Your API key (required)
-- `NIMBLE_BASE_URL` - Custom endpoint (optional)
-- `DEBUG` - Enable debug logging (optional)
-- `NIMBLE_DEFAULT_*` - Default settings (optional)
-
-## Focus Mode Guide
-
-| Mode | Best For | Example Queries |
-|------|----------|-----------------|
-| **general** | Broad searches, overviews | "What is quantum computing" |
-| **coding** | Programming, technical docs | "React hooks best practices" |
-| **news** | Current events, recent news | "AI developments 2026" |
-| **academic** | Research papers, studies | "Machine learning papers" |
-| **shopping** | Products, comparisons | "Best laptops for programming" |
-| **social** | Community, discussions | "Developer opinions on Rust" |
-| **geo** | Geographic, regional | "Climate patterns Pacific" |
-| **location** | Local business, places | "Coffee shops Seattle" |
-
-See `skills/nimble-web-search/references/focus-modes.md` for detailed guide.
-
-## Best Practices
-
-### Search Strategy
-
-1. **Start with right focus mode** - Match query type (coding, news, academic, etc.)
-2. **Begin with 10 results** - Increase if needed for comprehensive coverage
-3. **Use answer generation** - Enable AI synthesis for quick insights
-4. **Filter domains** - Target authoritative sources with domain filters
-5. **Add date filters** - Get recent content for time-sensitive queries
-6. **Iterate and refine** - Adjust focus mode and filters based on results
-
-## Troubleshooting
-
-### Authentication Failed
+Use the `nimble-agents` skill for data extraction:
 
 ```
-Error: 401 Unauthorized
+"Extract product details from this Amazon page"
+"Get restaurant data from Yelp listings"
+"Scrape pricing information from competitor websites"
 ```
 
-**Solution:**
-- Check `NIMBLE_API_KEY` is set correctly
-- Verify key is active at nimbleway.com
-- Ensure key has API access
-
-### Rate Limit Exceeded
-
-```
-Error: 429 Too Many Requests
-```
-
-**Solution:**
-- Add delays between requests
-- Reduce request frequency
-- Check your plan limits at nimbleway.com
-- Consider upgrading API tier
-
-### No Results Found
-
-**Solutions:**
-- Try different focus mode
-- Broaden search query
-- Remove domain filters
-- Adjust date filters
-- Check for typos
-
-### Timeout Errors
-
-**Solutions:**
-- Reduce max_results
-- Simplify query
-- Increase timeout in config
-- Retry after brief delay
-
-## Examples & References
-
-### Examples Directory
-
-- `skills/nimble-web-search/examples/basic-search.md` - Simple search patterns
-- `skills/nimble-web-search/examples/deep-research.md` - Multi-step search workflows
-- `skills/nimble-web-search/examples/competitive-analysis.md` - Competitive intelligence patterns
-
-### References Directory
-
-- `skills/nimble-web-search/references/focus-modes.md` - Complete focus mode guide (8 modes)
-- `skills/nimble-web-search/references/search-strategies.md` - Advanced search patterns and techniques
-- `skills/nimble-web-search/references/api-reference.md` - Full API documentation and examples
+The skill will search for existing agents, or generate a new one if needed.
 
 ## Development
 
-### Running Tests
+### Directory Structure
 
-```bash
-# Validate API configuration
-./skills/nimble-web-search/scripts/validate-query.sh "test query" general
+```
+agent-skills/
+├── .claude-plugin/          # Claude Code plugin config
+│   ├── plugin.json
+│   └── marketplace.json
+├── .cursor-plugin/          # Cursor plugin metadata
+│   └── plugin.json
+├── skills/                  # Shared by all platforms
+│   ├── nimble-web-search/
+│   │   ├── SKILL.md
+│   │   ├── examples/
+│   │   ├── references/
+│   │   └── scripts/
+│   └── nimble-agents/
+│       ├── SKILL.md
+│       ├── examples/
+│       └── references/
+├── rules/
+│   └── nimble-tools.mdc    # Cursor rule (auto-loaded by plugin)
+├── .mcp.json                # Claude Code plugin MCP config
+├── mcp.json                 # Cursor plugin MCP config
+├── .env.example
+└── README.md
 ```
 
-## Roadmap
+## Environment Variables
 
-- [ ] Additional focus modes and search capabilities
-- [ ] Advanced filtering and result optimization
-- [ ] Result caching layer
-- [ ] Integration with more Agent Skills platforms
-- [ ] Enhanced cross-platform compatibility
-- [ ] Custom search templates
-- [ ] Community-contributed search patterns
+| Variable | Required | Description |
+|----------|----------|-------------|
+| `NIMBLE_API_KEY` | Yes | Your Nimble API key |
+| `NIMBLE_BASE_URL` | No | Custom search API endpoint |
+| `NIMBLE_MCP_LOCAL_URL` | No | Local MCP server URL (dev only) |
 
 ## Support
 
-- **Documentation**: See `skills/` and `references/` directories
-- **API Status**: https://status.nimbleway.com
-- **Issues**: https://github.com/Nimbleway/agent-skills/issues
-- **Support**: support@nimbleway.com
-- **Community**: https://community.nimbleway.com
+- **Documentation**: [docs.nimbleway.com](https://docs.nimbleway.com)
+- **MCP Server**: [github.com/Nimbleway/nimble-mcp-server](https://github.com/Nimbleway/nimble-mcp-server)
+- **Issues**: [github.com/Nimbleway/agent-skills/issues](https://github.com/Nimbleway/agent-skills/issues)
+- **Email**: support@nimbleway.com
 
 ## License
 
-MIT License - see [LICENSE](LICENSE) file for details.
-
-## Acknowledgments
-
-- Built on the [Agent Skills](https://agentskills.io) open-source standard
-- Powered by [Nimble Search API](https://www.nimbleway.com/)
-- Compatible with multiple Agent Skills platforms
-
-## Links
-
-- **Agent Skills**: https://agentskills.io - Open standard for AI agent skills
-- **Skills CLI**: https://www.npmjs.com/package/skills - Official package manager
-- **Nimble Search API**: https://www.nimbleway.com/ - Advanced search API
-- **GitHub Repository**: https://github.com/Nimbleway/agent-skills - Source code
-- **API Documentation**: https://docs.nimbleway.com/nimble-sdk/search-api - API reference
-
----
-
-**Built with ❤️ for the Agent Skills community**
+MIT License — see [LICENSE](LICENSE) for details.

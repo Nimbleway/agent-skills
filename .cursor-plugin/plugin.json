@@ -1,0 +1,18 @@
+{
+  "name": "nimble",
+  "displayName": "Nimble Web Data Toolkit",
+  "version": "0.3.0",
+  "description": "Search the web and extract structured data with Nimble agents. Web search with 8 focus modes and guided agent workflows for structured extraction from any website.",
+  "author": {
+    "name": "Nimble",
+    "email": "support@nimbleway.com"
+  },
+  "homepage": "https://www.nimbleway.com",
+  "repository": "https://github.com/Nimbleway/agent-skills",
+  "license": "MIT",
+  "keywords": ["nimble", "web-search", "web-extraction", "agents", "mcp", "data-extraction", "structured-data"],
+  "category": "developer-tools",
+  "tags": ["web-search", "extraction", "agents"],
+  "skills": "./skills/",
+  "rules": "./rules/"
+}

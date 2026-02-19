@@ -3,6 +3,11 @@
 .env.local
 .env.*.local
 .claude
+.claude/
+
+# IDE / editor plugin state
+.cursor/
+*.bak
 
 # API keys and secrets
 *.key

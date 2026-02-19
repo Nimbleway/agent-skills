@@ -1,32 +1,14 @@
 {
-  "name": "nimble-web",
-  "version": "0.1.0",
-  "description": "Advanced web search skill powered by Nimble Search API. Built on Agent Skills open standard for cross-platform compatibility. Features 8 specialized focus modes with AI-powered answer generation.",
+  "name": "nimble",
+  "version": "0.3.0",
+  "description": "Nimble web data toolkit — search the web and extract structured data with agents",
   "author": {
     "name": "Nimble",
     "email": "support@nimbleway.com",
     "url": "https://www.nimbleway.com"
   },
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/Nimbleway/agent-skills"
-  },
+  "homepage": "https://www.nimbleway.com",
+  "repository": "https://github.com/Nimbleway/agent-skills",
   "license": "MIT",
-  "skills": "./skills/",
-  "keywords": [
-    "agent-skills",
-    "nimble-web-search",
-    "web-search",
-    "search",
-    "nimble",
-    "focus-modes",
-    "ai-search",
-    "cross-platform",
-    "open-standard"
-  ],
-  "categories": [
-    "web",
-    "research",
-    "productivity"
-  ]
+  "keywords": ["nimble", "web-search", "web-extraction", "agents", "mcp", "data-extraction", "structured-data"]
 }

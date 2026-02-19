@@ -6,7 +6,7 @@ description: >
   Use when: searching for information, finding recent news, looking up academic papers, searching for coding examples, finding shopping results, discovering social media posts, researching topics, or getting latest real-time data.
 license: MIT
 metadata:
-  version: "0.1.0"
+  version: "0.3.0"
   author: Nimbleway
   repository: https://github.com/Nimbleway/agent-skills
 ---
