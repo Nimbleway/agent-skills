@@ -95,12 +95,9 @@ From `$ARGUMENTS`, identify:
 
 Call `nimble_agents_list` with a **short, general query** (one or two keywords only). Never use full sentences.
 
-**Auto-advance rules after search:**
-- **Clear match:** One agent's description closely matches the user's intent → auto-select it, narrate the choice, proceed to step 5.
-- **No match:** Zero results OR no agent matches the specific intent AND intent is complete (website + data known) → auto-proceed to step 6 (generate). Narrate: "No existing agent matches. Generating a custom one..."
-- **Ambiguous:** Multiple agents could fit → present results with options (template below).
+**Always present options after search.** Never silently auto-advance past this step. The user must always see what was found and have the choice to generate a new agent.
 
-When presenting results (ambiguous case), show top 5 with numbered action options:
+Show top 5 with numbered action options:
 
 ```
 ### Existing agents for "{query}"
@@ -135,7 +132,7 @@ No agents matched "{query}".
 
 ### 4. Handle selection
 
-Most of the time, step 3's auto-advance rules will have already chosen the path. If options were presented:
+Options are always presented after search:
 
 - **User/agent picks an agent number (1-5)** → existing-agent path (step 5).
 - **User/agent picks "search with different keywords"** → ask what keywords, then repeat step 3.
@@ -144,11 +141,7 @@ Most of the time, step 3's auto-advance rules will have already chosen the path.
 
 ### 5. Existing-agent path
 
-**5a.** Call `nimble_agents_get` with the selected agent name.
-
-**Auto-advance:** If the agent's output fields cover what the user asked for AND all required input params can be inferred from the original request → narrate the agent details and proceed directly to step 5c (run). Skip the confirmation prompt.
-
-**Present options only if:** The agent's schema looks like a poor fit, or required params are unclear. In that case, show details with options:
+**5a.** Call `nimble_agents_get` with the selected agent name. Always present details with options — the user must always be able to choose "Generate a new agent instead":
 
 ```
 ### Agent: `agent-name`
