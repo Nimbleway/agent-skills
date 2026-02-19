@@ -157,7 +157,68 @@ Some agents accept several parameters for filtering or configuration.
 }
 ```
 
-### Pattern 4: No URL parameter
+### Pattern 4: Identifier-based agents
+
+Many ecommerce and catalog agents take a product identifier instead of (or in
+addition to) a URL. The identifier name varies by site.
+
+**Schema (Amazon — ASIN):**
+
+```json
+{
+  "properties": {
+    "asin": { "type": "string", "description": "Amazon Standard Identification Number" }
+  },
+  "required": ["asin"]
+}
+```
+
+**Params:**
+
+```json
+{ "asin": "B0CCZ1L489" }
+```
+
+**Schema (Walmart / Target — product_id):**
+
+```json
+{
+  "properties": {
+    "product_id": { "type": "string", "description": "Product identifier" }
+  },
+  "required": ["product_id"]
+}
+```
+
+**Params:**
+
+```json
+{ "product_id": "436473700" }
+```
+
+### Pattern 5: Keyword/search agents
+
+Search/SERP agents typically accept a `keyword` parameter and return a list of
+matching records rather than a single product detail.
+
+**Schema:**
+
+```json
+{
+  "properties": {
+    "keyword": { "type": "string", "description": "Search query" }
+  },
+  "required": ["keyword"]
+}
+```
+
+**Params:**
+
+```json
+{ "keyword": "wireless headphones" }
+```
+
+### Pattern 6: No URL parameter
 
 Rare, but some agents operate on a fixed domain and only need non-URL inputs.
 
