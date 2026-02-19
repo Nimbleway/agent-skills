@@ -1,7 +1,7 @@
 ---
-name: nimble-agent-orchestrator
+name: nimble-agents
 description: >
-  Find or generate a Nimble extraction agent for a task, then run it.
+  Find or generate a Nimble agent for a task, then run it.
   Use when the user needs structured web data extraction via Nimble agents/templates.
 allowed-tools:
   - mcp__nimble-mcp-server__nimble_agents_list
@@ -17,7 +17,7 @@ metadata:
   repository: https://github.com/Nimbleway/agent-skills
 ---
 
-# Nimble Agent Orchestrator
+# Nimble Agents
 
 Use this skill when the user wants structured extraction by running a Nimble agent/template.
 
@@ -53,15 +53,26 @@ Add to your MCP config:
 Always finish with an executed agent run result.
 
 - Preferred path: find an existing agent/template and run it.
-- Fallback path: generate a new agent, run it, then optionally publish/save it.
+- Fallback path: generate a new agent, publish it, then run it.
+
+## Execution principle
+
+**Infer and advance when the next action is unambiguous. Present options only when there is genuine ambiguity.**
+
+At every decision point, evaluate whether the next step can be determined from the original request and current context. If yes, proceed immediately — narrate what you're doing but do not wait for confirmation. Only present numbered options when:
+- Multiple agents could plausibly match and you cannot rank them confidently.
+- Required parameters cannot be inferred from the original request.
+- An error or unexpected result requires a user decision.
+
+This applies to all consumers — interactive human users and autonomous agents alike. Autonomous agents (no human-in-the-loop) cannot respond to prompts at all, so unnecessary options will stall them.
 
 ## Presentation rules
 
 - After every tool call, present results in markdown tables. Never show raw JSON.
-- Every user-facing prompt must end with **numbered options**. Options are always sequential numbers continuing after table rows if present.
+- Present numbered options **only when the next action is ambiguous** (see Execution principle). When auto-advancing, narrate the action instead (e.g. "No exact match found. Generating a custom agent...").
 - Keep tables to 5 rows max per page. Use pagination when more results exist.
 
-## Required orchestration flow
+## Required flow
 
 ### 1. Validate authentication
 
@@ -78,12 +89,18 @@ From `$ARGUMENTS`, identify:
 - Target domain/URL if provided.
 - What fields/records the user expects in output.
 - One or two broad keywords for search (e.g. "amazon", "reviews", "linkedin", "products").
+- **Completeness check:** Does the request already specify a website/URL AND what data to extract? If yes, mark intent as "complete" — this allows auto-advancing through later steps without asking for information you already have.
 
 ### 3. Search for existing agents
 
 Call `nimble_agents_list` with a **short, general query** (one or two keywords only). Never use full sentences.
 
-Present top 5 results, then numbered action options continuing from the last row number:
+**Auto-advance rules after search:**
+- **Clear match:** One agent's description closely matches the user's intent → auto-select it, narrate the choice, proceed to step 5.
+- **No match:** Zero results OR no agent matches the specific intent AND intent is complete (website + data known) → auto-proceed to step 6 (generate). Narrate: "No existing agent matches. Generating a custom one..."
+- **Ambiguous:** Multiple agents could fit → present results with options (template below).
+
+When presenting results (ambiguous case), show top 5 with numbered action options:
 
 ```
 ### Existing agents for "{query}"
@@ -116,16 +133,22 @@ No agents matched "{query}".
 2. Generate a new custom agent
 ```
 
-### 4. Handle user selection
+### 4. Handle selection
 
-- **User picks an agent number (1-5)** → existing-agent path (step 5).
-- **User picks "search with different keywords"** → ask what keywords, then repeat step 3.
-- **User picks "show next page"** → call `nimble_agents_list` with `skip` incremented by 5, present next page.
-- **User picks "generate a new custom agent"** → ask the user to describe what the agent should extract before proceeding. If the user's description is vague or missing, ask: "Please describe what data you want to extract and from which website." Only proceed to step 6 once you have a clear description.
+Most of the time, step 3's auto-advance rules will have already chosen the path. If options were presented:
+
+- **User/agent picks an agent number (1-5)** → existing-agent path (step 5).
+- **User/agent picks "search with different keywords"** → ask what keywords, then repeat step 3.
+- **User/agent picks "show next page"** → call `nimble_agents_list` with `skip` incremented by 5, present next page.
+- **User/agent picks "generate a new custom agent"** → proceed to step 6. Only ask for a description if the original request lacks a website/URL or what data to extract.
 
 ### 5. Existing-agent path
 
-**5a.** Call `nimble_agents_get` with the selected agent name. Present details with numbered options:
+**5a.** Call `nimble_agents_get` with the selected agent name.
+
+**Auto-advance:** If the agent's output fields cover what the user asked for AND all required input params can be inferred from the original request → narrate the agent details and proceed directly to step 5c (run). Skip the confirmation prompt.
+
+**Present options only if:** The agent's schema looks like a poor fit, or required params are unclear. In that case, show details with options:
 
 ```
 ### Agent: `agent-name`
@@ -153,7 +176,7 @@ No agents matched "{query}".
 3. Generate a new agent instead
 ```
 
-**5b.** If user picks "Run this agent": map values from the user request to input parameters. If any required params are still missing, ask in a table:
+**5b.** Map values from the original request to input parameters. Infer as much as possible (URLs from mentioned websites, queries from described topics, etc.). Only ask for required params that truly cannot be inferred:
 
 ```
 I need a few more values to run this agent:
@@ -183,17 +206,24 @@ Please provide the values (e.g. "1: https://example.com, 2: shoes").
 **Pick a number:**
 4. Run again with different inputs
 5. Get Python code for this extraction
-6. Search for a different agent
-7. Done
+6. Generate a new custom agent
+7. Search for a different agent
+8. Done
 ```
 
 Adapt column headers to match the actual output fields returned.
 
-If user picks "Get Python code" → go to step 9.
+**Auto-advance:** If the original request is fully satisfied by the results, proceed directly to the final summary (step 7). Only present post-result options if the user is in an interactive session and might want follow-up actions.
+
+If user picks "Get Python code" → go to step 8.
 
 ### 6. Generate path
 
-**6a.** Ensure you have a clear description of what to extract from the user. If not, ask:
+**6a.** Check whether the original request already provides a website/URL and what data to extract.
+
+**Auto-advance:** If both pieces are present (or can be reasonably inferred, e.g. "github trending repos" implies `https://github.com/trending` and repo metadata fields) → proceed directly to 6b. Do not ask the user to repeat information they already provided.
+
+**Ask only if genuinely missing:**
 
 ```
 Before I generate a new agent, please describe:
@@ -228,6 +258,8 @@ Agent generation in progress... I'll check back shortly.
 
 If `"complete"`:
 
+**Auto-advance:** Narrate the generated agent's schema, then proceed directly to publish and run (steps 6e–6f). The user already expressed intent to extract data and generation succeeded — do not wait for confirmation.
+
 ```
 ### Agent generated: `agent-name`
 
@@ -244,8 +276,14 @@ If `"complete"`:
 | `name` | string |
 | `value` | string |
 
+Publishing and running...
+```
+
+If the generated schema looks clearly wrong for the user's intent, present options instead:
+
+```
 **Pick a number:**
-1. Run this agent now
+1. Publish and run this agent
 2. Regenerate with a different description
 3. Go back to search existing agents
 ```
@@ -262,29 +300,17 @@ Generation failed: {error message}
 
 **6d.** Repeat generate calls with the same `session_id` until `"complete"`.
 
-**6e.** When running: build params from schema, ask for missing values using the format in step 5b, then call `nimble_agents_run` and present results using the format in step 5c.
-
-### 7. Optional publish (generate path only)
-
-After a successful generated run, present:
+**6e.** Once generation is complete, call `nimble_agents_publish` with the same `session_id` **before** running the agent. Confirm:
 
 ```
-### Save this agent?
-
-This agent extracted {count} records successfully.
-
-**Pick a number:**
-1. Yes, save it — agent becomes searchable for future reuse
-2. No, skip — agent is discarded after this session
+Agent `agent-name` published successfully. Preparing to run...
 ```
 
-If yes: call `nimble_agents_publish` with the same `session_id`. Confirm:
+If publish fails with a 409 conflict, the agent was already published — proceed to run.
 
-```
-Agent `agent-name` published. You can find it in future searches via `nimble_agents_list`.
-```
+**6f.** Build params from schema, infer values from the original request. Only ask for values that truly cannot be inferred (see step 5b). Call `nimble_agents_run` and present results using the format in step 5c.
 
-### 8. Final response
+### 7. Final response
 
 Always end with a clean summary:
 
@@ -296,12 +322,12 @@ Always end with a clean summary:
 | Agent used | `agent-name` |
 | Source | Existing / Generated |
 | Records extracted | {count} |
-| Published | Yes / No / N/A |
+| Published | Yes / N/A |
 
 {extraction results table from step 5c}
 ```
 
-### 9. Codegen (on request)
+### 8. Codegen (on request)
 
 When the user picks "Get Python code", generate a ready-to-run script using `nimble_python` (`pip install nimble_python`) that reproduces the agent run.
 
@@ -384,10 +410,12 @@ suggest using `nimble_agents_list` to find the agent.
 
 ## Guardrails
 
-- This skill is for extraction-agent workflows only, not general web search Q&A.
-- Only ask for missing required inputs; do not over-prompt.
-- Never publish generated agents without explicit user confirmation.
+- This skill is for agent workflows only — list, get, generate, run, and publish. Do not suggest scheduling, monitoring, automation, cron jobs, or any functionality outside the allowed tools.
+- Do not suggest or offer capabilities beyond what the allowed tools provide.
+- **Never ask for information already present in the original request.** Infer URLs, fields, and parameters from context.
+- Only present numbered options when the next action is genuinely ambiguous. When auto-advancing, narrate the action.
+- Always publish generated agents before running them (step 6e).
 - Session IDs must be reused across generate and publish calls within the same flow.
-- Always present tool call results in tables with numbered options at the end.
+- Present tool call results in tables. Never show raw JSON.
 - Adapt table columns to match actual data returned; templates above are examples.
-- For the generate path, always collect a clear extraction description before calling generate.
+- For the generate path, only ask for extraction description if the original request lacks a target website or what data to extract.

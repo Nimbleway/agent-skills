@@ -1,11 +1,11 @@
 {
   "name": "nimble-plugin-marketplace",
   "owner": { "name": "Nimble", "email": "support@nimbleway.com" },
-  "metadata": { "description": "Official Nimble plugins: web search, extraction agents, structured data" },
+  "metadata": { "description": "Official Nimble plugins: web search, agents, structured data" },
   "plugins": [{
     "name": "nimble",
     "source": "./",
-    "description": "Search the web and extract structured data with Nimble extraction agents",
+    "description": "Search the web and extract structured data with Nimble agents",
     "version": "0.3.0",
     "category": "data",
     "tags": ["web-search", "extraction", "agents", "structured-data"],

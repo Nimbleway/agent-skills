@@ -1,7 +1,7 @@
 {
   "name": "nimble",
   "version": "0.3.0",
-  "description": "Nimble web data toolkit — search the web and extract structured data with extraction agents",
+  "description": "Nimble web data toolkit — search the web and extract structured data with agents",
   "author": {
     "name": "Nimble",
     "email": "support@nimbleway.com",

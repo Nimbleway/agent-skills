@@ -3,14 +3,14 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Version](https://img.shields.io/badge/version-0.3.0-green)](https://github.com/Nimbleway/agent-skills)
 
-Search the web and extract structured data with Nimble extraction agents. One plugin for Claude Code, Cursor, and Vercel Agent Skills.
+Search the web and extract structured data with Nimble agents. One plugin for Claude Code, Cursor, and Vercel Agent Skills.
 
 ## Skills
 
 | Skill | Description |
 |-------|-------------|
 | **nimble-web-search** | Real-time web search with 8 focus modes (general, coding, news, academic, shopping, social, geo, location) |
-| **nimble-agent-orchestrator** | Find, generate, and run extraction agents for structured data from any website. Requires MCP server. |
+| **nimble-agents** | Find, generate, and run agents for structured data from any website. Requires MCP server. |
 
 ## Installation
 
@@ -100,7 +100,7 @@ This installs both skills into your project. To verify:
 npx skills add Nimbleway/agent-skills --list
 ```
 
-> **Note:** The agent orchestrator skill requires the Nimble MCP server. After installing via `npx skills`, you still need to connect the MCP server manually:
+> **Note:** The agents skill requires the Nimble MCP server. After installing via `npx skills`, you still need to connect the MCP server manually:
 >
 > ```bash
 > claude mcp add --transport http nimble-mcp-server https://mcp.nimbleway.com/mcp \
@@ -123,14 +123,14 @@ All three platforms read the same `skills/` directory. Platform-specific files c
 
 ### MCP Tools
 
-The agent orchestrator skill uses these MCP tools (provided by the Nimble MCP server):
+The agents skill uses these MCP tools (provided by the Nimble MCP server):
 
 | Tool | Description |
 |------|-------------|
-| `nimble_agents_list` | Browse extraction agents |
+| `nimble_agents_list` | Browse agents |
 | `nimble_agents_get` | Get agent details and schema |
 | `nimble_agents_generate` | Create custom agents via natural language |
-| `nimble_agents_run` | Execute extraction agents |
+| `nimble_agents_run` | Execute agents |
 | `nimble_agents_publish` | Save generated agents for reuse |
 
 ## Quick Start
@@ -147,7 +147,7 @@ Ask your AI agent to search the web — the `nimble-web-search` skill activates 
 
 ### Structured Extraction
 
-Use the `nimble-agent-orchestrator` skill for data extraction:
+Use the `nimble-agents` skill for data extraction:
 
 ```
 "Extract product details from this Amazon page"
@@ -155,19 +155,9 @@ Use the `nimble-agent-orchestrator` skill for data extraction:
 "Scrape pricing information from competitor websites"
 ```
 
-The orchestrator will search for existing agents, or generate a new one if needed.
+The skill will search for existing agents, or generate a new one if needed.
 
 ## Development
-
-### Local Testing with Claude Code
-
-```bash
-# Remote MCP server
-bash scripts/claude-plugin-dev.sh
-
-# Local MCP server (start server first on port 9000)
-bash scripts/claude-plugin-dev-localhost.sh
-```
 
 ### Directory Structure
 
@@ -184,7 +174,7 @@ agent-skills/
 │   │   ├── examples/
 │   │   ├── references/
 │   │   └── scripts/
-│   └── nimble-agent-orchestrator/
+│   └── nimble-agents/
 │       ├── SKILL.md
 │       ├── examples/
 │       └── references/
@@ -192,7 +182,6 @@ agent-skills/
 │   └── nimble-tools.mdc    # Cursor rule (auto-loaded by plugin)
 ├── .mcp.json                # Claude Code plugin MCP config
 ├── mcp.json                 # Cursor plugin MCP config
-├── scripts/                 # Dev launcher scripts
 ├── .env.example
 └── README.md
 ```
