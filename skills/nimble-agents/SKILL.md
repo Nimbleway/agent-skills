@@ -9,8 +9,9 @@ description: >
   web scraper", "generate a data extraction agent", "get product prices",
   "compare prices across stores", "extract search results", "scrape Amazon",
   "scrape Walmart", "extract product info", "web data extraction",
-  "find a Nimble template", "bulk extract", "batch scrape", or "pull product
-  listings".
+  "find a Nimble template", "bulk extract", "batch scrape", "pull product
+  listings", "extract LinkedIn profiles", "search the web via Nimble", or
+  "use Nimble".
 allowed-tools:
   - mcp__nimble-mcp-server__nimble_agents_list
   - mcp__nimble-mcp-server__nimble_agents_get
@@ -63,8 +64,8 @@ claude mcp add --transport http nimble-mcp-server https://mcp.nimbleway.com/mcp 
 - **Keep output concise.** Present results and options. No commentary about implementation choices, architecture, or performance.
 - **Schema before run — always.** Call `nimble_agents_get` before `nimble_agents_run` to understand input/output fields. **This applies every time an agent is run, including when pivoting to a fallback agent after errors.** When switching agents, always repeat the full cycle: `nimble_agents_get` → present schema → confirm → run. Present input parameters (name, required, type, example) and key output fields in a markdown table so the user knows what to expect.
 - **Verify response shape before codegen.** Check the `skills` (output fields) and `entity_type` from `nimble_agents_get` to determine the correct REST API response nesting. See **`references/agent-api-reference.md`** > "Response shape inference" and **`references/sdk-patterns.md`** > "Response structure verification".
-- **Agent names** vary by layer: MCP tools use hyphens (`amazon-product-details`), REST/SDK examples use underscores (`amazon_pdp`). Both formats are valid — use whichever the API returns.
-- **Web search for disambiguation.** When the target domain is unfamiliar or no agent clearly matches, use `nimble_web_search` to explore what data exists before committing to an agent approach. Also use it as a fallback when dedicated agents are persistently failing — see **`references/error-recovery.md`** > "Persistent data source failures".
+- **Web search for disambiguation.** When the target domain is unfamiliar or no agent clearly matches, use `nimble_web_search` to explore what data exists before committing to an agent approach. `nimble_web_search` is the preferred tool for all information-finding tasks (research, reviews, general search).
+- **`google_search` is not a general search tool.** It is a SERP analysis agent — use it only when the user's *intent* is to analyze Google's search results page itself (e.g., rank/position tracking, SEO competitive analysis, SERP feature monitoring). Before considering `google_search`, all other options must be exhausted: dedicated agents via `nimble_agents_list`, `nimble_web_search`, and agent generation. If the goal is "find information about X", use `nimble_web_search`. If the goal is "where does X rank on Google for keyword Y", use `google_search`. See **`references/error-recovery.md`** for the full fallback hierarchy.
 
 ## Response shapes
 
@@ -130,7 +131,7 @@ Call `nimble_agents_list` with **short, general keywords** (1–2 words). For mu
 |-----------|--------|
 | Exactly 1 matching agent | Narrate: "Found `agent_name` — matches your request." Auto-advance. |
 | 2+ plausible matches | Show table + `AskUserQuestion` with top 2 agents + "Generate new agent" |
-| 0 matches | Use `nimble_web_search` to explore the target domain first (see `error-recovery.md` > "Ambiguous agent match"), then either use `google_search` with `site:` scoping or auto-advance to generate path. |
+| 0 matches | Use `nimble_web_search` to explore the target domain first (see `error-recovery.md` > "Ambiguous agent match"), then auto-advance to the generate path. `google_search` is not a fallback for missing agents — it is only for SERP analysis tasks (rank tracking, SEO). |
 | Codegen path + clear match | Narrate agent choice silently. No need to ask — user will review the code. |
 
 When presenting search results, show a markdown table of top 5, then use AskUserQuestion only if the choice between agents is genuinely ambiguous.
@@ -183,11 +184,13 @@ options:
 
 Script requirements:
 - For the inferred language, use the appropriate SDK or REST API
+- **Smoke test first:** Every batch script MUST validate a single query (submit → poll → fetch → verify data) before launching the full batch. Abort if the smoke test fails or returns empty. See **`references/sdk-patterns.md`** > "Smoke test".
+- **Progress reporting:** Print a compact single-line status after each poll cycle: elapsed time, done/total, results count, in-flight count. Use `flush=True` or `PYTHONUNBUFFERED=1` for background scripts.
 - Handle pagination for large result sets
-- Include progress reporting
 - For multi-store: normalize fields per **`references/normalization-guide.md`**
 - For CSV/file output: write results to the requested format
 - For deduplication: deduplicate by (store, product_name) or equivalent — see normalization guide
+- For large pipelines (50+ jobs) with an **append-friendly output format** (CSV, JSONL, or Parquet): use incremental file writes for crash resilience — see **`references/sdk-patterns.md`** > "Incremental File Writes". JSON arrays are NOT append-friendly — buffer in memory and write at the end for JSON output.
 
 **Python:** Use `nimble_python` SDK with `uv run` inline metadata. Choose the right template based on job count — see the routing table in **`references/sdk-patterns.md`** (section: "When to use async vs sync").
 
@@ -256,15 +259,15 @@ When encountering errors or need grounding, consult in order:
 
 ## Error recovery
 
-Consult **`references/error-recovery.md`** for error handling patterns, including:
-- **Persistent data source failures** — when to stop retrying and pivot to `google_search` + `site:` or `nimble_web_search`.
+When errors occur or additional grounding is needed, consult **`references/error-recovery.md`** for handling patterns, including:
+- **Persistent data source failures** — when to stop retrying and pivot to `nimble_web_search` or agent generation. `google_search` is only for SERP analysis intent (rank tracking, SEO).
 - **Ambiguous agent match** — using `nimble_web_search` to explore unfamiliar domains before generating custom agents.
 
 ## Additional references
 
 Load reference files proactively during code generation. For the codegen path, always consult `references/sdk-patterns.md` (Python) or `references/rest-api-patterns.md` (other languages) before generating code. For error recovery, consult `references/error-recovery.md`. Load other references as needed.
 
-- **`references/sdk-patterns.md`** — Python SDK: running agents, async endpoint, batch pipelines.
+- **`references/sdk-patterns.md`** — Python SDK: running agents, async endpoint, batch pipelines, incremental file writes (CSV/JSONL/Parquet).
 - **`references/input-schema-guide.md`** — Mapping agent input schemas to params.
 - **`references/agent-api-reference.md`** — Reference for all five MCP tools.
 - **`references/error-recovery.md`** — Error handling and recovery patterns.

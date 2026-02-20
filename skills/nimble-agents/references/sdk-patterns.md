@@ -236,9 +236,81 @@ results = await nimble.get(f"/v1/tasks/{task_id}/results", cast_to=object)
 parsing = results.get("data", {}).get("parsing", {})
 ```
 
+### Smoke test — always validate one query first
+
+**CRITICAL:** Before launching any batch, run a single query through the full submit → poll → fetch cycle. This catches auth issues, bad parameters, API outages, and parsing bugs before committing to hundreds of jobs.
+
+```python
+async def smoke_test(nimble, agent: str, params: dict, timeout: float = 90.0):
+    """Run a single async job end-to-end. Returns parsed data or raises."""
+    print(f"Smoke test: {agent} with {params}")
+
+    # Submit
+    r = await nimble.post("/v1/agent/async",
+        body={"agent": agent, "params": params}, cast_to=object)
+    task_id = r["task"]["id"]
+    print(f"  Submitted task {task_id}")
+
+    # Poll
+    t0 = time.time()
+    poll_count = 0
+    while time.time() - t0 < timeout:
+        await asyncio.sleep(3.0)
+        poll_count += 1
+        r = await nimble.get(f"/v1/tasks/{task_id}", cast_to=object)
+        state = r.get("task", {}).get("state", "unknown")
+        elapsed = time.time() - t0
+        print(f"  Poll #{poll_count}: state={state} ({elapsed:.0f}s)")
+        if state == "success":
+            results = await nimble.get(
+                f"/v1/tasks/{task_id}/results", cast_to=object)
+            parsing = results.get("data", {}).get("parsing", {})
+            print(f"  Smoke test passed — got data")
+            return parsing
+        if state == "failed":
+            raise RuntimeError(f"Smoke test failed: task {task_id} state=failed")
+
+    raise TimeoutError(
+        f"Smoke test timed out after {timeout}s — task stuck at '{state}'. "
+        f"The API may be overloaded or the query may be invalid.")
+```
+
+**Usage in scripts:** Call `smoke_test()` before `run_pipeline()`:
+
+```python
+# Validate one query before committing to the full batch
+first_agent, first_params = jobs[0]
+sample = await smoke_test(nimble, first_agent, first_params)
+if not sample:
+    print("Smoke test returned empty results — aborting batch")
+    return
+print(f"Smoke test OK. Launching {len(jobs)} jobs...\n")
+```
+
+### Progress reporting
+
+Scripts running in background (via `Bash(run_in_background=True)`) need clear, compact progress output that is useful when tailing the output file.
+
+**Rules:**
+- Print a single-line status after each poll cycle — overwrite-friendly format
+- Include: elapsed time, completed/total, results so far, in-flight count
+- Use `PYTHONUNBUFFERED=1` or `print(..., flush=True)` to ensure output is visible immediately
+
+```python
+# Inside the main poll loop, after processing completions:
+done_count = stats["completed"] + stats["failed"] + stats["timeout"]
+elapsed = time.time() - t0
+print(
+    f"[{elapsed:>5.0f}s] {done_count}/{len(jobs)} done | "
+    f"{len(rows)} results | {len(in_flight)} in-flight | "
+    f"{stats['failed']} failed",
+    flush=True,
+)
+```
+
 ### High-throughput batch pipeline
 
-For large batches, maintain a pool of in-flight tasks. As tasks complete, immediately submit new ones to keep the pool full. This avoids idle time between fixed-size waves.
+For large batches, maintain a pool of in-flight tasks. As tasks complete, immediately submit new ones to keep the pool full.
 
 ```python
 # /// script
@@ -249,11 +321,44 @@ For large batches, maintain a pool of in-flight tasks. As tasks complete, immedi
 
 Keeps max_in_flight tasks on the server at all times. As tasks
 complete, new ones are submitted immediately to fill the pool.
+
+Always runs a smoke test on the first job before launching the batch.
 """
 import asyncio, csv, os, time
 from nimble_python import AsyncNimble
 
 TERMINAL = {"success", "failed"}
+
+
+# smoke_test() — identical to standalone version above (see "Smoke test" section).
+# Included inline so this script is fully self-contained and copy-pasteable.
+async def smoke_test(nimble, agent: str, params: dict, timeout: float = 90.0):
+    """Run a single async job end-to-end. Returns parsed data or raises."""
+    print(f"Smoke test: {agent} with {params}")
+    r = await nimble.post("/v1/agent/async",
+        body={"agent": agent, "params": params}, cast_to=object)
+    task_id = r["task"]["id"]
+    print(f"  Submitted task {task_id}")
+    t0 = time.time()
+    poll_count = 0
+    state = "pending"
+    while time.time() - t0 < timeout:
+        await asyncio.sleep(3.0)
+        poll_count += 1
+        r = await nimble.get(f"/v1/tasks/{task_id}", cast_to=object)
+        state = r.get("task", {}).get("state", "unknown")
+        elapsed = time.time() - t0
+        print(f"  Poll #{poll_count}: state={state} ({elapsed:.0f}s)", flush=True)
+        if state == "success":
+            results = await nimble.get(
+                f"/v1/tasks/{task_id}/results", cast_to=object)
+            parsing = results.get("data", {}).get("parsing", {})
+            print(f"  Smoke test passed — got data")
+            return parsing
+        if state == "failed":
+            raise RuntimeError(f"Smoke test failed: task {task_id} state=failed")
+    raise TimeoutError(
+        f"Smoke test timed out after {timeout}s — task stuck at '{state}'")
 
 
 async def run_pipeline(
@@ -283,6 +388,8 @@ async def run_pipeline(
 
     # Fill initial window
     await asyncio.gather(*(submit_one() for _ in range(min(max_in_flight, len(queue)))))
+    print(f"Submitted initial batch of {min(max_in_flight, stats['submitted'])} jobs",
+          flush=True)
 
     # Main loop: poll → expire → fetch → refill
     while in_flight or queue:
@@ -339,6 +446,16 @@ async def run_pipeline(
         if to_submit:
             await asyncio.gather(*(submit_one() for _ in range(to_submit)))
 
+        # Progress
+        done_count = stats["completed"] + stats["failed"] + stats["timeout"]
+        elapsed = time.time() - t0
+        print(
+            f"[{elapsed:>5.0f}s] {done_count}/{len(jobs)} done | "
+            f"{len(rows)} results | {len(in_flight)} in-flight | "
+            f"{stats['failed']} failed",
+            flush=True,
+        )
+
     stats["wall_time"] = time.time() - t0
     return rows, stats
 
@@ -352,6 +469,15 @@ async def main():
         ("walmart_pdp", {"product_id": "436473700"}),
     ]
 
+    # Validate first job before launching batch
+    first_agent, first_params = jobs[0]
+    sample = await smoke_test(nimble, first_agent, first_params)
+    if not sample:
+        print("ERROR: Smoke test returned empty results — aborting.")
+        await nimble.close()
+        return
+    print(f"Smoke test OK. Launching {len(jobs)} jobs...\n", flush=True)
+
     rows, stats = await run_pipeline(nimble, jobs)
 
     if rows:
@@ -359,7 +485,7 @@ async def main():
             w = csv.DictWriter(f, fieldnames=rows[0].keys())
             w.writeheader()
             w.writerows(rows)
-        print(f"Wrote {len(rows)} rows  |  {stats}")
+        print(f"\nWrote {len(rows)} rows  |  {stats}")
 
     await nimble.close()
 
@@ -395,11 +521,176 @@ asyncio.run(main())
 ```python
 # Submit with callback (no polling needed)
 await nimble.post("/v1/agent/async", body={
-    "agent": "google_search",
-    "params": {"query": "NBA scores"},
+    "agent": "amazon_serp",
+    "params": {"keyword": "wireless headphones"},
     "callback_url": "https://my-server.com/webhook",
 }, cast_to=object)
 ```
+
+---
+
+## Incremental File Writes (Crash-Resilient)
+
+For large pipelines (50+ jobs), write records to disk as each batch completes. This bounds memory and preserves partial results on crashes.
+
+### Why this is safe in asyncio
+
+`asyncio` is single-threaded cooperative multitasking. Synchronous file I/O (`writer.writerow()`, `f.write()`, `pq.write_table()`) never yields to the event loop, so **no two coroutines can interleave mid-write** — even inside `asyncio.gather`. No locks required.
+
+### Format comparison
+
+| Format | Append-friendly | Crash-resilient | Schema evolution | Compressible | Extra dependency |
+|--------|:-:|:-:|:-:|:-:|---|
+| **CSV** | Yes | Yes (flush) | Drops extra cols | No | None |
+| **JSONL** | Yes | Yes (flush) | Natural (self-describing) | No | None |
+| **Parquet (partitioned dir)** | Yes (new part file per batch) | Yes (each part self-contained) | `pa.unify_schemas()` at read | Snappy/zstd | `pyarrow` |
+| **JSON array** | **No** | **No** | N/A | No | None |
+
+**JSON arrays are NOT append-friendly.** A JSON array (`[{...}, {...}]`) requires the entire structure in memory to write. If the user requests JSON output, either:
+1. **Use JSONL instead** and note that it can be converted to JSON after completion.
+2. **Buffer in memory** and write the JSON array at the end (no crash resilience for large batches).
+3. For crash resilience with JSON-like output, write JSONL incrementally, then convert at the end:
+   ```python
+   # After pipeline completes — convert JSONL to JSON array
+   with open("output.jsonl") as f:
+       rows = [json.loads(line) for line in f]
+   with open("output.json", "w") as f:
+       json.dump(rows, f, indent=2, ensure_ascii=False)
+   ```
+
+Only use incremental file writers (CSV, JSONL, Parquet) when the target format supports it. For formats that do not (JSON array, Excel), buffer in memory and write at the end.
+
+### CSV incremental writer
+
+```python
+import csv
+
+class CSVIncrementalWriter:
+    def __init__(self, path: str):
+        self.path = path
+        self._file = None
+        self._writer = None
+        self._fieldnames = None
+        self.rows_written = 0
+
+    def write_batch(self, rows: list[dict]):
+        if not rows:
+            return
+        if self._file is None:
+            self._fieldnames = list(rows[0].keys())
+            self._file = open(self.path, "w", newline="")
+            self._writer = csv.DictWriter(
+                self._file, fieldnames=self._fieldnames,
+                extrasaction="ignore")
+            self._writer.writeheader()
+        self._writer.writerows(rows)
+        self._file.flush()
+        self.rows_written += len(rows)
+
+    def close(self):
+        if self._file:
+            self._file.close()
+```
+
+**Late columns:** `extrasaction="ignore"` silently drops columns not in the header. Missing keys produce empty strings.
+
+### JSONL incremental writer
+
+```python
+import json
+
+class JSONLIncrementalWriter:
+    def __init__(self, path: str):
+        self._file = open(path, "w")
+        self.rows_written = 0
+
+    def write_batch(self, rows: list[dict]):
+        for row in rows:
+            self._file.write(json.dumps(row, ensure_ascii=False) + "\n")
+        self._file.flush()
+        self.rows_written += len(rows)
+
+    def close(self):
+        self._file.close()
+```
+
+### Parquet partitioned directory writer
+
+Each `write_batch` creates a self-contained `.parquet` part file. Crash-safe: completed files survive.
+
+```python
+import pyarrow as pa
+import pyarrow.parquet as pq
+from pathlib import Path
+
+class ParquetPartitionedWriter:
+    def __init__(self, directory: str, schema: pa.Schema | None = None):
+        self.directory = Path(directory)
+        self.directory.mkdir(parents=True, exist_ok=True)
+        self._schema = schema
+        self._part_num = 0
+        self.rows_written = 0
+
+    def write_batch(self, rows: list[dict]):
+        if not rows:
+            return
+        table = pa.Table.from_pylist(rows, schema=self._schema)
+        if self._schema is None:
+            self._schema = table.schema
+        pq.write_table(table, self.directory / f"part-{self._part_num:06d}.parquet",
+                        compression="snappy")
+        self._part_num += 1
+        self.rows_written += len(rows)
+
+    def read_all(self) -> pa.Table:
+        import pyarrow.dataset as ds
+        parts = sorted(self.directory.glob("*.parquet"))
+        if not parts:
+            return pa.table({})
+        unified = pa.unify_schemas([pq.read_schema(str(p)) for p in parts])
+        return ds.dataset(str(self.directory), format="parquet",
+                          schema=unified).to_table()
+```
+
+**Schema evolution:** Different part files can have different schemas. `pa.unify_schemas()` merges them — missing columns become null at read time.
+
+**Compaction:** After the pipeline finishes, optionally merge parts into a single optimized file:
+
+```python
+table = writer.read_all()
+pq.write_table(table, "output.parquet", compression="snappy")
+```
+
+### Integration with the async pipeline
+
+Call `write_batch()` inside the `fetch()` coroutine, right after parsing results:
+
+```python
+if done:
+    batch_rows = []
+
+    async def fetch(tid, state):
+        info = in_flight.pop(tid)
+        if state != "success":
+            stats["failed"] += 1
+            return
+        r = await nimble.get(f"/v1/tasks/{tid}/results", cast_to=object)
+        parsing = r.get("data", {}).get("parsing", {})
+        # ... parse rows as before ...
+        batch_rows.extend(parsed_rows)
+        stats["completed"] += 1
+
+    await asyncio.gather(*(fetch(tid, st) for tid, st in done))
+    writer.write_batch(batch_rows)  # sync — safe, no interleaving
+```
+
+### Key rules
+
+- **Format guard:** Only use incremental writers for CSV, JSONL, or Parquet. For JSON array or Excel output, buffer in memory and write at the end.
+- **File handle:** Open once at pipeline start, close in `finally`
+- **Flush:** After each poll cycle's batch — balances durability vs I/O
+- **No threading:** Stay within asyncio. `threading`/`multiprocessing` breaks the safety guarantee
+- **Parquet add `pyarrow` to script deps:** `# dependencies = ["nimble_python", "pyarrow"]`
 
 ---
 
@@ -426,3 +717,8 @@ The SDK retries transient errors (429, 5xx, timeouts) automatically with exponen
 | Using sync `/v1/agent` for 4+ parallel jobs | Use `/v1/agent/async` for batch workloads |
 | Assuming `parsing` is always a flat list for SERP agents | `google_search` and similar non-ecommerce SERP agents return `parsing.entities.OrganicResult` — always check `nimble_agents_get` output fields first |
 | Using `agent.input_schema` or `agent.output_schema` | Actual fields are `agent.input_properties` (array) and `agent.skills` (dict) — see `agent-api-reference.md` |
+| Appending to a JSON array file incrementally | JSON arrays require the full structure in memory — use JSONL or CSV for incremental writes. Convert JSONL to JSON array at end if needed. |
+| Using `ParquetWriter` for crash-resilient writes | `ParquetWriter` data is lost if process dies before `close()`. Use partitioned directory instead. |
+| Using `threading` with shared file writer in asyncio | Stay in asyncio — single-thread model guarantees safe writes. Threading breaks this. |
+| Launching 50+ async jobs without testing one first | Always run `smoke_test()` on the first job. Catches auth, bad params, API outages before wasting time. |
+| No progress output in background scripts | Print compact status each poll cycle with `flush=True`. Essential for `tail -f` monitoring. |

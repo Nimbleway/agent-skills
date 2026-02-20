@@ -55,16 +55,18 @@ See `sdk-patterns.md` > "Retry Behavior" for SDK retry configuration.
 
 ### Persistent data source failures (2+ consecutive 500s)
 
-When the same data source fails repeatedly (e.g., all LinkedIn agents return 500), the entire data pipeline for that source is likely down. **Stop retrying and pivot:**
+When the same data source fails repeatedly (e.g., all LinkedIn agents return 500), the entire data pipeline for that source is likely down. **Stop retrying and pivot through this hierarchy:**
 
-1. **Use `google_search` with `site:` scoping** as a fallback. This searches the target domain via Google and often returns useful structured data in snippets:
-   - LinkedIn down → `google_search` with `query: "CTO fintech NYC site:linkedin.com"`
-   - Crunchbase agent missing → `google_search` with `query: "Series B startup site:crunchbase.com"`
-   - Any site → `google_search` with `query: "<keywords> site:<domain>"`
+1. **Use `nimble_web_search`** — the preferred tool for all information-finding tasks:
+   - LinkedIn down → `nimble_web_search` with `query: "CTO fintech NYC site:linkedin.com"`
+   - Crunchbase agent missing → `nimble_web_search` with `query: "Series B startup site:crunchbase.com"`
+   - Any site → `nimble_web_search` with `query: "<keywords> site:<domain>"`
 
-2. **Use `nimble_web_search`** for deep content extraction from specific pages when Google snippets are insufficient.
+2. **Generate a custom agent** — if `nimble_web_search` results lack the structure or depth needed, generate a dedicated agent for the target site via `nimble_agents_generate`.
 
-3. **Present the pivot to the user** via `AskUserQuestion` — offer the `google_search` fallback, generating a custom agent, or waiting for the service to recover.
+3. **Present the pivot to the user** via `AskUserQuestion` — offer `nimble_web_search` exploration, generating a custom agent, or waiting for the service to recover.
+
+**`google_search` is NOT a fallback for failed agents.** It is a SERP analysis tool — only appropriate when the user's *intent* is to analyze Google's results page itself (rank/position tracking, SEO competitive analysis, SERP feature monitoring). The question to ask: "Does the user want to *find information*, or *analyze where things rank on Google*?" If the former, use `nimble_web_search`. If the latter, use `google_search`.
 
 **Important:** When pivoting to a fallback agent, always repeat the full discovery cycle: `nimble_agents_get` → present schema → confirm → run. Never skip schema inspection when switching agents.
 
@@ -84,7 +86,17 @@ suggest using `nimble_agents_list` to find the agent.
 
 ### Task stuck at `pending`
 
-If a task stays `pending` beyond 60 seconds, it may be queued behind other jobs. Continue polling — tasks eventually process. Do not resubmit, as this creates duplicate work.
+If a task stays `pending` beyond 60 seconds, it may be queued behind other jobs or the API may be under load.
+
+**For batch scripts:** This is why the smoke test is mandatory. If the smoke test passes but batch tasks are pending, the API is likely queuing — continue polling. If the smoke test itself times out at `pending`, stop immediately and diagnose:
+
+1. Verify API key is valid (try a sync `/v1/agent` call).
+2. Try a different agent or simpler query.
+3. Wait 5 minutes and retry — the API may be temporarily overloaded.
+
+**Do not launch 100+ jobs without first confirming one completes.** A batch of pending jobs wastes time and API quota.
+
+For individual stuck tasks within a running batch, the `task_timeout` parameter handles expiry automatically — see `sdk-patterns.md` > "Tuning parameters".
 
 ### `"task not finished yet"` from `/v1/tasks/{id}/results`
 
@@ -106,13 +118,14 @@ When `nimble_agents_list` returns 0 matches or only partial matches:
 
 1. **Explore with `nimble_web_search` first.** Before generating a custom agent, search the target domain to understand what data exists and how pages are structured. This reduces ambiguity and prevents generating agents for the wrong page type.
    - Example: `nimble_web_search` with `query: "site:crunchbase.com fintech series B NYC"` to see what Crunchbase pages look like for this use case.
+   - `nimble_web_search` is often sufficient on its own — if results satisfy the user's need, stop here.
 
-2. **Try `google_search` with `site:` scoping** as an alternative to a dedicated agent. Google's index often surfaces the exact pages needed, and the snippets may contain sufficient structured data.
-
-3. **Only generate a custom agent** when:
+2. **Generate a custom agent** when:
    - The target site has a consistent page structure (e.g., product pages, profiles).
    - A specific URL can be provided as an example for the generator.
-   - The data needed goes beyond what Google snippets provide.
+   - The data needed goes beyond what `nimble_web_search` provides.
+
+3. **`google_search` is NOT a fallback for missing agents.** It is a SERP analysis tool for when the user's *intent* is to analyze Google's search results page itself — rank/position tracking, SEO competitive analysis, SERP feature monitoring. The question to ask: "Does the user want to *find information*, or *analyze where things rank on Google*?" If the former, `nimble_web_search` and agent generation are the correct tools.
 
 4. **When generating fails or produces poor results**, ask the user to clarify:
    - What specific data fields are needed.
