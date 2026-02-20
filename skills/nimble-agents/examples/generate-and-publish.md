@@ -64,17 +64,20 @@ session_id** and the user's answers as the new `prompt`:
 }
 ```
 
-Wait a few seconds and call generate again with the same session_id to poll:
+Call generate again **immediately** with **only `session_id`** (omit `prompt`). The server waits internally (~50 s) and returns when the status changes or the wait elapses — no `sleep` needed:
 
 ```json
 {
   "tool": "nimble_agents_generate",
   "params": {
-    "prompt": "",
     "session_id": "a3b1c2d4-5678-9abc-def0-1234567890ab"
   }
 }
 ```
+
+**Important:** Do NOT send `prompt` when polling. Any prompt text (even `""`) causes the backend to re-invoke the generation graph instead of checking status. Do NOT use `Bash("sleep ...")` — the server handles waiting internally.
+
+Stop polling after 12 consecutive `processing` responses (~10 minutes) and inform the user.
 
 ### Status: `complete`
 
@@ -162,8 +165,19 @@ Once status is `complete`, build params from the returned `input_schema` and run
 
 ## Step 5 -- Publish the agent
 
-After a successful run, ask the user whether to save the agent. If confirmed,
-call `nimble_agents_publish` with the **same session_id**.
+After a successful run, confirm publication via `AskUserQuestion`:
+
+```
+question: "Save this agent for future use?"
+header: "Publish"
+options:
+  - label: "Publish (Recommended)"
+    description: "Save agent so it's searchable via nimble_agents_list"
+  - label: "Skip"
+    description: "Don't save — agent is available only for this session"
+```
+
+If confirmed, call `nimble_agents_publish` with the **same session_id**.
 
 ```json
 {
@@ -181,8 +195,9 @@ call `nimble_agents_publish` with the **same session_id**.
   "agent": {
     "name": "yelp-restaurant-details",
     "description": "Extracts restaurant details from Yelp pages",
-    "input_schema": { "..." : "..." },
-    "output_schema": { "..." : "..." }
+    "input_properties": [ "..." ],
+    "skills": { "..." : "..." },
+    "entity_type": "Product Detail Page (PDP)"
   }
 }
 ```
@@ -193,6 +208,6 @@ The agent is now searchable via `nimble_agents_list` for future use.
 
 - Generate a UUID session_id once and reuse it for all generate and publish calls.
 - Handle all four statuses: `waiting`, `processing`, `complete`, `error`.
-- Poll with the same session_id when status is `processing`.
+- Poll with **only `session_id`** (omit `prompt`) when status is `processing`. No sleep needed — the server waits internally. Stop after 12.
 - Answer follow-up questions by passing answers as the `prompt` with the same session_id.
 - Only publish after a successful run and explicit user confirmation.

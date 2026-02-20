@@ -1,18 +1,23 @@
 ---
 name: nimble-agents
+argument-hint: "[query or URL]"
 description: >
-  This skill should be used when the user asks to "extract data from a website",
-  "scrape product details", "run a Nimble agent", "generate a web scraper",
-  "get product prices", "compare prices across stores", "extract search results",
-  "find a Nimble template", or needs structured web data extraction via Nimble
-  agents/templates. Covers the full lifecycle: search, inspect, generate, publish,
-  and run agents with result presentation and optional Python codegen.
+  Finds, generates, and runs Nimble agents to extract structured data from
+  websites. Produces either interactive results or ready-to-run scripts with
+  CSV/JSON output. This skill should be used when the user asks to "extract data
+  from a website", "scrape product details", "run a Nimble agent", "generate a
+  web scraper", "generate a data extraction agent", "get product prices",
+  "compare prices across stores", "extract search results", "scrape Amazon",
+  "scrape Walmart", "extract product info", "web data extraction",
+  "find a Nimble template", "bulk extract", "batch scrape", or "pull product
+  listings".
 allowed-tools:
   - mcp__nimble-mcp-server__nimble_agents_list
   - mcp__nimble-mcp-server__nimble_agents_get
   - mcp__nimble-mcp-server__nimble_agents_generate
   - mcp__nimble-mcp-server__nimble_agents_run
   - mcp__nimble-mcp-server__nimble_agents_publish
+  - mcp__nimble-mcp-server__nimble_web_search
 disable-model-invocation: false
 license: MIT
 metadata:
@@ -23,13 +28,13 @@ metadata:
 
 # Nimble Agents
 
-Use this skill when the user wants structured extraction by running a Nimble agent/template.
+Structured web data extraction via Nimble agents. Always finish with executed results or runnable code.
 
 User request: $ARGUMENTS
 
 ## Prerequisites
 
-Before using this skill, ensure the Nimble MCP server is connected:
+Ensure the Nimble MCP server is connected:
 
 **Claude Code:**
 ```bash
@@ -39,7 +44,6 @@ claude mcp add --transport http nimble-mcp-server https://mcp.nimbleway.com/mcp 
 ```
 
 **VS Code (Copilot / Continue):**
-Add to your MCP config:
 ```json
 {
   "nimble-mcp-server": {
@@ -50,378 +54,231 @@ Add to your MCP config:
 }
 ```
 
-**Get an API key:** [app.nimbleway.com/signup](https://app.nimbleway.com/signup) → Account Settings → API Keys
+**Get an API key:** [online.nimbleway.com/signup](https://online.nimbleway.com/signup) → Account Settings → API Keys
 
-## Goal
+## Core principles
 
-Always finish with an executed agent run result.
+- **Infer, don't ask.** Only use `AskUserQuestion` when there is genuine ambiguity that cannot be resolved from context.
+- **AskUserQuestion for all choices.** Never present choices as plain numbered lists in markdown. AskUserQuestion provides interactive arrow-key selection. Constraints: 2–4 options, header max 12 chars, label 1–5 words. "Other" is added automatically. Recommended option goes first with "(Recommended)" appended.
+- **Keep output concise.** Present results and options. No commentary about implementation choices, architecture, or performance.
+- **Schema before run — always.** Call `nimble_agents_get` before `nimble_agents_run` to understand input/output fields. **This applies every time an agent is run, including when pivoting to a fallback agent after errors.** When switching agents, always repeat the full cycle: `nimble_agents_get` → present schema → confirm → run. Present input parameters (name, required, type, example) and key output fields in a markdown table so the user knows what to expect.
+- **Verify response shape before codegen.** Check the `skills` (output fields) and `entity_type` from `nimble_agents_get` to determine the correct REST API response nesting. See **`references/agent-api-reference.md`** > "Response shape inference" and **`references/sdk-patterns.md`** > "Response structure verification".
+- **Agent names** vary by layer: MCP tools use hyphens (`amazon-product-details`), REST/SDK examples use underscores (`amazon_pdp`). Both formats are valid — use whichever the API returns.
+- **Web search for disambiguation.** When the target domain is unfamiliar or no agent clearly matches, use `nimble_web_search` to explore what data exists before committing to an agent approach. Also use it as a fallback when dedicated agents are persistently failing — see **`references/error-recovery.md`** > "Persistent data source failures".
 
-- Preferred path: find an existing agent/template and run it.
-- Fallback path: generate a new agent, publish it, then run it.
+## Response shapes
 
-## Schema-first principle
+| Layer | Path | Shape | When used |
+|-------|------|-------|-----------|
+| MCP tool (`nimble_agents_run`) | `data.results` | Always array | Interactive path (Steps 3A, 3C) |
+| REST API — ecommerce SERP | `data.parsing` | `list` (array of records) | Codegen path (Step 3B) |
+| REST API — non-ecommerce SERP | `data.parsing.entities.{EntityType}` | `dict` with nested arrays | Codegen: `google_search`, `google_maps_search`, etc. |
+| REST API — PDP | `data.parsing` | `dict` (flat fields) | Codegen path (Step 3B) |
 
-**Always call `nimble_agents_get` to inspect an agent's full schema before running it.** Never call `nimble_agents_run` without first completing a `nimble_agents_get` call and presenting the schema details to the user. The response provides:
-- **`skills`** (output schema) — field names, types, and descriptions for every extracted field.
-- **`input_properties`** — required and optional input parameters with types and examples.
-- **`sample_data`** — real sample records showing actual field values and response shape.
+Always check `typeof`/`isinstance` before iterating REST responses. **Before generating code**, inspect the `skills` output from `nimble_agents_get` to determine which shape applies — see **`references/sdk-patterns.md`** > "Response structure verification".
 
-This applies to every flow — interactive runs, batch scripts, codegen, and multi-agent comparisons. Use schema details to:
-1. Confirm the agent extracts the fields the user needs before committing to a run.
-2. Inform param mapping and script field extraction logic.
-3. Present a clear picture of what each agent will return.
+## Step 1: Parse intent and route
 
-A live `nimble_agents_run` call is only needed to deliver final results — not to discover field names or validate agent suitability.
+From `$ARGUMENTS`, extract all signals at once:
 
-**CRITICAL: Schema presentation is a mandatory checkpoint.** After presenting schema details from `nimble_agents_get`, STOP and wait for the user to confirm before calling `nimble_agents_run`. Running agents costs API credits and time — never auto-advance from schema presentation to agent execution. The `nimble_agents_get` output schema and sample data are sufficient to validate agent suitability without a live run.
+**What to detect:**
 
-## Execution principle
+| Signal | Values | How to detect |
+|--------|--------|---------------|
+| **Execution mode** | `interactive` or `codegen` | See routing table below |
+| **Scale** | `small` (≤50 results) or `large` (>50) | Numbers, "all", "top 1000", "bulk", "batch" |
+| **Output format** | `display`, `csv`, `json`, `file` | "CSV", "JSON file", "save to", "spreadsheet", "export" |
+| **Stores** | list of store names | "amazon", "walmart", "across X and Y", "compare", "both" |
+| **Target type** | `search` (keyword) or `detail` (URL/ID) | Keywords → SERP agent; specific URLs/ASINs → PDP agent |
+| **Language** | inferred from project | Check codebase (see language inference below) |
 
-**Infer and advance when the next action is unambiguous. Present options only when there is genuine ambiguity.**
+**Route to codegen when ANY of these are true:**
+- Scale > ~50 results (pagination needed)
+- Output format is file-based (CSV, JSON file, etc.)
+- Multi-store comparison with merging
+- Batch input (file of URLs/IDs)
+- User explicitly asks for a script/code
 
-At every decision point, evaluate whether the next step can be determined from the original request and current context. If yes, proceed immediately — narrate what you're doing but do not wait for confirmation. Only present numbered options when:
-- Multiple agents could plausibly match and confident ranking is not possible.
-- Required parameters cannot be inferred from the original request.
-- An error or unexpected result requires a user decision.
+**Otherwise route to interactive** (MCP tool calls).
 
-**Exception — never auto-advance to `nimble_agents_run`:** After presenting agent schemas (step 4a), always present options and wait for user confirmation before running agents. Running agents is an expensive operation (API credits, network time). The schema presentation checkpoint exists specifically so the user can review output fields and confirm suitability before committing to a run. This exception applies even when the user's intent is fully specified.
+### Language inference (for codegen path)
 
-This applies to all consumers — interactive human users and autonomous agents alike. Autonomous agents (no human-in-the-loop) cannot respond to prompts at all, so unnecessary options will stall them.
+Check the project for language signals — do NOT ask unless ambiguous:
 
-## Presentation rules
+| Project file | Inferred language |
+|-------------|-------------------|
+| `pyproject.toml`, `requirements.txt`, `setup.py`, `*.py` files | Python |
+| `package.json`, `tsconfig.json` | TypeScript/Node |
+| `go.mod` | Go (REST API) |
+| `Gemfile`, `*.rb` files | Ruby (REST API) |
+| `Cargo.toml` | Rust (REST API) |
+| None of the above | Default to Python |
 
-- After every tool call, present results in markdown tables. Never show raw JSON.
-- Present numbered options **only when the next action is ambiguous** (see Execution principle). When auto-advancing, narrate the action instead (e.g. "No exact match found. Generating a custom agent...").
-- Keep tables to 5 rows max per page. Use pagination when more results exist.
+**Only ask via AskUserQuestion if** both Python and Node project files exist simultaneously, or the user's codebase gives conflicting signals.
 
-## Required flow
+### Multi-agent detection
 
-### 1. Parse extraction intent
+If the request mentions multiple stores ("compare across Amazon and Walmart", "both", "vs"), plan multi-agent orchestration upfront — search for agents for ALL stores in parallel, not sequentially.
 
-From `$ARGUMENTS`, identify:
-- Target domain/URL if provided.
-- What fields/records the user expects in output.
-- One or two broad keywords for search (e.g. "amazon", "reviews", "linkedin", "products").
-- **Completeness check:** Does the request already specify a website/URL AND what data to extract? If yes, mark intent as "complete" — this allows auto-advancing through later steps without asking for information you already have.
+## Step 2: Agent discovery
 
-### 2. Search for existing agents
+Call `nimble_agents_list` with **short, general keywords** (1–2 words). For multi-store requests, search for each store in parallel. If `count` exceeds `curr_count` in the response, paginate using `skip` to see more agents. Present results 5 at a time.
 
-Call `nimble_agents_list` with a **short, general query** (one or two keywords only). Never use full sentences.
+**How to present results depends on ambiguity:**
 
-**Always present options after search.** Never silently auto-advance past this step. The user must always see what was found and have the choice to generate a new agent.
+| Situation | Action |
+|-----------|--------|
+| Exactly 1 matching agent | Narrate: "Found `agent_name` — matches your request." Auto-advance. |
+| 2+ plausible matches | Show table + `AskUserQuestion` with top 2 agents + "Generate new agent" |
+| 0 matches | Use `nimble_web_search` to explore the target domain first (see `error-recovery.md` > "Ambiguous agent match"), then either use `google_search` with `site:` scoping or auto-advance to generate path. |
+| Codegen path + clear match | Narrate agent choice silently. No need to ask — user will review the code. |
 
-Show top 5 with numbered action options:
+When presenting search results, show a markdown table of top 5, then use AskUserQuestion only if the choice between agents is genuinely ambiguous.
 
-```
-### Existing agents for "{query}"
+## Step 3A: Interactive path (small scale, display output)
 
-| # | Agent name | Description | Required inputs |
-|---|-----------|-------------|-----------------|
-| 1 | `agent-name-a` | Extracts product listings | `url` (string) |
-| 2 | `agent-name-b` | Extracts search results | `query` (string), `url` (string) |
-| 3 | `agent-name-c` | Extracts product details | `product_url` (string) |
-| 4 | `agent-name-d` | Extracts pricing data | `url` (string) |
-| 5 | `agent-name-e` | Extracts review data | `url` (string) |
+**3A-1.** Call `nimble_agents_get` on the chosen agent. Present the schema clearly in markdown tables:
+- **Input parameters:** Show each `input_properties` entry with name, required (yes/no), type, description, and example value.
+- **Output fields:** Show key fields from the `skills` dict with name and type, so the user knows what data to expect.
 
-Showing 1–5 of {total} results.
+See **`references/input-schema-guide.md`** for the full `input_properties` format and mapping rules.
 
-**Pick a number:**
-6. Search with different keywords
-7. Show next page of results
-8. Generate a new custom agent
-```
-
-Omit option 7 ("next page") when current page shows all results (count <= 5 or last page).
-
-If zero results:
-
-```
-No agents matched "{query}".
-
-**Pick a number:**
-1. Search with different keywords
-2. Generate a new custom agent
-```
-
-### 3. Handle selection
-
-Options are always presented after search:
-
-- **User/agent picks an agent number (1-5)** → existing-agent path (step 4).
-- **User/agent picks "search with different keywords"** → ask what keywords, then repeat step 2.
-- **User/agent picks "show next page"** → call `nimble_agents_list` with `skip` incremented by 5, present next page.
-- **User/agent picks "generate a new custom agent"** → proceed to step 5. Only ask for a description if the original request lacks a website/URL or what data to extract.
-
-### 4. Existing-agent path
-
-**4a. (MANDATORY CHECKPOINT — never skip, never auto-advance past)** Call `nimble_agents_get` with the selected agent name and **present schema details before any run**. This provides the full output schema (`skills` field), input parameters (`input_properties`), and sample data — sufficient for confirming agent suitability, running the agent, and generating code (see Schema-first principle). Always present details with options and **STOP — wait for user confirmation before proceeding to 4b/4c**. Do NOT call `nimble_agents_run` in the same response as schema presentation. The user must always be able to choose "Generate a new agent instead".
-
-**Multi-agent comparison:** When the request involves multiple agents (e.g. comparing across stores), call `nimble_agents_get` on ALL agents first. Present a unified schema comparison showing each agent's output fields side by side, so the user can confirm all agents cover the needed fields before any runs proceed:
+**3A-2.** Use `AskUserQuestion` to confirm before running:
 
 ```
-### Agent: `agent-name`
-
-{description}
-
-#### Input parameters
-
-| Parameter | Type | Required | Description |
-|-----------|------|----------|-------------|
-| `url` | string | Yes | Target page URL |
-| `query` | string | No | Optional search filter |
-
-#### Output fields
-
-| Field | Type |
-|-------|------|
-| `title` | string |
-| `price` | number |
-| `rating` | number |
-
-**Pick a number:**
-1. Run this agent
-2. Go back to search results
-3. Generate a new agent instead
+question: "Run this agent?"
+header: "Confirm"
+options:
+  - label: "Run agent (Recommended)"
+    description: "Execute {agent_name} with inferred parameters"
+  - label: "Generate new agent"
+    description: "Create a custom agent instead"
 ```
 
-For multi-agent comparisons, present all agents together:
+Do NOT call `nimble_agents_run` in the same response.
+
+**3A-3.** After confirmation, call `nimble_agents_run`. Present results as markdown table. Use `AskUserQuestion` for next steps:
 
 ```
-### Agents selected for comparison
-
-| Store | Agent | Key Output Fields | Input |
-|-------|-------|-------------------|-------|
-| Amazon | `amazon_serp` | name, price, rating, review_count | `keyword` (string) |
-| Walmart | `walmart_serp` | product_name, product_price, product_rating, product_reviews_count | `keyword` (string) |
-| Best Buy | `bestbuy_serp` | product_name, product_price, product_rating, product_review_count | `keyword` (string) |
-
-All agents cover the requested fields (price, rating, reviews).
-
-**Pick a number:**
-1. Run all agents
-2. Replace an agent
-3. Generate a new agent for a store
+question: "What next?"
+header: "Next step"
+options:
+  - label: "Done"
+    description: "Finish with these results"
+  - label: "Run again"
+    description: "Re-run with different parameters"
+  - label: "Get code"
+    description: "Generate a script to reproduce this"
 ```
 
-**4b.** Map values from the original request to input parameters. Infer as much as possible (URLs from mentioned websites, queries from described topics, etc.). Only ask for required params that truly cannot be inferred:
+**Auto-advance to final summary** if the original request is fully satisfied without needing follow-up.
+
+## Step 3B: Codegen path (large scale, file output, multi-store)
+
+**3B-1.** Call `nimble_agents_get` on chosen agent(s). Inspect both `input_properties` and `skills` (output fields). Use `skills` to determine the correct response parsing structure — see "Response shapes" table above. Do NOT present schemas interactively — use them to inform code generation.
+
+**3B-2.** Infer language from project context (see language inference table above).
+
+**3B-3.** Generate a ready-to-run script. Consult **`references/sdk-patterns.md`** for correct patterns.
+
+Script requirements:
+- For the inferred language, use the appropriate SDK or REST API
+- Handle pagination for large result sets
+- Include progress reporting
+- For multi-store: normalize fields per **`references/normalization-guide.md`**
+- For CSV/file output: write results to the requested format
+- For deduplication: deduplicate by (store, product_name) or equivalent — see normalization guide
+
+**Python:** Use `nimble_python` SDK with `uv run` inline metadata. Choose the right template based on job count — see the routing table in **`references/sdk-patterns.md`** (section: "When to use async vs sync").
+
+**TypeScript/Node, curl, other languages:** Use the REST API directly. See **`references/rest-api-patterns.md`** for patterns and examples.
+
+**3B-4.** Present the generated code and use `AskUserQuestion`:
 
 ```
-I need a few more values to run this agent:
-
-| # | Parameter | Type | Description |
-|---|-----------|------|-------------|
-| 1 | `url` | string | Target page URL |
-| 2 | `query` | string | Search keywords |
-
-Please provide the values (e.g. "1: https://example.com, 2: shoes").
+question: "Run this script now?"
+header: "Execute"
+options:
+  - label: "Run now (Recommended)"
+    description: "Execute the script and show results"
+  - label: "Save only"
+    description: "Save the file without running"
 ```
 
-**4c.** Only after the user has confirmed in step 4a, call `nimble_agents_run` with `agent_name` and complete `params`. Present results:
+## Step 3C: Generate path (no existing agent matches)
 
-```
-### Results — `agent-name`
+**3C-1.** Create a stable `session_id` (UUID v4, reuse for all generate/publish calls).
 
-**Source:** {url}
-**Records:** {count}
+**3C-2.** Call `nimble_agents_generate` with a clear prompt. If the user specifies exact output fields (e.g., "extract name, price, and rating"), include an `output_schema` in the generate call to guide the agent's extraction. Handle status:
+- `"waiting"` — present follow-up questions via `AskUserQuestion`, call again with same `session_id`.
+- `"processing"` — follow the **polling protocol** below.
+- `"complete"` — auto-advance to publish and run/codegen.
+- `"error"` — present error, offer retry or search alternatives.
 
-| # | Title | Price | Rating | URL |
-|---|-------|-------|--------|-----|
-| 1 | Product A | $29.99 | 4.5 | https://... |
-| 2 | Product B | $19.99 | 4.2 | https://... |
-| 3 | Product C | $39.99 | 4.8 | https://... |
+### Polling protocol (`processing` status)
 
-**Pick a number:**
-4. Run again with different inputs
-5. Get Python code for this extraction
-6. Generate a new custom agent
-7. Search for a different agent
-8. Done
-```
+Agent generation takes 2–10 minutes. The MCP server handles waiting internally (up to ~50 s per call), so **no `sleep` is needed between calls**.
 
-Adapt column headers to match the actual output fields returned.
+1. Tell the user: "Agent generation started — this typically takes 2–5 minutes (up to 10)."
+2. Call `nimble_agents_generate` with **only `session_id`** (omit `prompt`). The server waits internally and returns when either the status changes or ~50 seconds elapse.
+3. If still `processing`, narrate "Still generating... (N/12)" and call again immediately.
+4. **Max 12 polls** (~10 minutes total). After 12: inform user per `references/error-recovery.md`.
 
-**Auto-advance:** If the original request is fully satisfied by the results, proceed directly to the final summary (step 6). Only present post-result options if the user is in an interactive session and might want follow-up actions.
+**Rules:**
+- **NEVER send `prompt` when polling.** Not even `""`. Any prompt re-invokes the generation backend instead of checking status.
+- **NEVER use `Bash("sleep ...")` between polls.** The server handles waiting internally — adding sleep doubles the wait time unnecessarily.
 
-If user picks "Get Python code" → go to step 7.
+**3C-3.** Route to Step 3A (interactive) or Step 3B (codegen) to run the agent first based on the execution mode determined in Step 1.
 
-### 5. Generate path
+**3C-4.** After a successful run, use `AskUserQuestion` to offer publishing. If confirmed, call `nimble_agents_publish` with same `session_id`. If 409, already published — proceed.
 
-**5a.** Check whether the original request already provides a website/URL and what data to extract.
+## Step 4: Final response
 
-**Auto-advance:** If both pieces are present (or can be reasonably inferred, e.g. "github trending repos" implies `https://github.com/trending` and repo metadata fields) → proceed directly to 5b. Do not ask the user to repeat information they already provided.
+End with a concise summary table:
 
-**Ask only if genuinely missing:**
-
-```
-Before I generate a new agent, please describe:
-1. Which website/URL to extract from
-2. What data fields you need (e.g. product name, price, rating)
-```
-
-Do not call generate until you have both pieces.
-
-**5b.** Create a stable `session_id` (reuse for all generate/publish calls in this flow).
-
-**5c.** Call `nimble_agents_generate` with a clear prompt. Present status with numbered options:
-
-If `"waiting"` (follow-up questions):
-
-```
-The agent generator needs more information:
-
-| # | Question |
-|---|----------|
-| 1 | {first question from response} |
-| 2 | {second question from response} |
-
-Please answer the questions above by number.
-```
-
-If `"processing"`:
-
-```
-Agent generation in progress... I'll check back shortly.
-```
-
-If `"complete"`:
-
-**Auto-advance:** Narrate the generated agent's schema, then proceed directly to publish and run (steps 5e–5f). The user already expressed intent to extract data and generation succeeded — do not wait for confirmation.
-
-```
-### Agent generated: `agent-name`
-
-#### Input parameters
-
-| Parameter | Type | Required | Description |
-|-----------|------|----------|-------------|
-| `url` | string | Yes | Target URL |
-
-#### Output fields
-
-| Field | Type |
-|-------|------|
-| `name` | string |
-| `value` | string |
-
-Publishing and running...
-```
-
-If the generated schema looks clearly wrong for the user's intent, present options instead:
-
-```
-**Pick a number:**
-1. Publish and run this agent
-2. Regenerate with a different description
-3. Go back to search existing agents
-```
-
-If `"error"` or `"failed"`:
-
-```
-Generation failed: {error message}
-
-**Pick a number:**
-1. Retry with a modified description
-2. Search for an existing agent instead
-```
-
-**5d.** Repeat generate calls with the same `session_id` until `"complete"`.
-
-**5e.** Once generation is complete, call `nimble_agents_publish` with the same `session_id` **before** running the agent. Confirm:
-
-```
-Agent `agent-name` published successfully. Preparing to run...
-```
-
-If publish fails with a 409 conflict, the agent was already published — proceed to run.
-
-**5f.** Build params from schema, infer values from the original request. Only ask for values that truly cannot be inferred (see step 4b). Call `nimble_agents_run` and present results using the format in step 4c.
-
-### 6. Final response
-
-Always end with a clean summary:
-
-```
-### Summary
-
-| Detail | Value |
-|--------|-------|
-| Agent used | `agent-name` |
+| Field | Value |
+|-------|-------|
+| Agent(s) used | `agent_name` |
 | Source | Existing / Generated |
-| Records extracted | {count} |
-| Published | Yes / N/A |
+| Records extracted | count |
+| Output | Displayed / `filename.csv` |
 
-{extraction results table from step 4c}
-```
-
-### 7. Codegen (on request)
-
-When the user picks "Get Python code", generate a ready-to-run script using `nimble_python` that reproduces the agent run. Use `uv run` with inline script metadata for zero-setup execution.
-
-Consult **`references/sdk-patterns.md`** for complete templates and patterns:
-- **Single-agent template** — for simple one-off runs.
-- **Batch template with async parallelism** — for multiple items/URLs/queries.
-- **Retry with exponential backoff** — for production reliability.
-- **Dynamic batching (semaphore-only)** — for fastest throughput.
-
-Apply substitution rules and response access patterns from `references/sdk-patterns.md` — substitute agent name, params dict, and field names from the agent's output schema (via `nimble_agents_get`). Handle both `parsing` (dict) and `results` (list) response shapes.
-
-**Batch scripts must include:**
-- Semaphore-only dynamic batching (`asyncio.Semaphore(10)` + `asyncio.gather`) — avoids "wait for slowest in batch" penalty.
-- SDK-native retry via `AsyncNimble(max_retries=4)` — no custom retry code needed.
-- See `references/sdk-patterns.md` for production-ready patterns and benchmarked concurrency settings.
-
-After showing the code, return to the post-results options (minus the codegen option).
+Include the extraction results (or top N if large).
 
 ## Documentation & troubleshooting
 
-When encountering unknown errors, unexpected response shapes, or SDK issues, consult these sources in order:
+When encountering errors or need grounding, consult in order:
 
-1. **`references/sdk-patterns.md`** (bundled) — correct SDK patterns, common mistakes, retry/backoff.
-2. **https://docs.nimbleway.com/llms-full.txt** — full prose docs with code examples (~30k words, LLM-native). Use `WebFetch` to search for specific topics.
-3. **https://docs.nimbleway.com/openapi.json** — machine-readable API contract (best for endpoint schemas and parameter validation).
-4. **Context7** (if available) — query `/nimbleway/nimble-python` for SDK-specific types and patterns, or `/websites/nimbleway` for broadest coverage.
-
-**When to look up docs:**
-- Unexpected exception types or status codes from the SDK.
-- Unknown field names in agent responses (field names vary by store/agent — verify with `nimble_agents_get` output schema or a test run).
-- SDK method signatures or parameter types unclear.
-- Need to understand rate limits, authentication, or API-level error codes.
+1. **`references/sdk-patterns.md`** — correct SDK patterns and common mistakes.
+2. **https://docs.nimbleway.com/llms-full.txt** — full prose docs.
+3. **https://docs.nimbleway.com/openapi.json** — API contract.
+4. **Context7** (if available) — query `nimbleway`.
 
 ## Error recovery
 
-Quick reference for common errors. For detailed patterns and exception types, consult **`references/error-recovery.md`**.
-
-| Error | Action |
-|-------|--------|
-| 401/403 (auth) | Show: "Set `NIMBLE_API_KEY` env var and retry." Do not proceed. |
-| 404 (agent not found) | Fall back to `nimble_agents_list`. |
-| Empty results | Check URL reachability, page structure changes, missing params. |
-| 429 / 5xx (transient) | MCP calls: wait and retry once. Scripts: SDK retries automatically (2x default, configurable via `max_retries`). |
-| Generation stuck | After 3 `processing` responses, suggest waiting or simplifying the prompt. |
-| 409 publish conflict | Agent already published — proceed to run. |
+Consult **`references/error-recovery.md`** for error handling patterns, including:
+- **Persistent data source failures** — when to stop retrying and pivot to `google_search` + `site:` or `nimble_web_search`.
+- **Ambiguous agent match** — using `nimble_web_search` to explore unfamiliar domains before generating custom agents.
 
 ## Additional references
 
-For detailed guidance, consult:
-- **`references/sdk-patterns.md`** — Python SDK patterns: running agents (`POST /v1/agent`), async parallel execution, concurrency tuning, response handling, and common mistakes.
-- **`references/input-schema-guide.md`** — Mapping agent input schemas to params, including identifier-based (ASIN, product_id) and keyword patterns.
-- **`references/agent-api-reference.md`** — Concise reference for all five MCP tools.
-- **`references/error-recovery.md`** — Detailed error handling: SDK built-in retry behavior, exception types, and recovery patterns.
+Load reference files proactively during code generation. For the codegen path, always consult `references/sdk-patterns.md` (Python) or `references/rest-api-patterns.md` (other languages) before generating code. For error recovery, consult `references/error-recovery.md`. Load other references as needed.
 
-Working examples in `examples/`:
-- **`examples/find-and-run-agent.md`** — Search, inspect, and run an existing agent.
-- **`examples/generate-and-publish.md`** — Generate, publish, and run a new agent.
-- **`examples/bulk-extraction.md`** — Run an agent across multiple URLs with aggregated results.
+- **`references/sdk-patterns.md`** — Python SDK: running agents, async endpoint, batch pipelines.
+- **`references/input-schema-guide.md`** — Mapping agent input schemas to params.
+- **`references/agent-api-reference.md`** — Reference for all five MCP tools.
+- **`references/error-recovery.md`** — Error handling and recovery patterns.
+- **`references/normalization-guide.md`** — Multi-agent field mapping, unified schema, deduplication.
+- **`examples/find-and-run-agent.md`** — Existing-agent path walkthrough.
+- **`examples/generate-and-publish.md`** — Generate fallback walkthrough.
+- **`examples/bulk-extraction.md`** — Multi-URL batch extraction walkthrough.
+- **`references/rest-api-patterns.md`** — REST API patterns for TypeScript, Node, curl, and other non-Python languages.
+- **`examples/codegen-walkthrough.md`** — Codegen path walkthrough: multi-store comparison with CSV output.
 
 ## Guardrails
 
-- This skill is for agent workflows only — list, get, generate, run, and publish. Do not suggest scheduling, monitoring, automation, cron jobs, or any functionality outside the allowed tools.
-- Do not suggest or offer capabilities beyond what the allowed tools provide.
-- **Never ask for information already present in the original request.** Infer URLs, fields, and parameters from context.
-- Only present numbered options when the next action is genuinely ambiguous. When auto-advancing, narrate the action.
-- Always publish generated agents before running them (step 5e).
-- Session IDs must be reused across generate and publish calls within the same flow.
-- Present tool call results in tables. Never show raw JSON.
-- Adapt table columns to match actual data returned; templates above are examples.
-- For the generate path, only ask for extraction description if the original request lacks a target website or what data to extract.
+- Agent workflows only — list, get, generate, run, publish. No scheduling or monitoring.
+- To modify an existing agent, generate a new one with an improved prompt — there is no update operation.
+- **Never ask for information already in the request or inferable from context.**
+- Present tool call results in markdown tables. Never show raw JSON.
+- Adapt table columns to match actual data returned.

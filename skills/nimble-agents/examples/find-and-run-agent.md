@@ -43,9 +43,19 @@ extraction goal.
 | 2 | `amazon-product-search` | Extracts search result listings from Amazon |
 | 3 | `amazon-reviews` | Extracts customer reviews from Amazon product pages |
 
-**Pick a number:**
-4. Search with different keywords
-5. Generate a new custom agent
+Since multiple agents plausibly match, use `AskUserQuestion`:
+
+```
+question: "Which agent matches your needs?"
+header: "Select agent"
+options:
+  - label: "amazon-product-details (Recommended)"
+    description: "Extracts product details from Amazon product pages"
+  - label: "amazon-product-search"
+    description: "Extracts search result listings from Amazon"
+  - label: "Generate new agent"
+    description: "Create a custom agent instead"
+```
 
 ## Step 2 -- Get agent details
 
@@ -68,22 +78,16 @@ schema before running.
   "agent": {
     "name": "amazon-product-details",
     "description": "Extracts product details from Amazon product pages",
-    "input_schema": {
-      "type": "object",
-      "properties": {
-        "url": { "type": "string", "description": "Amazon product page URL" }
-      },
-      "required": ["url"]
+    "input_properties": [
+      { "name": "url", "required": true, "type": "string", "description": "Amazon product page URL", "rules": ["minLength: 1"], "examples": ["https://www.amazon.com/dp/B0DGHRT7PS"], "default": null }
+    ],
+    "skills": {
+      "title": { "type": "string" },
+      "price": { "type": "number" },
+      "rating": { "type": "number" },
+      "availability": { "type": "string" }
     },
-    "output_schema": {
-      "type": "object",
-      "properties": {
-        "title": { "type": "string" },
-        "price": { "type": "number" },
-        "rating": { "type": "number" },
-        "availability": { "type": "string" }
-      }
-    }
+    "entity_type": "Product Detail Page (PDP)"
   }
 }
 ```
@@ -109,10 +113,17 @@ Extracts product details from Amazon product pages.
 | `rating` | number |
 | `availability` | string |
 
-**Pick a number:**
-1. Run this agent
-2. Go back to search results
-3. Generate a new agent instead
+Use `AskUserQuestion` to confirm:
+
+```
+question: "Run this agent?"
+header: "Confirm"
+options:
+  - label: "Run agent (Recommended)"
+    description: "Execute amazon-product-details with inferred parameters"
+  - label: "Generate new agent"
+    description: "Create a custom agent instead"
+```
 
 ## Step 3 -- Run the agent
 
@@ -161,15 +172,23 @@ The user picks "Run this agent." Build `params` from the input schema and call
 |---|-------|-------|--------|--------------|
 | 1 | Wireless Noise Cancelling Headphones | $79.99 | 4.6 | In Stock |
 
-**Pick a number:**
-2. Run again with different inputs
-3. Get Python code for this extraction
-4. Search for a different agent
-5. Done
+Use `AskUserQuestion` for next steps:
+
+```
+question: "What next?"
+header: "Next step"
+options:
+  - label: "Done (Recommended)"
+    description: "Finish with these results"
+  - label: "Run again"
+    description: "Re-run with different parameters"
+  - label: "Get code"
+    description: "Generate a script to reproduce this"
+```
 
 ## Key takeaways
 
 - Always start with `nimble_agents_list` using short keyword queries.
-- Use `nimble_agents_get` to inspect the input/output schema before running.
-- Build the `params` dict from the agent's `input_schema` properties.
-- Present every result as a markdown table with numbered follow-up options.
+- Use `nimble_agents_get` to inspect `input_properties` and `skills` (output fields) before running.
+- Build the `params` dict from the agent's `input_properties` entries.
+- Present every result as a markdown table. Use `AskUserQuestion` for follow-up choices.

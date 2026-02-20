@@ -16,7 +16,7 @@ Search the web and extract structured data with Nimble agents. One plugin for Cl
 
 ### Prerequisites
 
-1. **Nimble API Key** — [Sign up](https://app.nimbleway.com/signup) and get your key from Account Settings > API Keys.
+1. **Nimble API Key** — [Sign up](https://online.nimbleway.com/signup) and get your key from Account Settings > API Keys.
 
 2. Set the environment variable:
    ```bash
