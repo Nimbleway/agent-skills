@@ -72,9 +72,11 @@ When the same data source fails repeatedly (e.g., all LinkedIn agents return 500
 
 ## Generation stuck (repeated `processing` status)
 
-Poll with **only `session_id`** (omit `prompt`). The server waits ~50 s internally per call — no `sleep` needed. After 12 consecutive `processing` responses (~10 minutes), inform the user:
+Poll with `nimble_agents_generate_status` (read-only GET endpoint) from a background Task agent. After 20 consecutive `processing` responses (~10 minutes), inform the user:
 
 > Agent generation is taking longer than expected. You can wait or try a simpler prompt.
+
+For transient errors during polling (timeouts, 5xx), retry the status check — do not restart generation. For persistent errors from the generate call itself, analyze the error and retry `nimble_agents_generate` with an improved or simplified prompt.
 
 ## Publish conflict (409 from `nimble_agents_publish`)
 

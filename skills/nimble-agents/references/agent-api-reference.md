@@ -1,6 +1,6 @@
 # Agent API Reference
 
-Concise reference for the five Nimble agent tools.
+Concise reference for the six Nimble agent tools.
 
 ---
 
@@ -109,7 +109,7 @@ Start or continue an agent generation conversation.
 
 | Parameter | Type | Required | Description |
 |-----------|------|----------|-------------|
-| `prompt` | string | **No** | Description of what to extract, or answers to follow-up questions. **Omit when polling a `processing` session** — sending any prompt (even `""`) re-invokes the generation backend instead of checking status. |
+| `prompt` | string | No | Description of what to extract, or answers to follow-up questions. Required on the first call. For clarification answers, pass the user's response here with the same `session_id`. |
 | `session_id` | string | Yes | UUID v4. Must remain the same across all calls in one flow. |
 | `url` | string | No | Example target URL for the agent. |
 | `output_schema` | object | No | Desired output schema (JSON Schema format). |
@@ -140,10 +140,63 @@ waiting  -->  processing  -->  complete
               error
 ```
 
-- `waiting` -- The generator needs more information. Respond and call again.
-- `processing` -- Generation is in progress. Poll immediately with only `session_id` (omit `prompt`). The server waits ~50 s internally before responding — no sleep needed. Stop after 12 consecutive polls (~10 minutes).
+- `waiting` -- The generator needs more information. Respond via `nimble_agents_generate` with the user's answer as `prompt`.
+- `processing` -- Generation in progress. Use `nimble_agents_generate_status` to poll for completion. Do NOT call this tool for status checks.
 - `complete` -- Agent is ready to run.
 - `error` -- Generation failed. Inspect the `error` field.
+
+---
+
+## nimble_agents_generate_status
+
+Check the current status of an agent generation session (read-only).
+
+### Parameters
+
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `session_id` | string | Yes | The `session_id` from a previous `nimble_agents_generate` call. |
+
+### Returns: `AgentGenerateResult`
+
+Same shape as `nimble_agents_generate`. Use this to poll for completion after `nimble_agents_generate` returns `processing`.
+
+### When to use
+
+- After `nimble_agents_generate` returns `processing` status.
+- From a background Task agent polling every ~30 seconds.
+- Do NOT use this tool to send clarifications — use `nimble_agents_generate` with `prompt` instead.
+
+### Example
+
+**Request:**
+
+```json
+{ "session_id": "a3b1c2d4-5678-9abc-def0-1234567890ab" }
+```
+
+**Response (still processing):**
+
+```json
+{
+  "status": "processing",
+  "session_id": "a3b1c2d4-5678-9abc-def0-1234567890ab",
+  "message": "Template generation in progress..."
+}
+```
+
+**Response (complete):**
+
+```json
+{
+  "status": "complete",
+  "session_id": "a3b1c2d4-5678-9abc-def0-1234567890ab",
+  "agent_name": "yelp-restaurant-details",
+  "domain": "yelp.com",
+  "input_schema": { "..." : "..." },
+  "output_schema": { "..." : "..." }
+}
+```
 
 ---
 

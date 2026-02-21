@@ -1,6 +1,6 @@
 # Multi-Agent Output Normalization
 
-Guide for normalizing output fields when comparing data across multiple agents or stores. Used during the codegen path (SKILL.md Step 3B). See `examples/codegen-walkthrough.md` for a worked example.
+Guide for normalizing output fields when comparing data across multiple agents or stores. Used during the codegen path (SKILL.md Step 3B). See `references/codegen-walkthrough.md` for a worked example.
 
 ## Table of Contents
 

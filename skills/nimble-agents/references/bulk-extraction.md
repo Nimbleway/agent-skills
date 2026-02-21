@@ -169,7 +169,7 @@ Aggregate these results the same way, adding a column for the varying parameter.
 
 ## When to switch to codegen
 
-The interactive approach above works well for small batches (roughly 2–5 URLs) where calling the MCP tool per URL is practical. For more than ~5 URLs, the interactive approach becomes tedious — SKILL.md Step 1 routes to the codegen path based on scale, output format, and other signals. See `examples/codegen-walkthrough.md` for a full walkthrough.
+The interactive approach above works well for small batches (roughly 2–5 URLs) where calling the MCP tool per URL is practical. For more than ~5 URLs, the interactive approach becomes tedious — SKILL.md Step 1 routes to the codegen path based on scale, output format, and other signals. See `references/codegen-walkthrough.md` for a full walkthrough.
 
 ### Example routing decision
 
@@ -186,7 +186,7 @@ User request: *"Extract product details for these 200 Amazon URLs from my urls.t
 **Route: codegen path.** Generate a script using the async batch pipeline
 pattern from `references/sdk-patterns.md` (section: Async Agent Endpoint).
 
-For a full codegen walkthrough, see `examples/codegen-walkthrough.md`.
+For a full codegen walkthrough, see `references/codegen-walkthrough.md`.
 
 ## Key takeaways
 

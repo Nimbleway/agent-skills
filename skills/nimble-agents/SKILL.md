@@ -2,27 +2,24 @@
 name: nimble-agents
 argument-hint: "[query or URL]"
 description: >
-  Finds, generates, and runs Nimble agents to extract structured data from
-  websites. Produces either interactive results or ready-to-run scripts with
-  CSV/JSON output. This skill should be used when the user asks to "extract data
-  from a website", "scrape product details", "run a Nimble agent", "generate a
-  web scraper", "generate a data extraction agent", "get product prices",
-  "compare prices across stores", "extract search results", "scrape Amazon",
-  "scrape Walmart", "extract product info", "web data extraction",
-  "find a Nimble template", "bulk extract", "batch scrape", "pull product
-  listings", "extract LinkedIn profiles", "search the web via Nimble", or
-  "use Nimble".
+  Finds, generates, and runs agents to extract structured data from
+  websites at scale. Handles multi-source with unified normalized schemas,
+  composing batch pipelines, and their SDK code generation with structured output.
+  Use when user asks to "get data from a website", "scrape a website",
+  "compare data points across websites", "generate a web scraper",
+  or mentions Nimble.
 allowed-tools:
   - mcp__nimble-mcp-server__nimble_agents_list
   - mcp__nimble-mcp-server__nimble_agents_get
   - mcp__nimble-mcp-server__nimble_agents_generate
+  - mcp__nimble-mcp-server__nimble_agents_generate_status
   - mcp__nimble-mcp-server__nimble_agents_run
   - mcp__nimble-mcp-server__nimble_agents_publish
   - mcp__nimble-mcp-server__nimble_web_search
 disable-model-invocation: false
 license: MIT
 metadata:
-  version: "0.3.0"
+  version: "0.4.0"
   author: Nimbleway
   repository: https://github.com/Nimbleway/agent-skills
 ---
@@ -59,6 +56,7 @@ claude mcp add --transport http nimble-mcp-server https://mcp.nimbleway.com/mcp 
 
 ## Core principles
 
+- **Fastest path to data.** The default route is: discover agent → get schema → run → display results. Planning (Step 1P), codegen (Step 3B), and generation (Step 3C) are **escalation paths** — enter them only when signals explicitly require it. Most requests resolve by finding and running an existing agent.
 - **Infer, don't ask.** Only use `AskUserQuestion` when there is genuine ambiguity that cannot be resolved from context.
 - **AskUserQuestion for all choices.** Never present choices as plain numbered lists in markdown. AskUserQuestion provides interactive arrow-key selection. Constraints: 2–4 options, header max 12 chars, label 1–5 words. "Other" is added automatically. Recommended option goes first with "(Recommended)" appended.
 - **Keep output concise.** Present results and options. No commentary about implementation choices, architecture, or performance.
@@ -86,14 +84,37 @@ From `$ARGUMENTS`, extract all signals at once:
 
 | Signal | Values | How to detect |
 |--------|--------|---------------|
-| **Execution mode** | `interactive` or `codegen` | See routing table below |
+| **Clarity** | `clear` (default) or `needs-planning` | See planning gate below |
+| **Execution mode** | `interactive` (default) or `codegen` | See routing table below |
 | **Scale** | `small` (≤50 results) or `large` (>50) | Numbers, "all", "top 1000", "bulk", "batch" |
 | **Output format** | `display`, `csv`, `json`, `file` | "CSV", "JSON file", "save to", "spreadsheet", "export" |
 | **Stores** | list of store names | "amazon", "walmart", "across X and Y", "compare", "both" |
 | **Target type** | `search` (keyword) or `detail` (URL/ID) | Keywords → SERP agent; specific URLs/ASINs → PDP agent |
 | **Language** | inferred from project | Check codebase (see language inference below) |
 
-**Route to codegen when ANY of these are true:**
+### Planning gate (most requests skip this)
+
+**Default: proceed directly to Step 2.** Only route to plan mode when ALL of these are absent:
+- A specific URL, site, or domain
+- Clear or inferable data to extract
+- A single well-scoped task
+
+In other words, plan mode is for vague or multi-step requests like "build me a scraping pipeline" or "I need competitive intelligence" where the target, data fields, or structure are genuinely unclear.
+
+When `needs-planning`, go to **Step 1P** below. Otherwise skip to **Step 2**.
+
+### Step 1P: Plan mode (unclear intent)
+
+Follow the planning protocol in **`references/planning-workflow.md`**:
+
+1. **Clarify** — use `AskUserQuestion` to resolve critical unknowns (max 2 questions at once).
+2. **Explore** — call `nimble_agents_list` for each target. Use `nimble_web_search` for unfamiliar domains.
+3. **Present plan** — show a gap analysis table (Site / Agent / Status: Existing or Generate) and confirm.
+4. **Execute** — Step 2 for existing agents, Step 3C for generations (in parallel as background tasks).
+
+### Execution mode routing (default: interactive)
+
+**Route to codegen only when ANY of these are true:**
 - Scale > ~50 results (pagination needed)
 - Output format is file-based (CSV, JSON file, etc.)
 - Multi-store comparison with merging
@@ -144,7 +165,7 @@ When presenting search results, show a markdown table of top 5, then use AskUser
 
 See **`references/input-schema-guide.md`** for the full `input_properties` format and mapping rules.
 
-**3A-2.** Use `AskUserQuestion` to confirm before running:
+**3A-2.** When intent is unambiguous (single matching agent, clear parameters, user provided the URL/query), **auto-advance directly to run** — skip confirmation. Otherwise, use `AskUserQuestion` to confirm:
 
 ```
 question: "Run this agent?"
@@ -156,9 +177,9 @@ options:
     description: "Create a custom agent instead"
 ```
 
-Do NOT call `nimble_agents_run` in the same response.
+When confirming, do NOT call `nimble_agents_run` in the same response as `AskUserQuestion`.
 
-**3A-3.** After confirmation, call `nimble_agents_run`. Present results as markdown table. Use `AskUserQuestion` for next steps:
+**3A-3.** Call `nimble_agents_run`. Present results as markdown table. **Auto-advance to Step 4 (final summary)** when the original request is fully satisfied. Only use `AskUserQuestion` for next steps when there is a clear reason to offer follow-up:
 
 ```
 question: "What next?"
@@ -171,8 +192,6 @@ options:
   - label: "Get code"
     description: "Generate a script to reproduce this"
 ```
-
-**Auto-advance to final summary** if the original request is fully satisfied without needing follow-up.
 
 ## Step 3B: Codegen path (large scale, file output, multi-store)
 
@@ -213,23 +232,20 @@ options:
 **3C-1.** Create a stable `session_id` (UUID v4, reuse for all generate/publish calls).
 
 **3C-2.** Call `nimble_agents_generate` with a clear prompt. If the user specifies exact output fields (e.g., "extract name, price, and rating"), include an `output_schema` in the generate call to guide the agent's extraction. Handle status:
-- `"waiting"` — present follow-up questions via `AskUserQuestion`, call again with same `session_id`.
-- `"processing"` — follow the **polling protocol** below.
-- `"complete"` — auto-advance to publish and run/codegen.
-- `"error"` — present error, offer retry or search alternatives.
+- `"waiting"` — present follow-up questions via `AskUserQuestion`, call generate again with same `session_id` and user's answer as `prompt`.
+- `"processing"` — launch a **background polling task** (see below).
+- `"complete"` — auto-advance to run and publish.
+- `"error"` — analyze the error. If retryable (timeout, transient failure), try generating again with an improved prompt. Otherwise present error and offer alternatives.
 
-### Polling protocol (`processing` status)
+### Background polling protocol (`processing` status)
 
-Agent generation takes 2–10 minutes. The MCP server handles waiting internally (up to ~50 s per call), so **no `sleep` is needed between calls**.
+Agent generation takes 2–10 minutes. Launch a **background Task agent** to poll with `nimble_agents_generate_status` every 30 seconds (max 20 checks). The conversation stays responsive while the agent polls.
 
-1. Tell the user: "Agent generation started — this typically takes 2–5 minutes (up to 10)."
-2. Call `nimble_agents_generate` with **only `session_id`** (omit `prompt`). The server waits internally and returns when either the status changes or ~50 seconds elapse.
-3. If still `processing`, narrate "Still generating... (N/12)" and call again immediately.
-4. **Max 12 polls** (~10 minutes total). After 12: inform user per `references/error-recovery.md`.
+Tell the user: "Agent generation started — this typically takes 2–5 minutes (up to 10). I'll check progress in the background."
 
-**Rules:**
-- **NEVER send `prompt` when polling.** Not even `""`. Any prompt re-invokes the generation backend instead of checking status.
-- **NEVER use `Bash("sleep ...")` between polls.** The server handles waiting internally — adding sleep doubles the wait time unnecessarily.
+See **`references/generate-and-publish.md`** > "Status: processing" for the exact Task prompt template and outcome handling (what to do on `complete`, `waiting`, `error`, or timeout).
+
+When generating multiple agents, launch background tasks **in parallel** — one per session_id.
 
 **3C-3.** Route to Step 3A (interactive) or Step 3B (codegen) to run the agent first based on the execution mode determined in Step 1.
 
@@ -269,18 +285,19 @@ Load reference files proactively during code generation. For the codegen path, a
 
 - **`references/sdk-patterns.md`** — Python SDK: running agents, async endpoint, batch pipelines, incremental file writes (CSV/JSONL/Parquet).
 - **`references/input-schema-guide.md`** — Mapping agent input schemas to params.
-- **`references/agent-api-reference.md`** — Reference for all five MCP tools.
+- **`references/agent-api-reference.md`** — Reference for all six MCP tools (including `nimble_agents_generate_status`).
 - **`references/error-recovery.md`** — Error handling and recovery patterns.
 - **`references/normalization-guide.md`** — Multi-agent field mapping, unified schema, deduplication.
-- **`examples/find-and-run-agent.md`** — Existing-agent path walkthrough.
-- **`examples/generate-and-publish.md`** — Generate fallback walkthrough.
-- **`examples/bulk-extraction.md`** — Multi-URL batch extraction walkthrough.
+- **`references/find-and-run-agent.md`** — Existing-agent path walkthrough.
+- **`references/planning-workflow.md`** — Plan mode protocol for unclear/complex intents.
+- **`references/generate-and-publish.md`** — Generate fallback walkthrough (includes polling protocol and outcome handling).
+- **`references/bulk-extraction.md`** — Multi-URL batch extraction walkthrough.
 - **`references/rest-api-patterns.md`** — REST API patterns for TypeScript, Node, curl, and other non-Python languages.
-- **`examples/codegen-walkthrough.md`** — Codegen path walkthrough: multi-store comparison with CSV output.
+- **`references/codegen-walkthrough.md`** — Codegen path walkthrough: multi-store comparison with CSV output.
 
 ## Guardrails
 
-- Agent workflows only — list, get, generate, run, publish. No scheduling or monitoring.
+- Agent workflows only — list, get, generate, generate_status, run, publish. No scheduling or monitoring.
 - To modify an existing agent, generate a new one with an improved prompt — there is no update operation.
 - **Never ask for information already in the request or inferable from context.**
 - Present tool call results in markdown tables. Never show raw JSON.
