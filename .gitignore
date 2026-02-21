@@ -77,3 +77,4 @@ coverage/
 .nimble-cache/
 research-results/
 extracted-content/
+.agents/

@@ -60,21 +60,42 @@ session_id** and the user's answers as the new `prompt`:
 {
   "status": "processing",
   "session_id": "a3b1c2d4-5678-9abc-def0-1234567890ab",
-  "message": "Agent generation in progress..."
+  "message": "Agent generation in progress...\n\n[Use nimble_agents_generate_status to poll for completion. Stop after 20 checks (~10 minutes).]"
 }
 ```
 
-Wait a few seconds and call generate again with the same session_id to poll:
+Launch a **background Task agent** to poll for completion. The conversation stays responsive while the agent monitors progress:
 
-```json
-{
-  "tool": "nimble_agents_generate",
-  "params": {
-    "prompt": "",
-    "session_id": "a3b1c2d4-5678-9abc-def0-1234567890ab"
-  }
-}
 ```
+Task(subagent_type="general-purpose", run_in_background=True, prompt="""
+Poll agent generation status for session_id="a3b1c2d4-5678-9abc-def0-1234567890ab".
+Loop: call nimble_agents_generate_status, check status.
+- "processing" → print progress, sleep 30s, repeat.
+- "complete" → print agent_name and schemas. Stop.
+- "waiting" → print "WAITING: " + message. Stop.
+- "error" → print "ERROR: " + error. Stop.
+Max 20 checks.
+""")
+```
+
+Use `nimble_agents_generate_status` (a dedicated read-only GET endpoint) for status checks. Do NOT call `nimble_agents_generate` for polling — it sends a POST and may re-invoke the backend.
+
+### Handling background task outcomes
+
+When the background task completes, handle the reported outcome:
+
+| Outcome | Action |
+|---------|--------|
+| `complete` | Auto-advance to Step 4 (run) then Step 5 (publish). |
+| `waiting` | Present the follow-up question via `AskUserQuestion`. Call `nimble_agents_generate` with the user's answer as `prompt` and same `session_id`. If that returns `processing`, launch another background polling task. |
+| `error` | Analyze the error. For transient failures or timeouts, retry `nimble_agents_generate` with same `session_id` and an improved/simplified prompt. For permanent errors, present alternatives per `error-recovery.md`. |
+| `TIMEOUT` (20 checks) | Inform user: "Generation is taking longer than expected. You can wait or try a simpler prompt." |
+
+### Parallel generation
+
+When generating multiple agents (e.g., multi-store comparison), launch
+background polling tasks **in parallel** — one per session_id. Each task
+polls independently. Gather results and proceed when all complete.
 
 ### Status: `complete`
 
@@ -162,8 +183,19 @@ Once status is `complete`, build params from the returned `input_schema` and run
 
 ## Step 5 -- Publish the agent
 
-After a successful run, ask the user whether to save the agent. If confirmed,
-call `nimble_agents_publish` with the **same session_id**.
+After a successful run, confirm publication via `AskUserQuestion`:
+
+```
+question: "Save this agent for future use?"
+header: "Publish"
+options:
+  - label: "Publish (Recommended)"
+    description: "Save agent so it's searchable via nimble_agents_list"
+  - label: "Skip"
+    description: "Don't save — agent is available only for this session"
+```
+
+If confirmed, call `nimble_agents_publish` with the **same session_id**.
 
 ```json
 {
@@ -181,8 +213,9 @@ call `nimble_agents_publish` with the **same session_id**.
   "agent": {
     "name": "yelp-restaurant-details",
     "description": "Extracts restaurant details from Yelp pages",
-    "input_schema": { "..." : "..." },
-    "output_schema": { "..." : "..." }
+    "input_properties": [ "..." ],
+    "skills": { "..." : "..." },
+    "entity_type": "Product Detail Page (PDP)"
   }
 }
 ```
@@ -191,8 +224,9 @@ The agent is now searchable via `nimble_agents_list` for future use.
 
 ## Key takeaways
 
-- Generate a UUID session_id once and reuse it for all generate and publish calls.
+- Generate a UUID session_id once and reuse it for all generate, status, and publish calls.
 - Handle all four statuses: `waiting`, `processing`, `complete`, `error`.
-- Poll with the same session_id when status is `processing`.
-- Answer follow-up questions by passing answers as the `prompt` with the same session_id.
+- Use `nimble_agents_generate_status` (GET, read-only) for polling — NOT `nimble_agents_generate` (POST).
+- Poll from a **background Task agent** so the conversation stays responsive. Stop after 20 checks (~10 minutes).
+- Answer follow-up questions by passing answers as the `prompt` to `nimble_agents_generate` with the same session_id.
 - Only publish after a successful run and explicit user confirmation.

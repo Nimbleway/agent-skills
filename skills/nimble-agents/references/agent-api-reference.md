@@ -1,6 +1,6 @@
 # Agent API Reference
 
-Concise reference for the five Nimble agent tools.
+Concise reference for the six Nimble agent tools.
 
 ---
 
@@ -28,11 +28,15 @@ Search and paginate through available agents.
 
 ### Example
 
-```json
-// Request
-{ "query": "linkedin", "limit": 5, "skip": 0 }
+**Request:**
 
-// Response
+```json
+{ "query": "linkedin", "limit": 5, "skip": 0 }
+```
+
+**Response:**
+
+```json
 {
   "agents": [
     { "name": "linkedin-profile", "description": "Extracts LinkedIn profile data" }
@@ -60,32 +64,40 @@ Retrieve full details and schemas for a single agent.
 | `agent` | object | Agent details dict. |
 | `agent.name` | string | Agent identifier. |
 | `agent.description` | string | What the agent extracts. |
-| `agent.input_schema` | object | JSON Schema defining required input parameters. |
-| `agent.output_schema` | object | JSON Schema defining the structure of extracted data. |
+| `agent.input_properties` | array | List of input parameter objects (see below). |
+| `agent.skills` | object | Output field definitions — keys are field names, values describe their type (see below). |
+| `agent.entity_type` | string | `"Search Engine Results Page (SERP)"` or `"Product Detail Page (PDP)"`. Determines response nesting — see "Response shape inference" below. |
+| `agent.feature_flags` | object | Capabilities: `is_pagination_supported`, `is_localization_supported`. |
 
-### Example
+### Input properties format
 
-```json
-// Request
-{ "agent_id": "amazon-product-details" }
+Each element of `input_properties` is an object:
 
-// Response
-{
-  "agent": {
-    "name": "amazon-product-details",
-    "description": "Extracts product details from Amazon product pages",
-    "input_schema": {
-      "type": "object",
-      "properties": { "url": { "type": "string" } },
-      "required": ["url"]
-    },
-    "output_schema": {
-      "type": "object",
-      "properties": { "title": { "type": "string" }, "price": { "type": "number" } }
-    }
-  }
-}
-```
+| Field | Type | Description |
+|-------|------|-------------|
+| `name` | string | Parameter name (e.g. `"query"`, `"url"`, `"identifier"`). |
+| `required` | boolean | Whether this parameter must be provided. |
+| `type` | string | Data type (e.g. `"string"`, `"integer"`). |
+| `description` | string | What the parameter controls. |
+| `rules` | array | Validation rules (e.g. `["minLength: 1"]`). |
+| `examples` | array | Example values (e.g. `["elon musk"]`). |
+| `default` | any | Default value if omitted (`null` = no default). |
+
+### Output fields format (`skills`)
+
+The `skills` dict maps field names to type descriptors: `{ "field_name": { "type": "string" } }`.
+
+### Response shape inference
+
+Use `entity_type` and `skills` from `nimble_agents_get` to predict the REST API response shape:
+
+| `entity_type` | `skills` structure | REST `data.parsing` shape |
+|---------------|-------------------|--------------------------|
+| PDP | Flat fields | `dict` — single record |
+| SERP (ecommerce) | Flat fields | `list` — array of records |
+| SERP (non-ecommerce) | Nested fields (contains `entities`, `total_entities_count`) | `dict` — with `entities.{EntityType}` arrays |
+
+**Important:** Inspect `skills` before generating code to determine which shape applies. See `sdk-patterns.md` > "Response structure verification".
 
 ---
 
@@ -97,7 +109,7 @@ Start or continue an agent generation conversation.
 
 | Parameter | Type | Required | Description |
 |-----------|------|----------|-------------|
-| `prompt` | string | Yes | Description of what to extract, or answers to follow-up questions. |
+| `prompt` | string | No | Description of what to extract, or answers to follow-up questions. Required on the first call. For clarification answers, pass the user's response here with the same `session_id`. |
 | `session_id` | string | Yes | UUID v4. Must remain the same across all calls in one flow. |
 | `url` | string | No | Example target URL for the agent. |
 | `output_schema` | object | No | Desired output schema (JSON Schema format). |
@@ -128,10 +140,63 @@ waiting  -->  processing  -->  complete
               error
 ```
 
-- `waiting` -- The generator needs more information. Respond and call again.
-- `processing` -- Generation is in progress. Poll with the same session_id.
+- `waiting` -- The generator needs more information. Respond via `nimble_agents_generate` with the user's answer as `prompt`.
+- `processing` -- Generation in progress. Use `nimble_agents_generate_status` to poll for completion. Do NOT call this tool for status checks.
 - `complete` -- Agent is ready to run.
 - `error` -- Generation failed. Inspect the `error` field.
+
+---
+
+## nimble_agents_generate_status
+
+Check the current status of an agent generation session (read-only).
+
+### Parameters
+
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `session_id` | string | Yes | The `session_id` from a previous `nimble_agents_generate` call. |
+
+### Returns: `AgentGenerateResult`
+
+Same shape as `nimble_agents_generate`. Use this to poll for completion after `nimble_agents_generate` returns `processing`.
+
+### When to use
+
+- After `nimble_agents_generate` returns `processing` status.
+- From a background Task agent polling every ~30 seconds.
+- Do NOT use this tool to send clarifications — use `nimble_agents_generate` with `prompt` instead.
+
+### Example
+
+**Request:**
+
+```json
+{ "session_id": "a3b1c2d4-5678-9abc-def0-1234567890ab" }
+```
+
+**Response (still processing):**
+
+```json
+{
+  "status": "processing",
+  "session_id": "a3b1c2d4-5678-9abc-def0-1234567890ab",
+  "message": "Template generation in progress..."
+}
+```
+
+**Response (complete):**
+
+```json
+{
+  "status": "complete",
+  "session_id": "a3b1c2d4-5678-9abc-def0-1234567890ab",
+  "agent_name": "yelp-restaurant-details",
+  "domain": "yelp.com",
+  "input_schema": { "..." : "..." },
+  "output_schema": { "..." : "..." }
+}
+```
 
 ---
 
@@ -144,7 +209,7 @@ Execute an agent against a target with the given parameters.
 | Parameter | Type | Required | Description |
 |-----------|------|----------|-------------|
 | `agent_name` | string | Yes | Name of the agent to run. |
-| `params` | object | Yes | Input values matching the agent's `input_schema`. |
+| `params` | object | Yes | Input values matching the agent's `input_properties`. |
 
 ### Returns: `RunAgentResult`
 
@@ -157,11 +222,15 @@ Execute an agent against a target with the given parameters.
 
 ### Example
 
-```json
-// Request
-{ "agent_name": "amazon-product-details", "params": { "url": "https://www.amazon.com/dp/B0DGHRT7PS" } }
+**Request:**
 
-// Response
+```json
+{ "agent_name": "amazon-product-details", "params": { "url": "https://www.amazon.com/dp/B0DGHRT7PS" } }
+```
+
+**Response:**
+
+```json
 {
   "data": {
     "results": [
@@ -192,17 +261,21 @@ Same structure as `nimble_agents_get`. The agent is now discoverable via
 
 ### Example
 
-```json
-// Request
-{ "session_id": "a3b1c2d4-5678-9abc-def0-1234567890ab" }
+**Request:**
 
-// Response
+```json
+{ "session_id": "a3b1c2d4-5678-9abc-def0-1234567890ab" }
+```
+
+**Response:**
+
+```json
 {
   "agent": {
     "name": "yelp-restaurant-details",
     "description": "Extracts restaurant details from Yelp pages",
-    "input_schema": { "..." : "..." },
-    "output_schema": { "..." : "..." }
+    "input_properties": [ "..." ],
+    "skills": { "..." : "..." }
   }
 }
 ```

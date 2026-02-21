@@ -167,6 +167,27 @@ Aggregate these results the same way, adding a column for the varying parameter.
 | 3 | bluetooth speaker | SoundBlast Mini | $29.99 | 4.6 |
 | 4 | bluetooth speaker | BassBoom 360 | $44.99 | 4.3 |
 
+## When to switch to codegen
+
+The interactive approach above works well for small batches (roughly 2–5 URLs) where calling the MCP tool per URL is practical. For more than ~5 URLs, the interactive approach becomes tedious — SKILL.md Step 1 routes to the codegen path based on scale, output format, and other signals. See `references/codegen-walkthrough.md` for a full walkthrough.
+
+### Example routing decision
+
+User request: *"Extract product details for these 200 Amazon URLs from my urls.txt file and save to CSV"*
+
+**Signals detected:**
+
+| Signal | Value | Evidence |
+|--------|-------|----------|
+| Scale | large | 200 URLs |
+| Output format | CSV file | "save to CSV" |
+| Batch input | file | "from my urls.txt" |
+
+**Route: codegen path.** Generate a script using the async batch pipeline
+pattern from `references/sdk-patterns.md` (section: Async Agent Endpoint).
+
+For a full codegen walkthrough, see `references/codegen-walkthrough.md`.
+
 ## Key takeaways
 
 - Run the agent once per URL or parameter combination.
@@ -174,3 +195,4 @@ Aggregate these results the same way, adding a column for the varying parameter.
 - Handle individual failures without aborting the batch.
 - Include source URL or varying parameters as columns for traceability.
 - Present a final summary with success/failure counts.
+- For larger batches (more than ~5 URLs), file-based output, or multi-store comparisons, route to the codegen path instead.
