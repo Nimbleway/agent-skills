@@ -1,7 +1,7 @@
 {
   "name": "nimble",
   "displayName": "Nimble Web Data Toolkit",
-  "version": "0.3.0",
+  "version": "0.4.0",
   "description": "Search the web and extract structured data with Nimble agents. Web search with 8 focus modes and guided agent workflows for structured extraction from any website.",
   "author": {
     "name": "Nimble",
