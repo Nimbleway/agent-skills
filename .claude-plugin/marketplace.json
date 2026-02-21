@@ -6,7 +6,7 @@
     "name": "nimble",
     "source": "./",
     "description": "Search the web and extract structured data with Nimble agents",
-    "version": "0.3.0",
+    "version": "0.4.0",
     "category": "data",
     "tags": ["web-search", "extraction", "agents", "structured-data"],
     "homepage": "https://www.nimbleway.com",
