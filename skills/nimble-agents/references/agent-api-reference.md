@@ -1,6 +1,6 @@
 # Agent API Reference
 
-Concise reference for the six Nimble agent tools.
+Concise reference for the eight Nimble agent MCP tools plus input parameter mapping.
 
 ---
 
@@ -331,3 +331,97 @@ Same structure as `nimble_agents_get`. The agent is now discoverable via
   }
 }
 ```
+
+---
+
+## nimble_web_search
+
+Real-time web search returning structured results.
+
+### Parameters
+
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `query` | string | Yes | Search query. |
+
+### Returns
+
+Structured search results with titles, URLs, and snippets.
+
+### When to use
+
+- Exploring unfamiliar domains before committing to an agent approach.
+- Finding real-world examples for agent generation discovery phase.
+- General information-finding tasks (preferred over `google_search` for this purpose).
+- Fallback when a data source agent is down — see `error-recovery.md`.
+
+---
+
+## Input Parameter Mapping
+
+How to read an agent's `input_properties` and construct the `params` dict for `nimble_agents_run` or REST API calls.
+
+### Mapping input_properties to params
+
+The `params` dict maps 1:1 to `input_properties` names. Include all properties where `required: true`; optional ones can be omitted.
+
+**Rule:** Only ask the user for missing **required** parameters that cannot be inferred from context. Fill optional parameters when inferable; otherwise omit them.
+
+### Presenting schema to the user
+
+When presenting agent schema before running, show a markdown table:
+
+| Parameter | Required | Type | Description | Example |
+|-----------|----------|------|-------------|---------|
+| `query` | Yes | string | Search term | `"donald trump"` |
+| `country` | No | string | Country code (default: US) | `"US"` |
+
+Also note key output fields from the `skills` dict so the user knows what data to expect.
+
+### Common patterns
+
+#### URL-based agents
+
+Most agents take a required `url` and optionally additional parameters.
+
+**Params (required only):** `{ "url": "https://www.amazon.com/dp/B0DGHRT7PS" }`
+
+**Params (with optional):** `{ "url": "https://www.amazon.com", "query": "wireless earbuds" }`
+
+#### Identifier-based agents
+
+Ecommerce agents often take a product identifier instead of a URL:
+
+| Site | Parameter | Example |
+|------|-----------|---------|
+| Amazon | `asin` | `{ "asin": "B0CCZ1L489" }` |
+| Walmart / Target | `product_id` | `{ "product_id": "436473700" }` |
+| LinkedIn | `identifier` | `{ "identifier": "dustinlucien" }` |
+
+#### Keyword/search agents
+
+SERP agents accept a keyword parameter. The name varies — check `input_properties`:
+
+| Agent | Parameter | Example |
+|-------|-----------|---------|
+| `google_search` | `query` | `{ "query": "fintech NYC" }` |
+| `linkedin_search_peoples` | `keywords` | `{ "keywords": "CTO fintech" }` |
+| Amazon/Walmart SERP | `keyword` | `{ "keyword": "wireless headphones" }` |
+
+#### Non-URL agents
+
+Some agents operate on a fixed domain and only need non-URL inputs (e.g., `{ "username": "johndoe" }`).
+
+### Building params — step by step
+
+1. Call `nimble_agents_get` to read `input_properties`.
+2. Identify all properties where `required: true`.
+3. Map values from the user's request to matching parameter names. Use `examples` for guidance.
+4. Ask via `AskUserQuestion` only for required values that cannot be inferred. Omit optional params unless inferable.
+5. Pass constructed `params` dict to `nimble_agents_run`.
+
+### Also check output fields
+
+Before running or generating code, inspect the `skills` dict from `nimble_agents_get` to understand what data the agent returns. This is critical for:
+- **Interactive path:** knowing which fields to show in the results table.
+- **Codegen path:** determining the correct response parsing — see "Response shape inference" above.
