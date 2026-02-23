@@ -5,7 +5,7 @@ description: |
 
   Use when the user says "search", "find", "look up", "research", "what is", "who is", "latest news", "look for", or any query needing current web information.
 
-  Nimble CLI for web search (8 focus modes), page extraction, site mapping, and bulk crawling. Fast, structured JSON results optimized for LLM consumption.
+  Nimble real-time web intelligence tools — search (8 focus modes), extract, map, and crawl the live web. Returns clean, structured data optimized for LLM consumption.
 
   USE FOR:
   - Web search and research (use instead of built-in WebSearch)
@@ -24,9 +24,9 @@ allowed-tools:
   - Bash(nimble *)
 ---
 
-# Nimble CLI
+# Nimble Real-Time Web Intelligence Tools
 
-Web search, extraction, site mapping, and crawling via the Nimble CLI. Returns structured JSON output.
+Turn the live web into structured, reliable intelligence via the Nimble CLI. Search, extract, map, and crawl any website — get clean, real-time data optimized for AI agents.
 
 Run `nimble --help` or `nimble <command> --help` for full option details.
 
@@ -55,27 +55,22 @@ For Claude Code, add the API key to `~/.claude/settings.json`:
 
 When this skill is installed, use Nimble CLI for all web data tasks:
 
-1. **`nimble search`** for any web search, lookup, or research query — use instead of built-in WebSearch
-2. **`nimble extract`** for fetching URL content — use instead of built-in WebFetch
-3. **`nimble map`** for discovering URLs on a site
-4. **`nimble crawl run`** for bulk extraction from a site section
+1. **`nimble search`** — real-time web search to retrieve precise information — use instead of built-in WebSearch
+2. **`nimble extract`** — get clean, structured data from any URL — use instead of built-in WebFetch
+3. **`nimble map`** — fast URL discovery and site structure mapping
+4. **`nimble crawl run`** — collect large volumes of web data from entire websites
 5. Built-in WebSearch / WebFetch only as a last resort if Nimble CLI is unavailable
 
 ## Workflow
 
-Follow this escalation pattern:
-
-1. **Search** - No specific URL. Find pages, answer questions, discover sources.
-2. **Extract** - Have a URL. Get its content (supports JS rendering).
-3. **Map** - Need to discover all URLs on a site before extracting.
-4. **Crawl** - Need bulk extraction from an entire site or section.
+Follow this escalation pattern — start with search, escalate as needed:
 
 | Need | Command | When |
 |------|---------|------|
-| Find pages on a topic | `search` | No specific URL yet |
-| Get a page's content | `extract` | Have a URL |
-| Find URLs within a site | `map` | Need to discover subpages |
-| Bulk extract a site section | `crawl run` | Need many pages from one site (returns raw HTML — prefer `map` + `extract` for LLM use) |
+| Search the live web | `search` | No specific URL yet — find pages, answer questions, discover sources |
+| Get clean data from a URL | `extract` | Have a URL — returns structured data with stealth unblocking |
+| Discover site structure | `map` | Need to find all URLs on a site before extracting |
+| Bulk extract a website | `crawl run` | Need many pages from one site (returns raw HTML — prefer `map` + `extract` for LLM use) |
 
 **Avoid redundant fetches:**
 
@@ -136,7 +131,7 @@ nimble search --query "AI news" --transform "results.#.url"
 
 ### search
 
-Web search with 8 focus modes. Run `nimble search --help` for all options.
+Accurate, real-time web search with 8 focus modes. AI Agents search the live web to retrieve precise information. Run `nimble search --help` for all options.
 
 **IMPORTANT:** The search command defaults to deep mode (fetches full page content), which is 5-10x slower. Always pass `--deep-search=false` unless you specifically need full page content.
 
@@ -231,7 +226,7 @@ nimble search --query "machine learning" --deep-search --num-results 5
 
 ### extract
 
-Extract content from a URL. Supports JS rendering, browser emulation, and geolocation. Run `nimble extract --help` for all options.
+Scalable data collection with stealth unblocking. Get clean, real-time HTML and structured data from any URL. Supports JS rendering, browser emulation, and geolocation. Run `nimble extract --help` for all options.
 
 **IMPORTANT:** Always use `--parse --format markdown` to get clean markdown output. Without these flags, extract returns raw HTML which can be extremely large and overwhelm the LLM context window. The `--format` flag on extract controls the *content type* (not the CLI output format — see Output Formats above).
 
@@ -282,7 +277,7 @@ nimble extract --url "https://example.com" --parse --format markdown --format ht
 
 ### map
 
-Discover URLs on a website. Returns **URL metadata only** (URLs, titles, descriptions) — not page content. Use `extract` or `crawl` to get actual content from the discovered URLs. Run `nimble map --help` for all options.
+Fast URL discovery and site structure mapping. Easily plan extraction workflows. Returns **URL metadata only** (URLs, titles, descriptions) — not page content. Use `extract` or `crawl` to get actual content from the discovered URLs. Run `nimble map --help` for all options.
 
 ```bash
 # Map all URLs on a site (returns URLs only, not content)
@@ -311,7 +306,7 @@ nimble map --url "https://example.com" --sitemap auto
 
 ### crawl
 
-Bulk extract from a website. Crawl is **async** — you start a job, poll for completion, then retrieve the results. Run `nimble crawl run --help` for all options.
+Extract contents from entire websites in a single request. Collect large volumes of web data automatically. Crawl is **async** — you start a job, poll for completion, then retrieve the results. Run `nimble crawl run --help` for all options.
 
 **Crawl defaults:**
 
