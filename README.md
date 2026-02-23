@@ -1,15 +1,15 @@
 # Nimble Web Data Toolkit
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![Version](https://img.shields.io/badge/version-0.4.0-green)](https://github.com/Nimbleway/agent-skills)
+[![Version](https://img.shields.io/badge/version-0.5.0-green)](https://github.com/Nimbleway/agent-skills)
 
-Search the web and extract structured data with Nimble agents. One plugin for Claude Code, Cursor, and Vercel Agent Skills.
+Search, extract, map, and crawl the web with Nimble CLI. One plugin for Claude Code, Cursor, and Vercel Agent Skills.
 
 ## Skills
 
 | Skill | Description |
 |-------|-------------|
-| **nimble-web-search** | Real-time web search with 8 focus modes (general, coding, news, academic, shopping, social, geo, location) |
+| **nimble-web-tools** | Web search, extraction, site mapping, and crawling via the Nimble CLI (`npm i @nimble-way/nimble-cli`) |
 | **nimble-agents** | Find, generate, and run agents for structured data from any website. Requires MCP server. |
 
 ## Installation
@@ -18,7 +18,12 @@ Search the web and extract structured data with Nimble agents. One plugin for Cl
 
 1. **Nimble API Key** — [Sign up](https://online.nimbleway.com/signup) and get your key from Account Settings > API Keys.
 
-2. Set the environment variable:
+2. **Nimble CLI** — Install the CLI:
+   ```bash
+   npm i -g @nimble-way/nimble-cli
+   ```
+
+3. Set the environment variable:
    ```bash
    export NIMBLE_API_KEY="your-api-key-here"
    ```
@@ -135,14 +140,22 @@ The agents skill uses these MCP tools (provided by the Nimble MCP server):
 
 ## Quick Start
 
-### Web Search
+### Web Tools (Search, Extract, Map, Crawl)
 
-Ask your AI agent to search the web — the `nimble-web-search` skill activates automatically:
+The `nimble-web-tools` skill wraps the Nimble CLI. Examples:
 
-```
-"Search for recent AI developments"
-"Find React Server Components documentation"
-"Look up the latest news on quantum computing"
+```bash
+# Search the web
+nimble search --query "React server components" --topic coding
+
+# Extract content from a URL
+nimble extract --url "https://example.com/article" --parse
+
+# Map all URLs on a site
+nimble map --url "https://docs.example.com" --limit 100
+
+# Crawl a site section
+nimble crawl run --url "https://docs.example.com" --include-path "/api" --limit 50
 ```
 
 ### Structured Extraction
@@ -169,14 +182,10 @@ agent-skills/
 ├── .cursor-plugin/          # Cursor plugin metadata
 │   └── plugin.json
 ├── skills/                  # Shared by all platforms
-│   ├── nimble-web-search/
-│   │   ├── SKILL.md
-│   │   ├── examples/
-│   │   ├── references/
-│   │   └── scripts/
+│   ├── nimble-web-tools/
+│   │   └── SKILL.md
 │   └── nimble-agents/
 │       ├── SKILL.md
-│       ├── examples/
 │       └── references/
 ├── rules/
 │   └── nimble-tools.mdc    # Cursor rule (auto-loaded by plugin)
@@ -191,7 +200,7 @@ agent-skills/
 | Variable | Required | Description |
 |----------|----------|-------------|
 | `NIMBLE_API_KEY` | Yes | Your Nimble API key |
-| `NIMBLE_BASE_URL` | No | Custom search API endpoint |
+| `NIMBLE_BASE_URL` | No | Custom API endpoint |
 | `NIMBLE_MCP_LOCAL_URL` | No | Local MCP server URL (dev only) |
 
 ## Support

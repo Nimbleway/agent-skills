@@ -1,5 +1,25 @@
 # Changelog
 
+## [0.5.0] - 2026-02-23
+
+### Added
+- **nimble-web-tools** skill — replaces `nimble-web-search` with full Nimble CLI wrapper
+  - `nimble search` — web search with 8 focus modes
+  - `nimble extract` — extract content from any URL (JS rendering, geolocation, parsing)
+  - `nimble map` — discover URLs and sitemaps on a website
+  - `nimble crawl` — bulk crawl website sections with depth/path control
+
+### Changed
+- Skills now use Nimble CLI (`@nimble-way/nimble-cli`) instead of curl-based wrapper scripts
+- Version bumped to 0.5.0 across all plugin configs
+- `rules/nimble-tools.mdc` updated to reference `nimble-web-tools` skill
+- README.md updated with CLI installation and new skill documentation
+
+### Removed
+- `nimble-web-search` skill (replaced by `nimble-web-tools`)
+- `scripts/search.sh` and `scripts/validate-query.sh` curl wrapper scripts
+- `examples/` and `references/` directories from old web-search skill
+
 ## [0.4.0] - 2026-02-18
 
 ### Added
