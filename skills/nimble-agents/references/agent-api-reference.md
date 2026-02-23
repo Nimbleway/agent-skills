@@ -1,6 +1,6 @@
 # Agent API Reference
 
-Concise reference for the six Nimble agent tools.
+Concise reference for the eight Nimble agent MCP tools plus input parameter mapping.
 
 ---
 
@@ -101,15 +101,15 @@ Use `entity_type` and `skills` from `nimble_agents_get` to predict the REST API 
 
 ---
 
-## nimble_agents_generate
+## nimble_agents_generate (initial creation only)
 
-Start or continue an agent generation conversation.
+Start agent creation. Use ONLY for the initial call. All follow-ups go through `nimble_agents_update`.
 
 ### Parameters
 
 | Parameter | Type | Required | Description |
 |-----------|------|----------|-------------|
-| `prompt` | string | No | Description of what to extract, or answers to follow-up questions. Required on the first call. For clarification answers, pass the user's response here with the same `session_id`. |
+| `prompt` | string | No | Description of what to extract. Required on the first call. This tool is for initial creation only — for follow-ups, use `nimble_agents_update` with the same `session_id`. |
 | `session_id` | string | Yes | UUID v4. Must remain the same across all calls in one flow. |
 | `url` | string | No | Example target URL for the agent. |
 | `output_schema` | object | No | Desired output schema (JSON Schema format). |
@@ -140,32 +140,32 @@ waiting  -->  processing  -->  complete
               error
 ```
 
-- `waiting` -- The generator needs more information. Respond via `nimble_agents_generate` with the user's answer as `prompt`.
-- `processing` -- Generation in progress. Use `nimble_agents_generate_status` to poll for completion. Do NOT call this tool for status checks.
+- `waiting` -- The generator needs more information. Respond via `nimble_agents_update` with the same `session_id` and the user's answer as `prompt`.
+- `processing` -- Generation in progress. Use `nimble_agents_status` to poll for completion. Do NOT call this tool for status checks.
 - `complete` -- Agent is ready to run.
 - `error` -- Generation failed. Inspect the `error` field.
 
 ---
 
-## nimble_agents_generate_status
+## nimble_agents_status
 
-Check the current status of an agent generation session (read-only).
+Check the current status of a generate or update session (read-only).
 
 ### Parameters
 
 | Parameter | Type | Required | Description |
 |-----------|------|----------|-------------|
-| `session_id` | string | Yes | The `session_id` from a previous `nimble_agents_generate` call. |
+| `session_id` | string | Yes | The `session_id` from a previous `nimble_agents_generate` or `nimble_agents_update` call. |
 
 ### Returns: `AgentGenerateResult`
 
-Same shape as `nimble_agents_generate`. Use this to poll for completion after `nimble_agents_generate` returns `processing`.
+Same shape as `nimble_agents_generate`. Use this to poll for completion after `nimble_agents_generate` or `nimble_agents_update` returns `processing`.
 
 ### When to use
 
-- After `nimble_agents_generate` returns `processing` status.
+- After `nimble_agents_generate` or `nimble_agents_update` returns `processing` status.
 - From a background Task agent polling every ~30 seconds.
-- Do NOT use this tool to send clarifications — use `nimble_agents_generate` with `prompt` instead.
+- Do NOT use this tool to send clarifications — use `nimble_agents_update` with `prompt` and the same `session_id` instead.
 
 ### Example
 
@@ -200,6 +200,55 @@ Same shape as `nimble_agents_generate`. Use this to poll for completion after `n
 
 ---
 
+## nimble_agents_update (primary tool for all follow-ups)
+
+Refine an existing agent or continue any generate/update session. Primary tool for all post-creation interactions.
+
+### Parameters
+
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `session_id` | string | No | Existing session to continue refining. |
+| `agent_name` | string | No | Agent to update. Published agents are forked; user's unpublished agents are updated in-place. |
+| `prompt` | string | No | Refinement instruction. At least one of prompt/input_schema/output_schema required. |
+| `input_schema` | object | No | JSON Schema override for input parameters. |
+| `output_schema` | object | No | JSON Schema override for output fields. |
+
+### Returns: `AgentGenerateResult`
+
+Same shape as `nimble_agents_generate`. Status flow is identical — use `nimble_agents_status` to poll.
+
+### Status lifecycle
+
+Same as generate:
+- `waiting` — Backend needs more info. Call `nimble_agents_update` with user's answer as `prompt`.
+- `processing` — Update in progress. Poll with `nimble_agents_status`.
+- `complete` — Agent updated. `agent_name` is set.
+- `error` — Apply retry-with-fix protocol: compose a prompt from the error diagnostics and call `nimble_agents_update` again.
+
+### Example
+
+**Request:**
+
+```json
+{
+  "agent_name": "amazon-product-details",
+  "prompt": "Add a ratings field and review count to the output schema"
+}
+```
+
+**Response:**
+
+```json
+{
+  "status": "processing",
+  "session_id": "auto-generated-thread-id",
+  "message": "Update in progress...\n\n[Use nimble_agents_status to poll for completion.]"
+}
+```
+
+---
+
 ## nimble_agents_run
 
 Execute an agent against a target with the given parameters.
@@ -208,7 +257,8 @@ Execute an agent against a target with the given parameters.
 
 | Parameter | Type | Required | Description |
 |-----------|------|----------|-------------|
-| `agent_name` | string | Yes | Name of the agent to run. |
+| `agent_name` | string | No | Name of the agent to run. At least one of `agent_name` or `session_id` is required. |
+| `session_id` | string | No | Session/thread ID for running an unpublished workflow. Use instead of `agent_name` for testing before publishing. |
 | `params` | object | Yes | Input values matching the agent's `input_properties`. |
 
 ### Returns: `RunAgentResult`
@@ -242,6 +292,8 @@ Execute an agent against a target with the given parameters.
 }
 ```
 
+> **Default behavior:** Publish first, then run by `agent_name`. Running by `session_id` is for testing unpublished workflows before publishing — only use when the user explicitly asks to test first.
+
 ---
 
 ## nimble_agents_publish
@@ -252,7 +304,7 @@ Save a generated agent so it becomes searchable and reusable.
 
 | Parameter | Type | Required | Description |
 |-----------|------|----------|-------------|
-| `session_id` | string | Yes | The same UUID used during `nimble_agents_generate`. |
+| `session_id` | string | Yes | The same UUID used during `nimble_agents_generate` (and subsequent `nimble_agents_update` calls). |
 
 ### Returns: `AgentDetailsResult`
 
@@ -279,3 +331,97 @@ Same structure as `nimble_agents_get`. The agent is now discoverable via
   }
 }
 ```
+
+---
+
+## nimble_web_search
+
+Real-time web search returning structured results.
+
+### Parameters
+
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `query` | string | Yes | Search query. |
+
+### Returns
+
+Structured search results with titles, URLs, and snippets.
+
+### When to use
+
+- Exploring unfamiliar domains before committing to an agent approach.
+- Finding real-world examples for agent generation discovery phase.
+- General information-finding tasks (preferred over `google_search` for this purpose).
+- Fallback when a data source agent is down — see `error-recovery.md`.
+
+---
+
+## Input Parameter Mapping
+
+How to read an agent's `input_properties` and construct the `params` dict for `nimble_agents_run` or REST API calls.
+
+### Mapping input_properties to params
+
+The `params` dict maps 1:1 to `input_properties` names. Include all properties where `required: true`; optional ones can be omitted.
+
+**Rule:** Only ask the user for missing **required** parameters that cannot be inferred from context. Fill optional parameters when inferable; otherwise omit them.
+
+### Presenting schema to the user
+
+When presenting agent schema before running, show a markdown table:
+
+| Parameter | Required | Type | Description | Example |
+|-----------|----------|------|-------------|---------|
+| `query` | Yes | string | Search term | `"donald trump"` |
+| `country` | No | string | Country code (default: US) | `"US"` |
+
+Also note key output fields from the `skills` dict so the user knows what data to expect.
+
+### Common patterns
+
+#### URL-based agents
+
+Most agents take a required `url` and optionally additional parameters.
+
+**Params (required only):** `{ "url": "https://www.amazon.com/dp/B0DGHRT7PS" }`
+
+**Params (with optional):** `{ "url": "https://www.amazon.com", "query": "wireless earbuds" }`
+
+#### Identifier-based agents
+
+Ecommerce agents often take a product identifier instead of a URL:
+
+| Site | Parameter | Example |
+|------|-----------|---------|
+| Amazon | `asin` | `{ "asin": "B0CCZ1L489" }` |
+| Walmart / Target | `product_id` | `{ "product_id": "436473700" }` |
+| LinkedIn | `identifier` | `{ "identifier": "dustinlucien" }` |
+
+#### Keyword/search agents
+
+SERP agents accept a keyword parameter. The name varies — check `input_properties`:
+
+| Agent | Parameter | Example |
+|-------|-----------|---------|
+| `google_search` | `query` | `{ "query": "fintech NYC" }` |
+| `linkedin_search_peoples` | `keywords` | `{ "keywords": "CTO fintech" }` |
+| Amazon/Walmart SERP | `keyword` | `{ "keyword": "wireless headphones" }` |
+
+#### Non-URL agents
+
+Some agents operate on a fixed domain and only need non-URL inputs (e.g., `{ "username": "johndoe" }`).
+
+### Building params — step by step
+
+1. Call `nimble_agents_get` to read `input_properties`.
+2. Identify all properties where `required: true`.
+3. Map values from the user's request to matching parameter names. Use `examples` for guidance.
+4. Ask via `AskUserQuestion` only for required values that cannot be inferred. Omit optional params unless inferable.
+5. Pass constructed `params` dict to `nimble_agents_run`.
+
+### Also check output fields
+
+Before running or generating code, inspect the `skills` dict from `nimble_agents_get` to understand what data the agent returns. This is critical for:
+- **Interactive path:** knowing which fields to show in the results table.
+- **Codegen path:** determining the correct response parsing — see "Response shape inference" above.
