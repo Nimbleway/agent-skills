@@ -75,7 +75,7 @@ Follow this escalation pattern:
 | Find pages on a topic | `search` | No specific URL yet |
 | Get a page's content | `extract` | Have a URL |
 | Find URLs within a site | `map` | Need to discover subpages |
-| Bulk extract a site section | `crawl run` | Need many pages from one site |
+| Bulk extract a site section | `crawl run` | Need many pages from one site (returns raw HTML — prefer `map` + `extract` for LLM use) |
 
 **Avoid redundant fetches:**
 
@@ -95,8 +95,11 @@ nimble extract --url "https://react.dev/reference/rsc/server-components" --parse
 
 ```bash
 nimble map --url "https://docs.example.com" --limit 50
-# Found 50 URLs — now crawl the docs section
-nimble crawl run --url "https://docs.example.com/api" --include-path "/api" --limit 20
+# Found 50 URLs — extract the most relevant ones individually (LLM-friendly markdown)
+nimble extract --url "https://docs.example.com/api/overview" --parse --format markdown
+nimble extract --url "https://docs.example.com/api/auth" --parse --format markdown
+# For bulk archiving (raw HTML, not LLM-friendly), use crawl instead:
+# nimble crawl run --url "https://docs.example.com/api" --include-path "/api" --limit 20
 ```
 
 ## Output Formats
@@ -365,25 +368,31 @@ nimble crawl run --url "https://example.com" --sitemap auto --limit 50
 
 **Poll crawl status and retrieve results:**
 
-Crawl jobs run asynchronously. After starting a crawl, poll for completion, then retrieve the content:
+Crawl jobs run asynchronously. After starting a crawl, poll for completion, then retrieve content using **individual task IDs** (not the crawl ID):
 
 ```bash
-# 1. Start the crawl (returns a task/crawl ID)
-nimble crawl run --url "https://docs.example.com" --limit 50
+# 1. Start the crawl → returns a crawl_id
+nimble crawl run --url "https://docs.example.com" --limit 5
+# Returns: crawl_id "abc-123"
 
-# 2. Poll status every 15-30 seconds until completed
-nimble crawl status --id "crawl-task-id"
+# 2. Poll status until completed → returns individual task_ids per page
+nimble crawl status --id "abc-123"
+# Returns: tasks: [{ task_id: "task-456" }, { task_id: "task-789" }, ...]
 # Status values: running, completed, failed, terminated
 
-# 3. Retrieve the crawled content (only after status is "completed")
-nimble tasks results --task-id "crawl-task-id"
+# 3. Retrieve content using INDIVIDUAL task_ids (NOT the crawl_id)
+nimble tasks results --task-id "task-456"
+nimble tasks results --task-id "task-789"
+# ⚠️ Using the crawl_id here returns 404 — you must use the per-page task_ids from step 2
 ```
+
+**IMPORTANT:** `nimble tasks results` requires the **individual task IDs** from `crawl status` (each crawled page gets its own task ID), not the crawl job ID. Using the crawl ID will return a 404 error.
 
 **Polling guidelines:**
 - Poll every **15-30 seconds** for small crawls (< 50 pages)
 - Poll every **30-60 seconds** for larger crawls (50+ pages)
 - Stop polling after status is `completed`, `failed`, or `terminated`
-- Use `nimble tasks results --task-id "crawl-task-id"` to get the actual crawled page content — `crawl status` only returns progress metadata
+- **Note:** `crawl status` may occasionally misreport individual task statuses (showing "failed" for tasks that actually succeeded). If `crawl status` shows failed tasks, try retrieving their results with `nimble tasks results` before assuming failure
 
 **List crawls:**
 
@@ -439,11 +448,12 @@ When searching for a person with a common name:
 
 ### Crawl Strategy
 
-1. **Map first, crawl second** — use `map` to discover URLs and understand site structure before crawling (map returns URLs only, not content)
-2. **Always set `--limit`** — crawl has no default limit, so always specify one to avoid crawling entire sites
-3. **Use path filters** — `--include-path` and `--exclude-path` to target specific sections
-4. **Name your crawls** — use `--name` for easy tracking
-5. **Poll and retrieve** — use `crawl status` to monitor progress, then `nimble tasks results --task-id` to get the actual crawled content once completed
+1. **Prefer `map` + `extract` over `crawl` for LLM use** — crawl results return raw HTML (60-115KB per page) which overwhelms LLM context. For LLM-friendly output, use `map` to discover URLs, then `extract --parse --format markdown` on individual pages
+2. **Use `crawl` only for bulk archiving or data pipelines** — when you need raw content from many pages and will post-process it outside the LLM context
+3. **Always set `--limit`** — crawl has no default limit, so always specify one to avoid crawling entire sites
+4. **Use path filters** — `--include-path` and `--exclude-path` to target specific sections
+5. **Name your crawls** — use `--name` for easy tracking
+6. **Retrieve with individual task IDs** — `crawl status` returns per-page task IDs; use those (not the crawl ID) with `nimble tasks results --task-id`
 
 ## Common Recipes
 
@@ -501,3 +511,5 @@ nimble extract --url "https://react.dev/reference/rsc/server-components" --parse
 | **LinkedIn profiles** | Auth wall blocks extraction (returns redirect/JS, status 999) | Use `--topic social` search instead — it returns LinkedIn data directly via subagents. Do NOT try to `extract` LinkedIn URLs. |
 | **Sites behind login** | Extract returns login page instead of content | No workaround — use search snippets instead |
 | **Heavy SPAs** | Extract returns empty or minimal HTML | Add `--render` flag to execute JavaScript before extraction |
+| **Crawl results** | Returns raw HTML (60-115KB per page), no markdown option | Use `map` + `extract --parse --format markdown` on individual pages for LLM-friendly output |
+| **Crawl status** | May misreport individual task statuses as "failed" when they actually succeeded | Always try `nimble tasks results --task-id` before assuming failure |
