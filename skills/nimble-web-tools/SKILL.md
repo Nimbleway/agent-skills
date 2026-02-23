@@ -88,7 +88,7 @@ Follow this escalation pattern:
 ```bash
 nimble search --query "React server components best practices" --topic coding --num-results 5 --deep-search=false
 # Found relevant URLs — now extract the most useful one
-nimble extract --url "https://react.dev/reference/rsc/server-components" --parse
+nimble extract --url "https://react.dev/reference/rsc/server-components" --parse --format markdown
 ```
 
 **Example: extracting docs from a site**
@@ -101,13 +101,26 @@ nimble crawl run --url "https://docs.example.com/api" --include-path "/api" --li
 
 ## Output Formats
 
-Control output format with the global `--format` flag:
+**Global CLI output format** — controls how the CLI structures its output. Place before the command:
 
 ```bash
-nimble search --query "test" --format json      # JSON (default)
-nimble search --query "test" --format yaml      # YAML
-nimble search --query "test" --format pretty    # Pretty-printed
-nimble search --query "test" --format raw       # Raw API response
+nimble --format json search --query "test"      # JSON (default)
+nimble --format yaml search --query "test"      # YAML
+nimble --format pretty search --query "test"    # Pretty-printed
+nimble --format raw search --query "test"       # Raw API response
+```
+
+**Content parsing format** — controls how page content is returned. These are command-specific flags:
+
+- **search**: `--parsing-type markdown` (or `plain_text`, `simplified_html`)
+- **extract**: `--format markdown` (or `html`) — note: this is a *content format* flag on extract, not the global output format
+
+```bash
+# Search with markdown content parsing
+nimble search --query "test" --parsing-type markdown --deep-search=false
+
+# Extract with markdown content + YAML CLI output
+nimble --format yaml extract --url "https://example.com" --parse --format markdown
 ```
 
 Use `--transform` with GJSON syntax to extract specific fields:
@@ -217,27 +230,26 @@ nimble search --query "machine learning" --deep-search --num-results 5
 
 Extract content from a URL. Supports JS rendering, browser emulation, and geolocation. Run `nimble extract --help` for all options.
 
-```bash
-# Basic extraction
-nimble extract --url "https://example.com"
+**IMPORTANT:** Always use `--parse --format markdown` to get clean markdown output. Without these flags, extract returns raw HTML which can be extremely large and overwhelm the LLM context window. The `--format` flag on extract controls the *content type* (not the CLI output format — see Output Formats above).
 
-# Parse the response content
-nimble extract --url "https://example.com/article" --parse
+```bash
+# Standard extraction (always use --parse --format markdown for LLM-friendly output)
+nimble extract --url "https://example.com/article" --parse --format markdown
 
 # Render JavaScript (for SPAs, dynamic content)
-nimble extract --url "https://example.com/app" --render
+nimble extract --url "https://example.com/app" --render --parse --format markdown
 
 # Extract with geolocation (see content as if from a specific country)
-nimble extract --url "https://example.com" --country US --city "New York"
+nimble extract --url "https://example.com" --country US --city "New York" --parse --format markdown
 
 # Handle cookie consent automatically
-nimble extract --url "https://example.com" --consent-header
+nimble extract --url "https://example.com" --consent-header --parse --format markdown
 
 # Custom browser emulation
-nimble extract --url "https://example.com" --browser chrome --device desktop --os windows
+nimble extract --url "https://example.com" --browser chrome --device desktop --os windows --parse --format markdown
 
-# Specify response format preference
-nimble extract --url "https://example.com" --format markdown --format html
+# Multiple content format preferences (API tries first, falls back to second)
+nimble extract --url "https://example.com" --parse --format markdown --format html
 ```
 
 **Key options:**
@@ -245,7 +257,8 @@ nimble extract --url "https://example.com" --format markdown --format html
 | Flag | Description |
 |------|-------------|
 | `--url` | Target URL to extract (required) |
-| `--parse` | Parse the response content |
+| `--parse` | Parse the response content (always use this) |
+| `--format` | Content type preference: `markdown`, `html` (always use `markdown` for LLM-friendly output) |
 | `--render` | Render JavaScript using a browser |
 | `--country` | Country code for geolocation and proxy |
 | `--city` | City for geolocation |
@@ -266,10 +279,10 @@ nimble extract --url "https://example.com" --format markdown --format html
 
 ### map
 
-Discover URLs on a website. Run `nimble map --help` for all options.
+Discover URLs on a website. Returns **URL metadata only** (URLs, titles, descriptions) — not page content. Use `extract` or `crawl` to get actual content from the discovered URLs. Run `nimble map --help` for all options.
 
 ```bash
-# Map all URLs on a site
+# Map all URLs on a site (returns URLs only, not content)
 nimble map --url "https://example.com"
 
 # Limit number of URLs returned
@@ -295,34 +308,42 @@ nimble map --url "https://example.com" --sitemap auto
 
 ### crawl
 
-Bulk extract from a website. Crawl is async — you start a job, then check its status. Run `nimble crawl run --help` for all options.
+Bulk extract from a website. Crawl is **async** — you start a job, poll for completion, then retrieve the results. Run `nimble crawl run --help` for all options.
+
+**Crawl defaults:**
+
+| Setting | Default | Notes |
+|---------|---------|-------|
+| `--sitemap` | `auto` | Automatically uses sitemap if available |
+| `--max-discovery-depth` | `5` | How deep the crawler follows links |
+| `--limit` | No limit | **Always set a limit** to avoid crawling entire sites |
 
 **Start a crawl:**
 
 ```bash
-# Crawl a site section
+# Crawl a site section (always set --limit)
 nimble crawl run --url "https://docs.example.com" --limit 50
 
 # Crawl with path filtering
 nimble crawl run --url "https://example.com" --include-path "/docs" --include-path "/api" --limit 100
 
 # Exclude paths
-nimble crawl run --url "https://example.com" --exclude-path "/blog" --exclude-path "/archive"
+nimble crawl run --url "https://example.com" --exclude-path "/blog" --exclude-path "/archive" --limit 50
 
 # Control crawl depth
-nimble crawl run --url "https://example.com" --max-discovery-depth 3
+nimble crawl run --url "https://example.com" --max-discovery-depth 3 --limit 50
 
 # Allow subdomains and external links
-nimble crawl run --url "https://example.com" --allow-subdomains --allow-external-links
+nimble crawl run --url "https://example.com" --allow-subdomains --allow-external-links --limit 50
 
 # Crawl entire domain (not just child paths)
-nimble crawl run --url "https://example.com/docs" --crawl-entire-domain
+nimble crawl run --url "https://example.com/docs" --crawl-entire-domain --limit 100
 
 # Named crawl for tracking
 nimble crawl run --url "https://example.com" --name "docs-crawl-feb-2026" --limit 200
 
 # Use sitemap for discovery
-nimble crawl run --url "https://example.com" --sitemap auto
+nimble crawl run --url "https://example.com" --sitemap auto --limit 50
 ```
 
 **Key options for `crawl run`:**
@@ -330,8 +351,8 @@ nimble crawl run --url "https://example.com" --sitemap auto
 | Flag | Description |
 |------|-------------|
 | `--url` | URL to crawl (required) |
-| `--limit` | Max pages to crawl |
-| `--max-discovery-depth` | Max depth based on discovery order |
+| `--limit` | Max pages to crawl (**always set this**) |
+| `--max-discovery-depth` | Max depth based on discovery order (default 5) |
 | `--include-path` | Regex patterns for URLs to include (repeatable) |
 | `--exclude-path` | Regex patterns for URLs to exclude (repeatable) |
 | `--allow-subdomains` | Follow links to subdomains |
@@ -339,14 +360,30 @@ nimble crawl run --url "https://example.com" --sitemap auto
 | `--crawl-entire-domain` | Follow sibling/parent URLs, not just child paths |
 | `--ignore-query-parameters` | Don't re-scrape same path with different query params |
 | `--name` | Name for the crawl job |
-| `--sitemap` | Use sitemap for URL discovery |
+| `--sitemap` | Use sitemap for URL discovery (default auto) |
 | `--callback` | Webhook for receiving results |
 
-**Check crawl status:**
+**Poll crawl status and retrieve results:**
+
+Crawl jobs run asynchronously. After starting a crawl, poll for completion, then retrieve the content:
 
 ```bash
+# 1. Start the crawl (returns a task/crawl ID)
+nimble crawl run --url "https://docs.example.com" --limit 50
+
+# 2. Poll status every 15-30 seconds until completed
 nimble crawl status --id "crawl-task-id"
+# Status values: running, completed, failed, terminated
+
+# 3. Retrieve the crawled content (only after status is "completed")
+nimble tasks results --task-id "crawl-task-id"
 ```
+
+**Polling guidelines:**
+- Poll every **15-30 seconds** for small crawls (< 50 pages)
+- Poll every **30-60 seconds** for larger crawls (50+ pages)
+- Stop polling after status is `completed`, `failed`, or `terminated`
+- Use `nimble tasks results --task-id "crawl-task-id"` to get the actual crawled page content — `crawl status` only returns progress metadata
 
 **List crawls:**
 
@@ -395,18 +432,18 @@ When searching for a person with a common name:
 
 ### Extraction Strategy
 
-1. **Try without `--render` first** — it's faster for static pages
-2. **Add `--render` for SPAs** — when content is loaded by JavaScript
-3. **Use `--parse`** — to get structured parsed content
+1. **Always use `--parse --format markdown`** — returns clean markdown instead of raw HTML, preventing context window overflow
+2. **Try without `--render` first** — it's faster for static pages
+3. **Add `--render` for SPAs** — when content is loaded by JavaScript
 4. **Set geolocation** — use `--country` to see region-specific content
 
 ### Crawl Strategy
 
-1. **Map first, crawl second** — use `map` to understand site structure before crawling
-2. **Use path filters** — `--include-path` and `--exclude-path` to target specific sections
-3. **Set reasonable limits** — start with `--limit 50` and increase if needed
+1. **Map first, crawl second** — use `map` to discover URLs and understand site structure before crawling (map returns URLs only, not content)
+2. **Always set `--limit`** — crawl has no default limit, so always specify one to avoid crawling entire sites
+3. **Use path filters** — `--include-path` and `--exclude-path` to target specific sections
 4. **Name your crawls** — use `--name` for easy tracking
-5. **Monitor status** — check `crawl status --id` for long-running jobs
+5. **Poll and retrieve** — use `crawl status` to monitor progress, then `nimble tasks results --task-id` to get the actual crawled content once completed
 
 ## Common Recipes
 
@@ -422,7 +459,7 @@ nimble search --query "Jane Doe career history Acme Corp" --deep-search=false --
 nimble search --query "Jane Doe publications blog articles" --deep-search=false --include-answer
 
 # Step 3: Extract the most promising non-auth-walled URLs (skip LinkedIn — see Known Limitations)
-nimble extract --url "https://www.companysite.com/team/jane-doe" --parse
+nimble extract --url "https://www.companysite.com/team/jane-doe" --parse --format markdown
 ```
 
 ### Researching a company
@@ -433,7 +470,7 @@ nimble search --query "Acme Corp" --topic general --deep-search=false --include-
 nimble search --query "Acme Corp" --topic news --time-range month --deep-search=false --include-answer
 
 # Step 2: Extract company page
-nimble extract --url "https://acme.com/about" --parse
+nimble extract --url "https://acme.com/about" --parse --format markdown
 ```
 
 ### Technical research
@@ -443,7 +480,7 @@ nimble extract --url "https://acme.com/about" --parse
 nimble search --query "React Server Components migration guide" --topic coding --deep-search=false --include-answer
 
 # Step 2: Extract the most relevant doc
-nimble extract --url "https://react.dev/reference/rsc/server-components" --parse
+nimble extract --url "https://react.dev/reference/rsc/server-components" --parse --format markdown
 ```
 
 ## Error Handling
