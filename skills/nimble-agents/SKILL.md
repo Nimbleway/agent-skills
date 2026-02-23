@@ -20,7 +20,7 @@ allowed-tools:
 disable-model-invocation: false
 license: MIT
 metadata:
-  version: "0.5.0"
+  version: "0.6.0"
   author: Nimbleway
   repository: https://github.com/Nimbleway/agent-skills
 ---
@@ -303,7 +303,7 @@ The background agent executes a closed-loop lifecycle:
 
 1. **Discovery** (when `refine_validate=true` or auto-triggered by failure) — use `nimble_web_search` with `deep_search=true` (MCP) to explore the domain. Build a refined prompt with specific fields, URLs, examples.
 2. **Create/Update** — `nimble_agents_generate` (first time only) or `nimble_agents_update` (all recovery and refinement, same session_id). Never regenerate. Retry-with-fix max 2 times on error.
-3. **Poll** — `nimble_agents_status` every strictly 30s, max 10 checks per phase. **5 consecutive errors or 10 checks without completion → auto-trigger update loop** (same session_id, discovery with error context, then `nimble_agents_update`).
+3. **Poll** — ONLY `nimble_agents_status` in a loop (never `nimble_agents_update` during polling). Loop: status → check → `Bash(sleep 30)` → repeat. Strictly 30s, max 10 checks. **5 consecutive errors or 10 checks → exit loop → update loop** (discovery, then `nimble_agents_update`).
 4. **Validate** — generate 50 diverse test inputs, write a Python validation script to `/tmp/validate_agent_{name}.py`, execute via `Bash(uv run ...)`. Assert >= 80% pass rate. Uses REST API `POST /v1/agent` (response at `data.parsing`).
 5. **Publish** — `nimble_agents_publish` on validation pass (or immediately if `refine_validate=false` and no failures).
 6. **Report** — structured report: agent name, operation, status, pass rate, schemas, sample results.
