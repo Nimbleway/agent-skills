@@ -127,7 +127,8 @@ Web search with 8 focus modes. Run `nimble search --help` for all options.
 Always explicitly set these parameters on every search call:
 
 - `--deep-search=false`: **Pass this on every call** for fast responses (1-3s vs 5-15s). Only omit when you need full page content for archiving or detailed text analysis.
-- `--topic`: Match to query type — `coding`, `news`, `academic`, etc. Default is `general`.
+- `--include-answer`: **Recommended on every research/exploration query.** Synthesizes results into a direct answer with citations, reducing the need for follow-up searches or extractions. Only skip for URL-discovery-only queries where you just need links. **Note:** This is a premium feature (Enterprise plans). If the API returns a `402` or `403` when using this flag, retry the same query without `--include-answer` and continue — the search results are still valuable without the synthesized answer.
+- `--topic`: Match to query type — `coding`, `news`, `academic`, etc. Default is `general`. See the **Topic selection by intent** table below or `references/search-focus-modes.md` for guidance.
 - `--num-results`: Default `10` — balanced speed and coverage.
 
 ```bash
@@ -180,7 +181,7 @@ nimble search --query "machine learning" --deep-search --num-results 5
 | `--locale` | Locale for language settings |
 | `--max-subagents` | Max parallel subagents for shopping/social/geo modes (1-10, default 3) |
 
-**Focus modes:**
+**Focus modes** (quick reference — for detailed per-mode guidance, decision tree, and combination strategies, **read `references/search-focus-modes.md`**):
 
 | Mode | Best for |
 |------|----------|
@@ -189,9 +190,21 @@ nimble search --query "machine learning" --deep-search --num-results 5
 | `news` | Current events, breaking news, recent articles |
 | `academic` | Research papers, scholarly articles, studies |
 | `shopping` | Product searches, price comparisons, e-commerce |
-| `social` | Social media posts, community discussions |
+| `social` | People research, LinkedIn/X/YouTube profiles, community discussions |
 | `geo` | Geographic information, regional data |
 | `location` | Local businesses, place-specific queries |
+
+**Topic selection by intent** (see `references/search-focus-modes.md` for full table):
+
+| Query Intent | Primary Topic | Secondary (parallel) |
+|---|---|---|
+| Research a **person** | `social` | `general` |
+| Research a **company** | `general` | `news` |
+| Find **code/docs** | `coding` | — |
+| Current **events** | `news` | `social` |
+| Find a **product/price** | `shopping` | — |
+| Find a **place/business** | `location` | `geo` |
+| Find **research papers** | `academic` | — |
 
 **Performance tips:**
 
@@ -360,10 +373,25 @@ nimble crawl terminate --id "crawl-task-id"
 
 1. **Always pass `--deep-search=false`** — the default is deep mode (slow). Fast mode covers 95% of use cases: URL discovery, research, comparisons, answer generation
 2. **Only use deep mode when you need full page text** — archiving articles, extracting complete docs, building datasets
-3. **Start with the right focus mode** — match `--topic` to your query type
-4. **Use `--include-answer`** — get AI-synthesized insights without extracting each result
+3. **Start with the right focus mode** — match `--topic` to your query type (see `references/search-focus-modes.md`)
+4. **Use `--include-answer`** — get AI-synthesized insights without extracting each result. If it returns 402/403, retry without it.
 5. **Filter domains** — use `--include-domain` to target authoritative sources
 6. **Add time filters** — use `--time-range` for time-sensitive queries
+
+### Multi-Search Strategy
+
+When researching a topic in depth, run 2-3 searches in parallel with:
+- **Different topics** — e.g., `social` + `general` for people research
+- **Different query angles** — e.g., "Jane Doe current job" + "Jane Doe career history" + "Jane Doe publications"
+
+This is faster than sequential searches and gives broader coverage. Deduplicate results by URL before extracting.
+
+### Disambiguating Common Names
+
+When searching for a person with a common name:
+1. Include distinguishing context in the query: company name, job title, city
+2. Use `--topic social` — LinkedIn results include location and current company, making disambiguation easier
+3. Cross-reference results across searches to confirm you're looking at the right person
 
 ### Extraction Strategy
 
@@ -380,12 +408,59 @@ nimble crawl terminate --id "crawl-task-id"
 4. **Name your crawls** — use `--name` for easy tracking
 5. **Monitor status** — check `crawl status --id` for long-running jobs
 
+## Common Recipes
+
+### Researching a person
+
+```bash
+# Step 1: Run social + general in parallel for max coverage
+nimble search --query "Jane Doe Head of Engineering" --topic social --deep-search=false --num-results 10 --include-answer
+nimble search --query "Jane Doe Head of Engineering" --topic general --deep-search=false --num-results 10 --include-answer
+
+# Step 2: Broaden with different query angles in parallel
+nimble search --query "Jane Doe career history Acme Corp" --deep-search=false --include-answer
+nimble search --query "Jane Doe publications blog articles" --deep-search=false --include-answer
+
+# Step 3: Extract the most promising non-auth-walled URLs (skip LinkedIn — see Known Limitations)
+nimble extract --url "https://www.companysite.com/team/jane-doe" --parse
+```
+
+### Researching a company
+
+```bash
+# Step 1: Overview + recent news in parallel
+nimble search --query "Acme Corp" --topic general --deep-search=false --include-answer
+nimble search --query "Acme Corp" --topic news --time-range month --deep-search=false --include-answer
+
+# Step 2: Extract company page
+nimble extract --url "https://acme.com/about" --parse
+```
+
+### Technical research
+
+```bash
+# Step 1: Find docs and code examples
+nimble search --query "React Server Components migration guide" --topic coding --deep-search=false --include-answer
+
+# Step 2: Extract the most relevant doc
+nimble extract --url "https://react.dev/reference/rsc/server-components" --parse
+```
+
 ## Error Handling
 
 | Error | Solution |
 |-------|----------|
 | `NIMBLE_API_KEY not set` | Set the environment variable: `export NIMBLE_API_KEY="your-key"` |
 | `401 Unauthorized` | Verify API key is active at nimbleway.com |
+| `402`/`403` with `--include-answer` | Premium feature not available on current plan. Retry the same query without `--include-answer` and continue |
 | `429 Too Many Requests` | Reduce request frequency or upgrade API tier |
 | Timeout | Ensure `--deep-search=false` is set, reduce `--num-results`, or increase `--request-timeout` |
 | No results | Try different `--topic`, broaden query, remove domain filters |
+
+## Known Limitations
+
+| Site | Issue | Workaround |
+|------|-------|------------|
+| **LinkedIn profiles** | Auth wall blocks extraction (returns redirect/JS, status 999) | Use `--topic social` search instead — it returns LinkedIn data directly via subagents. Do NOT try to `extract` LinkedIn URLs. |
+| **Sites behind login** | Extract returns login page instead of content | No workaround — use search snippets instead |
+| **Heavy SPAs** | Extract returns empty or minimal HTML | Add `--render` flag to execute JavaScript before extraction |
