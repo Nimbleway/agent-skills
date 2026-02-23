@@ -76,5 +76,5 @@ After confirmation:
 - **Agents to generate** → proceed to Step 3C (generate path). Launch
   generations **in parallel** as background tasks — one per session_id.
   Each background task polls independently via
-  `nimble_agents_generate_status`. Gather results and proceed when all
+  `nimble_agents_status`. Gather results and proceed when all
   complete.

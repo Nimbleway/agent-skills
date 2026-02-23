@@ -12,9 +12,10 @@ allowed-tools:
   - mcp__nimble-mcp-server__nimble_agents_list
   - mcp__nimble-mcp-server__nimble_agents_get
   - mcp__nimble-mcp-server__nimble_agents_generate
-  - mcp__nimble-mcp-server__nimble_agents_generate_status
+  - mcp__nimble-mcp-server__nimble_agents_status
   - mcp__nimble-mcp-server__nimble_agents_run
   - mcp__nimble-mcp-server__nimble_agents_publish
+  - mcp__nimble-mcp-server__nimble_agents_update
   - mcp__nimble-mcp-server__nimble_web_search
 disable-model-invocation: false
 license: MIT
@@ -231,15 +232,17 @@ options:
 
 **3C-1.** Create a stable `session_id` (UUID v4, reuse for all generate/publish calls).
 
-**3C-2.** Call `nimble_agents_generate` with a clear prompt. If the user specifies exact output fields (e.g., "extract name, price, and rating"), include an `output_schema` in the generate call to guide the agent's extraction. Handle status:
-- `"waiting"` — present follow-up questions via `AskUserQuestion`, call generate again with same `session_id` and user's answer as `prompt`.
+**3C-2.** Call `nimble_agents_generate` **once** with a clear prompt. If the user specifies exact output fields (e.g., "extract name, price, and rating"), include an `output_schema` in the generate call to guide the agent's extraction. Handle status:
+- `"waiting"` — present follow-up questions via `AskUserQuestion`, then call `nimble_agents_update` with same `session_id` and user's answer as `prompt`.
 - `"processing"` — launch a **background polling task** (see below).
 - `"complete"` — auto-advance to run and publish.
-- `"error"` — analyze the error. If retryable (timeout, transient failure), try generating again with an improved prompt. Otherwise present error and offer alternatives.
+- `"error"` — apply the **retry-with-fix protocol** (see below) using `nimble_agents_update`.
+
+**Important:** `nimble_agents_generate` is for initial creation only. All follow-ups (answering waiting questions, retrying errors, refining) use `nimble_agents_update` with the same `session_id`.
 
 ### Background polling protocol (`processing` status)
 
-Agent generation takes 2–10 minutes. Launch a **background Task agent** to poll with `nimble_agents_generate_status` every 30 seconds (max 20 checks). The conversation stays responsive while the agent polls.
+Agent generation takes 2–10 minutes. Launch a **background Task agent** to poll with `nimble_agents_status` every 30 seconds (max 20 checks). The conversation stays responsive while the agent polls.
 
 Tell the user: "Agent generation started — this typically takes 2–5 minutes (up to 10). I'll check progress in the background."
 
@@ -247,9 +250,51 @@ See **`references/generate-and-publish.md`** > "Status: processing" for the exac
 
 When generating multiple agents, launch background tasks **in parallel** — one per session_id.
 
+### Retry-with-fix protocol
+
+When `nimble_agents_status` returns `status="error"` during polling:
+
+1. **Read diagnostics**: Extract the `error` and `message` fields from the response.
+2. **Compose fix prompt**: Build a prompt that references the failure:
+   ```
+   prompt: "The previous attempt encountered an issue: {error}. The assistant reported: {message}. Please fix the configuration accordingly and retry."
+   ```
+3. **Retry via update**: Call `nimble_agents_update` with the **same `session_id`** and the fix prompt. This works for sessions started by either generate or update — the graph preserves conversation state.
+4. **Resume polling**: If the retry returns `"processing"`, launch a new background polling task.
+5. **Max 2 consecutive retries**: After 2 consecutive error/issue message responses, try to `nimble_agents_update` by creating a prompt that is likely to fix from inferring the issue from the messages accumulted. If problem persists, present the issues to the user and offer to use another agent, regenerate with different prompt or allow to edit the update prompt with `nimble_agents_update`.
+
 **3C-3.** Route to Step 3A (interactive) or Step 3B (codegen) to run the agent first based on the execution mode determined in Step 1.
 
 **3C-4.** After a successful run, use `AskUserQuestion` to offer publishing. If confirmed, call `nimble_agents_publish` with same `session_id`. If 409, already published — proceed.
+
+## Step 3D: Update path (refine existing agent)
+
+**Prefer update over generate.** When an existing agent can be refined, use `nimble_agents_update(agent_name=...)` rather than generating from scratch.
+
+When the user wants to modify or improve an existing agent (e.g. "change the output fields", "add ratings", "update the agent to also extract X"):
+
+**3D-1.** Call `nimble_agents_get` to inspect the current agent's schemas.
+
+**3D-2.** Call `nimble_agents_update` with:
+- `agent_name`: the agent to refine
+- `prompt`: natural-language refinement instruction
+- `output_schema` / `input_schema`: optional schema overrides
+
+Published agents → automatically forked to a private copy. User's unpublished agents → updated in-place.
+
+Handle status (same flow as generate):
+- `"waiting"` → relay question via `AskUserQuestion`, call `nimble_agents_update` again with same `session_id` and user's answer as `prompt`.
+- `"processing"` → launch a **background polling task** with `nimble_agents_status` (same protocol as Step 3C).
+- `"complete"` → agent_name is set, proceed to publish then run.
+- `"error"` → apply the **retry-with-fix protocol** from Step 3C.
+
+**3D-3. Default: publish first, then run by agent_name.**
+
+After `"complete"`, the default workflow is:
+1. Call `nimble_agents_publish` with same `session_id` to save the refined agent.
+2. Run the published agent via `nimble_agents_run(agent_name=..., params={...})`.
+
+This ensures the agent is persisted and reusable. Offer an `AskUserQuestion` confirmation before publishing only if the user previously expressed hesitation; otherwise auto-publish.
 
 ## Step 4: Final response
 
@@ -285,20 +330,22 @@ Load reference files proactively during code generation. For the codegen path, a
 
 - **`references/sdk-patterns.md`** — Python SDK: running agents, async endpoint, batch pipelines, incremental file writes (CSV/JSONL/Parquet).
 - **`references/input-schema-guide.md`** — Mapping agent input schemas to params.
-- **`references/agent-api-reference.md`** — Reference for all six MCP tools (including `nimble_agents_generate_status`).
+- **`references/agent-api-reference.md`** — Reference for all six MCP tools (including `nimble_agents_status`).
 - **`references/error-recovery.md`** — Error handling and recovery patterns.
 - **`references/normalization-guide.md`** — Multi-agent field mapping, unified schema, deduplication.
 - **`references/find-and-run-agent.md`** — Existing-agent path walkthrough.
 - **`references/planning-workflow.md`** — Plan mode protocol for unclear/complex intents.
 - **`references/generate-and-publish.md`** — Generate fallback walkthrough (includes polling protocol and outcome handling).
+- **`references/update-agent.md`** — Update/refine agent walkthrough: fork logic, UBCT limitations, retry-with-fix, update-poll-run-publish flow.
 - **`references/bulk-extraction.md`** — Multi-URL batch extraction walkthrough.
 - **`references/rest-api-patterns.md`** — REST API patterns for TypeScript, Node, curl, and other non-Python languages.
 - **`references/codegen-walkthrough.md`** — Codegen path walkthrough: multi-store comparison with CSV output.
 
 ## Guardrails
 
-- Agent workflows only — list, get, generate, generate_status, run, publish. No scheduling or monitoring.
-- To modify an existing agent, generate a new one with an improved prompt — there is no update operation.
+- Agent workflows only — list, get, generate, update, status, run, publish. No scheduling or monitoring.
+- **Generate once, update for everything else.** Call `nimble_agents_generate` only once per agent creation. All follow-ups — answering waiting questions, retrying errors, refining — go through `nimble_agents_update` with the same `session_id`. Prefer updating existing agents over generating from scratch.
+- To modify an existing agent, use `nimble_agents_update` with the `agent_name` and a refinement prompt. Published agents are automatically forked to a private copy. UBCT-based agents cannot be updated — generate a new one instead.
 - **Never ask for information already in the request or inferable from context.**
 - Present tool call results in markdown tables. Never show raw JSON.
 - Adapt table columns to match actual data returned.
