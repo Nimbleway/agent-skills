@@ -1,6 +1,6 @@
 # Agent API Reference
 
-Concise reference for the eight Nimble agent MCP tools plus input parameter mapping.
+Concise reference for the nine Nimble agent MCP tools plus input parameter mapping.
 
 ---
 

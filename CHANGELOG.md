@@ -11,8 +11,7 @@
   - Description rewritten to third-person with specific trigger phrases
   - Step 3 condensed; detailed content moved to `references/generate-update-and-publish.md`
   - Added anti-hallucination guardrails for subagent prompts
-- **nimble-web-tools** skill — description and writing style fixes
-- Version bumped to 0.6.0 across all plugin configs
+- Version bumped to 0.6.1 across all plugin configs
 - Deduplicated `google_search` caveat in `error-recovery.md`
 
 ## [0.5.0] - 2026-02-23
