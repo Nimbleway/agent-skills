@@ -5,6 +5,9 @@
 .claude
 .claude/
 
+# Local docs / design documents
+docs/
+
 # IDE / editor plugin state
 .cursor/
 *.bak

@@ -1,7 +1,7 @@
 # Nimble Web Data Toolkit
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![Version](https://img.shields.io/badge/version-0.5.0-green)](https://github.com/Nimbleway/agent-skills)
+[![Version](https://img.shields.io/badge/version-0.6.1-green)](https://github.com/Nimbleway/agent-skills)
 
 Search, extract, map, and crawl the web with Nimble CLI. One plugin for Claude Code, Cursor, and Vercel Agent Skills.
 
@@ -191,7 +191,6 @@ agent-skills/
 │   └── nimble-tools.mdc    # Cursor rule (auto-loaded by plugin)
 ├── .mcp.json                # Claude Code plugin MCP config
 ├── mcp.json                 # Cursor plugin MCP config
-├── .env.example
 └── README.md
 ```
 

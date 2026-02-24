@@ -1,7 +1,7 @@
 {
   "name": "nimble",
   "displayName": "Nimble Web Data Toolkit",
-  "version": "0.6.0",
+  "version": "0.6.1",
   "description": "Search, extract, map, and crawl the web with Nimble CLI. Web search with 8 focus modes, page extraction, site mapping, bulk crawling, and guided agent workflows for structured data.",
   "author": {
     "name": "Nimble",

@@ -1,5 +1,19 @@
 # Changelog
 
+## [0.6.1] - 2026-02-24
+
+### Changed
+- **nimble-agents** skill — comprehensive rewrite for MCP reliability and best practices
+  - Fixed `allowed-tools` prefix (`mcp__plugin_nimble_nimble-mcp-server__` format)
+  - Task agents now use `run_in_background=False` to preserve MCP access ([#13254](https://github.com/anthropics/claude-code/issues/13254))
+  - Added MCP tool registry blocks to all Task prompt templates
+  - Enforced `nimble_web_search` (MCP) as only search method — banned WebSearch, WebFetch, curl
+  - Description rewritten to third-person with specific trigger phrases
+  - Step 3 condensed; detailed content moved to `references/generate-update-and-publish.md`
+  - Added anti-hallucination guardrails for subagent prompts
+- Version bumped to 0.6.1 across all plugin configs
+- Deduplicated `google_search` caveat in `error-recovery.md`
+
 ## [0.5.0] - 2026-02-23
 
 ### Added
