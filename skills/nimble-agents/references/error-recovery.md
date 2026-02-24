@@ -48,7 +48,8 @@ For batch operations, log the error and continue with remaining items. Do not ab
 
 ## Rate limiting / transient errors (429, 500-504)
 
-> Transient server error. For MCP tool calls, wait briefly and retry once manually.
+> For `nimble_agents_generate` or `nimble_agents_update_from_agent`: if 429/quota is returned, stop and report quota exhaustion. Do NOT create a new session or fallback to another session-creation call.
+> For `nimble_agents_update_session`/`nimble_agents_status` on transient errors, wait briefly and retry once using the same `session_id`.
 > For generated scripts, the SDK handles retry automatically.
 
 See `sdk-patterns.md` > "Retry Behavior" for SDK retry configuration.
@@ -76,7 +77,7 @@ Poll with `nimble_agents_status` (read-only GET endpoint) from a background Task
 
 > Agent generation is taking longer than expected. You can wait or try a simpler prompt.
 
-For transient errors during polling (timeouts, 5xx), retry the status check — do not restart generation. For persistent errors, analyze the error and retry via `nimble_agents_update` with the same `session_id` and an improved or simplified prompt. Max 2 consecutive retries.
+For transient errors during polling (timeouts, 5xx), retry the status check — do not restart generation. For persistent errors, analyze the error and retry via `nimble_agents_update_session` with the same `session_id` and an improved or simplified prompt. Max 2 consecutive retries.
 
 ## Publish conflict (409 from `nimble_agents_publish`)
 
@@ -127,7 +128,7 @@ When `nimble_agents_list` returns 0 matches or only partial matches:
    - A specific URL can be provided as an example for the generator.
    - The data needed goes beyond what `nimble_web_search` provides.
 
-3. **`google_search` is NOT a fallback for missing agents.** It is a SERP analysis tool for when the user's *intent* is to analyze Google's search results page itself — rank/position tracking, SEO competitive analysis, SERP feature monitoring. The question to ask: "Does the user want to *find information*, or *analyze where things rank on Google*?" If the former, `nimble_web_search` and agent generation are the correct tools.
+3. **`google_search` is NOT a fallback for missing agents.** See the [Persistent data source failures](#persistent-data-source-failures-2-consecutive-500s) section for the full `google_search` vs `nimble_web_search` distinction.
 
 4. **When generating fails or produces poor results**, ask the user to clarify:
    - What specific data fields are needed.

@@ -1,8 +1,8 @@
 # Generate, Update, and Publish an Agent
 
-Background agent workflow for creating, updating, and publishing agents with automated validation.
+Task agent workflow for creating, updating, and publishing agents with automated validation.
 
-**HARD RULE: `nimble_agents_generate`, `nimble_agents_update`, `nimble_agents_status`, and `nimble_agents_publish` are BANNED from the foreground conversation.** This entire workflow MUST run inside a background `Task(subagent_type="general-purpose", run_in_background=True)` agent. Calling these tools in the foreground floods context with large polling responses. No exceptions — not even for a single update or status check.
+**HARD RULE: `nimble_agents_generate`, `nimble_agents_update_from_agent`, `nimble_agents_update_session`, `nimble_agents_status`, and `nimble_agents_publish` are BANNED from the foreground conversation.** This entire workflow MUST run inside a `Task(subagent_type="general-purpose", run_in_background=False)` agent. Using `run_in_background=False` is required because background Task agents [cannot access MCP tools](https://github.com/anthropics/claude-code/issues/13254). The Task agent runs in its own context window regardless — foreground mode only means the main conversation waits for completion. No exceptions — not even for a single update or status check.
 
 ## Overview — Closed-loop lifecycle
 
@@ -11,7 +11,7 @@ User chooses refine-validate (yes/no) — ONCE, in the foreground
         ↓
 ┌─→ Discovery (nimble_web_search deep → refined prompt, fields, URLs)
 │   ↓
-│   Create/Update (nimble_agents_generate or nimble_agents_update)
+│   Create/UpdateFromAgent (nimble_agents_generate or nimble_agents_update_from_agent)
 │   ↓
 │   Poll (nimble_agents_status every 30s, max 10 checks)
 │   ↓                              ↓
@@ -29,18 +29,18 @@ User chooses refine-validate (yes/no) — ONCE, in the foreground
 │   ↓  UPDATE LOOP (auto-triggered)  ←────────────┘
 │   Discovery with failure context
 │   ↓
-└── nimble_agents_update (same session_id) → re-poll → re-validate
+└── nimble_agents_update_session (same session_id) → re-poll → re-validate
     (max 2 cycles → escalate to user)
     NEVER regenerate — always update
 ```
 
-**Key rule:** The update loop is **auto-triggered on failure** — 5 consecutive poll errors/issue-messages, poll timeout, or <80% validation — regardless of the user's initial preference. The user's choice only controls whether discovery and validation run on the *happy path*. **Never regenerate — always use `nimble_agents_update` with the same session_id for all recovery.**
+**Key rule:** The update loop is **auto-triggered on failure** — 5 consecutive poll errors/issue-messages, poll timeout, or <80% validation — regardless of the user's initial preference. The user's choice only controls whether discovery and validation run on the *happy path*. **Never regenerate — always use `nimble_agents_update_session` with the same session_id for all recovery.**
 
 **Overall timeout: 15 minutes wall-clock.** The entire background agent lifecycle — all cycles, all phases combined — must complete within 15 minutes. If the timeout is reached, immediately stop, skip remaining phases, and jump to Phase 6 (Report) with `STATUS: timed_out`. Use `max_turns=50` on the Task launch to enforce a turn budget.
 
 ## Phase 0: User preference (ONCE, in the foreground)
 
-**CRITICAL: AskUserQuestion happens ONCE in the foreground conversation, BEFORE launching the background agent. The background agent receives `refine_validate=true|false` and NEVER asks the user anything.**
+**CRITICAL: AskUserQuestion happens ONCE in the foreground conversation, BEFORE launching the Task agent. The Task agent receives `refine_validate=true|false` and NEVER asks the user anything.**
 
 ```
 question: "Run refinement-validation before publishing?"
@@ -52,15 +52,15 @@ options:
     description: "Generate → publish immediately without validation testing"
 ```
 
-This determines `refine_validate=true|false` for the background agent. Even with `false`, failures still auto-trigger the loop.
+This determines `refine_validate=true|false` for the Task agent. Even with `false`, failures still auto-trigger the loop.
 
 ## Phase 1: Discovery
 
 Run when `refine_validate=true` OR when entering the refine-validate loop after a failure.
 
-**Discovery tools:**
+**Discovery tools (MCP only — NEVER use WebSearch, WebFetch, or curl):**
 
-1. **`nimble_web_search`** (MCP) with `deep_search=true`, `max_results=5` — searches the target domain and extracts full page content from each result. This provides product listings, detail pages, and field structures in a single call.
+1. **`nimble_web_search`** (MCP: `mcp__plugin_nimble_nimble-mcp-server__nimble_web_search`) with `deep_search=true`, `max_results=5` — searches the target domain and extracts full page content from each result. This provides product listings, detail pages, and field structures in a single call.
 
 **Discovery outputs** (feed into the generate/update prompt):
 - Refined extraction prompt with specific field names
@@ -91,22 +91,19 @@ Skip discovery when the user provides a fully specified prompt with URL, fields,
 
 ### Update (refining existing agent)
 
-`nimble_agents_update` is the primary tool for all post-creation interactions:
-- Refining existing agents (change output fields, adjust behavior)
-- Answering follow-up questions from `nimble_agents_generate` (`waiting` status)
-- Retrying errors (compose fix prompt from diagnostics)
-- Continuing any session started by generate or update
-- Refine-validate loop — updating after validation failures
+Use explicit update tools:
+- `nimble_agents_update_from_agent` starts update from an existing `agent_name` and may fork.
+- `nimble_agents_update_session` continues that exact `session_id` for all follow-ups.
+- `nimble_agents_update_session` is the only tool allowed once a `session_id` exists.
 
-`nimble_agents_generate` is only used once for initial creation.
+`nimble_agents_generate` is only used once for initial creation. Existing-agent refinement starts with `nimble_agents_update_from_agent`.
 
 ```json
 {
-  "tool": "nimble_agents_update",
+  "tool": "nimble_agents_update_from_agent",
   "params": {
     "agent_name": "yelp-restaurant-details",
-    "prompt": "Add review_count and photos_count to the output schema",
-    "session_id": "a3b1c2d4-5678-9abc-def0-1234567890ab"
+    "prompt": "Add review_count and photos_count to the output schema"
   }
 }
 ```
@@ -124,7 +121,7 @@ Skip discovery when the user provides a fully specified prompt with URL, fields,
 
 | Status | Action |
 |--------|--------|
-| `waiting` | Relay follow-up questions to user via `AskUserQuestion`. Call `nimble_agents_update` with same `session_id` and user's answer as `prompt`. |
+| `waiting` | Relay follow-up questions to user via `AskUserQuestion`. Call `nimble_agents_update_session` with same `session_id` and user's answer as `prompt`. |
 | `processing` | Enter Phase 3 (polling). |
 | `complete` | Enter Phase 4 (validation) if `refine_validate=true`, otherwise Phase 5 (publish). |
 | `error` | Apply retry-with-fix (max 2 retries, then auto-trigger refine-validate loop). |
@@ -138,9 +135,9 @@ When update (or status polling) returns `status="error"`:
    ```
    "The previous attempt failed: {error}. The assistant reported: {message}. Please fix the configuration accordingly."
    ```
-3. Call `nimble_agents_update` with same `session_id` and the fix prompt.
+3. Call `nimble_agents_update_session` with same `session_id` and the fix prompt.
 4. If it returns `processing`, resume polling with `nimble_agents_status`.
-5. Max 2 retries — then trigger the update loop (discovery with error context, then `nimble_agents_update` with same session_id).
+5. Max 2 retries — then trigger the update loop (discovery with error context, then `nimble_agents_update_session` with same session_id).
 
 ## Phase 3: Polling with consecutive error tracking
 
@@ -154,10 +151,10 @@ Use `nimble_agents_status` (read-only GET) for polling — never `nimble_agents_
 
 1. **Collect** all error messages and issue descriptions from the 5 failures.
 2. **Run discovery** (Phase 1) with accumulated error context to understand the failure pattern.
-3. **Update** — call `nimble_agents_update` with the **same session_id** and a refined prompt incorporating error analysis.
+3. **Update** — call `nimble_agents_update_session` with the **same session_id** and a refined prompt incorporating error analysis.
 4. **Resume** from Phase 3 (polling).
 
-**Never regenerate. Never create a new session_id.** Always use `nimble_agents_update` to fix the existing agent. This happens automatically regardless of the user's initial `refine_validate` preference.
+**Never regenerate. Never create a new session_id.** Always use `nimble_agents_update_session` to fix the existing agent. This happens automatically regardless of the user's initial `refine_validate` preference.
 
 ### Polling template
 
@@ -179,7 +176,7 @@ If max checks reached: print "POLL_TIMEOUT: generation did not complete after 10
 
 Run when `refine_validate=true` OR when auto-triggered by the refine-validate loop.
 
-**CRITICAL: Validation uses a generated SDK script executed via `uv run`, NOT 50 individual MCP tool calls.** The script uses the REST API `POST /v1/agent` (response at `data.parsing`), not MCP `nimble_agents_run` (response at `data.results`).
+**CRITICAL: Validation uses a generated SDK script executed via `uv run`, NOT 50 individual MCP tool calls.** The script uses the REST API `POST /v1/agent` (response at `data.parsing`), not MCP `nimble_agents_run` (response at `data.results`). Use `nimble_web_search` (MCP) for finding real test inputs — never WebSearch/WebFetch.
 
 ### Step 4a: Generate test inputs
 
@@ -261,7 +258,7 @@ asyncio.run(main())
 | Pass rate | Action |
 |-----------|--------|
 | >= 80% | Validation passed → Phase 5 (publish). |
-| < 80% | **Auto-trigger update loop**: analyze failures → Phase 1 (discovery with failure context) → Phase 2 (`nimble_agents_update` with same session_id) → Phase 3 (poll) → Phase 4 (re-validate with same 50 inputs). Max 2 cycles. |
+| < 80% | **Auto-trigger update loop**: analyze failures → Phase 1 (discovery with failure context) → Phase 2 (`nimble_agents_update_session` with same session_id) → Phase 3 (poll) → Phase 4 (re-validate with same 50 inputs). Max 2 cycles. |
 
 **Failure analysis for the refine-validate prompt:**
 - Group errors by type (empty results, exceptions, partial data)
@@ -327,22 +324,35 @@ Return a structured generation/update report **regardless of outcome** (pass or 
 
 ## Update loop (auto-triggered on failure)
 
-**Two triggers — both auto-fire the same closed loop using `nimble_agents_update` (never regenerate):**
+**Two triggers — both auto-fire the same closed loop using `nimble_agents_update_session` (never regenerate):**
 
 | Trigger | When | What happens |
 |---------|------|-------------|
-| 5 consecutive poll errors | 5 `error`/issue-message statuses in a row, or poll timeout (10 checks) | Discovery with accumulated errors → `nimble_agents_update` (same session_id) → poll → validate |
-| Validation failure | < 80% pass rate | Analyze failures → discovery with failure context → `nimble_agents_update` (same session_id) → poll → re-validate with same 50 inputs |
+| 5 consecutive poll errors | 5 `error`/issue-message statuses in a row, or poll timeout (10 checks) | Discovery with accumulated errors → `nimble_agents_update_session` (same session_id) → poll → validate |
+| Validation failure | < 80% pass rate | Analyze failures → discovery with failure context → `nimble_agents_update_session` (same session_id) → poll → re-validate with same 50 inputs |
 
-**Never regenerate. Never create a new session_id.** Always use `nimble_agents_update` to fix the existing agent.
+**Never regenerate. Never create a new session_id.** Always use `nimble_agents_update_session` to fix the existing agent.
 
-**Max 2 update cycles.** After 2 cycles without reaching 80%, the background agent stops and reports the best result. The foreground conversation presents recovery options to the user.
+**Max 2 update cycles.** After 2 cycles without reaching 80%, the Task agent stops and reports the best result. The foreground conversation presents recovery options to the user.
 
-## Background agent Task prompt template
+## Task agent prompt template
 
 ```
-Task(subagent_type="general-purpose", run_in_background=True, max_turns=50, prompt="""
+Task(subagent_type="general-purpose", run_in_background=False, max_turns=50, prompt="""
 Generate/update agent workflow.
+
+**MCP tool registry (call these as MCP tool invocations, NOT bash/curl):**
+| Short name | Full MCP tool name |
+|------------|--------------------|
+| nimble_agents_generate | mcp__plugin_nimble_nimble-mcp-server__nimble_agents_generate |
+| nimble_agents_update_from_agent | mcp__plugin_nimble_nimble-mcp-server__nimble_agents_update_from_agent |
+| nimble_agents_update_session | mcp__plugin_nimble_nimble-mcp-server__nimble_agents_update_session |
+| nimble_agents_status | mcp__plugin_nimble_nimble-mcp-server__nimble_agents_status |
+| nimble_agents_publish | mcp__plugin_nimble_nimble-mcp-server__nimble_agents_publish |
+| nimble_agents_get | mcp__plugin_nimble_nimble-mcp-server__nimble_agents_get |
+| nimble_web_search | mcp__plugin_nimble_nimble-mcp-server__nimble_web_search |
+
+**CRITICAL: Use MCP tool calls only. NEVER use bash, curl, wget, WebSearch, or WebFetch to call APIs or search the web. NEVER construct MCP endpoint URLs manually. If an MCP tool is unavailable, report the error — do NOT work around it.**
 
 **Session ID:** {session_id}
 **Agent intent:** {user_prompt}
@@ -361,10 +371,12 @@ Execute the closed-loop lifecycle:
    - If re-entering from failure, include all accumulated error messages and failing inputs.
 
 2. CREATE/UPDATE:
-   - First time: call nimble_agents_generate with the prompt.
-   - All subsequent (recovery, refinement): call nimble_agents_update with the SAME session_id. NEVER regenerate.
+   - First time for new agent creation: call nimble_agents_generate with the prompt.
+   - First time for existing-agent refinement: call nimble_agents_update_from_agent with agent_name.
+   - After any session_id is established: all subsequent recovery/refinement calls MUST use nimble_agents_update_session with the SAME session_id.
    - Handle waiting/processing/complete/error statuses.
-   - On error: retry with fix prompt (max 2). After 2 failures → go to step 1 (update loop).
+   - On error: retry with fix prompt via nimble_agents_update_session (max 2). After 2 failures → go to step 1 (update loop).
+   - If nimble_agents_generate or nimble_agents_update_from_agent returns 429/quota errors: STOP and report quota exhaustion. Do not start a new session.
 
 3. POLL (if processing):
    - Call nimble_agents_status every STRICTLY 30s (use Bash(sleep 30), never longer), max 10 checks.
@@ -381,7 +393,7 @@ Execute the closed-loop lifecycle:
    - Write a Python validation script to /tmp/validate_agent_{agent_name}.py using the template from generate-update-and-publish.md Phase 4b.
    - Execute via Bash: uv run /tmp/validate_agent_{agent_name}.py
    - Parse JSON output. If >= 80% pass: go to step 5.
-   - If < 80%: analyze failures, go to step 1 (update loop via nimble_agents_update, same session_id).
+   - If < 80%: analyze failures, go to step 1 (update loop via nimble_agents_update_session, same session_id).
    - Max 2 update cycles total. After 2: stop, report best result.
    - OVERALL TIMEOUT: 15 minutes wall-clock for the entire workflow. If exceeded, stop and report.
 
@@ -404,17 +416,18 @@ Execute the closed-loop lifecycle:
 
 ## Parallel generation
 
-When generating multiple agents (e.g., multi-store comparison), launch background tasks **in parallel** — one per session_id. Each task runs the full closed-loop lifecycle independently. Gather reports when all complete.
+When generating multiple agents (e.g., multi-store comparison), launch Task agents sequentially — one per session_id. Each task runs the full closed-loop lifecycle independently. Gather reports when all complete.
 
 ## Key rules
 
-- **Generate/update ALWAYS runs as a background agent.** No exceptions.
-- **AskUserQuestion happens ONCE in the foreground before launching.** The background agent NEVER asks the user anything.
+- **Generate/update ALWAYS runs as a Task agent with `run_in_background=False`.** No exceptions. Background mode (`run_in_background=True`) breaks MCP tool access.
+- **AskUserQuestion happens ONCE in the foreground before launching.** The Task agent NEVER asks the user anything.
 - **Validation uses a generated SDK script** (`uv run`), NOT individual MCP tool calls.
 - **5 consecutive poll errors/issue-messages → auto-trigger update loop.** Hard rule, no exceptions.
-- `nimble_agents_generate` is for initial creation only. **All recovery and follow-ups use `nimble_agents_update` — never regenerate.**
+- `nimble_agents_generate` is for initial creation only. Existing-agent refinement starts with `nimble_agents_update_from_agent`, then all recovery/follow-ups use `nimble_agents_update_session`.
 - Generate a UUID session_id once; **never create a new one.** Use the same session_id for all updates and recovery.
-- **Discovery uses `nimble_web_search`** (MCP, with `deep_search=true`) only. `nimble_agents_list` is already called in the foreground routing step.
+- **All web search MUST use `nimble_web_search`** (MCP, with `deep_search=true`) only. NEVER use built-in `WebSearch`, `WebFetch`, or `curl` for searching. `nimble_agents_list` is already called in the foreground routing step.
+- **Every Task prompt MUST include the MCP tool registry block** with full tool names. Without it, the subagent may fail to find MCP tools and fall back to bash.
 - 80% pass rate is the minimum threshold for publishing with validation.
 - Max 2 update cycles before escalating to the user.
 - **Overall timeout: 15 minutes wall-clock.** Stop and report if exceeded. Use `max_turns=50` on Task launch.

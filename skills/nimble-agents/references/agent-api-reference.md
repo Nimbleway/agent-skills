@@ -103,47 +103,30 @@ Use `entity_type` and `skills` from `nimble_agents_get` to predict the REST API 
 
 ## nimble_agents_generate (initial creation only)
 
-Start agent creation. Use ONLY for the initial call. All follow-ups go through `nimble_agents_update`.
+Start agent creation for a new agent. Use only once per new generation flow.
 
 ### Parameters
 
 | Parameter | Type | Required | Description |
 |-----------|------|----------|-------------|
-| `prompt` | string | No | Description of what to extract. Required on the first call. This tool is for initial creation only — for follow-ups, use `nimble_agents_update` with the same `session_id`. |
-| `session_id` | string | Yes | UUID v4. Must remain the same across all calls in one flow. |
+| `prompt` | string | No | Description of what to extract. Required on first call. |
+| `session_id` | string | Yes | UUID v4. Must remain the same for all follow-ups in this flow. |
 | `url` | string | No | Example target URL for the agent. |
 | `output_schema` | object | No | Desired output schema (JSON Schema format). |
 | `input_schema` | object | No | Desired input schema (JSON Schema format). |
 
 ### Returns: `AgentGenerateResult`
 
-| Field | Type | Description |
-|-------|------|-------------|
-| `status` | string | One of: `waiting`, `processing`, `complete`, `error`. |
-| `session_id` | string | Echo of the session ID. |
-| `message` | string | Follow-up questions (when `waiting`) or status info. |
-| `agent_name` | string | Agent name (when `complete`). |
-| `domain` | string | Target domain (when `complete`). |
-| `input_schema` | object | Generated input schema (when `complete`). |
-| `output_schema` | object | Generated output schema (when `complete`). |
-| `error` | string | Error message (when `error`). |
+Same status shape used by update tools (`waiting`, `processing`, `complete`, `error`).
 
 ### Status lifecycle
 
-```
-waiting  -->  processing  -->  complete
-   ^             |
-   |             v
-   +-- waiting (more questions)
-                 |
-                 v
-              error
-```
+- `waiting` — Generator needs more information. Continue with `nimble_agents_update_session` using the same `session_id`.
+- `processing` — Generation in progress. Poll with `nimble_agents_status`.
+- `complete` — Agent is ready to run/publish.
+- `error` — Generation failed. Use retry-with-fix via `nimble_agents_update_session` with same `session_id`.
 
-- `waiting` -- The generator needs more information. Respond via `nimble_agents_update` with the same `session_id` and the user's answer as `prompt`.
-- `processing` -- Generation in progress. Use `nimble_agents_status` to poll for completion. Do NOT call this tool for status checks.
-- `complete` -- Agent is ready to run.
-- `error` -- Generation failed. Inspect the `error` field.
+If this call returns HTTP 429/quota errors, stop and report quota exhaustion. Do not start a new session.
 
 ---
 
@@ -155,95 +138,82 @@ Check the current status of a generate or update session (read-only).
 
 | Parameter | Type | Required | Description |
 |-----------|------|----------|-------------|
-| `session_id` | string | Yes | The `session_id` from a previous `nimble_agents_generate` or `nimble_agents_update` call. |
+| `session_id` | string | Yes | The `session_id` from `nimble_agents_generate`, `nimble_agents_update_from_agent`, or `nimble_agents_update_session`. |
 
 ### Returns: `AgentGenerateResult`
 
-Same shape as `nimble_agents_generate`. Use this to poll for completion after `nimble_agents_generate` or `nimble_agents_update` returns `processing`.
+Same shape as generation/update responses.
 
 ### When to use
 
-- After `nimble_agents_generate` or `nimble_agents_update` returns `processing` status.
+- After `nimble_agents_generate`, `nimble_agents_update_from_agent`, or `nimble_agents_update_session` returns `processing`.
 - From a background Task agent polling every ~30 seconds.
-- Do NOT use this tool to send clarifications — use `nimble_agents_update` with `prompt` and the same `session_id` instead.
-
-### Example
-
-**Request:**
-
-```json
-{ "session_id": "a3b1c2d4-5678-9abc-def0-1234567890ab" }
-```
-
-**Response (still processing):**
-
-```json
-{
-  "status": "processing",
-  "session_id": "a3b1c2d4-5678-9abc-def0-1234567890ab",
-  "message": "Template generation in progress..."
-}
-```
-
-**Response (complete):**
-
-```json
-{
-  "status": "complete",
-  "session_id": "a3b1c2d4-5678-9abc-def0-1234567890ab",
-  "agent_name": "yelp-restaurant-details",
-  "domain": "yelp.com",
-  "input_schema": { "..." : "..." },
-  "output_schema": { "..." : "..." }
-}
-```
+- Do not use this tool to send clarifications — use `nimble_agents_update_session` instead.
 
 ---
 
-## nimble_agents_update (primary tool for all follow-ups)
+## nimble_agents_update_from_agent
 
-Refine an existing agent or continue any generate/update session. Primary tool for all post-creation interactions.
+Start refinement from an existing `agent_name`.
 
 ### Parameters
 
 | Parameter | Type | Required | Description |
 |-----------|------|----------|-------------|
-| `session_id` | string | No | Existing session to continue refining. |
-| `agent_name` | string | No | Agent to update. Published agents are forked; user's unpublished agents are updated in-place. |
-| `prompt` | string | No | Refinement instruction. At least one of prompt/input_schema/output_schema required. |
+| `agent_name` | string | Yes | Agent to refine. Published agents are forked; owned unpublished agents are updated in-place. |
+| `prompt` | string | No | Refinement instruction. |
 | `input_schema` | object | No | JSON Schema override for input parameters. |
 | `output_schema` | object | No | JSON Schema override for output fields. |
 
+At least one of `prompt`, `input_schema`, or `output_schema` is required.
+
 ### Returns: `AgentGenerateResult`
 
-Same shape as `nimble_agents_generate`. Status flow is identical — use `nimble_agents_status` to poll.
+Includes update metadata fields:
+- `source_agent_name`: current agent being edited
+- `forked_from_agent_name`: original name when forked
+
+### Flow rules
+
+- Call this tool once to enter update mode from an existing agent.
+- After it returns a `session_id`, never call it again in the same run.
+- Continue with `nimble_agents_update_session` for all follow-ups.
+- On HTTP 429/quota errors, stop and report quota exhaustion. Do not start another session.
+
+---
+
+## nimble_agents_update_session
+
+Continue an existing update/generate session by `session_id`.
+
+### Parameters
+
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `session_id` | string | Yes | Existing session to continue refining (must already exist). |
+| `prompt` | string | No | Refinement instruction or answer to waiting question. |
+| `input_schema` | object | No | JSON Schema override for input parameters. |
+| `output_schema` | object | No | JSON Schema override for output fields. |
+
+At least one of `prompt`, `input_schema`, or `output_schema` is required.
+
+### Returns: `AgentGenerateResult`
+
+Same shape as generate/update-from-agent responses.
 
 ### Status lifecycle
 
-Same as generate:
-- `waiting` — Backend needs more info. Call `nimble_agents_update` with user's answer as `prompt`.
-- `processing` — Update in progress. Poll with `nimble_agents_status`.
-- `complete` — Agent updated. `agent_name` is set.
-- `error` — Apply retry-with-fix protocol: compose a prompt from the error diagnostics and call `nimble_agents_update` again.
+- `waiting` — backend needs more info; call `nimble_agents_update_session` again with same `session_id`.
+- `processing` — poll with `nimble_agents_status`.
+- `complete` — refinement finished.
+- `error` — apply retry-with-fix using the same `session_id`.
 
 ### Example
 
-**Request:**
-
 ```json
 {
-  "agent_name": "amazon-product-details",
+  "session_id": "thread_123",
   "prompt": "Add a ratings field and review count to the output schema"
-}
-```
-
-**Response:**
-
-```json
-{
-  "status": "processing",
-  "session_id": "auto-generated-thread-id",
-  "message": "Update in progress...\n\n[Use nimble_agents_status to poll for completion.]"
 }
 ```
 
@@ -304,7 +274,7 @@ Save a generated agent so it becomes searchable and reusable.
 
 | Parameter | Type | Required | Description |
 |-----------|------|----------|-------------|
-| `session_id` | string | Yes | The same UUID used during `nimble_agents_generate` (and subsequent `nimble_agents_update` calls). |
+| `session_id` | string | Yes | Session used during `nimble_agents_generate` / `nimble_agents_update_from_agent` / `nimble_agents_update_session`. |
 
 ### Returns: `AgentDetailsResult`
 

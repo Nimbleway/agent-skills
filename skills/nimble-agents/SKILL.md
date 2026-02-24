@@ -2,25 +2,26 @@
 name: nimble-agents
 argument-hint: "[query or URL]"
 description: >
-  Finds, generates, and runs agents to extract structured data from
-  websites at scale. Handles multi-source with unified normalized schemas,
-  composing batch pipelines, and their SDK code generation with structured output.
-  Use when user asks to "get data from a website", "scrape a website",
-  "compare data points across websites", "generate a web scraper",
-  or mentions Nimble.
+  This skill should be used when the user asks to "get data from a website",
+  "scrape a website", "extract product details", "compare prices across stores",
+  "pull data from Amazon or Walmart", "generate a web scraper",
+  "build a data extraction pipeline", or mentions Nimble.
+  Covers discovering existing extraction agents, running them interactively,
+  generating scripts for large-scale extraction, and creating new custom agents.
 allowed-tools:
-  - mcp__nimble-mcp-server__nimble_agents_list
-  - mcp__nimble-mcp-server__nimble_agents_get
-  - mcp__nimble-mcp-server__nimble_agents_generate
-  - mcp__nimble-mcp-server__nimble_agents_status
-  - mcp__nimble-mcp-server__nimble_agents_run
-  - mcp__nimble-mcp-server__nimble_agents_publish
-  - mcp__nimble-mcp-server__nimble_agents_update
-  - mcp__nimble-mcp-server__nimble_web_search
+  - mcp__plugin_nimble_nimble-mcp-server__nimble_agents_list
+  - mcp__plugin_nimble_nimble-mcp-server__nimble_agents_get
+  - mcp__plugin_nimble_nimble-mcp-server__nimble_agents_generate
+  - mcp__plugin_nimble_nimble-mcp-server__nimble_agents_status
+  - mcp__plugin_nimble_nimble-mcp-server__nimble_agents_run
+  - mcp__plugin_nimble_nimble-mcp-server__nimble_agents_publish
+  - mcp__plugin_nimble_nimble-mcp-server__nimble_agents_update_from_agent
+  - mcp__plugin_nimble_nimble-mcp-server__nimble_agents_update_session
+  - mcp__plugin_nimble_nimble-mcp-server__nimble_web_search
 disable-model-invocation: false
 license: MIT
 metadata:
-  version: "0.6.0"
+  version: "0.6.1"
   author: Nimbleway
   repository: https://github.com/Nimbleway/agent-skills
 ---
@@ -53,25 +54,29 @@ claude mcp add --transport http nimble-mcp-server https://mcp.nimbleway.com/mcp 
 }
 ```
 
-**Get an API key:** [online.nimbleway.com/signup](https://online.nimbleway.com/signup) → Account Settings → API Keys
+**API key:** [online.nimbleway.com/signup](https://online.nimbleway.com/signup) → Account Settings → API Keys
 
 ## Core principles
 
 - **Fastest path to data.** Default route: discover agent → get schema → run → display results. Planning and generation are escalation paths.
 - **Always search existing agents first.** Call `nimble_agents_list` before considering generate. Hard rule.
+- **Update over generate — always.** When a close-match agent exists (same domain/type, even if missing fields or different scope), update it rather than generating from scratch. Updating preserves proven extraction logic and is faster, cheaper, and more reliable. Only generate a new agent when `nimble_agents_list` returns 0 results for the target domain. Never offer "Create new agent" as the recommended option when a close match exists.
 - **AskUserQuestion at every decision point — no exceptions.** Always present the standard `AskUserQuestion` prompts shown in each step. Never skip them, never auto-advance without asking. Never present choices as plain numbered lists. Constraints: 2–4 options, header max 12 chars, label 1–5 words. Recommended option goes first with "(Recommended)".
 - **Schema before run — always.** Call `nimble_agents_get` before `nimble_agents_run`. Present input parameters and output fields in markdown tables. This applies when switching agents too.
+- **Script generation (Step 2B) is ONLY for large-scale, high-volume tasks.** Never generate code for normal interactive requests. Script mode requires ALL of: scale >50 items AND the user explicitly asks for code/script/CSV/batch output. Multi-source requests, dataset requests, and comparison requests do NOT automatically trigger script mode — run them interactively first. The default path is always: discover → run → display results.
 - **Verify response shape before script generation.** Check `skills` and `entity_type` from `nimble_agents_get` to determine REST API response nesting. See **`references/agent-api-reference.md`** > "Response shape inference" and **`references/sdk-patterns.md`** > "Response structure verification".
 - **`google_search` is not a general search tool.** It is a SERP analysis agent for rank tracking and SEO analysis. For finding information, use `nimble_web_search`. See **`references/error-recovery.md`**.
-- **NEVER call `nimble_agents_generate`, `nimble_agents_update`, `nimble_agents_status`, or `nimble_agents_publish` in the foreground.** These MUST run inside a background Task agent. Calling them in the foreground floods context with large polling responses and wastes the conversation's token budget. This is a HARD RULE — no exceptions, not even for "just one quick update". Always launch a background Task agent for any generate/update/status/publish operation.
-- **Foreground MCP calls are limited to exactly 3 tools:** `nimble_agents_list` (routing), `nimble_agents_get` (schema display), `nimble_agents_run` (interactive execution). Everything else runs in a background Task agent. See [Delegation model](#delegation-model).
+- **All web search MUST use `nimble_web_search` (MCP).** Never use `WebSearch`, `WebFetch`, or `curl`. See [Guardrails](#guardrails).
+- **Mutation tools (`generate`, `update`, `status`, `publish`) are BANNED from the foreground.** Always delegate to a Task agent. See [Delegation model](#delegation-model).
+- **Task agents MUST use `run_in_background=False`.** Background mode breaks MCP access. See [Delegation model](#delegation-model).
+- **Foreground MCP calls limited to 3 tools:** `nimble_agents_list`, `nimble_agents_get`, `nimble_agents_run`.
 - **Never use `nimble_find_search_agent`, `nimble_run_search_agent`, `nimble_url_extract`, or any WSA template tools.**
 
 ## Delegation model
 
-The foreground conversation orchestrates and presents results. Background Task agents handle all MCP-heavy work.
+The foreground conversation orchestrates and presents results. Task agents handle all MCP-heavy work.
 
-**Foreground — ONLY these 3 MCP tools allowed:**
+**Foreground — ONLY these 3 MCP tools allowed (direct calls):**
 
 | Tool | Purpose | Max calls |
 |------|---------|-----------|
@@ -79,17 +84,40 @@ The foreground conversation orchestrates and presents results. Background Task a
 | `nimble_agents_get` | Display schema before run | 1 per agent |
 | `nimble_agents_run` | Interactive execution (≤5 items) | 1 per item |
 
-**Background — EVERYTHING else (mandatory, no exceptions):**
+**Task agents — EVERYTHING else (mandatory, no exceptions):**
 
-| Phase | Background agent | Foreground does |
-|-------|-----------------|-----------------|
+| Phase | Task agent | Foreground does |
+|-------|-----------|-----------------|
 | Discovery (`nimble_web_search` deep) | Step 1D | Launch, present report |
-| Agent create/update (`nimble_agents_generate`, `nimble_agents_update`, `nimble_agents_status`, `nimble_agents_publish`) | Step 3 | Launch, present report |
+| Agent create/update (`nimble_agents_generate`, `nimble_agents_update_from_agent`, `nimble_agents_update_session`, `nimble_agents_status`, `nimble_agents_publish`) | Step 3 | Launch, present report |
 | Script generation (write code to call existing agent) | Step 2B | Launch, present script |
 
-**`nimble_agents_generate`, `nimble_agents_update`, `nimble_agents_status`, `nimble_agents_publish` are BANNED from the foreground. Always use `Task(subagent_type="general-purpose", run_in_background=True)` for these.**
+**`nimble_agents_generate`, `nimble_agents_update_from_agent`, `nimble_agents_update_session`, `nimble_agents_status`, and `nimble_agents_publish` are BANNED from the foreground. Always use `Task(subagent_type="general-purpose", run_in_background=False)` for these.**
 
-For **multi-source workflows**, launch one background agent per source/phase in parallel. Gather reports, then present the combined plan.
+**Why `run_in_background=False`:** Background Task agents (`run_in_background=True`) [cannot access MCP tools](https://github.com/anthropics/claude-code/issues/13254) — they silently fall back to bash/curl and fail. Using `run_in_background=False` ensures MCP tool access. The Task agent still runs in its own context window (no foreground pollution); the only cost is the foreground waits for completion. When this platform limitation is resolved, switch back to `run_in_background=True`.
+
+For **multi-source workflows**, launch Task agents sequentially (one per source/phase). Gather reports, then present the combined plan.
+
+### MCP tool registry
+
+All Task agent prompts MUST include the tool registry block so the subagent knows the exact MCP tool names. Copy this block into every Task prompt:
+
+```
+**MCP tool registry (call these as MCP tool invocations, NOT bash/curl):**
+| Short name | Full MCP tool name |
+|------------|--------------------|
+| nimble_agents_list | mcp__plugin_nimble_nimble-mcp-server__nimble_agents_list |
+| nimble_agents_get | mcp__plugin_nimble_nimble-mcp-server__nimble_agents_get |
+| nimble_agents_generate | mcp__plugin_nimble_nimble-mcp-server__nimble_agents_generate |
+| nimble_agents_update_from_agent | mcp__plugin_nimble_nimble-mcp-server__nimble_agents_update_from_agent |
+| nimble_agents_update_session | mcp__plugin_nimble_nimble-mcp-server__nimble_agents_update_session |
+| nimble_agents_status | mcp__plugin_nimble_nimble-mcp-server__nimble_agents_status |
+| nimble_agents_publish | mcp__plugin_nimble_nimble-mcp-server__nimble_agents_publish |
+| nimble_agents_run | mcp__plugin_nimble_nimble-mcp-server__nimble_agents_run |
+| nimble_web_search | mcp__plugin_nimble_nimble-mcp-server__nimble_web_search |
+
+**CRITICAL: Use MCP tool calls only. NEVER use bash, curl, wget, WebSearch, or WebFetch to call APIs or search the web. NEVER construct MCP endpoint URLs manually.**
+```
 
 ## Response shapes
 
@@ -115,18 +143,20 @@ Only `needs-planning` when ALL of these are absent: a target URL/site/domain, cl
 | Result | Route |
 |--------|-------|
 | Exact match | Show schema summary + `AskUserQuestion`: "Use this agent" (Recommended) / "Create new agent" → Step 3 |
-| Close match (same domain/type, missing fields or different scope) | Show schema gaps + `AskUserQuestion`: "Update this agent" (Recommended) / "Create new agent" → Step 3 |
-| 2+ plausible matches | Show table + `AskUserQuestion` with top matches + "Update closest agent" (Recommended) |
-| 0 matches | Launch **Discovery background agent** (Step 1D) → results inform Step 3 |
+| Close match (same domain/type, missing fields or different scope) | Show schema gaps + `AskUserQuestion`: "Update this agent" (Recommended) / "Create new agent". **Always recommend update** — it preserves existing extraction logic and is faster than generating from scratch. |
+| 2+ plausible matches | Show table + `AskUserQuestion` with top matches + "Update closest agent" (Recommended). Pick the agent with the most field overlap. |
+| 0 matches | Launch **Discovery Task agent** (Step 1D) → results inform Step 3. **This is the ONLY case where generating a new agent is appropriate.** |
+
+**Update is always preferred over generate.** A close-match agent on the same domain already has working URL patterns, pagination logic, and parsing rules. Updating it to add/change fields is a minor refinement. Generating from scratch rebuilds everything and risks lower quality. Only generate when no agent exists for the target domain at all.
 
 **3. Execution mode** — `interactive` (default) or `script`
 
-Route to script generation (Step 2B) when ANY of: scale >50, file output (CSV/JSON), multi-store comparison, batch input file, user explicitly asks for code. Otherwise interactive. **Script generation writes code that calls an existing agent** — it does not create new agents. If no agent exists yet, resolve that first (Step 3) before generating a script.
+**Interactive is ALWAYS the default.** Route to script generation (Step 2B) ONLY when BOTH conditions are met: (a) scale is explicitly >50 items or the user provides a batch input file, AND (b) the user explicitly asks for code, a script, a CSV export, or batch processing. Words like "dataset", "compare", "multi-source", or "2 sources" do NOT trigger script mode — run these interactively. **Script generation writes code that calls an existing agent** — it does not create new agents. If no agent exists yet, resolve that first (Step 3) before generating a script.
 
 ### Step 1P: Plan mode (rare — only when `needs-planning`)
 
 1. **Clarify** — `AskUserQuestion` to resolve critical unknowns (max 2 questions). Focus on: what site(s), what data fields, what output format.
-2. **Explore** — `nimble_agents_list` for each target (foreground, 1 call each). For unfamiliar domains, launch Discovery background agents in parallel (Step 1D).
+2. **Explore** — `nimble_agents_list` for each target (foreground, 1 call each). For unfamiliar domains, launch Discovery Task agents (Step 1D).
 3. **Present plan** — gap analysis table:
 
 | # | Site / Data Source | Agent | Status |
@@ -134,16 +164,23 @@ Route to script generation (Step 2B) when ANY of: scale >50, file output (CSV/JS
 | 1 | amazon.com products | amazon-product-details | Existing |
 | 2 | walmart.com products | — | Generate |
 
-4. **Execute** — Step 2 for existing agents, Step 3 for generations (in parallel as background tasks).
+4. **Execute** — Step 2 for existing agents, Step 3 for generations (as Task agents).
 
-### Step 1D: Discovery (background agent — for unfamiliar domains)
+### Step 1D: Discovery (Task agent — for unfamiliar domains)
 
-Launch when `nimble_agents_list` returns 0 matches and the target domain needs exploration. Runs as `Task(subagent_type="general-purpose", run_in_background=True)`. The foreground tells the user: *"Exploring {domain} to understand available data..."*
+Launch when `nimble_agents_list` returns 0 matches and the target domain needs exploration. Runs as `Task(subagent_type="general-purpose", run_in_background=False)`. The foreground tells the user: *"Exploring {domain} to understand available data..."*
 
 **Task prompt template:**
 
 ```
 Explore {domain} for {user_intent}.
+
+**MCP tool registry (call these as MCP tool invocations, NOT bash/curl):**
+| Short name | Full MCP tool name |
+|------------|--------------------|
+| nimble_web_search | mcp__plugin_nimble_nimble-mcp-server__nimble_web_search |
+
+**CRITICAL: Use MCP tool calls only. NEVER use bash, curl, wget, WebSearch, or WebFetch to call APIs or search the web. NEVER construct MCP endpoint URLs manually.**
 
 Use `nimble_web_search` (MCP) with deep_search=true to discover the site and available data:
 1. Search "{domain} {keywords}" with deep_search=true, max_results=5 — this fetches and extracts full page content from each result, giving you product listings, detail pages, and field structures in one call.
@@ -160,6 +197,7 @@ Use `nimble_web_search` (MCP) with deep_search=true to discover the site and ava
 - LIMITATIONS: login walls, pagination limits, JS rendering, etc.
 
 Do NOT use AskUserQuestion. Do NOT use nimble_find_search_agent, nimble_run_search_agent, or nimble_url_extract.
+Do NOT use WebSearch, WebFetch, bash curl, or any non-MCP search/fetch method.
 ```
 
 On receiving the report, the foreground conversation:
@@ -205,15 +243,15 @@ options:
     description: "Finish with these results"
   - label: "Run again"
     description: "Re-run with different parameters"
-  - label: "Get script"
-    description: "Write a script to run this agent at scale (Step 2B)"
 ```
+
+Do NOT offer script generation as a next step unless the user explicitly mentions needing large-scale extraction (>50 items) or batch processing. Script generation is not a natural follow-up to interactive runs.
 
 **Bulk (2–5 URLs):** Run per URL, aggregate results, handle individual failures without aborting. See **`references/batch-patterns.md`** > "Interactive batch extraction".
 
-### 2B: Script generation (large scale, file output, multi-store)
+### 2B: Script generation (ONLY for large-scale, high-volume tasks)
 
-**Writes a runnable script that calls an existing Nimble agent at scale via the SDK/REST API.** This does NOT create new agents — the agent must already exist. Runs as a background Task agent. The foreground infers language, launches the agent, and presents the generated script for confirmation.
+**This step is ONLY reached when the user explicitly needs to process >50 items at scale or requests batch code/script generation.** Normal requests — even multi-source or "dataset" requests — are handled interactively via Step 2A. Writes a runnable script that calls an existing Nimble agent at scale via the SDK/REST API. This does NOT create new agents — the agent must already exist. Runs as a Task agent. The foreground infers language, launches the agent, and presents the generated script for confirmation.
 
 **2B-1.** Infer language from project context (foreground, before launching):
 
@@ -224,12 +262,19 @@ options:
 | `go.mod` | Go (REST API) |
 | None of the above | Default to Python |
 
-**2B-2.** Launch script generation background agent: `Task(subagent_type="general-purpose", run_in_background=True)`.
+**2B-2.** Launch script generation Task agent: `Task(subagent_type="general-purpose", run_in_background=False)`.
 
 **Task prompt template:**
 
 ```
 Write a {language} script that calls existing Nimble agent(s) at scale via SDK/REST API.
+
+**MCP tool registry (call these as MCP tool invocations, NOT bash/curl):**
+| Short name | Full MCP tool name |
+|------------|--------------------|
+| nimble_agents_get | mcp__plugin_nimble_nimble-mcp-server__nimble_agents_get |
+
+**CRITICAL: Use MCP tool calls only. NEVER use bash, curl, wget, WebSearch, or WebFetch to call APIs or search the web. NEVER construct MCP endpoint URLs manually.**
 
 **Existing agents to call:** {agent_names}
 **User intent:** {user_prompt}
@@ -258,7 +303,8 @@ Return the complete script and a brief summary of:
 - Total estimated API calls
 
 Do NOT use AskUserQuestion. Do NOT use nimble_find_search_agent or nimble_run_search_agent.
-Do NOT call nimble_agents_generate, nimble_agents_update, or nimble_agents_publish.
+Do NOT call nimble_agents_generate, nimble_agents_update_from_agent, nimble_agents_update_session, or nimble_agents_publish.
+Do NOT use WebSearch, WebFetch, bash curl, or any non-MCP search/fetch method.
 ```
 
 **2B-3.** Present the generated script and confirm execution via `AskUserQuestion` (foreground):
@@ -275,9 +321,9 @@ options:
 
 **No agent validation step here.** The 50-input validation flow (Step 3) is only for agent creation/update. Script generation uses an existing, already-validated agent — just write the script and run it.
 
-## Step 3: Create or update agent (on the Nimble platform)
+## Step 3: Update existing agent or create new (on the Nimble platform)
 
-**Creates a new agent or updates an existing one on Nimble's platform via `nimble_agents_generate`/`nimble_agents_update`.** This is NOT code/script generation — it creates an extraction definition that can later be called interactively (Step 2A) or from a script (Step 2B). ALWAYS runs as a background agent. The foreground conversation stays responsive.
+Updates an existing agent (preferred) or creates a new one on Nimble's platform. **Default to update** when a close-match agent was found in Step 1 — pass the existing agent name to the Task agent so it uses `nimble_agents_update_from_agent` instead of `nimble_agents_generate`. Only create a new agent when Step 1 returned 0 matches. This is NOT code/script generation — it creates/modifies an extraction definition callable via Step 2A or 2B. ALWAYS runs as a Task agent (`run_in_background=False`).
 
 ### 3-1. Create a stable `session_id` (UUID v4).
 
@@ -293,28 +339,15 @@ options:
     description: "Generate → publish immediately without validation testing"
 ```
 
-**This is the ONLY AskUserQuestion for the generate/update flow. The background agent NEVER asks the user anything.**
+### 3-3. Launch Task agent
 
-### 3-3. Launch background Task agent
+Set `refine_validate` to the user's choice. Launch `Task(subagent_type="general-purpose", run_in_background=False, max_turns=50)` using the prompt template from **`references/generate-update-and-publish.md`** (includes MCP tool registry, lifecycle phases, and all rules). Tell the user: "Agent generation started. I'll report results when complete."
 
-Set `refine_validate` to the user's choice. See **`references/generate-update-and-publish.md`** for the complete Task prompt template, lifecycle phases, and key rules.
-
-The background agent executes a closed-loop lifecycle:
-
-1. **Discovery** (when `refine_validate=true` or auto-triggered by failure) — use `nimble_web_search` with `deep_search=true` (MCP) to explore the domain. Build a refined prompt with specific fields, URLs, examples.
-2. **Create/Update** — `nimble_agents_generate` (first time only) or `nimble_agents_update` (all recovery and refinement, same session_id). Never regenerate. Retry-with-fix max 2 times on error.
-3. **Poll** — ONLY `nimble_agents_status` in a loop (never `nimble_agents_update` during polling). Loop: status → check → `Bash(sleep 30)` → repeat. Strictly 30s, max 10 checks. **5 consecutive errors or 10 checks → exit loop → update loop** (discovery, then `nimble_agents_update`).
-4. **Validate** — generate 50 diverse test inputs, write a Python validation script to `/tmp/validate_agent_{name}.py`, execute via `Bash(uv run ...)`. Assert >= 80% pass rate. Uses REST API `POST /v1/agent` (response at `data.parsing`).
-5. **Publish** — `nimble_agents_publish` on validation pass (or immediately if `refine_validate=false` and no failures).
-6. **Report** — structured report: agent name, operation, status, pass rate, schemas, sample results.
-
-**Auto-triggered update loop** (regardless of initial preference): on 5+ consecutive poll errors, poll timeout (10 checks), or <80% validation pass rate. **Never regenerate — always `nimble_agents_update` with the same session_id.** Max 2 cycles. **Overall timeout: 15 minutes wall-clock.** Use `max_turns=50` on the Task launch.
-
-Tell the user: "Agent generation started in the background. I'll report results when complete."
+The Task agent executes a closed-loop lifecycle: Discovery → Create/Update → Poll → Validate → Publish → Report. On failure, it auto-triggers an update loop (max 2 cycles, 15-minute wall-clock timeout). See the reference file for complete details.
 
 ### 3-4. Present report
 
-When the background agent completes, present the report. On success, the agent now exists on the platform — route to Step 2A (interactive run) or Step 2B (script generation) based on execution mode. On failure after max cycles, offer:
+When the Task agent completes, present the report. On success, route to Step 2A or 2B. On failure after max cycles, offer:
 
 ```
 question: "Agent validation did not reach 80% pass rate. How to proceed?"
@@ -341,12 +374,14 @@ Include the extraction results (or top N if large).
 
 ## Documentation & troubleshooting
 
-When encountering errors or needing grounding, consult:
+**For large-scale codegen tasks (Step 2B) only** — consult these when writing scripts that call Nimble APIs at scale. Do NOT load these for interactive runs (Step 2A) or agent creation (Step 3):
 
 1. **`references/sdk-patterns.md`** — correct SDK patterns and common mistakes.
 2. **https://docs.nimbleway.com/llms-full.txt** — full prose docs.
 3. **https://docs.nimbleway.com/openapi.json** — API contract.
 4. **Context7** (if available) — query `nimbleway`.
+
+For interactive runs and agent creation, the MCP tool schemas from `nimble_agents_get` provide all the information needed.
 
 ## Error recovery
 
@@ -354,20 +389,31 @@ Consult **`references/error-recovery.md`** for handling patterns including persi
 
 ## Additional references
 
-Load reference files proactively during script generation (Step 2B). Always consult `sdk-patterns.md` (Python) or `rest-api-patterns.md` (other languages) before writing scripts.
+Load reference files **only during large-scale script generation (Step 2B)** or agent creation (Step 3). Do NOT load these for interactive runs (Step 2A) — MCP tool schemas are sufficient.
 
+**For script generation (Step 2B) only:**
 - **`references/sdk-patterns.md`** — Running agents, async endpoint, batch pipelines, incremental file writes.
-- **`references/agent-api-reference.md`** — All 8 MCP tools reference plus input parameter mapping.
-- **`references/batch-patterns.md`** — Multi-store comparison, normalization, interactive batch, codegen walkthrough.
-- **`references/generate-update-and-publish.md`** — Full agent creation/update lifecycle (Step 3): discovery, creation, polling, SDK validation (50 inputs, 80% threshold), publish, reporting, update loop.
 - **`references/rest-api-patterns.md`** — REST API patterns for TypeScript, Node, curl, and other non-Python languages.
+- **`references/batch-patterns.md`** — Multi-store comparison, normalization, interactive batch, codegen walkthrough.
+
+**For agent creation/update (Step 3) only:**
+- **`references/generate-update-and-publish.md`** — Full agent creation/update lifecycle: discovery, creation, polling, SDK validation (50 inputs, 80% threshold), publish, reporting, update loop.
+
+**General (any step, load as needed):**
+- **`references/agent-api-reference.md`** — MCP tools reference plus input parameter mapping.
 - **`references/error-recovery.md`** — Error handling and recovery patterns.
 
 ## Guardrails
 
-- **NEVER call `nimble_agents_generate`, `nimble_agents_update`, `nimble_agents_status`, or `nimble_agents_publish` in the foreground conversation.** These MUST run inside a background `Task` agent. No exceptions — not even "just one quick call". Polling in the foreground floods context and wastes tokens.
+- **NEVER call `nimble_agents_generate`, `nimble_agents_update_from_agent`, `nimble_agents_update_session`, `nimble_agents_status`, or `nimble_agents_publish` in the foreground conversation.** These MUST run inside a `Task` agent. No exceptions — not even "just one quick call". Polling in the foreground floods context and wastes tokens.
+- **Task agents MUST use `run_in_background=False`.** Background Task agents cannot access MCP tools ([known platform limitation](https://github.com/anthropics/claude-code/issues/13254)). When this is resolved upstream, switch back to `run_in_background=True`.
+- **All web search MUST use `nimble_web_search` (MCP tool).** NEVER use built-in `WebSearch`, `WebFetch`, `curl`, `wget`, or any other search/fetch method — in the foreground or in Task agents. The full tool name is `mcp__plugin_nimble_nimble-mcp-server__nimble_web_search`.
+- **NEVER use bash/curl to call MCP endpoints.** Task agents must call MCP tools by their tool names, not by constructing HTTP requests to MCP server URLs. If an MCP tool is not available, report the error — do not attempt to work around it via bash.
+- **Every Task agent prompt MUST include the MCP tool registry block** from [Delegation model > MCP tool registry](#mcp-tool-registry). This tells the subagent the exact tool names to use. Without it, the subagent may fail to find MCP tools and fall back to bash.
 - **Foreground MCP tools are limited to:** `nimble_agents_list`, `nimble_agents_get`, `nimble_agents_run`. Nothing else.
 - **Never** use `nimble_find_search_agent`, `nimble_run_search_agent`, or any WSA template tools.
-- **Generate once, update for everything else.** `nimble_agents_generate` only once per agent. All recovery, refinement, and follow-ups via `nimble_agents_update` with the same session_id — never regenerate. When listing finds a close-match agent, prefer updating it over generating from scratch.
+- **Update first, generate only as last resort.** When a close-match agent exists, always use `nimble_agents_update_from_agent` to refine it — never generate a new agent for the same domain. Use `nimble_agents_generate` ONLY when `nimble_agents_list` returned 0 results. For the update state machine: call `nimble_agents_update_from_agent` once to create/resolve the update session, then use `nimble_agents_update_session` for every follow-up with the same `session_id`. Never create a second session for the same refinement thread.
+- **Hard 429 rule.** If `nimble_agents_generate` or `nimble_agents_update_from_agent` returns 429/quota errors, stop and report quota exhaustion. Do not call any update tool as fallback and do not create new sessions.
 - Published agents are automatically forked when updated. UBCT-based agents cannot be updated — generate a new one instead.
+- **Never load external docs (`llms-full.txt`, `openapi.json`), SDK references, or batch pattern files for interactive runs (Step 2A).** These are exclusively for large-scale script generation (Step 2B). For interactive runs, the MCP tool schemas from `nimble_agents_get` are sufficient. Loading unnecessary docs wastes context and slows execution.
 - Present tool call results in markdown tables. Never show raw JSON.
