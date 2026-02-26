@@ -1,26 +1,26 @@
 # Focus Modes Reference
 
-Detailed guide for selecting the right `--topic` for your search query.
+Detailed guide for selecting the right `--focus` for your search query.
 
 ## Decision Tree
 
 ```
 What are you searching for?
 |
-|-- A person? ................... --topic social  (+ parallel general)
-|-- A company/organization? ..... --topic general (+ parallel news)
-|-- Code, docs, or technical? ... --topic coding
-|-- Current events or news? ..... --topic news   (+ parallel social for reactions)
-|-- Research papers? ............ --topic academic
-|-- Products or prices? ......... --topic shopping
-|-- A local business or place? .. --topic location
-|-- Geographic/regional data? ... --topic geo
-|-- General/unsure? ............. --topic general
+|-- A person? ................... --focus social  (+ parallel general)
+|-- A company/organization? ..... --focus general (+ parallel news)
+|-- Code, docs, or technical? ... --focus coding
+|-- Current events or news? ..... --focus news   (+ parallel social for reactions)
+|-- Research papers? ............ --focus academic
+|-- Products or prices? ......... --focus shopping
+|-- A local business or place? .. --focus location
+|-- Geographic/regional data? ... --focus geo
+|-- General/unsure? ............. --focus general
 ```
 
-## Topic Selection by Intent
+## Focus Selection by Intent
 
-| Query Intent | Primary Topic | Secondary (parallel) | Why |
+| Query Intent | Primary Focus | Secondary (parallel) | Why |
 |---|---|---|---|
 | Research a **person** | `social` | `general` | Social searches LinkedIn/X/YouTube directly via subagents; general covers blogs, news, company pages |
 | Research a **company** | `general` | `news` | General for overview; news for recent developments |
