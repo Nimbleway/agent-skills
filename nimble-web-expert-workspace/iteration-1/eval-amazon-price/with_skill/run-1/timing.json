@@ -1,6 +1,0 @@
-{
-  "total_tokens": 69847,
-  "duration_ms": 21219,
-  "total_duration_seconds": 21.2,
-  "note": "Agent was blocked on Bash permissions before running nimble commands"
-}
