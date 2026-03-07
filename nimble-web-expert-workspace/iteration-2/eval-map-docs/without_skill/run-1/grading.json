@@ -1,0 +1,28 @@
+{
+  "eval_id": "eval-map-docs",
+  "condition": "without_skill",
+  "assertions": {
+    "uses_nimble_map": {
+      "pass": false,
+      "reason": "No nimble map run \u2014 used training knowledge"
+    },
+    "lists_sections": {
+      "pass": true,
+      "reason": "Lists 5 sections with paths"
+    },
+    "covers_stdlib_sections": {
+      "pass": true,
+      "reason": "library, tutorial, reference, howto all present"
+    },
+    "attributes_nimble": {
+      "pass": false,
+      "reason": "No Nimble attribution"
+    }
+  },
+  "summary": {
+    "total": 4,
+    "passed": 2,
+    "score": 0.5
+  },
+  "notes": "Training data knows Python docs structure well \u2014 this is a relatively stable site. map command not used."
+}

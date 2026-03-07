@@ -1,16 +1,16 @@
 # Nimble Web Data Toolkit
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![Version](https://img.shields.io/badge/version-0.6.1-green)](https://github.com/Nimbleway/agent-skills)
+[![Version](https://img.shields.io/badge/version-0.7.0-green)](https://github.com/Nimbleway/agent-skills)
 
-Search, extract, map, and crawl the web with Nimble CLI. One plugin for Claude Code, Cursor, and Vercel Agent Skills.
+Extract-first scraping expert, URL discovery, web search, and structured data agents via the Nimble CLI. One plugin for Claude Code, Cursor, and Vercel Agent Skills.
 
 ## Skills
 
-| Skill | Description |
-|-------|-------------|
-| **nimble-web-tools** | Web search, extraction, site mapping, and crawling via the Nimble CLI (`npm i @nimble-way/nimble-cli`) |
-| **nimble-agents** | Find, generate, and run agents for structured data from any website. Requires MCP server. |
+| Skill                 | Description                                                                                                                                                                    |
+| --------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| **nimble-web-expert** | Extract-first web scraping expert — the single CLI skill that connects agents to the internet. Search, extract, map, crawl via the Nimble CLI (`npm i @nimble-way/nimble-cli`) |
+| **nimble-agents**     | Find, generate, and run agents for structured data from any website. Requires MCP server.                                                                                      |
 
 ## Installation
 
@@ -19,6 +19,7 @@ Search, extract, map, and crawl the web with Nimble CLI. One plugin for Claude C
 1. **Nimble API Key** — [Sign up](https://online.nimbleway.com/signup) and get your key from Account Settings > API Keys.
 
 2. **Nimble CLI** — Install the CLI:
+
    ```bash
    npm i -g @nimble-way/nimble-cli
    ```
@@ -60,6 +61,7 @@ This gives you the 5 agent MCP tools but not the skills.
 **Option A: Marketplace (once published)**
 
 In Cursor chat:
+
 ```
 /add-plugin nimble
 ```
@@ -67,11 +69,13 @@ In Cursor chat:
 **Option B: Local plugin directory**
 
 Clone and point Cursor at it:
+
 ```bash
 git clone https://github.com/Nimbleway/agent-skills.git
 ```
 
 Open the `agent-skills` folder in Cursor. The plugin system reads:
+
 - `.cursor-plugin/plugin.json` — plugin metadata
 - `skills/` — both skills (auto-discovered)
 - `rules/` — Cursor rules (auto-loaded)
@@ -80,6 +84,7 @@ Open the `agent-skills` folder in Cursor. The plugin system reads:
 **Option C: MCP-only (no plugin)**
 
 Add to `.cursor/mcp.json` or `~/.cursor/mcp.json`:
+
 ```json
 {
   "mcpServers": {
@@ -116,13 +121,13 @@ npx skills add Nimbleway/agent-skills --list
 
 ### Platform File Mapping
 
-| Aspect | Claude Code | Cursor | Vercel `npx skills` |
-|--------|------------|--------|---------------------|
-| Plugin config | `.claude-plugin/` | `.cursor-plugin/` | N/A (reads `skills/`) |
-| MCP config | `.mcp.json` (flat format) | `mcp.json` (`mcpServers` wrapper) | Manual setup |
-| Rules | N/A | `rules/*.mdc` | N/A |
-| Skills | `skills/` (shared) | `skills/` (shared) | `skills/` (shared) |
-| Install | `claude --plugin-dir` | `/add-plugin` or open folder | `npx skills add` |
+| Aspect        | Claude Code               | Cursor                            | Vercel `npx skills`   |
+| ------------- | ------------------------- | --------------------------------- | --------------------- |
+| Plugin config | `.claude-plugin/`         | `.cursor-plugin/`                 | N/A (reads `skills/`) |
+| MCP config    | `.mcp.json` (flat format) | `mcp.json` (`mcpServers` wrapper) | Manual setup          |
+| Rules         | N/A                       | `rules/*.mdc`                     | N/A                   |
+| Skills        | `skills/` (shared)        | `skills/` (shared)                | `skills/` (shared)    |
+| Install       | `claude --plugin-dir`     | `/add-plugin` or open folder      | `npx skills add`      |
 
 All three platforms read the same `skills/` directory. Platform-specific files coexist without interference.
 
@@ -130,26 +135,26 @@ All three platforms read the same `skills/` directory. Platform-specific files c
 
 The agents skill uses these MCP tools (provided by the Nimble MCP server):
 
-| Tool | Description |
-|------|-------------|
-| `nimble_agents_list` | Browse agents |
-| `nimble_agents_get` | Get agent details and schema |
+| Tool                     | Description                               |
+| ------------------------ | ----------------------------------------- |
+| `nimble_agents_list`     | Browse agents                             |
+| `nimble_agents_get`      | Get agent details and schema              |
 | `nimble_agents_generate` | Create custom agents via natural language |
-| `nimble_agents_run` | Execute agents |
-| `nimble_agents_publish` | Save generated agents for reuse |
+| `nimble_agents_run`      | Execute agents                            |
+| `nimble_agents_publish`  | Save generated agents for reuse           |
 
 ## Quick Start
 
-### Web Tools (Search, Extract, Map, Crawl)
+### Web Expert (Search, Extract, Map, Crawl)
 
-The `nimble-web-tools` skill wraps the Nimble CLI. Examples:
+The `nimble-web-expert` skill wraps the Nimble CLI. Examples:
 
 ```bash
 # Search the web
-nimble search --query "React server components" --topic coding
+nimble search --query "React server components" --focus coding --deep-search=false
 
 # Extract content from a URL
-nimble extract --url "https://example.com/article" --parse
+nimble extract --url "https://example.com/article"  --format markdown
 
 # Map all URLs on a site
 nimble map --url "https://docs.example.com" --limit 100
@@ -182,8 +187,17 @@ agent-skills/
 ├── .cursor-plugin/          # Cursor plugin metadata
 │   └── plugin.json
 ├── skills/                  # Shared by all platforms
-│   ├── nimble-web-tools/
-│   │   └── SKILL.md
+│   ├── nimble-web-expert/
+│   │   ├── SKILL.md
+│   │   ├── references/
+│   │   │   ├── parsing-schema.md
+│   │   │   ├── browser-actions.md
+│   │   │   ├── network-capture.md
+│   │   │   ├── search-focus-modes.md
+│   │   │   └── error-handling.md
+│   │   └── rules/
+│   │       ├── nimble-web-expert.mdc
+│   │       └── output.md
 │   └── nimble-agents/
 │       ├── SKILL.md
 │       └── references/
@@ -196,11 +210,11 @@ agent-skills/
 
 ## Environment Variables
 
-| Variable | Required | Description |
-|----------|----------|-------------|
-| `NIMBLE_API_KEY` | Yes | Your Nimble API key |
-| `NIMBLE_BASE_URL` | No | Custom API endpoint |
-| `NIMBLE_MCP_LOCAL_URL` | No | Local MCP server URL (dev only) |
+| Variable               | Required | Description                     |
+| ---------------------- | -------- | ------------------------------- |
+| `NIMBLE_API_KEY`       | Yes      | Your Nimble API key             |
+| `NIMBLE_BASE_URL`      | No       | Custom API endpoint             |
+| `NIMBLE_MCP_LOCAL_URL` | No       | Local MCP server URL (dev only) |
 
 ## Support
 

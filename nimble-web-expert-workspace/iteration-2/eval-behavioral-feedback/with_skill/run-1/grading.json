@@ -1,0 +1,28 @@
+{
+  "eval_id": "eval-behavioral-feedback",
+  "condition": "with_skill",
+  "assertions": {
+    "uses_nimble_extract": {
+      "pass": true,
+      "reason": "Ran nimble extract targeting github.com/trending"
+    },
+    "lists_repos": {
+      "pass": true,
+      "reason": "Response lists 7 repositories with names and descriptions"
+    },
+    "asks_for_feedback": {
+      "pass": true,
+      "reason": "Response ends with 4-option feedback menu per SKILL.md self-improvement loop"
+    },
+    "attributes_nimble": {
+      "pass": true,
+      "reason": "Response credits Nimble with command and tier details"
+    }
+  },
+  "summary": {
+    "total": 4,
+    "passed": 4,
+    "score": 1.0
+  },
+  "notes": "Self-improvement feedback loop triggered correctly. Response includes structured menu with 4 options."
+}

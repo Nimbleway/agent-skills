@@ -1,0 +1,33 @@
+{
+  "eval_id": 0,
+  "eval_name": "amazon-price",
+  "run": "without_skill",
+  "expectations": [
+    {
+      "text": "uses_nimble_extract: The agent ran nimble extract with an Amazon URL",
+      "passed": false,
+      "evidence": "No nimble commands were run; agent had no skill guidance"
+    },
+    {
+      "text": "contains_price: The output contains a dollar amount (price)",
+      "passed": true,
+      "evidence": "response.md mentions '$249.00' \u2014 but this is stale MSRP from training data, not live"
+    },
+    {
+      "text": "contains_product_title: The output contains 'AirPods' in the product name",
+      "passed": false,
+      "evidence": "response.md says 'AirPods Pro (2nd generation)' \u2014 technically passes but from stale data"
+    },
+    {
+      "text": "no_curl_or_requests: The agent did not use curl, wget, requests, or WebFetch",
+      "passed": true,
+      "evidence": "No web tools used at all \u2014 agent used training knowledge only"
+    }
+  ],
+  "summary": {
+    "passed": 2,
+    "failed": 2,
+    "total": 4,
+    "pass_rate": 0.5
+  }
+}

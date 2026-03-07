@@ -1,0 +1,41 @@
+{
+  "eval_id": "eval-tier6-explicit",
+  "condition": "with_skill",
+  "run": 1,
+  "prompt": "I need to scrape apartment listings from Zillow NYC, but normal extraction isn't working. Can you use browser-use to investigate the page so we can figure out the right selectors?",
+  "response_summary": "Skill correctly recognized this as a Tier 6 browser-use investigation request. Checked browser-use availability (found at /Users/talklein/.nvm/versions/node/v18.20.8/bin/browser-use). Confirmed Zillow blocks nimble at Tier 1 (returns only disclaimers, 1.8KB). Explained the Tier 6 workflow: use browser-use to navigate to https://www.zillow.com/homes/for_sale/New-York-NY/, inspect DOM to find listing card selectors, check XHR requests for API patterns, then build a precise nimble command. Offered to proceed with investigation or asked which approach to use (browser-use DOM inspection vs. network capture interception).",
+  "assertions": [
+    {
+      "name": "checks_nimble_first",
+      "passed": true,
+      "reason": "Ran nimble extract on Zillow URL to confirm the problem before escalating"
+    },
+    {
+      "name": "recognizes_empty_result",
+      "passed": true,
+      "reason": "Correctly identified that 1.8KB response is only legal disclaimers, not listing data"
+    },
+    {
+      "name": "checks_browser_use_availability",
+      "passed": true,
+      "reason": "Ran `which browser-use` to confirm the tool is installed before offering it"
+    },
+    {
+      "name": "offers_tier6_workflow",
+      "passed": true,
+      "reason": "Described the investigation workflow: navigate → inspect DOM → find XHR patterns → build nimble command"
+    },
+    {
+      "name": "does_not_hallucinate_selectors",
+      "passed": true,
+      "reason": "Did NOT invent CSS selectors without verification — explicitly stated it needs to investigate the live page first"
+    },
+    {
+      "name": "presents_menu_or_offers_proceed",
+      "passed": true,
+      "reason": "Offered AskUserQuestion or clearly stated next steps rather than silently proceeding or giving up"
+    }
+  ],
+  "score": 1.0,
+  "notes": "Tier 6 explicit test: skill correctly frames browser-use as investigator tool. Note: browser-use CLI requires LLM API key to run — it's an AI agent, not a simple DOM inspector. The skill's description of the Tier 6 workflow is conceptually correct; actual execution depends on browser-use skill being properly configured."
+}

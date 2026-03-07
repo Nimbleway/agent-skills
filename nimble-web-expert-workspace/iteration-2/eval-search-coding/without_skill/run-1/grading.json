@@ -1,0 +1,28 @@
+{
+  "eval_id": "eval-search-coding",
+  "condition": "without_skill",
+  "assertions": {
+    "uses_nimble_search": {
+      "pass": false,
+      "reason": "No nimble search run \u2014 used training data"
+    },
+    "five_items": {
+      "pass": true,
+      "reason": "5 libraries listed"
+    },
+    "includes_python_libs": {
+      "pass": true,
+      "reason": "FastAPI, Flask, Django, Falcon, Litestar all present"
+    },
+    "attributes_nimble": {
+      "pass": false,
+      "reason": "No Nimble attribution \u2014 data from training"
+    }
+  },
+  "summary": {
+    "total": 4,
+    "passed": 2,
+    "score": 0.5
+  },
+  "notes": "Training data knows these stable libraries well. But misses any 2026 releases and lacks live links/context."
+}

@@ -1,0 +1,32 @@
+{
+  "eval_id": "eval-tier4-amazon-multi",
+  "condition": "without_skill",
+  "assertions": {
+    "uses_amazon_search_url": {
+      "pass": false,
+      "reason": "No nimble command run"
+    },
+    "five_results": {
+      "pass": false,
+      "reason": "No results returned"
+    },
+    "includes_prices": {
+      "pass": false,
+      "reason": "No live pricing data"
+    },
+    "includes_product_urls": {
+      "pass": false,
+      "reason": "No URLs generated"
+    },
+    "attributes_nimble": {
+      "pass": false,
+      "reason": "Mentions Nimble as suggestion but doesn't use it"
+    }
+  },
+  "summary": {
+    "total": 5,
+    "passed": 0,
+    "score": 0.0
+  },
+  "notes": "Complete fail \u2014 e-commerce data is inherently dynamic. Good fallback messaging pointing to Nimble install."
+}

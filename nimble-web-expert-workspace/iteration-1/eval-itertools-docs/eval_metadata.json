@@ -1,0 +1,23 @@
+{
+  "eval_id": 2,
+  "eval_name": "itertools-docs",
+  "prompt": "I need to understand what Python's itertools module offers. Can you go to docs.python.org and find the itertools page, then give me a summary of its main function groups?",
+  "assertions": [
+    {
+      "name": "uses_nimble_extract_or_map",
+      "description": "The agent ran nimble extract or nimble map targeting docs.python.org"
+    },
+    {
+      "name": "covers_main_groups",
+      "description": "The output mentions at least 2 of: infinite iterators, combinatoric iterators, chain, islice, groupby, product, combinations, permutations"
+    },
+    {
+      "name": "structured_output",
+      "description": "The output is organized into categories or groups, not just a flat list"
+    },
+    {
+      "name": "no_hallucination_check",
+      "description": "The output doesn't describe functions that don't exist in itertools (e.g. itertools.map, itertools.filter)"
+    }
+  ]
+}

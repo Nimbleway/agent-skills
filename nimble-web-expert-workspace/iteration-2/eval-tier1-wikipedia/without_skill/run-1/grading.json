@@ -1,0 +1,32 @@
+{
+  "eval_id": "eval-tier1-wikipedia",
+  "condition": "without_skill",
+  "assertions": {
+    "uses_nimble_extract": {
+      "pass": false,
+      "reason": "No nimble command run \u2014 answered from training data"
+    },
+    "no_render_flag": {
+      "pass": true,
+      "reason": "N/A \u2014 no extraction attempted"
+    },
+    "five_bullets": {
+      "pass": true,
+      "reason": "Response lists 5 bullet-style items"
+    },
+    "covers_quantum_concepts": {
+      "pass": true,
+      "reason": "Training data covers qubit, superposition, entanglement, algorithm"
+    },
+    "attributes_nimble": {
+      "pass": false,
+      "reason": "No Nimble attribution \u2014 data from training, not live web"
+    }
+  },
+  "summary": {
+    "total": 5,
+    "passed": 3,
+    "score": 0.6
+  },
+  "notes": "Training data partially covers static facts (quantum computing), but no live extraction. Attribution fails."
+}

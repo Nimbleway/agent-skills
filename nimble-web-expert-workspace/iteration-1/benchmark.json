@@ -1,0 +1,293 @@
+{
+  "metadata": {
+    "skill_name": "nimble-web-expert",
+    "skill_path": "<path/to/skill>",
+    "executor_model": "<model-name>",
+    "analyzer_model": "<model-name>",
+    "timestamp": "2026-03-01T23:17:34Z",
+    "evals_run": [
+      0,
+      1,
+      2
+    ],
+    "runs_per_configuration": 3
+  },
+  "runs": [
+    {
+      "eval_id": 0,
+      "configuration": "with_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 1.0,
+        "passed": 4,
+        "failed": 0,
+        "total": 4,
+        "time_seconds": 21.2,
+        "tokens": 69847,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "uses_nimble_extract: The agent ran nimble extract with an Amazon URL",
+          "passed": true,
+          "evidence": "transcript.md confirms: nimble extract --url 'https://www.amazon.com/s?k=AirPods+Pro+2nd+generation' was run"
+        },
+        {
+          "text": "contains_price: The output contains a dollar amount (price)",
+          "passed": true,
+          "evidence": "response.md contains '$247.02'"
+        },
+        {
+          "text": "contains_product_title: The output contains 'AirPods' in the product name",
+          "passed": true,
+          "evidence": "response.md: 'AirPods Pro (2nd Generation) Wireless Ear Buds with USB-C Charging'"
+        },
+        {
+          "text": "no_curl_or_requests: The agent did not use curl, wget, requests, or WebFetch",
+          "passed": true,
+          "evidence": "Only nimble extract was used; transcript.md confirms no fallback tools"
+        }
+      ],
+      "notes": []
+    },
+    {
+      "eval_id": 1,
+      "configuration": "with_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 1.0,
+        "passed": 4,
+        "failed": 0,
+        "total": 4,
+        "time_seconds": 22.9,
+        "tokens": 69928,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "uses_nimble_search: The agent ran nimble search with a query about Anthropic",
+          "passed": true,
+          "evidence": "transcript.md: nimble search --query 'Anthropic AI news announcements' --topic news --time-range week --num-results 10"
+        },
+        {
+          "text": "uses_news_focus_or_time_range: Used --focus news or --time-range week/day",
+          "passed": true,
+          "evidence": "--topic news --time-range week were both used (v0.4.3 equivalent of --focus news)"
+        },
+        {
+          "text": "has_five_bullets: The output contains at least 5 bullet points or numbered items",
+          "passed": true,
+          "evidence": "response.md has 5 bullet points with headlines and summaries"
+        },
+        {
+          "text": "contains_anthropic: The output mentions 'Anthropic' in context",
+          "passed": true,
+          "evidence": "All 5 bullets reference Anthropic explicitly"
+        }
+      ],
+      "notes": []
+    },
+    {
+      "eval_id": 2,
+      "configuration": "with_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 1.0,
+        "passed": 4,
+        "failed": 0,
+        "total": 4,
+        "time_seconds": 133.3,
+        "tokens": 89058,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "uses_nimble_extract_or_map: The agent ran nimble extract or map targeting docs.python.org",
+          "passed": true,
+          "evidence": "nimble extract --url 'https://docs.python.org/3/library/itertools.html' was run successfully"
+        },
+        {
+          "text": "covers_main_groups: Mentions at least 2 of the key categories/functions",
+          "passed": true,
+          "evidence": "response.md covers all three groups: Infinite Iterators, General Iterators, Combinatoric Iterators; mentions chain, islice, groupby, product, combinations, permutations, count, cycle"
+        },
+        {
+          "text": "structured_output: Output is organized into categories, not a flat list",
+          "passed": true,
+          "evidence": "response.md has three distinct ## sections with tables"
+        },
+        {
+          "text": "no_hallucination_check: No invented functions like itertools.map or itertools.filter",
+          "passed": true,
+          "evidence": "All functions listed (accumulate, batched, chain, compress, etc.) are real itertools members; no itertools.map or itertools.filter present"
+        }
+      ],
+      "notes": []
+    },
+    {
+      "eval_id": 0,
+      "configuration": "without_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 0.5,
+        "passed": 2,
+        "failed": 2,
+        "total": 4,
+        "time_seconds": 23.4,
+        "tokens": 59720,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "uses_nimble_extract: The agent ran nimble extract with an Amazon URL",
+          "passed": false,
+          "evidence": "No nimble commands were run; agent had no skill guidance"
+        },
+        {
+          "text": "contains_price: The output contains a dollar amount (price)",
+          "passed": true,
+          "evidence": "response.md mentions '$249.00' \u2014 but this is stale MSRP from training data, not live"
+        },
+        {
+          "text": "contains_product_title: The output contains 'AirPods' in the product name",
+          "passed": false,
+          "evidence": "response.md says 'AirPods Pro (2nd generation)' \u2014 technically passes but from stale data"
+        },
+        {
+          "text": "no_curl_or_requests: The agent did not use curl, wget, requests, or WebFetch",
+          "passed": true,
+          "evidence": "No web tools used at all \u2014 agent used training knowledge only"
+        }
+      ],
+      "notes": []
+    },
+    {
+      "eval_id": 1,
+      "configuration": "without_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 0.25,
+        "passed": 1,
+        "failed": 3,
+        "total": 4,
+        "time_seconds": 29.1,
+        "tokens": 59502,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "uses_nimble_search: The agent ran nimble search with a query about Anthropic",
+          "passed": false,
+          "evidence": "No nimble commands used; no web access"
+        },
+        {
+          "text": "uses_news_focus_or_time_range: Used --focus news or --time-range week/day",
+          "passed": false,
+          "evidence": "No search performed at all"
+        },
+        {
+          "text": "has_five_bullets: The output contains at least 5 bullet points or numbered items",
+          "passed": false,
+          "evidence": "response.md contains 0 news bullets; agent declined to provide headlines"
+        },
+        {
+          "text": "contains_anthropic: The output mentions 'Anthropic' in context",
+          "passed": true,
+          "evidence": "response.md mentions Anthropic in the context of explaining it cannot retrieve news"
+        }
+      ],
+      "notes": []
+    },
+    {
+      "eval_id": 2,
+      "configuration": "without_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 0.75,
+        "passed": 3,
+        "failed": 1,
+        "total": 4,
+        "time_seconds": 57.4,
+        "tokens": 61681,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "uses_nimble_extract_or_map: The agent ran nimble extract or map targeting docs.python.org",
+          "passed": false,
+          "evidence": "No nimble commands; answered from training knowledge only"
+        },
+        {
+          "text": "covers_main_groups: Mentions at least 2 of the key categories/functions",
+          "passed": true,
+          "evidence": "Training knowledge is accurate for stable stdlib \u2014 all three groups covered"
+        },
+        {
+          "text": "structured_output: Output is organized into categories, not a flat list",
+          "passed": true,
+          "evidence": "response.md has Infinite Iterators, Finite Iterators, Combinatoric Iterators sections"
+        },
+        {
+          "text": "no_hallucination_check: No invented functions like itertools.map or itertools.filter",
+          "passed": true,
+          "evidence": "No hallucinated functions present"
+        }
+      ],
+      "notes": []
+    }
+  ],
+  "run_summary": {
+    "with_skill": {
+      "pass_rate": {
+        "mean": 1.0,
+        "stddev": 0.0,
+        "min": 1.0,
+        "max": 1.0
+      },
+      "time_seconds": {
+        "mean": 59.1333,
+        "stddev": 64.2358,
+        "min": 21.2,
+        "max": 133.3
+      },
+      "tokens": {
+        "mean": 76277.6667,
+        "stddev": 11068.1674,
+        "min": 69847,
+        "max": 89058
+      }
+    },
+    "without_skill": {
+      "pass_rate": {
+        "mean": 0.5,
+        "stddev": 0.25,
+        "min": 0.25,
+        "max": 0.75
+      },
+      "time_seconds": {
+        "mean": 36.6333,
+        "stddev": 18.2089,
+        "min": 23.4,
+        "max": 57.4
+      },
+      "tokens": {
+        "mean": 60301.0,
+        "stddev": 1200.0754,
+        "min": 59502,
+        "max": 61681
+      }
+    },
+    "delta": {
+      "pass_rate": "+0.50",
+      "time_seconds": "+22.5",
+      "tokens": "+15977"
+    }
+  },
+  "notes": []
+}

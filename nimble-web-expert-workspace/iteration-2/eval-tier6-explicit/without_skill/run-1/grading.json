@@ -1,0 +1,41 @@
+{
+  "eval_id": "eval-tier6-explicit",
+  "condition": "without_skill",
+  "run": 1,
+  "prompt": "I need to scrape apartment listings from Zillow NYC, but normal extraction isn't working. Can you use browser-use to investigate the page so we can figure out the right selectors?",
+  "response_summary": "Without skill, Claude has no knowledge of the Tier 6 investigation workflow. Likely responses: (a) Says it cannot browse the web and refers to WebFetch which also fails on Zillow, (b) Tries to run WebFetch on Zillow URL and gets back only the disclaimer content, (c) Offers to help write Python code using requests/playwright without connecting it to a real investigation workflow, (d) May hallucinate plausible-sounding Zillow CSS selectors from training data (e.g. '.StyledCard', '.list-card') without any live verification. No mention of browser-use as an investigation tool. No structured escalation menu.",
+  "assertions": [
+    {
+      "name": "checks_nimble_first",
+      "passed": false,
+      "reason": "Does not know about nimble CLI — would use WebFetch or Python code instead"
+    },
+    {
+      "name": "recognizes_empty_result",
+      "passed": false,
+      "reason": "If WebFetch returns disclaimers, likely doesn't identify this as a blocked/empty result pattern"
+    },
+    {
+      "name": "checks_browser_use_availability",
+      "passed": false,
+      "reason": "No knowledge of browser-use as an installed tool — does not check availability"
+    },
+    {
+      "name": "offers_tier6_workflow",
+      "passed": false,
+      "reason": "No concept of investigation → nimble command pipeline; may suggest ad-hoc Python/Playwright instead"
+    },
+    {
+      "name": "does_not_hallucinate_selectors",
+      "passed": false,
+      "reason": "Likely guesses Zillow CSS selectors from training data (.list-card, .StyledCard, etc.) without live verification"
+    },
+    {
+      "name": "presents_menu_or_offers_proceed",
+      "passed": false,
+      "reason": "No structured menu — responds in free-form prose with unclear next steps"
+    }
+  ],
+  "score": 0.0,
+  "notes": "Without skill: no awareness of Tier 6, no nimble usage, likely hallucinated selectors or unhelpful WebFetch attempt."
+}

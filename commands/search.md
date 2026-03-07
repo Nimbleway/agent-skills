@@ -7,7 +7,7 @@ argument-hint: <query>
 
 ## Query: $ARGUMENTS
 
-Use the **nimble-web-tools** skill to search for this query.
+Use the **nimble-web-expert** skill to search for this query.
 
 Run: `nimble search --query "$ARGUMENTS" --deep-search=false`
 

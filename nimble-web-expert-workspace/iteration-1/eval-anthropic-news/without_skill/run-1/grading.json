@@ -1,0 +1,33 @@
+{
+  "eval_id": 1,
+  "eval_name": "anthropic-news",
+  "run": "without_skill",
+  "expectations": [
+    {
+      "text": "uses_nimble_search: The agent ran nimble search with a query about Anthropic",
+      "passed": false,
+      "evidence": "No nimble commands used; no web access"
+    },
+    {
+      "text": "uses_news_focus_or_time_range: Used --focus news or --time-range week/day",
+      "passed": false,
+      "evidence": "No search performed at all"
+    },
+    {
+      "text": "has_five_bullets: The output contains at least 5 bullet points or numbered items",
+      "passed": false,
+      "evidence": "response.md contains 0 news bullets; agent declined to provide headlines"
+    },
+    {
+      "text": "contains_anthropic: The output mentions 'Anthropic' in context",
+      "passed": true,
+      "evidence": "response.md mentions Anthropic in the context of explaining it cannot retrieve news"
+    }
+  ],
+  "summary": {
+    "passed": 1,
+    "failed": 3,
+    "total": 4,
+    "pass_rate": 0.25
+  }
+}

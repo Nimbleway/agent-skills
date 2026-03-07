@@ -1,0 +1,41 @@
+{
+  "eval_id": "eval-tier6-implicit",
+  "condition": "with_skill",
+  "run": 1,
+  "prompt": "Show me the top 5 apartments for sale in NYC on Zillow right now. Include price, address, and number of bedrooms.",
+  "response_summary": "With skill: Ran nimble extract at Tier 1 on https://www.zillow.com/homes/for_sale/New-York-NY/ → received 1,837 bytes of only legal disclaimers, no listing data. Escalated to Tier 3 (--render --driver vx10-pro) → same result. Correctly identified result as 'blocked — no listing data returned'. Presented AskUserQuestion with options: 'Add browser actions (scroll/wait) to trigger listing load' / 'Use browser-use to investigate the page structure' / 'Try a different data source (StreetEasy, Realtor.com)' / 'Use network capture to intercept the XHR listing API'. Did NOT give up silently. Did NOT hallucinate listing data.",
+  "assertions": [
+    {
+      "name": "uses_nimble_extract_first",
+      "passed": true,
+      "reason": "Ran nimble extract on Zillow URL before escalating"
+    },
+    {
+      "name": "recognizes_empty_result",
+      "passed": true,
+      "reason": "Correctly identified 1,837 bytes as disclaimers-only, not listing data — flagged as blocked"
+    },
+    {
+      "name": "escalates_to_stealth",
+      "passed": true,
+      "reason": "Tried --render --driver vx10-pro before concluding data is inaccessible via standard tiers"
+    },
+    {
+      "name": "offers_browser_use_as_option",
+      "passed": true,
+      "reason": "Included 'Use browser-use to investigate the page structure' as one of the escalation options in the menu"
+    },
+    {
+      "name": "does_not_hallucinate_listings",
+      "passed": true,
+      "reason": "Did NOT invent apartment listings from training data — made clear the live fetch returned no data"
+    },
+    {
+      "name": "presents_structured_menu",
+      "passed": true,
+      "reason": "Used AskUserQuestion with 4 concrete options rather than giving up or asking in prose"
+    }
+  ],
+  "score": 1.0,
+  "notes": "Implicit Tier 6 test: skill correctly detects failure, escalates systematically, and offers browser-use as one option in a structured menu. User can choose to investigate with browser-use or try an alternative source."
+}

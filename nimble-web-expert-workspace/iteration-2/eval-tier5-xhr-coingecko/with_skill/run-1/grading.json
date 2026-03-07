@@ -1,0 +1,32 @@
+{
+  "eval_id": "eval-tier5-xhr-coingecko",
+  "condition": "with_skill",
+  "assertions": {
+    "uses_nimble_extract_xhr": {
+      "pass": true,
+      "reason": "Ran nimble extract --is-xhr on api.coingecko.com"
+    },
+    "three_prices": {
+      "pass": true,
+      "reason": "BTC $66,098, ETH $1,939.39, SOL $83.78 all present"
+    },
+    "includes_dollar_amounts": {
+      "pass": true,
+      "reason": "USD dollar amounts present for all 3 coins"
+    },
+    "no_render_flag": {
+      "pass": true,
+      "reason": "Used --is-xhr only, no --render flag"
+    },
+    "attributes_nimble": {
+      "pass": true,
+      "reason": "Response credits Nimble with --is-xhr and API details"
+    }
+  },
+  "summary": {
+    "total": 5,
+    "passed": 5,
+    "score": 1.0
+  },
+  "notes": "Perfect XHR extraction. Response in 456ms. No render needed for pure JSON API endpoints."
+}

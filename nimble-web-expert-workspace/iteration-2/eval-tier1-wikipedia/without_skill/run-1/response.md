@@ -1,0 +1,3 @@
+Quantum computing uses quantum-mechanical phenomena to process information. Key concepts include: qubits, superposition, entanglement, quantum gates, and quantum algorithms. Notable algorithms: Shor's (factoring) and Grover's (search). Hardware is still noisy (NISQ era). Applications: cryptography, drug discovery, optimization.
+
+*(Note: I answered from training data — results may be outdated. Install the Nimble skill for live web data: `npm i -g @nimble-way/nimble-cli`)*

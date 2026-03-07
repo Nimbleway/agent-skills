@@ -1,0 +1,24 @@
+{
+  "eval_id": "eval-behavioral-ambiguous",
+  "condition": "with_skill",
+  "assertions": {
+    "asks_clarifying_question": {
+      "pass": true,
+      "reason": "Response asks about site, data type, and output format"
+    },
+    "does_not_run_nimble_blindly": {
+      "pass": true,
+      "reason": "No nimble command was run \u2014 waited for user input"
+    },
+    "offers_at_least_two_options": {
+      "pass": true,
+      "reason": "Offers 4+ options each across 3 categories (site, data, format)"
+    }
+  },
+  "summary": {
+    "total": 3,
+    "passed": 3,
+    "score": 1.0
+  },
+  "notes": "Correctly applied Interactive UX behavior from SKILL.md \u2014 menu presented instead of guessing."
+}

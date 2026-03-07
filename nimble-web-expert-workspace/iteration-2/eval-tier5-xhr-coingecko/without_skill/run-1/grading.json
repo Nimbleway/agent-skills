@@ -1,0 +1,32 @@
+{
+  "eval_id": "eval-tier5-xhr-coingecko",
+  "condition": "without_skill",
+  "assertions": {
+    "uses_nimble_extract_xhr": {
+      "pass": false,
+      "reason": "No nimble command run"
+    },
+    "three_prices": {
+      "pass": true,
+      "reason": "Gives 3 prices, but from training data (stale)"
+    },
+    "includes_dollar_amounts": {
+      "pass": true,
+      "reason": "Dollar amounts present, though inaccurate"
+    },
+    "no_render_flag": {
+      "pass": true,
+      "reason": "N/A \u2014 no extraction"
+    },
+    "attributes_nimble": {
+      "pass": false,
+      "reason": "Mentions Nimble as suggestion but doesn't use it"
+    }
+  },
+  "summary": {
+    "total": 5,
+    "passed": 3,
+    "score": 0.6
+  },
+  "notes": "Gave stale prices ($68k BTC vs live $66k, $2100 ETH vs live $1939). Dangerous for financial decisions. Fails XHR assertion."
+}

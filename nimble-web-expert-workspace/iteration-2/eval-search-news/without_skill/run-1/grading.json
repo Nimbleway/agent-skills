@@ -1,0 +1,32 @@
+{
+  "eval_id": "eval-search-news",
+  "condition": "without_skill",
+  "assertions": {
+    "uses_nimble_search": {
+      "pass": false,
+      "reason": "No nimble command run"
+    },
+    "uses_news_focus": {
+      "pass": false,
+      "reason": "No search performed"
+    },
+    "five_items": {
+      "pass": false,
+      "reason": "No headlines returned"
+    },
+    "mentions_openai": {
+      "pass": false,
+      "reason": "No current news available"
+    },
+    "attributes_nimble": {
+      "pass": false,
+      "reason": "Suggests Nimble but doesn't use it"
+    }
+  },
+  "summary": {
+    "total": 5,
+    "passed": 0,
+    "score": 0.0
+  },
+  "notes": "Complete fail \u2014 live news search impossible without Nimble. Correct refusal, good fallback."
+}

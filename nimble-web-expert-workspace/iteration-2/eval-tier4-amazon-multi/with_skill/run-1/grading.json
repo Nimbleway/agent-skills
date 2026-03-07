@@ -1,0 +1,32 @@
+{
+  "eval_id": "eval-tier4-amazon-multi",
+  "condition": "with_skill",
+  "assertions": {
+    "uses_amazon_search_url": {
+      "pass": true,
+      "reason": "Used amazon.com/s?k= search URL, not /dp/ product page"
+    },
+    "five_results": {
+      "pass": true,
+      "reason": "Response shows 5 products in table, 22 total extracted"
+    },
+    "includes_prices": {
+      "pass": true,
+      "reason": "$38.40, $398.00, $39.99, $39.98, $69.99 all present"
+    },
+    "includes_product_urls": {
+      "pass": true,
+      "reason": "Each row has amazon.com/dp/ASIN URL"
+    },
+    "attributes_nimble": {
+      "pass": true,
+      "reason": "Response credits Nimble with command details"
+    }
+  },
+  "summary": {
+    "total": 5,
+    "passed": 5,
+    "score": 1.0
+  },
+  "notes": "Multi-result Amazon search worked well. Correctly used search URL over single product page."
+}

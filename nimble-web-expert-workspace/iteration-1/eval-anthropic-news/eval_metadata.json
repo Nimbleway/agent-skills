@@ -1,0 +1,23 @@
+{
+  "eval_id": 1,
+  "eval_name": "anthropic-news",
+  "prompt": "What are the latest news stories about Anthropic from the past week? Give me a bullet list of 5 headlines with a one-sentence summary each.",
+  "assertions": [
+    {
+      "name": "uses_nimble_search",
+      "description": "The agent ran nimble search with a query about Anthropic"
+    },
+    {
+      "name": "uses_news_focus_or_time_range",
+      "description": "The search used --focus news or --time-range week/day to get recent results"
+    },
+    {
+      "name": "has_five_bullets",
+      "description": "The output contains at least 5 bullet points or numbered items"
+    },
+    {
+      "name": "contains_anthropic",
+      "description": "The output mentions 'Anthropic' in context"
+    }
+  ]
+}

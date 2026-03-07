@@ -1,0 +1,41 @@
+{
+  "eval_id": "eval-tier6-implicit",
+  "condition": "without_skill",
+  "run": 1,
+  "prompt": "Show me the top 5 apartments for sale in NYC on Zillow right now. Include price, address, and number of bedrooms.",
+  "response_summary": "Without skill: No knowledge of nimble CLI escalation pattern. Likely behaviors: (a) Says 'I can't browse the web in real time' and stops — giving up silently without offering alternatives, (b) Tries WebFetch on Zillow URL, gets back disclaimers/empty, says 'Zillow doesn't seem to have listings at that URL' — misdiagnoses the problem, (c) Hallucinates 5 plausible-sounding NYC apartment listings from training data with made-up prices and addresses, not flagged as unverified, (d) Suggests the user try the Zillow app or website manually. No browser-use investigation offered. No structured escalation menu. No use of nimble.",
+  "assertions": [
+    {
+      "name": "uses_nimble_extract_first",
+      "passed": false,
+      "reason": "Does not know about nimble — uses WebFetch or gives up immediately"
+    },
+    {
+      "name": "recognizes_empty_result",
+      "passed": false,
+      "reason": "If WebFetch is used and returns disclaimers, likely misidentifies the issue or ignores it"
+    },
+    {
+      "name": "escalates_to_stealth",
+      "passed": false,
+      "reason": "No concept of render tiers or stealth drivers — no escalation attempted"
+    },
+    {
+      "name": "offers_browser_use_as_option",
+      "passed": false,
+      "reason": "No knowledge of browser-use as an investigation tool — not offered as an option"
+    },
+    {
+      "name": "does_not_hallucinate_listings",
+      "passed": false,
+      "reason": "High risk of hallucinating plausible NYC apartment listings with fake prices and addresses from training data"
+    },
+    {
+      "name": "presents_structured_menu",
+      "passed": false,
+      "reason": "No structured menu — either gives up in prose or invents data without asking user's preference"
+    }
+  ],
+  "score": 0.0,
+  "notes": "Without skill: common failure modes are hallucination (makes up listings) or silent failure (gives up without offering browser-use investigation or alternative sources). Both are worse outcomes for the user than the with-skill behavior."
+}

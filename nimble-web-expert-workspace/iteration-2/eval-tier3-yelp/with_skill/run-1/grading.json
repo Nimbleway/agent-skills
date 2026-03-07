@@ -1,0 +1,32 @@
+{
+  "eval_id": "eval-tier3-yelp",
+  "condition": "with_skill",
+  "assertions": {
+    "uses_nimble_extract_yelp": {
+      "pass": true,
+      "reason": "Ran nimble extract on yelp.com search URL"
+    },
+    "uses_render_or_stealth": {
+      "pass": true,
+      "reason": "Used --render --driver vx10-pro (stealth Tier 3)"
+    },
+    "three_restaurants": {
+      "pass": true,
+      "reason": "Response lists 3 SF Italian restaurants"
+    },
+    "includes_ratings": {
+      "pass": true,
+      "reason": "Star ratings (4.5\u2605) present for each restaurant"
+    },
+    "attributes_nimble": {
+      "pass": true,
+      "reason": "Response credits Nimble with tier details"
+    }
+  },
+  "summary": {
+    "total": 5,
+    "passed": 5,
+    "score": 1.0
+  },
+  "notes": "ISSUE: --render-options flag missing in v0.4.3. Browser-action recipe in SKILL.md needs v0.4.x compat note. Stealth fallback worked."
+}

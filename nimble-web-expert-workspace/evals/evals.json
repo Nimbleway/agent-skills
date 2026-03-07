@@ -1,0 +1,77 @@
+{
+  "skill_name": "nimble-web-expert",
+  "evals": [
+    {
+      "id": 0,
+      "prompt": "What's the current price of AirPods Pro (2nd generation) on Amazon? Just give me the price and product title — nothing else.",
+      "expected_output": "A short response with the product title and current price extracted from Amazon, e.g. 'Apple AirPods Pro (2nd generation) — $189.99'",
+      "files": [],
+      "assertions": [
+        {
+          "name": "uses_nimble_extract",
+          "description": "The agent ran nimble extract with an Amazon URL"
+        },
+        {
+          "name": "contains_price",
+          "description": "The output contains a dollar amount (price)"
+        },
+        {
+          "name": "contains_product_title",
+          "description": "The output contains 'AirPods' in the product name"
+        },
+        {
+          "name": "no_curl_or_requests",
+          "description": "The agent did not use curl, wget, requests, or WebFetch to get the data"
+        }
+      ]
+    },
+    {
+      "id": 1,
+      "prompt": "What are the latest news stories about Anthropic from the past week? Give me a bullet list of 5 headlines with a one-sentence summary each.",
+      "expected_output": "A bullet list of 5 recent Anthropic news headlines with brief summaries, sourced from a live web search",
+      "files": [],
+      "assertions": [
+        {
+          "name": "uses_nimble_search",
+          "description": "The agent ran nimble search with a query about Anthropic"
+        },
+        {
+          "name": "uses_news_focus_or_time_range",
+          "description": "The search used --focus news or --time-range week/day to get recent results"
+        },
+        {
+          "name": "has_five_bullets",
+          "description": "The output contains at least 5 bullet points or numbered items"
+        },
+        {
+          "name": "contains_anthropic",
+          "description": "The output mentions 'Anthropic' in context"
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "prompt": "I need to understand what Python's itertools module offers. Can you go to docs.python.org and find the itertools page, then give me a summary of its main function groups?",
+      "expected_output": "A structured summary of Python itertools grouped by type (e.g. infinite iterators, combinatoric iterators, terminating iterators), extracted from the live Python docs",
+      "files": [],
+      "assertions": [
+        {
+          "name": "uses_nimble_extract_or_map",
+          "description": "The agent ran nimble extract or nimble map targeting docs.python.org"
+        },
+        {
+          "name": "covers_main_groups",
+          "description": "The output mentions at least 2 of: infinite iterators, combinatoric iterators, chain, islice, groupby, product, combinations, permutations"
+        },
+        {
+          "name": "structured_output",
+          "description": "The output is organized into categories or groups, not just a flat list"
+        },
+        {
+          "name": "no_hallucination_check",
+          "description": "The output doesn't describe functions that don't exist in itertools (e.g. itertools.map, itertools.filter)"
+        }
+      ]
+    }
+  ]
+}

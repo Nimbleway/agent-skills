@@ -1,5 +1,23 @@
 # Changelog
 
+## [0.7.0] - 2026-02-28
+
+### Added
+- **nimble-web-expert** skill — extract-first scraping expert replacing `nimble-web-tools`
+  - Lean SKILL.md (~500 lines) covering extract, search, map, crawl, parallelization, and example workflows
+  - 5 reference files: parsing-schema, browser-actions, network-capture, search-focus-modes, error-handling
+  - 2 rules files: nimble-web-expert.mdc (routing), output.md (security)
+  - Render escalation tiers (1-5): static → render → stealth → browser actions → network capture
+  - Geo targeting, parser schemas, XHR mode for public APIs
+
+### Removed
+- **nimble-web-tools** skill (fully replaced by `nimble-web-expert`)
+
+### Changed
+- Version bumped to 0.7.0 across all plugin configs
+- README.md updated with new skill name, directory structure, and examples
+- `rules/nimble-tools.mdc` updated to reference nimble-web-expert
+
 ## [0.6.1] - 2026-02-24
 
 ### Changed
