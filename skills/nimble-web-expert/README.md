@@ -47,39 +47,62 @@ The skill follows a tiered extraction strategy — escalating automatically unti
 flowchart TD
     A([User Request]) --> B{Step 0\nPre-built Agent Check}
     B -->|Agent found| C[nimble agent run]
-    B -->|No agent| D[Tier 1: Static fetch]
-    D -->|blocked| E[Tier 2: --render]
-    E -->|blocked| F[Tier 3: --driver vx10-pro]
-    F -->|still blocked| G{What's\nmissing?}
-    G -->|DOM behind interaction| H[Tier 4: Browser actions\n--browser-action]
-    G -->|data from XHR / API| I[Tier 5: Network capture\n--network-capture]
-    G -->|interaction triggers XHR| HI[Tier 4+5: Both flags\ncombined]
-    G -->|unknown| J[Tier 6: browser-use\nor Playwright]
-    J --> K[Discover selectors / XHR]
-    K --> L[Retry with Tier 4, 5, or 4+5]
-    C --> M[(Save to .nimble/\nPresent results)]
-    D --> M
-    E --> M
-    F --> M
-    H --> M
-    I --> M
-    HI --> M
-    L --> M
+    B -->|No agent| D{Which\ncommand?}
+
+    D -->|fetch / scrape URL| E[Tier 1: nimble extract]
+    D -->|web search| S[nimble search]
+    D -->|discover URLs| MP[nimble map]
+    D -->|bulk crawl| CR[nimble crawl]
+
+    E -->|no data / blocked\nor wrong content| F[Tier 2: + --render]
+    F -->|no data / blocked\nor wrong content| G[Tier 3: + --driver vx10-pro]
+    G -->|still failing| H{What's\nmissing?}
+
+    H -->|DOM behind interaction| I[Tier 4: + --browser-action]
+    H -->|data via XHR / API| J[Tier 5: + --network-capture]
+    H -->|interaction triggers XHR| IJ[Tier 4+5: both flags\ncombined]
+    H -->|unknown| K[Tier 6: browser-use\nor Playwright]
+    K --> L[Discover selectors / XHR]
+    L --> M[Retry with Tier 4, 5, or 4+5]
+
+    E -->|data found ✓| P{Structured\noutput needed?}
+    F -->|data found ✓| P
+    G -->|data found ✓| P
+    I --> P
+    J --> P
+    IJ --> P
+    M --> P
+
+    P -->|yes| Q[Re-run with --parse]
+    P -->|no| R
+    Q --> R
+
+    C --> R
+    S --> R
+    MP --> R
+    CR --> R
+    R[(Save to .nimble/\nPresent results)]
 
     style A fill:#ced4da,stroke:#868e96
     style B fill:#fff3bf,stroke:#f59f00
     style C fill:#b2f2bb,stroke:#2f9e44
-    style D fill:#a5d8ff,stroke:#1c7ed6
+    style D fill:#fff3bf,stroke:#f59f00
+    style S fill:#b2f2bb,stroke:#2f9e44
+    style MP fill:#b2f2bb,stroke:#2f9e44
+    style CR fill:#b2f2bb,stroke:#2f9e44
     style E fill:#a5d8ff,stroke:#1c7ed6
-    style F fill:#74c0fc,stroke:#1c7ed6
-    style G fill:#fff3bf,stroke:#f59f00
-    style H fill:#ffd8a8,stroke:#e67700
+    style F fill:#a5d8ff,stroke:#1c7ed6
+    style G fill:#74c0fc,stroke:#1c7ed6
+    style H fill:#fff3bf,stroke:#f59f00
     style I fill:#ffd8a8,stroke:#e67700
-    style HI fill:#ffc078,stroke:#e67700
-    style J fill:#ffa8a8,stroke:#c92a2a
+    style J fill:#ffd8a8,stroke:#e67700
+    style IJ fill:#ffc078,stroke:#e67700
     style K fill:#ffa8a8,stroke:#c92a2a
     style L fill:#ffa8a8,stroke:#c92a2a
-    style M fill:#d0bfff,stroke:#7048e8
+    style M fill:#ffa8a8,stroke:#c92a2a
+    style P fill:#fff3bf,stroke:#f59f00
+    style Q fill:#e9ecef,stroke:#868e96
+    style R fill:#d0bfff,stroke:#7048e8
 ```
 
 > Interactive diagram: [nimble-web-expert.excalidraw](nimble-web-expert.excalidraw)
