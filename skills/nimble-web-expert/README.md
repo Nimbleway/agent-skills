@@ -50,18 +50,21 @@ flowchart TD
     B -->|No agent| D[Tier 1: Static fetch]
     D -->|blocked| E[Tier 2: --render]
     E -->|blocked| F[Tier 3: --driver vx10-pro]
-    F -->|needs interaction| G[Tier 4: Browser actions]
-    G -->|needs XHR| H[Tier 5: Network capture]
-    H -->|unknown selectors| I[Tier 6: browser-use / Playwright]
-    I --> J[Discover selectors / XHR]
-    J --> K[Build nimble command]
-    C --> L[(Save to .nimble/\nPresent results)]
-    D --> L
-    E --> L
-    F --> L
-    G --> L
-    H --> L
-    K --> L
+    F -->|still blocked| G{What's\nmissing?}
+    G -->|DOM behind interaction| H[Tier 4: Browser actions\n--browser-action]
+    G -->|data from XHR / API| I[Tier 5: Network capture\n--network-capture]
+    G -->|interaction triggers XHR| HI[Tier 4+5: Both flags\ncombined]
+    G -->|unknown| J[Tier 6: browser-use\nor Playwright]
+    J --> K[Discover selectors / XHR]
+    K --> L[Retry with Tier 4, 5, or 4+5]
+    C --> M[(Save to .nimble/\nPresent results)]
+    D --> M
+    E --> M
+    F --> M
+    H --> M
+    I --> M
+    HI --> M
+    L --> M
 
     style A fill:#ced4da,stroke:#868e96
     style B fill:#fff3bf,stroke:#f59f00
@@ -69,12 +72,14 @@ flowchart TD
     style D fill:#a5d8ff,stroke:#1c7ed6
     style E fill:#a5d8ff,stroke:#1c7ed6
     style F fill:#74c0fc,stroke:#1c7ed6
-    style G fill:#ffd8a8,stroke:#e67700
+    style G fill:#fff3bf,stroke:#f59f00
     style H fill:#ffd8a8,stroke:#e67700
-    style I fill:#ffa8a8,stroke:#c92a2a
+    style I fill:#ffd8a8,stroke:#e67700
+    style HI fill:#ffc078,stroke:#e67700
     style J fill:#ffa8a8,stroke:#c92a2a
     style K fill:#ffa8a8,stroke:#c92a2a
-    style L fill:#d0bfff,stroke:#7048e8
+    style L fill:#ffa8a8,stroke:#c92a2a
+    style M fill:#d0bfff,stroke:#7048e8
 ```
 
 > Interactive diagram: [nimble-web-expert.excalidraw](nimble-web-expert.excalidraw)

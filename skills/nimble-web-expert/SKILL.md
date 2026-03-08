@@ -122,7 +122,7 @@ For most extractions, ask what format the user wants:
 - "How would you like the results?" → choices: Clean summary (prose) / Structured table / Parsed JSON / Raw markdown
 
 **When a command fails or returns empty/blocked results:**
-Silently escalate through the render tiers (Tier 1 → 2 → 3) without asking. Only surface a decision when you've exhausted all tiers and still have no data:
+Silently escalate through render tiers **1 → 2 → 3** without asking. After Tier 3, **pick Tier 4, 5, or both** based on what is blocking (see the tier table) — they are alternatives, not a sequence. Only surface a decision when you've exhausted all applicable tiers and still have no data:
 
 - Check what investigation tools are available:
   ```bash
@@ -362,16 +362,24 @@ Before running any `extract`, `search`, or `map` command, check whether a pre-bu
 | Unknown selectors or XHR path   | browser-use or Playwright investigation | `references/nimble-extract/browser-investigation.md` |
 | Common sites (proven patterns)  | copy a recipe                           | `references/recipes.md`                              |
 
-**Render escalation for extract (try in order, stop when data appears):**
+**Render escalation for extract (Tiers 1–3 are sequential; Tiers 4–5 are alternatives, not a sequence):**
 
 | Tier | When                                      | Command flag                         |
 | ---- | ----------------------------------------- | ------------------------------------ |
 | 1    | Static pages, docs, news                  | _(no flag)_                          |
 | 2    | SPAs, dynamic content                     | `--render`                           |
 | 3    | E-commerce, social, job boards            | `--render --driver vx10-pro`         |
-| 4    | Data behind clicks/scrolls                | `--render --browser-action '[...]'`  |
-| 5    | Data from XHR/AJAX calls                  | `--render --network-capture '[...]'` |
+| 4 **or** 5 | Tier 3 still blocked — pick based on what is missing (see below) | — |
+| 4    | Data hidden behind clicks/scrolls/forms   | `--render --browser-action '[...]'`  |
+| 5    | Data loaded via XHR/AJAX calls            | `--render --network-capture '[...]'` |
+| 4+5  | Interaction triggers the XHR (e.g. click loads an API response) | combine both flags |
 | 6    | Unknown selectors/XHR — investigate first | browser-use or Playwright            |
+
+**Choosing between Tier 4 and Tier 5 (after Tier 3 fails):**
+- **Tier 4 only** — content is already in the DOM but requires user interaction to reveal it (infinite scroll, accordion, tab click, "load more" button).
+- **Tier 5 only** — content is fetched from a background API; the HTML itself has no useful data.
+- **Both (Tier 4+5)** — a user action (click, scroll) triggers an XHR that returns the data. Use `--browser-action` to perform the action and `--network-capture` to intercept the response in the same command.
+- **Tier 6** — you don't yet know which applies. Investigate first with browser-use or Playwright, then return to Tier 4, 5, or 4+5.
 
 ---
 
