@@ -410,9 +410,9 @@ Both sync and async endpoints return the same data structure. There are **three*
 | Ecommerce SERP | `array` (list of records) | `amazon_serp`, `walmart_serp` |
 | Non-ecommerce SERP | `object` with nested `entities.{EntityType}` arrays | `google_search`, `google_maps_search` |
 
-**Note:** The REST API (`POST /v1/agent`) returns results at `data.parsing`. The MCP tool `nimble_agents_run` returns results at `data.results`. These are different layers — this document covers the REST API only.
+**Note:** The REST API (`POST /v1/agent`) returns results at `data.parsing`. The CLI `nimble agent run` also returns `data.parsing` (same format). This document covers the REST API layer, used for script/codegen. For interactive use, the CLI is preferred.
 
-**Before generating code**, check the `skills` output from `nimble_agents_get` to determine which shape applies. See `agent-api-reference.md` > "Response shape inference" for the full mapping table.
+**Before generating code**, check the `skills` output from `nimble agent get --template-name <name>` (CLI) to determine which shape applies. See `agent-api-reference.md` > "Response shape inference" for the full mapping table.
 
 ### Non-ecommerce SERP response shape
 
@@ -523,7 +523,7 @@ curl -s ... | jq '.data.parsing'
 | Status | Meaning | Action |
 |--------|---------|--------|
 | 401/403 | Invalid or expired API key | Check `NIMBLE_API_KEY` |
-| 404 | Agent not found | Verify agent name via `nimble_agents_list` |
+| 404 | Agent not found | Verify agent name via `nimble agent list --limit 100` (CLI) |
 | 429 | Rate limited | Back off and retry after delay |
 | 500-504 | Server error | Retry with exponential backoff |
 

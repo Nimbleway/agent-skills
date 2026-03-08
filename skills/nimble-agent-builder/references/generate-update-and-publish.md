@@ -2,14 +2,14 @@
 
 Task agent workflow for creating, updating, and publishing agents with automated validation.
 
-**HARD RULE: `nimble_agents_generate`, `nimble_agents_update_from_agent`, `nimble_agents_update_session`, `nimble_agents_status`, and `nimble_agents_publish` are BANNED from the foreground conversation.** This entire workflow MUST run inside a `Task(subagent_type="general-purpose", run_in_background=False)` agent. Using `run_in_background=False` is required because background Task agents [cannot access MCP tools](https://github.com/anthropics/claude-code/issues/13254). The Task agent runs in its own context window regardless — foreground mode only means the main conversation waits for completion. No exceptions — not even for a single update or status check.
+**HARD RULE: `nimble_agents_generate`, `nimble_agents_update_from_agent`, `nimble_agents_update_session`, `nimble_agents_status`, and `nimble_agents_publish` are BANNED from the foreground conversation.** This entire workflow MUST run inside a `Task(subagent_type="general-purpose", run_in_background=False)` agent. Using `run_in_background=False` is a **temporary workaround** for a known platform limitation: background Task agents cannot access MCP tools ([#13254](https://github.com/anthropics/claude-code/issues/13254)). The Task agent runs in its own context window regardless — foreground mode only means the main conversation waits for completion. Revert to `run_in_background=True` once the platform issue is resolved. No exceptions in the meantime — not even for a single update or status check.
 
 ## Overview — Closed-loop lifecycle
 
 ```
 User chooses refine-validate (yes/no) — ONCE, in the foreground
         ↓
-┌─→ Discovery (nimble_web_search deep → refined prompt, fields, URLs)
+┌─→ Discovery (nimble map + nimble search CLI → refined prompt, fields, URLs)
 │   ↓
 │   Create/UpdateFromAgent (nimble_agents_generate or nimble_agents_update_from_agent)
 │   ↓
@@ -58,9 +58,20 @@ This determines `refine_validate=true|false` for the Task agent. Even with `fals
 
 Run when `refine_validate=true` OR when entering the refine-validate loop after a failure.
 
-**Discovery tools (MCP only — NEVER use WebSearch, WebFetch, or curl):**
+**Discovery tools (Nimble CLI via Bash — NEVER use WebSearch, WebFetch, or curl):**
 
-1. **`nimble_web_search`** (MCP: `mcp__plugin_nimble_nimble-mcp-server__nimble_web_search`) with `deep_search=true`, `max_results=5` — searches the target domain and extracts full page content from each result. This provides product listings, detail pages, and field structures in a single call.
+1. **`nimble map`** (CLI) — discover URL patterns and site sections:
+   ```bash
+   export PATH="$HOME/go/bin:$PATH"
+   nimble map --url "https://{domain}" --limit 50
+   ```
+   This reveals listing pages, detail pages, and URL patterns — critical for understanding what the agent needs to handle.
+
+2. **`nimble search`** (CLI) — fetch full page content for field examples:
+   ```bash
+   nimble search --query "{domain} {keywords}" --max-results 5
+   ```
+   This extracts full page content from each result, providing product listings, detail pages, and field structures.
 
 **Discovery outputs** (feed into the generate/update prompt):
 - Refined extraction prompt with specific field names
@@ -176,7 +187,7 @@ If max checks reached: print "POLL_TIMEOUT: generation did not complete after 10
 
 Run when `refine_validate=true` OR when auto-triggered by the refine-validate loop.
 
-**CRITICAL: Validation uses a generated SDK script executed via `uv run`, NOT 50 individual MCP tool calls.** The script uses the REST API `POST /v1/agent` (response at `data.parsing`), not MCP `nimble_agents_run` (response at `data.results`). Use `nimble_web_search` (MCP) for finding real test inputs — never WebSearch/WebFetch.
+**CRITICAL: Validation uses a generated SDK script executed via `uv run`, NOT 50 individual CLI/MCP tool calls.** The script uses the REST API `POST /v1/agent` (response at `data.parsing`), not CLI `nimble agent run`. Use `nimble search` (CLI) for finding real test inputs — never WebSearch/WebFetch.
 
 ### Step 4a: Generate test inputs
 
@@ -189,14 +200,14 @@ Generate or search for **50 diverse test inputs** matching the agent's `input_pr
 
 **How to generate inputs:**
 
-1. Read `input_properties` from `nimble_agents_get` to understand required fields and types.
-2. Use `nimble_web_search` (MCP) with `deep_search=true` to find real examples of the target domain/content.
+1. Run `nimble agent get --template-name <agent_name>` (CLI) to read `input_properties` and understand required fields and types.
+2. Use `nimble search --query "<domain> examples" --max-results 5` (CLI) to find real examples of the target domain/content.
 3. Combine searched real-world inputs with synthetically varied inputs.
 4. Store the 50 inputs as a JSON array.
 
 ### Step 4b: Generate and run validation script
 
-The background agent generates a Python validation script, writes it to `/tmp/validate_agent_{agent_name}.py`, and executes via `Bash(uv run /tmp/validate_agent_{agent_name}.py)`.
+The background agent generates a Python validation script, writes it to `.nimble/validate_agent_{agent_name}.py`, and executes via `Bash(uv run .nimble/validate_agent_{agent_name}.py)`.
 
 **Validation script template:**
 
@@ -341,6 +352,13 @@ Return a structured generation/update report **regardless of outcome** (pass or 
 Task(subagent_type="general-purpose", run_in_background=False, max_turns=50, prompt="""
 Generate/update agent workflow.
 
+export PATH="$HOME/go/bin:$PATH"
+
+**CLI tools (use via Bash — NOT MCP):**
+- `nimble agent get --template-name <name>` — get agent schema / input properties
+- `nimble search --query "<query>" --max-results 5` — web search (deep by default)
+- `nimble map --url <url> --limit 50` — discover URL patterns on a site
+
 **MCP tool registry (call these as MCP tool invocations, NOT bash/curl):**
 | Short name | Full MCP tool name |
 |------------|--------------------|
@@ -349,10 +367,8 @@ Generate/update agent workflow.
 | nimble_agents_update_session | mcp__plugin_nimble_nimble-mcp-server__nimble_agents_update_session |
 | nimble_agents_status | mcp__plugin_nimble_nimble-mcp-server__nimble_agents_status |
 | nimble_agents_publish | mcp__plugin_nimble_nimble-mcp-server__nimble_agents_publish |
-| nimble_agents_get | mcp__plugin_nimble_nimble-mcp-server__nimble_agents_get |
-| nimble_web_search | mcp__plugin_nimble_nimble-mcp-server__nimble_web_search |
 
-**CRITICAL: Use MCP tool calls only. NEVER use bash, curl, wget, WebSearch, or WebFetch to call APIs or search the web. NEVER construct MCP endpoint URLs manually. If an MCP tool is unavailable, report the error — do NOT work around it.**
+**CRITICAL: Use CLI (Bash) for get/search/map. Use MCP tool calls ONLY for generate/update/status/publish. NEVER use WebSearch, WebFetch, curl, or wget. NEVER construct MCP endpoint URLs manually. If an MCP tool is unavailable, report the error — do NOT work around it.**
 
 **Session ID:** {session_id}
 **Agent intent:** {user_prompt}
@@ -366,7 +382,8 @@ Generate/update agent workflow.
 Execute the closed-loop lifecycle:
 
 1. DISCOVERY (if refine_validate=true, or re-entering from failure):
-   - Use `nimble_web_search` (MCP) with deep_search=true, max_results=5 to explore the target domain and extract page content.
+   - Run `nimble map --url "https://{domain}" --limit 50` (CLI) to understand site structure and URL patterns.
+   - Run `nimble search --query "{domain} {keywords}" --max-results 5` (CLI) to extract page content and field examples.
    - Build a refined prompt with specific fields, URLs, and examples.
    - If re-entering from failure, include all accumulated error messages and failing inputs.
 
@@ -387,11 +404,11 @@ Execute the closed-loop lifecycle:
      → Go to step 1 (update loop) with error context. Keep same session_id.
 
 4. VALIDATE (if refine_validate=true, or re-entering from failure):
-   - Call nimble_agents_get to read input_properties.
-   - Generate 50 diverse test inputs (use `nimble_web_search` MCP with deep_search=true for real examples).
+   - Run `nimble agent get --template-name {agent_name}` (CLI) to read input_properties.
+   - Generate 50 diverse test inputs (use `nimble search --query "<domain> examples" --max-results 5` CLI for real examples).
    - High variability: different entities, edge cases, URL patterns.
-   - Write a Python validation script to /tmp/validate_agent_{agent_name}.py using the template from generate-update-and-publish.md Phase 4b.
-   - Execute via Bash: uv run /tmp/validate_agent_{agent_name}.py
+   - Write a Python validation script to .nimble/validate_agent_{agent_name}.py using the template from generate-update-and-publish.md Phase 4b.
+   - Execute via Bash: uv run .nimble/validate_agent_{agent_name}.py
    - Parse JSON output. If >= 80% pass: go to step 5.
    - If < 80%: analyze failures, go to step 1 (update loop via nimble_agents_update_session, same session_id).
    - Max 2 update cycles total. After 2: stop, report best result.
@@ -426,7 +443,7 @@ When generating multiple agents (e.g., multi-store comparison), launch Task agen
 - **5 consecutive poll errors/issue-messages → auto-trigger update loop.** Hard rule, no exceptions.
 - `nimble_agents_generate` is for initial creation only. Existing-agent refinement starts with `nimble_agents_update_from_agent`, then all recovery/follow-ups use `nimble_agents_update_session`.
 - Generate a UUID session_id once; **never create a new one.** Use the same session_id for all updates and recovery.
-- **All web search MUST use `nimble_web_search`** (MCP, with `deep_search=true`) only. NEVER use built-in `WebSearch`, `WebFetch`, or `curl` for searching. `nimble_agents_list` is already called in the foreground routing step.
+- **All web search MUST use `nimble search`** (CLI, via Bash). NEVER use built-in `WebSearch`, `WebFetch`, or `curl` for searching. Agent listing is already done in the foreground routing step.
 - **Every Task prompt MUST include the MCP tool registry block** with full tool names. Without it, the subagent may fail to find MCP tools and fall back to bash.
 - 80% pass rate is the minimum threshold for publishing with validation.
 - Max 2 update cycles before escalating to the user.

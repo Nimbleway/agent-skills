@@ -1,3 +1,11 @@
+---
+name: nimble-parsing-schema-reference
+description: |
+  Reference for --parser flag structured extraction. Load when markdown output lacks the specific fields needed.
+  Contains: schema and schema_list types, CSS/jsonpath/xpath selectors, text/attr/html extractors,
+  post-processors (regex, number, boolean, sequence), results in data.parsing.
+---
+
 # Parsing Schema
 
 Docs: https://docs.nimbleway.com/nimble-sdk/web-tools/extract/features/parsing-schema

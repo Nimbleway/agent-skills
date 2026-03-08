@@ -65,7 +65,7 @@ The response from `POST /v1/agent` is a dict. Extracted data lives at `resp["dat
 
 ### Response structure verification
 
-**Before generating code**, always check the output fields from `nimble_agents_get` (the `skills` dict) to determine which response shape to expect:
+**Before generating code**, always check the output fields from `nimble agent get --template-name <name>` (CLI, the `skills` dict) to determine which response shape to expect:
 
 - If `skills` has flat fields (`product_title`, `price`, `rating`) → flat list or dict.
 - If `skills` has fields like `entity_type`, `position`, `cleaned_domain` grouped under distinct entity types → nested `parsing.entities.{EntityType}` structure.
@@ -84,7 +84,7 @@ Agent parameters vary by agent. Common patterns:
 | Search query | `keyword` | `{"keyword": "wireless headphones"}` |
 | URL-based | `url` | `{"url": "https://example.com/page"}` |
 
-Always check the agent's `input_properties` via `nimble_agents_get` to determine the correct parameter names.
+Always check the agent's `input_properties` via `nimble agent get --template-name <name>` (CLI) to determine the correct parameter names.
 
 ---
 
@@ -715,7 +715,7 @@ The SDK retries transient errors (429, 5xx, timeouts) automatically with exponen
 | Fixed poll interval for large batches | Scale poll interval with batch size (see tuning table) |
 | Polling `/v1/tasks` via raw curl | Use SDK `nimble.get(...)` — curl may 401 due to auth handling |
 | Using sync `/v1/agent` for 4+ parallel jobs | Use `/v1/agent/async` for batch workloads |
-| Assuming `parsing` is always a flat list for SERP agents | `google_search` and similar non-ecommerce SERP agents return `parsing.entities.OrganicResult` — always check `nimble_agents_get` output fields first |
+| Assuming `parsing` is always a flat list for SERP agents | `google_search` and similar non-ecommerce SERP agents return `parsing.entities.OrganicResult` — always check `nimble agent get --template-name` (CLI) output fields first |
 | Using `agent.input_schema` or `agent.output_schema` | Actual fields are `agent.input_properties` (array) and `agent.skills` (dict) — see `agent-api-reference.md` |
 | Appending to a JSON array file incrementally | JSON arrays require the full structure in memory — use JSONL or CSV for incremental writes. Convert JSONL to JSON array at end if needed. |
 | Using `ParquetWriter` for crash-resilient writes | `ParquetWriter` data is lost if process dies before `close()`. Use partitioned directory instead. |

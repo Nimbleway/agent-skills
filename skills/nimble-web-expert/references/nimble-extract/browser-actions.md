@@ -1,3 +1,10 @@
+---
+name: nimble-browser-actions-reference
+description: |
+  Reference for --browser-action flag (Tier 4 extract). Load when data is behind clicks, scrolls, or form submissions.
+  Contains: all action types (click, fill, scroll, auto_scroll, wait, wait_for_element, press), parameters, chaining examples.
+---
+
 # Browser Actions
 
 Docs: https://docs.nimbleway.com/nimble-sdk/web-tools/extract/features/browser-actions

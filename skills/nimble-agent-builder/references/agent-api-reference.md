@@ -1,6 +1,12 @@
 # Agent API Reference
 
-Concise reference for the nine Nimble agent MCP tools plus input parameter mapping.
+Concise reference for Nimble agent tools plus input parameter mapping.
+
+> **CLI vs MCP:** `nimble_agents_list`, `nimble_agents_get`, `nimble_agents_run`, and `nimble_web_search` are now accessed via the **Nimble CLI** (Bash), not MCP. Their response schemas documented here remain valid — the data structures are identical regardless of interface. CLI equivalents:
+> - `nimble agent list --limit 100` (was `nimble_agents_list`)
+> - `nimble agent get --template-name <name>` (was `nimble_agents_get`)
+> - `nimble agent run --agent <name> --params '{...}'` (was `nimble_agents_run`)
+> - `nimble search --query "<q>"` (was `nimble_web_search`)
 
 ---
 

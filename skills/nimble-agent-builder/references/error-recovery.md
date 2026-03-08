@@ -5,7 +5,7 @@ Detailed error handling patterns for Nimble agent workflows.
 ## Table of Contents
 
 - [Authentication failure (401/403)](#authentication-failure-401403-from-any-tool-call)
-- [Agent not found (404)](#agent-not-found-404-from-nimble_agents_get)
+- [Agent not found (404)](#agent-not-found-404-from-nimble-agent-get)
 - [Empty results](#empty-results-run-returns-no-records)
 - [Application-level run error](#application-level-run-error-error-field-in-response)
 - [Rate limiting / transient errors (429, 5xx)](#rate-limiting--transient-errors-429-500-504)
@@ -25,11 +25,11 @@ Detailed error handling patterns for Nimble agent workflows.
 
 Do not proceed until auth is valid.
 
-## Agent not found (404 from `nimble_agents_get`)
+## Agent not found (404 from `nimble agent get`)
 
 > Agent "{name}" was not found. It may have been removed or renamed.
 
-Fall back to `nimble_agents_list` to search for available agents.
+Fall back to `nimble agent list --limit 100` (CLI) to search for available agents.
 
 ## Empty results (run returns no records)
 
@@ -58,18 +58,18 @@ See `sdk-patterns.md` > "Retry Behavior" for SDK retry configuration.
 
 When the same data source fails repeatedly (e.g., all LinkedIn agents return 500), the entire data pipeline for that source is likely down. **Stop retrying and pivot through this hierarchy:**
 
-1. **Use `nimble_web_search`** — the preferred tool for all information-finding tasks:
-   - LinkedIn down → `nimble_web_search` with `query: "CTO fintech NYC site:linkedin.com"`
-   - Crunchbase agent missing → `nimble_web_search` with `query: "Series B startup site:crunchbase.com"`
-   - Any site → `nimble_web_search` with `query: "<keywords> site:<domain>"`
+1. **Use `nimble search`** (CLI) — the preferred tool for all information-finding tasks:
+   - LinkedIn down → `nimble search --query "CTO fintech NYC site:linkedin.com"`
+   - Crunchbase agent missing → `nimble search --query "Series B startup site:crunchbase.com"`
+   - Any site → `nimble search --query "<keywords> site:<domain>"`
 
-2. **Generate a custom agent** — if `nimble_web_search` results lack the structure or depth needed, generate a dedicated agent for the target site via `nimble_agents_generate`.
+2. **Generate a custom agent** — if `nimble search` results lack the structure or depth needed, generate a dedicated agent for the target site via `nimble_agents_generate`.
 
-3. **Present the pivot to the user** via `AskUserQuestion` — offer `nimble_web_search` exploration, generating a custom agent, or waiting for the service to recover.
+3. **Present the pivot to the user** via `AskUserQuestion` — offer `nimble search` exploration, generating a custom agent, or waiting for the service to recover.
 
-**`google_search` is NOT a fallback for failed agents.** It is a SERP analysis tool — only appropriate when the user's *intent* is to analyze Google's results page itself (rank/position tracking, SEO competitive analysis, SERP feature monitoring). The question to ask: "Does the user want to *find information*, or *analyze where things rank on Google*?" If the former, use `nimble_web_search`. If the latter, use `google_search`.
+**`google_search` is NOT a fallback for failed agents.** It is a SERP analysis tool — only appropriate when the user's *intent* is to analyze Google's results page itself (rank/position tracking, SEO competitive analysis, SERP feature monitoring). The question to ask: "Does the user want to *find information*, or *analyze where things rank on Google*?" If the former, use `nimble search` (CLI). If the latter, use `google_search`.
 
-**Important:** When pivoting to a fallback agent, always repeat the full discovery cycle: `nimble_agents_get` → present schema → confirm → run. Never skip schema inspection when switching agents.
+**Important:** When pivoting to a fallback agent, always repeat the full discovery cycle: `nimble agent get --template-name` → present schema → confirm → run. Never skip schema inspection when switching agents.
 
 ## Generation stuck (repeated `processing` status)
 
@@ -83,7 +83,7 @@ For transient errors during polling (timeouts, 5xx), retry the status check — 
 
 The agent was already published in a previous session. The tool will automatically
 fetch and return the existing agent details. If it cannot resolve the name,
-suggest using `nimble_agents_list` to find the agent.
+suggest using `nimble agent list --limit 100` (CLI) to find the agent.
 
 ## Async task polling errors
 
@@ -117,18 +117,18 @@ The tasks endpoint requires `Bearer` auth via the SDK's `get()` method. Direct `
 
 ## Ambiguous agent match (no clear fit)
 
-When `nimble_agents_list` returns 0 matches or only partial matches:
+When `nimble agent list --limit 100` returns 0 matches or only partial matches:
 
-1. **Explore with `nimble_web_search` first.** Before generating a custom agent, search the target domain to understand what data exists and how pages are structured. This reduces ambiguity and prevents generating agents for the wrong page type.
-   - Example: `nimble_web_search` with `query: "site:crunchbase.com fintech series B NYC"` to see what Crunchbase pages look like for this use case.
-   - `nimble_web_search` is often sufficient on its own — if results satisfy the user's need, stop here.
+1. **Explore with `nimble search`** (CLI) first. Before generating a custom agent, search the target domain to understand what data exists and how pages are structured. This reduces ambiguity and prevents generating agents for the wrong page type.
+   - Example: `nimble search --query "site:crunchbase.com fintech series B NYC"` to see what Crunchbase pages look like for this use case.
+   - `nimble search` is often sufficient on its own — if results satisfy the user's need, stop here.
 
 2. **Generate a custom agent** when:
    - The target site has a consistent page structure (e.g., product pages, profiles).
    - A specific URL can be provided as an example for the generator.
-   - The data needed goes beyond what `nimble_web_search` provides.
+   - The data needed goes beyond what `nimble search` provides.
 
-3. **`google_search` is NOT a fallback for missing agents.** See the [Persistent data source failures](#persistent-data-source-failures-2-consecutive-500s) section for the full `google_search` vs `nimble_web_search` distinction.
+3. **`google_search` is NOT a fallback for missing agents.** See the [Persistent data source failures](#persistent-data-source-failures-2-consecutive-500s) section for the full `google_search` vs `nimble search` distinction.
 
 4. **When generating fails or produces poor results**, ask the user to clarify:
    - What specific data fields are needed.

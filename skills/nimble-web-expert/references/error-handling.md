@@ -1,3 +1,11 @@
+---
+name: nimble-error-handling-reference
+description: |
+  Error codes and troubleshooting guide. Load when a nimble command fails unexpectedly.
+  Contains: HTTP error codes, empty content signals, captcha/blocked responses, known site quirks,
+  render tier escalation tips, debug patterns.
+---
+
 # Error Handling & Known Limitations
 
 ## Error codes
