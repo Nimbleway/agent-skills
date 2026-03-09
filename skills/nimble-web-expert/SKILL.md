@@ -41,7 +41,7 @@ User request: $ARGUMENTS
 
 ## Core principles
 
-- **Step 0 first, always.** Before any `nimble` command, check the built-in agent table. If the site is not in the table, run `nimble agent list --limit 100` before falling back to extraction. Announce the check out loud — never silently. Use the agent if found. Agents cover Amazon, Walmart, Target, Yelp, LinkedIn, and 40+ more sites.
+- **Route by intent first.** Analyze the request before picking a command. If the user names a specific site or domain, check for a pre-built agent first — announce this out loud, never silently. If they give a direct URL, go to `nimble extract`. For research or topic-based tasks, use `nimble search`. To discover or bulk-crawl URLs, use `nimble map` or `nimble crawl`. `nimble search` and `nimble map` can also serve as intermediate steps to gather URLs or input IDs before running an agent or extract across multiple pages.
 - **One command → present results → done.** Pick the right command, run it once, show the data. Do NOT experiment, test, validate, or loop.
 - **Escalate render tiers silently.** Tier 1 → 2 → 3 → … without asking. Only surface a decision when all tiers fail and you need investigation tools.
 - **Never answer from training data.** Live prices, current news, today's listings → always fetch via Nimble. If Nimble is unavailable, say so. Do not guess.
@@ -67,27 +67,29 @@ Agents built by nimble-agent-builder are immediately usable here. After publishi
 
 Detect these signals and ask the user before running anything:
 
-**Trigger patterns:**
+**Only suggest when all of these are true:**
+
+- The user has explicitly signalled a recurring or scheduled need (not just a one-off)
+- The extraction pattern is repetitive (same site, same fields, same params)
+- The user has seen the results and approved them
+
+**Do NOT ask after every extract.** Only surface this when the user's language clearly signals a recurring workflow:
 
 - "I want to do this regularly / every day / every week"
 - "Build me a workflow / pipeline / automation"
 - "I'll be tracking [prices / listings / data] over time"
 - "Make this reusable" / "Can I call this via API?"
-- User runs the same extract on the same site 2+ times in a session
-- An existing agent is broken or needs a new field
 
-**When triggered — always ask with AskUserQuestion:**
+**When triggered — ask with AskUserQuestion:**
 
 ```
-question: "This looks like a recurring extraction pattern. Build a reusable agent?"
-header: "Agent or extract?"
+question: "This looks like a recurring extraction. Want to build a reusable agent for it?"
+header: "Agent?"
 options:
-  - label: "Build reusable agent (Recommended)"
-    description: "Use nimble-agent-builder to create a named agent — run anytime via `nimble agent run --agent <name> --params '{...}'` with no extract config"
-  - label: "Extract now, mention later"
-    description: "Run the extract now; suggest agent-builder at the end if results look good"
-  - label: "Just this once"
-    description: "One-off fetch only, no agent needed"
+  - label: "Yes — build a reusable agent (Recommended)"
+    description: "Use nimble-agent-builder to create a named agent — run anytime via `nimble agent run --agent <name> --params '{...}'`"
+  - label: "Not now"
+    description: "Keep as a one-off extraction"
 ```
 
 **For agent refinement:** When the user says an existing agent is wrong/broken/missing fields, tell them: _"Agent updates are handled by nimble-agent-builder — it can refine the existing agent without rebuilding from scratch."_
@@ -308,17 +310,26 @@ head -200 .nimble/nimble-docs-full.md
 
 ---
 
-## Step 0 — Try a built-in agent first (always)
+## Analyze & Route — pick the right command
 
-Before running any `extract`, `search`, or `map` command, check whether a pre-built Nimble agent covers the request. Agents return clean structured data with zero selector work — they're faster and more reliable than manual extraction.
+| User signal | Command | Notes |
+|---|---|---|
+| Names a specific site or domain | `nimble agent` → `nimble extract` if no agent | Always check for agent first when a domain is named |
+| Provides a direct URL | `nimble extract` | Skip agent check — go straight to extract |
+| Research, topic, or vertical query | `nimble search` | Use focus modes for news, jobs, shopping, etc. |
+| "Find URLs / sitemap / all pages" | `nimble map` | Returns URL list + metadata |
+| "Crawl / archive a whole section" | `nimble crawl` | Async bulk extraction |
 
-**ALWAYS verbalize this check to the user — never do it silently:**
+> **Multi-step flows:** `nimble search` and `nimble map` can be used as intermediate steps to gather URLs or input IDs before running an agent or extract across multiple pages.
 
-1. **Announce the check:** Before looking up anything, say: _"Let me check if there's a pre-built Nimble agent for [site/topic]..."_
-2. **Report what you found:**
-   - If a match is found: _"Found the `<agent_name>` agent — using it now."_
-   - If no match: _"No pre-built agent found for [site] — falling back to standard extraction."_
-3. **Never skip Step 0 silently.** Even if you're certain there's no agent, you must say so before proceeding to extract/search.
+### Agent check (when a domain is named)
+
+When the user names a specific site, check whether a pre-built Nimble agent covers the request before extracting. Agents return clean structured data with zero selector work — faster and more reliable than manual extraction.
+
+**Always verbalize this check — never do it silently:**
+
+1. **Announce:** _"Let me check if there's a pre-built Nimble agent for [site]..."_
+2. **Report:** If found: _"Found the `<agent_name>` agent — using it now."_ If not: _"No pre-built agent — falling back to extraction."_
 
 **Lookup order:**
 
@@ -350,54 +361,48 @@ Before running any `extract`, `search`, or `map` command, check whether a pre-bu
 
 ## Workflow — what to use when
 
-> **Always run Step 0 first** — check for a pre-built agent before any command below.
+| Situation                           | Command                                            | Reference                                            |
+| ----------------------------------- | -------------------------------------------------- | ---------------------------------------------------- |
+| Site/domain named → check agent first | `nimble agent list` → `nimble agent run`         | `references/nimble-agents/SKILL.md`                  |
+| Direct URL to fetch or scrape       | `nimble extract`                                   | `references/nimble-extract/SKILL.md`                 |
+| Search the live web / research      | `nimble search`                                    | `references/nimble-search/SKILL.md`                  |
+| Discover URLs on a site             | `nimble map`                                       | `references/nimble-map/SKILL.md`                     |
+| Bulk crawl a site section           | `nimble crawl run`                                 | `references/nimble-crawl/SKILL.md`                   |
+| Unknown selectors or XHR path       | browser-use or Playwright investigation            | `references/nimble-extract/browser-investigation.md` |
+| Common sites (proven patterns)      | copy a recipe                                      | `references/recipes.md`                              |
 
-| Situation                       | Command                                 | Reference                                            |
-| ------------------------------- | --------------------------------------- | ---------------------------------------------------- |
-| Known site (Amazon, Yelp, etc.) | `nimble agent run --agent <name> --params '{...}'` | `references/nimble-agents/SKILL.md`           |
-| Fetch a URL / read a page       | `nimble extract`                        | `references/nimble-extract/SKILL.md`                 |
-| Search the live web             | `nimble search`                         | `references/nimble-search/SKILL.md`                  |
-| Discover URLs on a site         | `nimble map`                            | `references/nimble-map/SKILL.md`                     |
-| Bulk archive many pages         | `nimble crawl run`                      | `references/nimble-crawl/SKILL.md`                   |
-| Unknown selectors or XHR path   | browser-use or Playwright investigation | `references/nimble-extract/browser-investigation.md` |
-| Common sites (proven patterns)  | copy a recipe                           | `references/recipes.md`                              |
+### Extract Waterfall — when and how to escalate
 
-**Render escalation for extract (Tiers 1–3 are sequential; Tiers 4–5 are alternatives, not a sequence):**
+When `nimble extract` doesn't return the expected data, escalate through render tiers. **Tiers 1–3 are sequential. Tiers 4–5 are alternatives — pick based on what's blocking, not as a sequence.**
 
-| Tier | When                                      | Command flag                         |
+| Tier | When to use                               | Command flag                         |
 | ---- | ----------------------------------------- | ------------------------------------ |
 | 1    | Static pages, docs, news                  | _(no flag)_                          |
 | 2    | SPAs, dynamic content                     | `--render`                           |
 | 3    | E-commerce, social, job boards            | `--render --driver vx10-pro`         |
-| 4 **or** 5 | Tier 3 still blocked — pick based on what is missing (see below) | — |
 | 4    | Data hidden behind clicks/scrolls/forms   | `--render --browser-action '[...]'`  |
 | 5    | Data loaded via XHR/AJAX calls            | `--render --network-capture '[...]'` |
-| 4+5  | Interaction triggers the XHR (e.g. click loads an API response) | combine both flags |
+| 4+5  | Interaction triggers the XHR              | combine both flags                   |
 | 6    | Unknown selectors/XHR — investigate first | browser-use or Playwright            |
 
-**Choosing between Tier 4 and Tier 5 (after Tier 3 fails):**
-- **Tier 4 only** — content is already in the DOM but requires user interaction to reveal it (infinite scroll, accordion, tab click, "load more" button).
-- **Tier 5 only** — content is fetched from a background API; the HTML itself has no useful data.
-- **Both (Tier 4+5)** — a user action (click, scroll) triggers an XHR that returns the data. Use `--browser-action` to perform the action and `--network-capture` to intercept the response in the same command.
-- **Tier 6** — you don't yet know which applies. Investigate first with browser-use or Playwright, then return to Tier 4, 5, or 4+5.
+- **Tier 4** — content is in the DOM but needs user interaction to reveal it (scroll, click, "load more").
+- **Tier 5** — content comes from a background API; the page HTML has no useful data.
+- **Both (4+5)** — a user action triggers an XHR. Use `--browser-action` + `--network-capture` together.
+- **Tier 6** — unknown which applies. Investigate with browser-use or Playwright, then retry 4, 5, or 4+5.
 
 ---
 
 ## Response shapes
 
-Output format varies by command and flags — know what to expect before parsing:
+Each command supports multiple output formats via flags. For the full flag reference, search [docs.nimbleway.com](https://docs.nimbleway.com).
 
-| Command + flags                            | Shape                                    | Access pattern                               |
-| ------------------------------------------ | ---------------------------------------- | -------------------------------------------- |
-| `nimble extract` (default)                 | Markdown text                            | Read directly                                |
-| `nimble extract --format json`             | `{"data": {"markdown": "..."}}`          | Use `--transform "data.markdown"` to flatten |
-| `nimble extract --parse`                   | `{"data": {"parsing": {fields}}}`        | `jq '.data.parsing'`                         |
-| `nimble extract --network-capture '[...]'` | `{"data": [{"url":"...","body":"..."}]}` | `jq '.data[0].body'` for first capture       |
-| `nimble search`                            | JSON array                               | `[{"title", "url", "description"}]`          |
-| `nimble map`                               | JSON array                               | `[{"url", "type"}]`                          |
-| `nimble crawl run`                         | `{"job_id": "..."}`                      | Poll with `nimble crawl status <job_id>`     |
-| `nimble agent run` — PDP                   | Flat dict                                | `amazon_pdp`, `walmart_pdp`, etc.            |
-| `nimble agent run` — SERP/list             | Array of dicts                           | `amazon_serp`, `yelp_serp`, etc.             |
+| Command          | Output                                                                 |
+| ---------------- | ---------------------------------------------------------------------- |
+| `nimble agent`   | Structured data — dict (PDP/product) or array (SERP/list)              |
+| `nimble extract` | HTML, Markdown, or parsed JSON — depends on `--format` and `--parse`  |
+| `nimble search`  | Structured results array (title, URL, description)                     |
+| `nimble map`     | URLs list + metadata                                                   |
+| `nimble crawl`   | Async job — poll with `nimble crawl status <job_id>`                   |
 
 **Before running an agent:** check its type with `nimble agent schema <name>` — look for `entity_type`. `"product"` = dict (PDP), `"list"` = array (SERP). Guard array access with `isinstance(result, list)` before iterating in scripts.
 

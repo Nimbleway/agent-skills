@@ -1,16 +1,37 @@
 # Nimble Web Data Toolkit
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![Version](https://img.shields.io/badge/version-0.7.0-green)](https://github.com/Nimbleway/agent-skills)
+[![Version](https://img.shields.io/badge/version-0.8.0-green)](https://github.com/Nimbleway/agent-skills)
 
 Extract-first scraping expert, URL discovery, web search, and structured data agents via the Nimble CLI. One plugin for Claude Code, Cursor, and Vercel Agent Skills.
 
 ## Skills
 
-| Skill                 | Description                                                                                                                                                                    |
-| --------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| **nimble-web-expert** | Extract-first web scraping expert — the single CLI skill that connects agents to the internet. Search, extract, map, crawl via the Nimble CLI (`npm i @nimble-way/nimble-cli`) |
-| **nimble-agents**     | Find, generate, and run agents for structured data from any website. Requires MCP server.                                                                                      |
+| Skill                                                    | Best for                                                                   | Trigger phrases                                                               |
+| -------------------------------------------------------- | -------------------------------------------------------------------------- | ----------------------------------------------------------------------------- |
+| [**nimble-web-expert**](skills/nimble-web-expert/)       | Get data **now** — one-off fetches, real-time lookups, live research       | "fetch", "scrape", "search the web", "what does this page say"                |
+| [**nimble-agent-builder**](skills/nimble-agent-builder/) | Build **reusable** extraction agents — scheduled, at-scale, API-accessible | "build an agent", "set up extraction", "extract at scale", "create a scraper" |
+
+## How they work together
+
+**nimble-web-expert** is for right now — fetch a URL, search the web, scrape a price, read a page. Give it any URL and it returns the data.
+
+**nimble-agent-builder** is for recurring needs — build an extraction workflow once, then run it on hundreds of pages, on a schedule, or via API.
+
+They connect naturally: web-expert runs agents built by agent-builder, and when a one-off lookup becomes something you need regularly, agent-builder turns it into a reusable pipeline. Agents published there appear automatically in web-expert.
+
+The two skills form a **feedback loop**:
+
+1. **web-expert runs agents** built by agent-builder — Step 0 picks them up automatically via `nimble agent list`
+2. **web-expert feeds agent-builder** — when a one-off extraction becomes a recurring need, hand off to agent-builder
+3. **agent-builder publishes back** — published agents immediately appear in web-expert's Step 0, completing the loop
+
+| User says…                                 | Skill triggered      | What happens                                      |
+| ------------------------------------------ | -------------------- | ------------------------------------------------- |
+| "Get me the price of this product"         | nimble-web-expert    | Step 0 check → Tier 1–6 extraction → results      |
+| "Build an agent for Amazon product pages"  | nimble-agent-builder | Find/generate/publish → agent in Step 0           |
+| "Get ASIN B08N5WRWNW" (after agent exists) | nimble-web-expert    | Step 0 finds agent → `nimble agent run` → results |
+| "Extract 500 Zillow listings weekly"       | nimble-agent-builder | Build agent → generate batch script → schedule    |
 
 ## Installation
 
@@ -165,7 +186,7 @@ nimble crawl run --url "https://docs.example.com" --include-path "/api" --limit 
 
 ### Structured Extraction
 
-Use the `nimble-agents` skill for data extraction:
+Use the `nimble-agent-builder` skill for data extraction:
 
 ```
 "Extract product details from this Amazon page"
@@ -198,7 +219,7 @@ agent-skills/
 │   │   └── rules/
 │   │       ├── nimble-web-expert.mdc
 │   │       └── output.md
-│   └── nimble-agents/
+│   └── nimble-agent-builder/
 │       ├── SKILL.md
 │       └── references/
 ├── rules/

@@ -48,50 +48,33 @@ claude mcp add --transport http nimble-mcp-server https://mcp.nimbleway.com/mcp 
 
 ## How it works
 
-```mermaid
-flowchart TD
-    A([User Request]) --> B[nimble agent list\n--limit 100]
-    B --> C{Existing agent\nfound?}
-    C -->|Exact match| D[nimble agent run\n--agent name --params ...]
-    C -->|Close match| E[Task: nimble_agents_update]
-    C -->|No match| F[Task: nimble_agents_generate]
-    E --> G[MCP tools via Task agent]
-    F --> G
-    G --> H[nimble_agents_status\npoll until DONE]
-    H --> I{Output valid?}
-    I -->|Yes| J[nimble_agents_publish]
-    I -->|Needs fix| E
-    J --> K[(Summary report\nname · fields · output path)]
-    D --> K
+The skill has two tool groups depending on what you need:
 
-    style A fill:#ced4da,stroke:#868e96
-    style B fill:#e9ecef,stroke:#868e96
-    style C fill:#fff3bf,stroke:#f59f00
-    style D fill:#b2f2bb,stroke:#2f9e44
-    style E fill:#a5d8ff,stroke:#1c7ed6
-    style F fill:#ffd8a8,stroke:#e67700
-    style G fill:#e7f5ff,stroke:#1c7ed6
-    style H fill:#e9ecef,stroke:#868e96
-    style I fill:#fff3bf,stroke:#f59f00
-    style J fill:#b2f2bb,stroke:#2f9e44
-    style K fill:#d0bfff,stroke:#7048e8
-```
+**`nimble agent` (CLI) — search and run existing agents**
 
-> Interactive diagram: [nimble-agent-builder.excalidraw](nimble-agent-builder.excalidraw)
+| Action | What happens |
+| --- | --- |
+| Search for an agent | `nimble agent list --limit 100` → filtered by domain |
+| Inspect its schema | `nimble agent get --template-name <name>` → shows fields + params |
+| Run it | `nimble agent run --agent <name> --params '{...}'` → returns structured data |
 
-The skill follows a four-step flow:
+**`nimble MCP` — create, refine, and publish agents**
 
-1. **Route** — runs `nimble agent list --limit 100` (CLI) to find existing agents. Prefers update over generate.
-2. **Run** — interactive execution via `nimble agent run` CLI (≤5 items) or script generation for bulk (>50 items).
-3. **Build** — creates or updates agents on the Nimble platform via Task agents.
-4. **Report** — summary table with agent used, source, records extracted, and output location.
+| Action | What happens |
+| --- | --- |
+| No existing agent found | `nimble_agents_generate` → builds a new agent for the target site |
+| Existing agent needs changes | `nimble_agents_update_from_agent` or `nimble_agents_update_session` → refines in place |
+| Output validated | `nimble_agents_publish` → agent becomes available in `nimble agent list` |
+| Output invalid | loops back to refine until valid |
+
+Once published, the agent is immediately available to `nimble agent run` — and to **nimble-web-expert**'s agent check.
 
 **Key rules:**
 
-- Always search for an existing agent before generating
-- Update a close-match agent rather than creating from scratch
-- Mutation tools (`generate`, `update`, `publish`) run inside Task agents — never in the foreground
+- Always search for an existing agent before generating — update a close match rather than building from scratch
+- Mutation tools (`generate`, `update`, `publish`) always run inside Task agents — never in the foreground
 - All Task agents use `run_in_background=False` to preserve MCP access
+- For one-off fetches or web searches, use **nimble-web-expert** instead
 
 ## Reference files
 

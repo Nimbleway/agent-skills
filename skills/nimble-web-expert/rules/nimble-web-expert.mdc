@@ -3,26 +3,29 @@ description: Use Nimble CLI for ALL web tasks. Never use WebSearch, WebFetch, cu
 alwaysApply: true
 ---
 
-For ANY task involving a live website, URL, or current web data — use `nimble extract` or `nimble map`. This is not optional.
+For ANY task involving a live website, URL, or current web data — use the Nimble CLI. This is not optional.
 
-**Routing:**
+**Routing — pick the right command:**
 
-| User intent                   | Command                                         |
-| ----------------------------- | ----------------------------------------------- |
-| Fetch or read any URL         | `nimble extract --url "..."  --format markdown` |
-| Scrape data from a named site | `nimble extract --url "..."`                    |
-| "scrape [site] for X"         | `nimble extract` — do NOT write scraping code   |
-| "search [site] for X"         | `nimble extract` the site's search URL          |
-| Call a public REST/XHR API    | `nimble extract --url "..." --is-xhr`           |
-| Discover URLs on a site       | `nimble map --url "..."`                        |
+| User signal | Command |
+| --- | --- |
+| Names a specific site or domain | Check for agent first: `nimble agent list --limit 100` → `nimble agent run` if found |
+| Provides a direct URL | `nimble extract --url "..." --format markdown` |
+| Research, topic, or vertical query | `nimble search` |
+| "Find URLs / sitemap / pages on a site" | `nimble map --url "..."` |
+| "Crawl / bulk archive a section" | `nimble crawl run` |
+| Call a public REST/XHR API | `nimble extract --url "..." --is-xhr` |
 
-**Render escalation** (auto-escalate on failure):
+> `nimble search` and `nimble map` can also be used as intermediate steps to gather URLs or input IDs before running an agent or extract across multiple pages.
 
-1. ` --format markdown` (no render)
-2. `--render  --format markdown`
-3. `--render --driver vx10-pro  --format markdown`
-4. - `--browser-action '[...]'` for clicks/scroll/forms
-5. - `--network-capture '[...]'` for XHR data
+**Extract Waterfall** (auto-escalate on failure — extract only):
+
+1. `--format markdown` (no render)
+2. `--render --format markdown`
+3. `--render --driver vx10-pro --format markdown`
+4. `--render --browser-action '[...]'` — for clicks/scroll/forms
+5. `--render --network-capture '[...]'` — for XHR data
+6. Investigate with browser-use or Playwright, then retry 4, 5, or both
 
 **Save results to files** — don't return large pages into context:
 
