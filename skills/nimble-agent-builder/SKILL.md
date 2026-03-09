@@ -1,6 +1,5 @@
 ---
 name: nimble-agent-builder
-argument-hint: "[query or URL]"
 description: >
   A building experience: create, test, validate, refine, and publish extraction workflows
   based on existing or new Nimble agents. For users who want to invest in a durable,
@@ -24,7 +23,6 @@ allowed-tools:
   - mcp__plugin_nimble_nimble-mcp-server__nimble_agents_publish
   - mcp__plugin_nimble_nimble-mcp-server__nimble_agents_update_from_agent
   - mcp__plugin_nimble_nimble-mcp-server__nimble_agents_update_session
-disable-model-invocation: false
 license: MIT
 metadata:
   version: "0.8.0"
@@ -40,52 +38,34 @@ User request: $ARGUMENTS
 
 ## Prerequisites
 
-Ensure the Nimble MCP server is connected:
+**Quick check:** `nimble --version && echo "${NIMBLE_API_KEY:+API key: set}"`
 
-**Claude Code:**
+If CLI is missing or API key is not set, load `rules/setup.md` for one-time setup (CLI install, API key, MCP server).
+
+## Startup check — run this before anything else
+
+**Before any other work, verify MCP is connected:**
 
 ```bash
-export NIMBLE_API_KEY="your_api_key"
+claude mcp list 2>/dev/null | grep -q nimble-mcp-server && echo "MCP: connected" || echo "MCP: not connected"
+```
+
+**If connected** → proceed with the user's request normally.
+
+**If not connected** → run the setup command immediately, then stop and ask the user to restart. Do NOT start site discovery, do NOT ask validation questions, do NOT do any workflow work:
+
+```bash
 claude mcp add --transport http nimble-mcp-server https://mcp.nimbleway.com/mcp \
   --header "Authorization: Bearer ${NIMBLE_API_KEY}"
 ```
 
-**VS Code (Copilot / Continue):**
+Then tell the user:
 
-```json
-{
-  "nimble-mcp-server": {
-    "command": "npx",
-    "args": [
-      "-y",
-      "mcp-remote@latest",
-      "https://mcp.nimbleway.com/mcp",
-      "--header",
-      "Authorization:Bearer YOUR_API_KEY"
-    ]
-  }
-}
-```
+> "The Nimble MCP server wasn't connected — I've added it now. **Please restart Claude Code and come back.** After restart, just repeat your request and I'll pick up right away. MCP tools will be available in every future session automatically."
 
-**API key:** [online.nimbleway.com/signup](https://online.nimbleway.com/signup) → Account Settings → API Keys
+**Stop here. Do not continue with the workflow until the user restarts.**
 
-**Nimble CLI** (required for agent list, get, run, and search):
-
-```bash
-export PATH="$HOME/go/bin:$PATH"
-nimble --version && echo "CLI ready"
-```
-
-If `nimble` is not found, install it:
-
-```bash
-brew install go   # skip if Go is already installed
-go install 'github.com/Nimbleway/nimble-cli/cmd/nimble@latest'
-export PATH="$HOME/go/bin:$PATH"
-nimble --version
-```
-
-Add `export PATH="$HOME/go/bin:$PATH"` to your `~/.zshrc` or `~/.bashrc` so it persists across sessions.
+---
 
 ## Skill ecosystem
 
@@ -127,8 +107,6 @@ If `nimble_agents_generate` or `nimble_agents_update_from_agent` cannot produce 
 
 ```
 Investigate {url} to find CSS selectors and/or XHR API endpoints needed to extract: {fields_needed}.
-
-export PATH="$HOME/go/bin:$PATH"
 
 Use Playwright to probe the live page:
 python3 << 'EOF'
@@ -215,8 +193,6 @@ For **multi-source workflows**, launch Task agents sequentially (one per source/
 All Task agent prompts MUST include the tool registry block so the subagent knows the exact MCP tool names. Copy this block into every Task prompt:
 
 ```
-export PATH="$HOME/go/bin:$PATH"
-
 **CLI tools (use via Bash — NOT MCP):**
 - `nimble agent list --limit 100` — list available agents
 - `nimble agent get --template-name <name>` — get agent schema
@@ -292,8 +268,6 @@ Launch when `nimble agent list --limit 100` returns 0 matches for the target dom
 
 ```
 Explore {domain} for {user_intent}.
-
-export PATH="$HOME/go/bin:$PATH"
 
 Use the Nimble CLI to discover the site structure and available data:
 
@@ -394,8 +368,6 @@ Do NOT offer script generation as a next step unless the user explicitly mention
 
 ```
 Write a {language} script that calls existing Nimble agent(s) at scale via SDK/REST API.
-
-export PATH="$HOME/go/bin:$PATH"
 
 **Use the Nimble CLI to inspect agent schemas (via Bash, NOT MCP):**
 ```bash
@@ -537,15 +509,14 @@ Load reference files **only during large-scale script generation (Step 2B)** or 
 
 ## Guardrails
 
-- **NEVER call `nimble_agents_generate`, `nimble_agents_update_from_agent`, `nimble_agents_update_session`, `nimble_agents_status`, or `nimble_agents_publish` in the foreground conversation.** These MUST run inside a `Task` agent. No exceptions — not even "just one quick call". Polling in the foreground floods context and wastes tokens.
-- **Task agents MUST use `run_in_background=False`.** Background Task agents cannot access MCP tools ([known platform limitation](https://github.com/anthropics/claude-code/issues/13254)). When this is resolved upstream, switch back to `run_in_background=True`.
-- **All web search MUST use `nimble search` (CLI, via Bash).** NEVER use built-in `WebSearch`, `WebFetch`, `curl`, `wget`, or any other search/fetch method — in the foreground or in Task agents.
-- **NEVER use bash/curl to call MCP endpoints.** Task agents must call MCP tools by their tool names, not by constructing HTTP requests to MCP server URLs. If an MCP tool is not available, report the error — do not attempt to work around it via bash.
-- **Every Task agent prompt MUST include the MCP tool registry block** from [Delegation model > MCP tool registry](#mcp-tool-registry). This tells the subagent the exact tool names to use. Without it, the subagent may fail to find MCP tools and fall back to bash.
-- **Foreground uses CLI (Bash) only for data access:** `nimble agent list`, `nimble agent get --template-name`, `nimble agent run`, `nimble search`. No direct MCP calls from the foreground.
+- **Mutation tools (`generate`, `update`, `status`, `publish`) are BANNED from the foreground.** No exceptions — not even "just one quick call". Polling in the foreground floods context. Always use `Task(run_in_background=False)`.
+- **Task agents MUST use `run_in_background=False`.** Background Task agents cannot access MCP tools ([known limitation](https://github.com/anthropics/claude-code/issues/13254)).
+- **All web search MUST use `nimble search` (CLI).** NEVER use `WebSearch`, `WebFetch`, `curl`, or `wget` — in foreground or Task agents.
+- **Every Task agent prompt MUST include the MCP tool registry block** (see [Delegation model](#delegation-model)). Without it, subagents fall back to bash and fail.
+- **Never use bash/curl to call MCP endpoints.** Call MCP tools by name; if unavailable, report the error.
 - **Never** use `nimble_find_search_agent`, `nimble_run_search_agent`, or any WSA template tools.
-- **Update first, generate only as last resort.** When a close-match agent exists, always use `nimble_agents_update_from_agent` to refine it — never generate a new agent for the same domain. Use `nimble_agents_generate` ONLY when `nimble agent list --limit 100` returned 0 matches for the target domain. For the update state machine: call `nimble_agents_update_from_agent` once to create/resolve the update session, then use `nimble_agents_update_session` for every follow-up with the same `session_id`. Never create a second session for the same refinement thread.
-- **Hard 429 rule.** If `nimble_agents_generate` or `nimble_agents_update_from_agent` returns 429/quota errors, stop and report quota exhaustion. Do not call any update tool as fallback and do not create new sessions.
+- **Update state machine:** call `nimble_agents_update_from_agent` once per refinement thread. Use `nimble_agents_update_session` for all follow-ups with the same `session_id`. Never open a second session for the same thread.
+- **Hard 429 rule.** On quota errors from generate/update tools: stop, report exhaustion. Do not retry or switch tools.
 - Published agents are automatically forked when updated. UBCT-based agents cannot be updated — generate a new one instead.
-- **Never load external docs (`llms-full.txt`, `openapi.json`), SDK references, or batch pattern files for interactive runs (Step 2A).** These are exclusively for large-scale script generation (Step 2B). For interactive runs, the CLI output from `nimble agent get --template-name` is sufficient. Loading unnecessary docs wastes context and slows execution.
-- Present tool call results in markdown tables. Never show raw JSON.
+- **Never load SDK/batch references for interactive runs (Step 2A).** CLI output from `nimble agent get --template-name` is sufficient. Load references only for Step 2B (script generation) and Step 3 (agent creation).
+- Present results in markdown tables. Never show raw JSON.

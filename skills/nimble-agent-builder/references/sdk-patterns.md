@@ -12,6 +12,7 @@ For TypeScript, Node.js, curl, and other non-Python languages, see `references/r
 - [Single-Agent Example](#single-agent-example)
 - [Batch Example with CSV Output](#batch-example-with-csv-output)
 - [Async Agent Endpoint (High-Throughput)](#async-agent-endpoint-high-throughput)
+- [Incremental File Writes (Crash-Resilient)](#incremental-file-writes-crash-resilient)
 - [Retry Behavior](#retry-behavior)
 - [Common Mistakes](#common-mistakes)
 
@@ -38,9 +39,7 @@ Run with: `uv run script.py`
 
 ## Running an Agent
 
-The correct way to run a Nimble agent via the Python SDK is through the raw `POST /v1/agent` endpoint.
-
-**IMPORTANT:** Do **not** use `client.extract(url=..., skill=...)` for running agents. That endpoint does not support agent execution and will return errors.
+Use `client.agent.run()` for synchronous execution. Do **not** use the raw `client.post("/v1/agent", ...)` — the SDK has a first-class method.
 
 ### Correct pattern
 
@@ -50,18 +49,19 @@ from nimble_python import Nimble
 
 nimble = Nimble(api_key=os.environ["NIMBLE_API_KEY"])
 
-resp = nimble.post(
-    "/v1/agent",
-    body={"agent": "<agent-name>", "params": {"param_key": "param_value"}},
-    cast_to=object,
+result = nimble.agent.run(
+    agent="<agent-name>",
+    params={"param_key": "param_value"}
 )
 
-parsing = resp.get("data", {}).get("parsing", {})
+parsing = result.data.parsing
 ```
 
 ### Response structure
 
-The response from `POST /v1/agent` is a dict. Extracted data lives at `resp["data"]["parsing"]`.
+`nimble.agent.run()` returns an SDK response object. Extracted data is at `result.data.parsing`:
+- **SERP / list agents** → `list` of records
+- **PDP / product agents** → `dict` (single record)
 
 ### Response structure verification
 
@@ -71,6 +71,8 @@ The response from `POST /v1/agent` is a dict. Extracted data lives at `resp["dat
 - If `skills` has fields like `entity_type`, `position`, `cleaned_domain` grouped under distinct entity types → nested `parsing.entities.{EntityType}` structure.
 
 This prevents generating broken parsing code. See `agent-api-reference.md` > "Response shape inference" for the full mapping table.
+
+---
 
 ## Agent Parameters
 
@@ -101,13 +103,9 @@ from nimble_python import Nimble
 
 nimble = Nimble(api_key=os.environ["NIMBLE_API_KEY"])
 
-resp = nimble.post(
-    "/v1/agent",
-    body={"agent": "amazon_pdp", "params": {"asin": "B0CCZ1L489"}},
-    cast_to=object,
-)
+result = nimble.agent.run(agent="amazon_pdp", params={"asin": "B0CCZ1L489"})
 
-parsing = resp.get("data", {}).get("parsing", {})
+parsing = result.data.parsing
 if isinstance(parsing, dict):
     print(
         f"title: {parsing.get('product_title')}, "
@@ -141,13 +139,9 @@ nimble = AsyncNimble(api_key=os.environ["NIMBLE_API_KEY"], max_retries=4, timeou
 SEM = asyncio.Semaphore(10)
 
 
-async def run_agent(agent: str, params: dict) -> dict:
+async def run_agent(agent: str, params: dict):
     async with SEM:
-        return await nimble.post(
-            "/v1/agent",
-            body={"agent": agent, "params": params},
-            cast_to=object,
-        )
+        return await nimble.agent.run(agent=agent, params=params)
 
 
 async def main():
@@ -165,14 +159,16 @@ async def main():
 
     # Write to CSV
     rows = []
-    for (agent, params), resp in zip(jobs, results):
-        if isinstance(resp, Exception):
+    for (agent, params), result in zip(jobs, results):
+        if isinstance(result, Exception):
             continue
-        parsing = resp.get("data", {}).get("parsing", {})
+        parsing = result.data.parsing
         if isinstance(parsing, list):
+            # List items are typed Pydantic objects — must call .model_dump() before ** spread
             for rec in parsing:
-                rows.append({"agent": agent, **params, **rec})
+                rows.append({"agent": agent, **params, **rec.model_dump()})
         elif isinstance(parsing, dict):
+            # PDP agents return a plain dict — direct access is fine
             entities = parsing.get("entities")
             if entities:
                 for entity_list in entities.values():
@@ -199,46 +195,41 @@ asyncio.run(main())
 
 ## Async Agent Endpoint (High-Throughput)
 
-`POST /v1/agent/async` decouples submission from processing. Submit jobs instantly, then poll for results concurrently.
+`nimble.agent.run_async()` decouples submission from processing. Submit jobs instantly, then poll for results concurrently.
 
 ### Async flow
 
-1. **Submit** — `POST /v1/agent/async` with same body as `/v1/agent`. Returns immediately with `task_id`.
-2. **Poll** — `GET /v1/tasks/{task_id}` until `task.state` reaches a terminal value.
-3. **Retrieve** — `GET /v1/tasks/{task_id}/results` to fetch the parsed data.
+1. **Submit** — `nimble.agent.run_async(agent=..., params=...)`. Returns immediately; get task ID via `resp.task['id']` (`task` is a plain dict).
+2. **Poll** — `nimble.tasks.get(task_id)` until `task.task.state` reaches a terminal value (`"success"` or `"error"`).
+3. **Retrieve** — When `state == "success"`, call `nimble.tasks.results(task_id)` separately; parsed data is at `results['data']['parsing']` (list of plain dicts).
 
 ### Task states
 
 | State | Meaning |
 |-------|---------|
-| `pending` | Queued, not yet processing |
-| `success` | Completed — fetch results |
-| `failed` | Processing failed |
+| `pending` | Queued, not yet started |
+| `success` | Completed — fetch results via `tasks.results()` |
+| `error` | Processing failed |
 
-### Submit response structure
-
-```python
-resp = await nimble.post("/v1/agent/async", body={...}, cast_to=object)
-# resp["task"]["id"]    — UUID for polling
-# resp["task"]["state"] — always "pending" initially
-task_id = resp["task"]["id"]
-```
-
-### Poll + retrieve
+### Submit + poll + retrieve
 
 ```python
+# Submit
+resp = await nimble.agent.run_async(agent="amazon_pdp", params={"asin": "B0CCZ1L489"})
+task_id = resp.task['id']  # task is a plain dict — access via ['id']
+
 # Poll
-poll = await nimble.get(f"/v1/tasks/{task_id}", cast_to=object)
-state = poll["task"]["state"]  # "pending", "success", or "failed"
+task = await nimble.tasks.get(task_id)
+state = task.task.state  # "pending" | "success" | "error"
 
-# Retrieve (only after state == "success")
-results = await nimble.get(f"/v1/tasks/{task_id}/results", cast_to=object)
-parsing = results.get("data", {}).get("parsing", {})
+# Retrieve (only after state == "success" — call tasks.results() separately)
+results = await nimble.tasks.results(task_id)
+parsing = results['data']['parsing']  # list of plain dicts
 ```
 
 ### Smoke test — always validate one query first
 
-**CRITICAL:** Before launching any batch, run a single query through the full submit → poll → fetch cycle. This catches auth issues, bad parameters, API outages, and parsing bugs before committing to hundreds of jobs.
+**CRITICAL:** Before launching any batch, run a single query through the full submit → poll → retrieve cycle. This catches auth issues, bad parameters, API outages, and parsing bugs before committing to hundreds of jobs.
 
 ```python
 async def smoke_test(nimble, agent: str, params: dict, timeout: float = 90.0):
@@ -246,29 +237,28 @@ async def smoke_test(nimble, agent: str, params: dict, timeout: float = 90.0):
     print(f"Smoke test: {agent} with {params}")
 
     # Submit
-    r = await nimble.post("/v1/agent/async",
-        body={"agent": agent, "params": params}, cast_to=object)
-    task_id = r["task"]["id"]
+    r = await nimble.agent.run_async(agent=agent, params=params)
+    task_id = r.task['id']  # task is a plain dict
     print(f"  Submitted task {task_id}")
 
     # Poll
     t0 = time.time()
     poll_count = 0
+    state = "pending"
     while time.time() - t0 < timeout:
         await asyncio.sleep(3.0)
         poll_count += 1
-        r = await nimble.get(f"/v1/tasks/{task_id}", cast_to=object)
-        state = r.get("task", {}).get("state", "unknown")
+        task = await nimble.tasks.get(task_id)
+        state = task.task.state
         elapsed = time.time() - t0
         print(f"  Poll #{poll_count}: state={state} ({elapsed:.0f}s)")
         if state == "success":
-            results = await nimble.get(
-                f"/v1/tasks/{task_id}/results", cast_to=object)
-            parsing = results.get("data", {}).get("parsing", {})
+            results = await nimble.tasks.results(task_id)
+            parsing = results['data']['parsing']
             print(f"  Smoke test passed — got data")
             return parsing
-        if state == "failed":
-            raise RuntimeError(f"Smoke test failed: task {task_id} state=failed")
+        if state == "error":
+            raise RuntimeError(f"Smoke test failed: task {task_id} state=error")
 
     raise TimeoutError(
         f"Smoke test timed out after {timeout}s — task stuck at '{state}'. "
@@ -327,7 +317,7 @@ Always runs a smoke test on the first job before launching the batch.
 import asyncio, csv, os, time
 from nimble_python import AsyncNimble
 
-TERMINAL = {"success", "failed"}
+TERMINAL = {"success", "error"}
 
 
 # smoke_test() — identical to standalone version above (see "Smoke test" section).
@@ -335,9 +325,8 @@ TERMINAL = {"success", "failed"}
 async def smoke_test(nimble, agent: str, params: dict, timeout: float = 90.0):
     """Run a single async job end-to-end. Returns parsed data or raises."""
     print(f"Smoke test: {agent} with {params}")
-    r = await nimble.post("/v1/agent/async",
-        body={"agent": agent, "params": params}, cast_to=object)
-    task_id = r["task"]["id"]
+    r = await nimble.agent.run_async(agent=agent, params=params)
+    task_id = r.task['id']  # task is a plain dict
     print(f"  Submitted task {task_id}")
     t0 = time.time()
     poll_count = 0
@@ -345,18 +334,17 @@ async def smoke_test(nimble, agent: str, params: dict, timeout: float = 90.0):
     while time.time() - t0 < timeout:
         await asyncio.sleep(3.0)
         poll_count += 1
-        r = await nimble.get(f"/v1/tasks/{task_id}", cast_to=object)
-        state = r.get("task", {}).get("state", "unknown")
+        task = await nimble.tasks.get(task_id)
+        state = task.task.state
         elapsed = time.time() - t0
         print(f"  Poll #{poll_count}: state={state} ({elapsed:.0f}s)", flush=True)
         if state == "success":
-            results = await nimble.get(
-                f"/v1/tasks/{task_id}/results", cast_to=object)
-            parsing = results.get("data", {}).get("parsing", {})
+            results = await nimble.tasks.results(task_id)
+            parsing = results['data']['parsing']
             print(f"  Smoke test passed — got data")
             return parsing
-        if state == "failed":
-            raise RuntimeError(f"Smoke test failed: task {task_id} state=failed")
+        if state == "error":
+            raise RuntimeError(f"Smoke test failed: task {task_id} state=error")
     raise TimeoutError(
         f"Smoke test timed out after {timeout}s — task stuck at '{state}'")
 
@@ -379,9 +367,8 @@ async def run_pipeline(
         if not queue:
             return
         agent, params = queue.pop()
-        r = await nimble.post("/v1/agent/async",
-            body={"agent": agent, "params": params}, cast_to=object)
-        in_flight[r["task"]["id"]] = {
+        r = await nimble.agent.run_async(agent=agent, params=params)
+        in_flight[r.task['id']] = {
             "agent": agent, "params": params, "t": time.time(),
         }
         stats["submitted"] += 1
@@ -404,27 +391,28 @@ async def run_pipeline(
         if not in_flight and not queue:
             break
 
-        # Poll all in-flight
+        # Poll all in-flight — return (task_id, state, task_object)
         async def check(tid):
-            r = await nimble.get(f"/v1/tasks/{tid}", cast_to=object)
-            return tid, r.get("task", {}).get("state")
+            task = await nimble.tasks.get(tid)
+            return tid, task.task.state, task
 
         poll_results = await asyncio.gather(
             *(check(t) for t in in_flight), return_exceptions=True)
 
-        # Collect completed + fetch results
-        done = [(tid, st) for tid, st in
+        # Collect completed tasks (task object is already fetched — no second API call)
+        done = [(tid, st, task) for tid, st, task in
                 (item for item in poll_results if not isinstance(item, Exception))
                 if st in TERMINAL]
 
         if done:
-            async def fetch(tid, state):
+            async def fetch(tid, state, task):
                 info = in_flight.pop(tid)
                 if state != "success":
                     stats["failed"] += 1
                     return
-                r = await nimble.get(f"/v1/tasks/{tid}/results", cast_to=object)
-                parsing = r.get("data", {}).get("parsing", {})
+                # Results are not inline — fetch separately
+                res = await nimble.tasks.results(tid)
+                parsing = res['data']['parsing']  # list of plain dicts
                 if isinstance(parsing, list):
                     for rec in parsing:
                         rows.append({"agent": info["agent"], **info["params"], **rec})
@@ -439,7 +427,7 @@ async def run_pipeline(
                         rows.append({"agent": info["agent"], **info["params"], **parsing})
                 stats["completed"] += 1
 
-            await asyncio.gather(*(fetch(tid, st) for tid, st in done))
+            await asyncio.gather(*(fetch(tid, st, task) for tid, st, task in done))
 
         # Refill window
         to_submit = min(max_in_flight - len(in_flight), len(queue))
@@ -503,12 +491,12 @@ asyncio.run(main())
 
 ### When to use async vs sync
 
-| Scenario | Endpoint | Why |
-|----------|----------|-----|
-| Single agent run (interactive) | `/v1/agent` (sync) | Simpler, immediate result |
-| 2-3 agents, user waiting | `/v1/agent` + `asyncio.gather` | Low overhead, fast enough |
-| 4+ agents, batch processing | **`/v1/agent/async`** + batch pipeline | Much higher throughput than sync |
-| Background / scheduled jobs | **`/v1/agent/async`** + `callback_url` | No polling needed |
+| Scenario | Method | Why |
+|----------|--------|-----|
+| Single agent run (interactive) | `nimble.agent.run()` | Simpler, immediate result |
+| 2–3 agents, user waiting | `nimble.agent.run()` + `asyncio.gather` | Low overhead, fast enough |
+| 4+ agents, batch processing | `nimble.agent.run_async()` + batch pipeline | Much higher throughput |
+| Background / scheduled jobs | `nimble.agent.run_async()` + `callback_url` | No polling needed |
 
 ### AsyncOptions (optional submit parameters)
 
@@ -520,11 +508,11 @@ asyncio.run(main())
 
 ```python
 # Submit with callback (no polling needed)
-await nimble.post("/v1/agent/async", body={
-    "agent": "amazon_serp",
-    "params": {"keyword": "wireless headphones"},
-    "callback_url": "https://my-server.com/webhook",
-}, cast_to=object)
+await nimble.agent.run_async(
+    agent="amazon_serp",
+    params={"keyword": "wireless headphones"},
+    callback_url="https://my-server.com/webhook",
+)
 ```
 
 ---
@@ -669,18 +657,18 @@ Call `write_batch()` inside the `fetch()` coroutine, right after parsing results
 if done:
     batch_rows = []
 
-    async def fetch(tid, state):
+    async def fetch(tid, state, task):
         info = in_flight.pop(tid)
         if state != "success":
             stats["failed"] += 1
             return
-        r = await nimble.get(f"/v1/tasks/{tid}/results", cast_to=object)
-        parsing = r.get("data", {}).get("parsing", {})
+        res = await nimble.tasks.results(tid)
+        parsing = res['data']['parsing']  # list of plain dicts
         # ... parse rows as before ...
         batch_rows.extend(parsed_rows)
         stats["completed"] += 1
 
-    await asyncio.gather(*(fetch(tid, st) for tid, st in done))
+    await asyncio.gather(*(fetch(tid, st, task) for tid, st, task in done))
     writer.write_batch(batch_rows)  # sync — safe, no interleaving
 ```
 
@@ -704,17 +692,19 @@ The SDK retries transient errors (429, 5xx, timeouts) automatically with exponen
 
 | Mistake | Correct approach |
 |---------|-----------------|
-| `client.extract(url=..., skill=...)` | `nimble.post("/v1/agent", body={...}, cast_to=object)` |
-| `response.data.parsing.entities` | `resp.get("data", {}).get("parsing", {})` |
-| `nimble.agent(...)` | Method does not exist. Use `nimble.post(...)` |
-| `nimble.agents.run(...)` | `agents` is for management only. Use `nimble.post(...)` |
-| Assuming all responses are lists | Check `isinstance(parsing, list)` vs `isinstance(parsing, dict)` |
+| `nimble.post("/v1/agent", body={...}, cast_to=object)` | `nimble.agent.run(agent=..., params=...)` |
+| `nimble.agents.run(...)` | Singular: `nimble.agent.run(...)` (not `agents`) |
+| `resp.get("data", {}).get("parsing", {})` after `agent.run()` | `result.data.parsing` — SDK attribute access, not dict |
+| `result.data.parsing.get("entities")` on SERP responses | SERP `parsing` is a list of typed objects — call `.model_dump()` first; PDP `parsing` is a plain dict |
+| `**rec` spread or `rec.get()` on SERP parsing items | SERP items are typed Pydantic objects — use `rec.model_dump()` before `**` spread or `.get()` |
+| `resp.task_id` after `run_async()` | No `.task_id` attribute — use `resp.task['id']` (`task` is a plain dict) |
+| `task.task.result.data.parsing` after polling | No `.result` field — call `await nimble.tasks.results(task_id)` separately; data at `results['data']['parsing']` (plain dicts, no `.model_dump()` needed) |
+| Checking `task.task.state == "completed"` for async tasks | Terminal state is `"success"` (not `"completed"`); failure state is `"error"` (not `"failed"`) |
+| Assuming all responses are lists | SERP agents → `parsing` is a list; PDP/detail agents → `parsing` is a plain dict |
 | Using `pip install` for one-off scripts | Use `uv run` with inline `# /// script` metadata |
-| Checking `state == "completed"` for async | Terminal state is `"success"`, not `"completed"` |
 | Using semaphore on async submit | Submit freely — no observed submission rate limit |
 | Fixed poll interval for large batches | Scale poll interval with batch size (see tuning table) |
-| Polling `/v1/tasks` via raw curl | Use SDK `nimble.get(...)` — curl may 401 due to auth handling |
-| Using sync `/v1/agent` for 4+ parallel jobs | Use `/v1/agent/async` for batch workloads |
+| Using sync `agent.run()` for 4+ parallel jobs | Use `agent.run_async()` for batch workloads |
 | Assuming `parsing` is always a flat list for SERP agents | `google_search` and similar non-ecommerce SERP agents return `parsing.entities.OrganicResult` — always check `nimble agent get --template-name` (CLI) output fields first |
 | Using `agent.input_schema` or `agent.output_schema` | Actual fields are `agent.input_properties` (array) and `agent.skills` (dict) — see `agent-api-reference.md` |
 | Appending to a JSON array file incrementally | JSON arrays require the full structure in memory — use JSONL or CSV for incremental writes. Convert JSONL to JSON array at end if needed. |

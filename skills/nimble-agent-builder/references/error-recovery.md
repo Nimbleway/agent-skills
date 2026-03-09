@@ -93,7 +93,7 @@ If a task stays `pending` beyond 60 seconds, it may be queued behind other jobs 
 
 **For batch scripts:** This is why the smoke test is mandatory. If the smoke test passes but batch tasks are pending, the API is likely queuing — continue polling. If the smoke test itself times out at `pending`, stop immediately and diagnose:
 
-1. Verify API key is valid (try a sync `/v1/agent` call).
+1. Verify API key is valid (try a sync `nimble.agent.run()` call).
 2. Try a different agent or simpler query.
 3. Wait 5 minutes and retry — the API may be temporarily overloaded.
 
@@ -101,19 +101,15 @@ If a task stays `pending` beyond 60 seconds, it may be queued behind other jobs 
 
 For individual stuck tasks within a running batch, the `task_timeout` parameter handles expiry automatically — see `sdk-patterns.md` > "Tuning parameters".
 
-### `"task not finished yet"` from `/v1/tasks/{id}/results`
+### Task not yet finished
 
-The task has not reached a terminal state. Continue polling `/v1/tasks/{task_id}` until `task.state` is `"success"` or `"failed"` before fetching results.
+The task has not reached a terminal state. Continue calling `nimble.tasks.get(task_id)` and checking `task.task.state` until it reaches `"success"` or `"error"`.
 
-**IMPORTANT:** The terminal success state is `"success"`, NOT `"completed"`. Code that checks for `"completed"` will poll forever.
+**IMPORTANT:** The terminal success state is `"success"`, NOT `"completed"`. The actual SDK type is `Literal['pending', 'success', 'error']`. Always check `task.task.state == "success"`. Results are **not inline** in the task object — after `state == "success"`, call `await nimble.tasks.results(task_id)` separately; parsed data is at `results['data']['parsing']`.
 
-### Task state `"failed"`
+### Task state `"error"`
 
-The async task failed server-side. Retry by submitting a new async job. If failures persist, fall back to the sync `/v1/agent` endpoint.
-
-### Auth 401 on `/v1/tasks/{id}` via curl
-
-The tasks endpoint requires `Bearer` auth via the SDK's `get()` method. Direct `curl` calls may fail due to auth header handling differences. Use `nimble.get(f"/v1/tasks/{task_id}", cast_to=object)` instead.
+The async task failed server-side. Retry by submitting a new `nimble.agent.run_async()` call. If failures persist, fall back to the sync `nimble.agent.run()` method.
 
 ## Ambiguous agent match (no clear fit)
 

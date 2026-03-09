@@ -187,7 +187,7 @@ If max checks reached: print "POLL_TIMEOUT: generation did not complete after 10
 
 Run when `refine_validate=true` OR when auto-triggered by the refine-validate loop.
 
-**CRITICAL: Validation uses a generated SDK script executed via `uv run`, NOT 50 individual CLI/MCP tool calls.** The script uses the REST API `POST /v1/agent` (response at `data.parsing`), not CLI `nimble agent run`. Use `nimble search` (CLI) for finding real test inputs — never WebSearch/WebFetch.
+**CRITICAL: Validation uses a generated SDK script executed via `uv run`, NOT 50 individual CLI/MCP tool calls.** The script uses `nimble.agent.run()` via the Python SDK (response at `result.data.parsing`), not CLI `nimble agent run`. Use `nimble search` (CLI) for finding real test inputs — never WebSearch/WebFetch.
 
 ### Step 4a: Generate test inputs
 
@@ -231,12 +231,8 @@ async def main():
     async def run_one(i, params):
         async with sem:
             try:
-                resp = await nimble.post(
-                    "/v1/agent",
-                    body={"agent": AGENT, "params": params},
-                    cast_to=object,
-                )
-                parsing = resp.get("data", {}).get("parsing", {})
+                resp = await nimble.agent.run(agent=AGENT, params=params)
+                parsing = resp.data.parsing
                 if parsing and (
                     isinstance(parsing, list) and len(parsing) > 0
                     or isinstance(parsing, dict) and any(v for v in parsing.values() if v)
@@ -259,7 +255,7 @@ asyncio.run(main())
 ```
 
 **Key points:**
-- Uses REST API `POST /v1/agent` (response at `data.parsing`), NOT MCP `nimble_agents_run` (response at `data.results`)
+- Uses SDK `nimble.agent.run()` (response at `result.data.parsing`), NOT CLI `nimble agent run` (response at `data.results` before `--transform`)
 - `asyncio.Semaphore(10)` for concurrency control
 - `asyncio.gather` for parallel execution
 - Outputs JSON to stdout for the background agent to parse

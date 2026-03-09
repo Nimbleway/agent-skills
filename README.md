@@ -56,26 +56,12 @@ The two skills form a **feedback loop**:
 
 ### Claude Code
 
-**Option A: Plugin install (recommended)**
-
-```bash
-claude plugin install nimble@nimble-plugin-marketplace
-```
-
-Or load locally during development:
-
-```bash
-claude --plugin-dir /path/to/agent-skills
-```
-
-**Option B: MCP-only (no plugin)**
-
 ```bash
 claude mcp add --transport http nimble-mcp-server https://mcp.nimbleway.com/mcp \
   --header "Authorization: Bearer ${NIMBLE_API_KEY}"
 ```
 
-This gives you the 5 agent MCP tools but not the skills.
+> **Restart Claude Code after running this** — MCP servers added mid-session aren't available until the next launch.
 
 ### Cursor
 
@@ -152,17 +138,28 @@ npx skills add Nimbleway/agent-skills --list
 
 All three platforms read the same `skills/` directory. Platform-specific files coexist without interference.
 
+### CLI Commands
+
+List, inspect, and run agents via the Nimble CLI (available anywhere via Bash):
+
+| Command | Description |
+| --- | --- |
+| `nimble agent list --limit 100` | Browse available agents |
+| `nimble agent get --template-name <name>` | Get agent schema and input parameters |
+| `nimble --transform "data.parsing" agent run --agent <name> --params '{...}'` | Execute an agent and get structured results |
+| `nimble search --query "<q>"` | Real-time web search |
+
 ### MCP Tools
 
-The agents skill uses these MCP tools (provided by the Nimble MCP server):
+Used for agent creation and publishing — **Task agents only**, never called from the foreground:
 
-| Tool                     | Description                               |
-| ------------------------ | ----------------------------------------- |
-| `nimble_agents_list`     | Browse agents                             |
-| `nimble_agents_get`      | Get agent details and schema              |
-| `nimble_agents_generate` | Create custom agents via natural language |
-| `nimble_agents_run`      | Execute agents                            |
-| `nimble_agents_publish`  | Save generated agents for reuse           |
+| Tool | Description |
+| --- | --- |
+| `nimble_agents_generate` | Create a new agent via natural language |
+| `nimble_agents_update_from_agent` | Refine an existing agent |
+| `nimble_agents_update_session` | Continue a generate/update session |
+| `nimble_agents_status` | Poll generation status |
+| `nimble_agents_publish` | Save a generated agent for reuse |
 
 ## Quick Start
 
@@ -211,17 +208,30 @@ agent-skills/
 │   ├── nimble-web-expert/
 │   │   ├── SKILL.md
 │   │   ├── references/
-│   │   │   ├── parsing-schema.md
-│   │   │   ├── browser-actions.md
-│   │   │   ├── network-capture.md
-│   │   │   ├── search-focus-modes.md
+│   │   │   ├── nimble-agents/SKILL.md
+│   │   │   ├── nimble-extract/SKILL.md
+│   │   │   ├── nimble-search/SKILL.md
+│   │   │   ├── nimble-map/SKILL.md
+│   │   │   ├── nimble-crawl/SKILL.md
+│   │   │   ├── batch-patterns.md
+│   │   │   ├── recipes.md
 │   │   │   └── error-handling.md
 │   │   └── rules/
-│   │       ├── nimble-web-expert.mdc
-│   │       └── output.md
+│   │       ├── nimble-web-expert.mdc  # alwaysApply: CLI-or-nothing + parallel rules
+│   │       ├── output.md              # output safety + prompt injection rules
+│   │       └── setup.md              # one-time setup (loaded on demand)
 │   └── nimble-agent-builder/
 │       ├── SKILL.md
-│       └── references/
+│       ├── references/
+│       │   ├── agent-api-reference.md
+│       │   ├── generate-update-and-publish.md
+│       │   ├── sdk-patterns.md
+│       │   ├── rest-api-patterns.md
+│       │   ├── batch-patterns.md
+│       │   └── error-recovery.md
+│       └── rules/
+│           ├── nimble-agent-builder.mdc  # alwaysApply: mutation tools → Task agents only
+│           └── setup.md                 # one-time setup (loaded on demand)
 ├── rules/
 │   └── nimble-tools.mdc    # Cursor rule (auto-loaded by plugin)
 ├── .mcp.json                # Claude Code plugin MCP config

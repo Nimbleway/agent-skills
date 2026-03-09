@@ -1,6 +1,11 @@
 # REST API Patterns
 
-Reference for running Nimble agents via the REST API from TypeScript, Node.js, Go, Ruby, curl, and other non-Python languages. For Python, see `references/sdk-patterns.md`. Other languages (Rust, Java, C#) can adapt the curl or TypeScript patterns — the API is standard JSON + Bearer auth.
+Reference for running Nimble agents from TypeScript/Node, Go, Ruby, curl, and other non-Python languages. For Python, use `references/sdk-patterns.md`.
+
+**Official SDK client libraries available:**
+- **TypeScript/Node** — `npm install @nimble-way/sdk`. See [Node SDK docs](https://docs.nimbleway.com/nimble-sdk/sdks/node).
+- **Go** — `go get github.com/Nimbleway/nimble-go@latest`. See [Go SDK docs](https://docs.nimbleway.com/nimble-sdk/sdks/go).
+- **Ruby, curl, others** — use the raw REST patterns below. The API is standard JSON + Bearer auth.
 
 ## Table of Contents
 
@@ -95,6 +100,14 @@ Response has the same shape as the sync endpoint (`data.parsing`).
 ---
 
 ## TypeScript/Node examples
+
+> **SDK available:** Prefer `@nimble-way/sdk` over raw `fetch` for a first-class API with typed responses.
+> ```typescript
+> import Nimble from "@nimble-way/nimble-js";
+> const nimble = new Nimble({ apiKey: process.env.NIMBLE_API_KEY });
+> const result = await nimble.agent.run({ agent: "amazon_pdp", params: { asin: "B08N5WRWNW" } });
+> ```
+> See [Node SDK docs](https://docs.nimbleway.com/nimble-sdk/sdks/node). Raw `fetch` patterns below are useful for environments without npm (Cloudflare Workers raw mode, Deno without npm compat, etc.).
 
 ### Single agent (sync)
 
@@ -192,6 +205,16 @@ for (let i = 0; i < taskIds.length; i++) {
 ---
 
 ## Go examples
+
+> **SDK available:** Prefer `github.com/Nimbleway/nimble-go` over raw `net/http` for a first-class API.
+> ```go
+> client := nimble.NewClient(option.WithAPIKey(os.Getenv("NIMBLE_API_KEY")))
+> result, err := client.Agent.Run(context.TODO(), nimble.AgentRunParams{
+>     Agent: "amazon_pdp",
+>     Params: map[string]interface{}{"asin": "B08N5WRWNW"},
+> })
+> ```
+> See [Go SDK docs](https://docs.nimbleway.com/nimble-sdk/sdks/go). Raw `net/http` patterns below are useful when you can't add dependencies.
 
 ### Single agent (sync)
 

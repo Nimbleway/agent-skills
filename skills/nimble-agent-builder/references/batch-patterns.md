@@ -21,7 +21,7 @@ Patterns for processing multiple inputs, comparing across stores, and normalizin
 | Batch input file (URLs/IDs) | Codegen | Read file, generate async pipeline script |
 | 50+ items per store | Codegen | Async batch pipeline (`/v1/agent/async` + poll) |
 
-**Routing rule:** The interactive batch approach (MCP tool calls) works for small batches (~2–5 items). Beyond that, route to codegen — generate a script using templates from `sdk-patterns.md` (Python) or `rest-api-patterns.md` (other languages).
+**Routing rule:** The interactive batch approach (CLI runs) works for small batches (~2–5 items). Beyond that, route to codegen — generate a script using templates from `sdk-patterns.md` (Python) or `rest-api-patterns.md` (other languages).
 
 ---
 
@@ -86,13 +86,9 @@ nimble = AsyncNimble(api_key=os.environ["NIMBLE_API_KEY"], max_retries=4, timeou
 SEM = asyncio.Semaphore(10)
 
 
-async def run_agent(agent: str, params: dict) -> dict:
+async def run_agent(agent: str, params: dict):
     async with SEM:
-        return await nimble.post(
-            "/v1/agent",
-            body={"agent": agent, "params": params},
-            cast_to=object,
-        )
+        return await nimble.agent.run(agent=agent, params=params)
 
 
 def normalize(store: str, record: dict) -> dict:
@@ -126,9 +122,10 @@ async def main():
         if isinstance(resp, Exception):
             print(f"  {store} failed: {resp}")
             continue
-        parsing = resp.get("data", {}).get("parsing", [])
+        parsing = resp.data.parsing
         if isinstance(parsing, list):
-            rows.extend(normalize(store, r) for r in parsing)
+            # SERP items are typed Pydantic objects — must call .model_dump() before passing to normalize()
+            rows.extend(normalize(store, r.model_dump()) for r in parsing)
 
     # Deduplicate by (store, product_name)
     seen, unique = set(), []
@@ -212,22 +209,6 @@ walmart_norm = make_normalizer("Walmart", {
 })
 ```
 
-#### TypeScript
-
-```typescript
-function makeNormalizer(store: string, fieldMap: Record<string, string>) {
-  return (record: Record<string, unknown>) => ({
-    store,
-    ...Object.fromEntries(
-      Object.entries(fieldMap).map(([unified, agentField]) => [
-        unified,
-        record[agentField] ?? "",
-      ])
-    ),
-  });
-}
-```
-
 ### Deduplication
 
 After normalization, deduplicate by a composite key — typically `(store, product_name)`:
@@ -258,7 +239,7 @@ When agents are discovered at runtime (not hardcoded), build the field mapping d
 
 ## Interactive batch extraction
 
-Pattern for running an agent against several URLs via MCP tool calls and aggregating results.
+Pattern for running an agent against several URLs via CLI commands and aggregating results.
 
 ### When to use
 
@@ -276,7 +257,7 @@ Small batches (2–5 URLs) where running `nimble agent run` per URL via CLI is p
 
 ```bash
 export PATH="$HOME/go/bin:$PATH"
-nimble agent run --agent amazon-product-details \
+nimble --transform "data.parsing" agent run --agent amazon-product-details \
   --params '{"url": "https://www.amazon.com/dp/B0DGHRT7PS"}'
 ```
 
