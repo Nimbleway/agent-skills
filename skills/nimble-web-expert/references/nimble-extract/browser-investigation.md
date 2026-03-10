@@ -18,12 +18,12 @@ which browser-use 2>/dev/null && echo "browser-use: installed" || echo "browser-
 python3 -c "from playwright.sync_api import sync_playwright; print('playwright: installed')" 2>/dev/null || echo "playwright: not found"
 ```
 
-| | browser-use | Playwright |
-|--|-------------|------------|
-| Cost | Paid (Nimble) | Free (open source) |
-| Style | Agent-based — describe what to find | Script-based — write what to run |
-| Best for | Complex investigations, needs judgment | Simple selector/XHR discovery |
-| Install | `npm i -g @nimbleway/browser-use-cli` | `pip install playwright && playwright install chromium` |
+|          | browser-use                            | Playwright                                              |
+| -------- | -------------------------------------- | ------------------------------------------------------- |
+| Cost     | Paid (Nimble)                          | Free (open source)                                      |
+| Style    | Agent-based — describe what to find    | Script-based — write what to run                        |
+| Best for | Complex investigations, needs judgment | Simple selector/XHR discovery                           |
+| Install  | `npm i -g @nimbleway/browser-use-cli`  | `pip install playwright && playwright install chromium` |
 
 **Rule:** Use browser-use if installed. Fall back to Playwright if not.
 
@@ -32,6 +32,7 @@ python3 -c "from playwright.sync_api import sync_playwright; print('playwright: 
 ## Finding CSS selectors
 
 ### With browser-use
+
 ```
 [browser-use] Navigate to https://example.com/product
 [browser-use] Take a screenshot to understand the layout
@@ -40,6 +41,7 @@ python3 -c "from playwright.sync_api import sync_playwright; print('playwright: 
 ```
 
 ### With Playwright
+
 ```python
 # Save as .nimble/find-selectors.py → python3 .nimble/find-selectors.py
 from playwright.sync_api import sync_playwright
@@ -60,6 +62,7 @@ with sync_playwright() as p:
 ```
 
 **Then build the nimble command:**
+
 ```bash
 nimble extract --url "https://example.com/product" --render --parse \
   --parser '{
@@ -76,6 +79,7 @@ nimble extract --url "https://example.com/product" --render --parse \
 ## Finding XHR/API patterns
 
 ### With browser-use
+
 ```
 [browser-use] Navigate to https://example.com/search?q=shoes
 [browser-use] Open DevTools Network tab, filter XHR/Fetch
@@ -84,6 +88,7 @@ nimble extract --url "https://example.com/product" --render --parse \
 ```
 
 ### With Playwright
+
 ```python
 # Save as .nimble/find-xhr.py → python3 .nimble/find-xhr.py
 from playwright.sync_api import sync_playwright
@@ -100,6 +105,7 @@ with sync_playwright() as p:
 ```
 
 **Then choose the nimble approach:**
+
 ```bash
 # Option A — call the API directly (fastest, if no auth required)
 nimble --transform "data.markdown" extract \
@@ -118,6 +124,7 @@ nimble extract \
 ## Finding browser actions (clicks, scrolls, waits)
 
 ### With browser-use
+
 ```
 [browser-use] Navigate to https://example.com/product
 [browser-use] Click "Reviews" tab → selector: button[data-tab="reviews"]
@@ -126,6 +133,7 @@ nimble extract \
 ```
 
 ### With Playwright
+
 ```python
 # Save as .nimble/find-actions.py → python3 .nimble/find-actions.py
 from playwright.sync_api import sync_playwright
@@ -142,6 +150,7 @@ with sync_playwright() as p:
 ```
 
 **Then build the nimble browser actions:**
+
 ```bash
 nimble --transform "data.markdown" extract \
   --url "https://example.com/product" --render \
@@ -157,12 +166,14 @@ nimble --transform "data.markdown" extract \
 ## When to use Tier 6
 
 **Go to Tier 6 when:**
+
 - Tiers 1–5 failed and output is empty or irrelevant
 - Data is dynamic but you don't know what interaction triggers it
 - You need `--parser` schema or `--browser-action` for an unfamiliar site
 - User asks "why isn't this working?" — investigate before retrying
 
 **Skip Tier 6 when:**
+
 - The site is in the proven recipes (Amazon, Yelp, etc.) — selectors are known
 - `--render` or `--driver vx10-pro` already returns the content
 - XHR pattern is obvious from URL structure (documented public API)

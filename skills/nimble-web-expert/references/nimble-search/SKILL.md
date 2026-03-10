@@ -3,8 +3,7 @@ name: nimble-search-reference
 description: |
   Reference for nimble search command. Load when searching the live web.
   Contains: all flags, 8 focus modes (general/coding/news/academic/shopping/social/geo/location),
-  v0.5.0 vs v0.4.x flag differences (--focus vs --topic, --max-results vs --num-results),
-  response structure, credit costs.
+  search_depth modes (lite/fast/deep), response structure, credit costs.
 ---
 
 # nimble search — reference
@@ -14,6 +13,7 @@ Real-time web search with 8 focus modes. Returns results with titles, URLs, and 
 ## Table of Contents
 
 - [Parameters](#parameters)
+- [Search depth modes](#search-depth-modes)
 - [Focus modes](#focus-modes)
 - [CLI](#cli)
 - [Python SDK](#python-sdk)
@@ -23,24 +23,39 @@ Real-time web search with 8 focus modes. Returns results with titles, URLs, and 
 
 ## Parameters
 
-| Parameter                 | Type            | Default   | Description                                                                                                       |
-| ------------------------- | --------------- | --------- | ----------------------------------------------------------------------------------------------------------------- |
-| `query`                   | string          | required  | Search query                                                                                                      |
-| `focus`                   | string or array | `general` | Focus mode (see table below) or array of specific agent names e.g. `["amazon_serp", "target_serp"]`               |
-| `deep_search`             | bool            | `true`    | `true` = fetch full page content; `false` = metadata only (5–10× faster)                                          |
-| `include_answer`          | bool            | `false`   | AI-synthesized answer (premium — retry without if 402/403)                                                        |
-| `max_results`             | int             | `10`      | Result count (1–100)                                                                                              |
-| `output_format`           | string          | —         | `plain_text` \| `markdown` \| `simplified_html`                                                                   |
-| `include_domains`         | array           | —         | Restrict to these domains (max 50)                                                                                |
-| `exclude_domains`         | array           | —         | Exclude these domains (max 50)                                                                                    |
-| `time_range`              | string          | —         | `hour` \| `day` \| `week` \| `month` \| `year` — cannot combine with dates                                        |
-| `start_date` / `end_date` | string          | —         | Date range `YYYY-MM-DD` — cannot combine with `time_range`                                                        |
-| `content_type`            | string          | —         | File type filter: `pdf`, `docx`, `xlsx`, `documents`, `spreadsheets`, `presentations` — only with `general` focus |
-| `max_subagents`           | int             | —         | Parallel agents for shopping/social/geo/location (1–5)                                                            |
-| `country`                 | string          | —         | ISO Alpha-2 geo-targeted results (e.g. `US`)                                                                      |
-| `locale`                  | string          | —         | Language code (e.g. `en`, `fr`, `de`)                                                                             |
+| Parameter                 | Type            | Default  | Description                                                                                                       |
+| ------------------------- | --------------- | -------- | ----------------------------------------------------------------------------------------------------------------- |
+| `query`                   | string          | required | Search query                                                                                                      |
+| `search_depth`            | string          | `deep`   | Content depth: `lite` \| `fast` \| `deep` — see depth table below                                                |
+| `focus`                   | string or array | `general`| Focus mode (see table below) or array of specific agent names e.g. `["amazon_serp", "target_serp"]`               |
+| `include_answer`          | bool            | `false`  | AI-synthesized answer (premium — retry without if 402/403)                                                        |
+| `max_results`             | int             | `10`     | Result count (1–100)                                                                                              |
+| `output_format`           | string          | —        | `plain_text` \| `markdown` \| `simplified_html`                                                                   |
+| `include_domains`         | array           | —        | Restrict to these domains (max 50)                                                                                |
+| `exclude_domains`         | array           | —        | Exclude these domains (max 50)                                                                                    |
+| `time_range`              | string          | —        | `hour` \| `day` \| `week` \| `month` \| `year` — cannot combine with dates                                        |
+| `start_date` / `end_date` | string          | —        | Date range `YYYY-MM-DD` — cannot combine with `time_range`                                                        |
+| `content_type`            | string          | —        | File type filter: `pdf`, `docx`, `xlsx`, `documents`, `spreadsheets`, `presentations` — only with `general` focus |
+| `max_subagents`           | int             | —        | Parallel agents for shopping/social/geo/location (1–5)                                                            |
+| `country`                 | string          | —        | ISO Alpha-2 geo-targeted results (e.g. `US`)                                                                      |
+| `locale`                  | string          | —        | Language code (e.g. `en`, `fr`, `de`)                                                                             |
+| `deep_search`             | bool            | —        | **Deprecated** — use `search_depth` instead. `true` = `deep`, `false` = `lite`. Still works for backward compat. |
 
-CLI uses hyphens (`--deep-search`, `--include-answer`). SDK uses underscores (`deep_search`, `include_answer`).
+CLI uses hyphens (`--search-depth`, `--include-answer`). SDK uses underscores (`search_depth`, `include_answer`).
+
+---
+
+## Search depth modes
+
+| Mode   | Content                          | Speed    | Best for                                                        |
+| ------ | -------------------------------- | -------- | --------------------------------------------------------------- |
+| `lite` | Metadata only (title, URL, snippet) | Fastest | High-volume pipelines, URL discovery, quick filtering           |
+| `fast` | Rich cached content              | Fast     | AI agents, RAG, chatbots — quality content without scrape latency |
+| `deep` | Full real-time page content      | Slowest  | Research, due diligence, tasks requiring complete source material |
+
+**Default for AI agent use:** prefer `fast` — richest content-to-latency ratio.
+
+---
 
 ## Focus modes
 
@@ -55,25 +70,28 @@ CLI uses hyphens (`--deep-search`, `--include-answer`). SDK uses underscores (`d
 | `geo`      | Geographic and regional data        | "tech companies in Berlin"               |
 | `location` | Local businesses, restaurants       | "italian restaurants San Francisco"      |
 
+---
+
 ## CLI
 
 ```bash
-# Deep search (default — fetches full content)
-nimble search --query "React server components"
+# Fast depth — rich content, low latency (best for agents)
+nimble search --query "React server components" --search-depth fast
 
-# Fast metadata-only
-nimble search --query "OpenAI announcements" --focus news --deep-search=false
+# Lite — metadata only, fastest
+nimble search --query "OpenAI announcements" --focus news --search-depth lite
+
+# Deep — full real-time page scrape
+nimble search --query "EU AI Act" --focus news --search-depth deep \
+  --start-date 2025-01-01 --end-date 2025-12-31
 
 # With AI answer + domain filter
 nimble search --query "Python asyncio best practices" \
-  --focus coding --deep-search=false --include-answer \
+  --focus coding --search-depth fast --include-answer \
   --include-domain docs.python.org --include-domain realpython.com
 
-# Date range
-nimble search --query "EU AI Act" --focus news --start-date 2025-01-01 --end-date 2025-12-31
-
 # Extract just URLs
-nimble --transform "results.#.url" search --query "React tutorials" --deep-search=false
+nimble --transform "results.#.url" search --query "React tutorials" --search-depth lite
 ```
 
 ## Python SDK
@@ -82,22 +100,30 @@ nimble --transform "results.#.url" search --query "React tutorials" --deep-searc
 from nimble_python import Nimble
 nimble = Nimble(api_key=os.environ["NIMBLE_API_KEY"])
 
-# Deep search (default)
-resp = nimble.search(query="React server components")
+# Fast depth — best default for AI agent use
+resp = nimble.search(query="React server components", search_depth="fast")
 
-# Fast + AI answer
+# Lite — scan many results quickly
 resp = nimble.search(
     query="OpenAI announcements",
     focus="news",
-    deep_search=False,
-    include_answer=True,
+    search_depth="lite",
     time_range="week",
+)
+
+# Deep — full content for research
+resp = nimble.search(
+    query="EU AI Act enforcement",
+    focus="news",
+    search_depth="deep",
+    include_answer=True,
 )
 
 # Custom focus — explicit agent array
 resp = nimble.search(
     query="best wireless headphones",
     focus=["amazon_serp", "walmart_serp"],
+    search_depth="fast",
     max_results=10,
 )
 
@@ -105,17 +131,19 @@ results = resp.results       # list of result objects
 answer = resp.answer         # AI summary (if include_answer=True)
 ```
 
+---
+
 ## Response structure
 
-| Field                            | Type   | Description                           |
-| -------------------------------- | ------ | ------------------------------------- |
-| `total_results`                  | int    | Total results returned                |
-| `results`                        | array  | Search results                        |
-| `results[].title`                | string | Page title                            |
-| `results[].description`          | string | Snippet                               |
-| `results[].url`                  | string | Page URL                              |
-| `results[].content`              | string | Full page content (deep search only)  |
-| `results[].metadata.position`    | int    | Result rank                           |
-| `results[].metadata.entity_type` | string | e.g. `OrganicResult`                  |
-| `answer`                         | string | AI summary (if `include_answer=True`) |
-| `request_id`                     | UUID   | Request identifier                    |
+| Field                            | Type   | Description                                                  |
+| -------------------------------- | ------ | ------------------------------------------------------------ |
+| `total_results`                  | int    | Total results returned                                       |
+| `results`                        | array  | Search results                                               |
+| `results[].title`                | string | Page title                                                   |
+| `results[].description`          | string | Snippet                                                      |
+| `results[].url`                  | string | Page URL                                                     |
+| `results[].content`              | string | Page content — cached (`fast`) or real-time scraped (`deep`) |
+| `results[].metadata.position`    | int    | Result rank                                                  |
+| `results[].metadata.entity_type` | string | e.g. `OrganicResult`                                         |
+| `answer`                         | string | AI summary (if `include_answer=True`)                        |
+| `request_id`                     | UUID   | Request identifier                                           |

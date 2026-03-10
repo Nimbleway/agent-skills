@@ -1,7 +1,8 @@
 ---
 name: nimble-network-capture-reference
 description: |
-  Reference for --network-capture flag (Tier 5 extract). Load when page data comes from XHR or AJAX calls.
+  Reference for --network-capture flag. Load when page data comes from XHR or AJAX calls,
+  or when you want to call a known API endpoint directly (--is-xhr).
   Contains: filter syntax (url contains/regex), resource_type, --is-xhr mode for direct API calls,
   capture+parse combined patterns. Note: --is-xhr and --render are mutually exclusive.
 ---
