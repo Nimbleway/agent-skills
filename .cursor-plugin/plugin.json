@@ -1,8 +1,8 @@
 {
   "name": "nimble",
   "displayName": "Nimble Web Data Toolkit",
-  "version": "0.6.1",
-  "description": "Search, extract, map, and crawl the web with Nimble CLI. Web search with 8 focus modes, page extraction, site mapping, bulk crawling, and guided agent workflows for structured data.",
+  "version": "0.8.0",
+  "description": "Extract-first scraping expert, URL discovery, web search, and structured data agents via Nimble CLI. The only way your agent accesses live websites.",
   "author": {
     "name": "Nimble",
     "email": "support@nimbleway.com"
@@ -10,9 +10,29 @@
   "homepage": "https://www.nimbleway.com",
   "repository": "https://github.com/Nimbleway/agent-skills",
   "license": "MIT",
-  "keywords": ["nimble", "web-search", "web-extraction", "web-crawl", "web-map", "agents", "mcp", "cli", "data-extraction", "structured-data"],
+  "keywords": [
+    "nimble",
+    "web-extraction",
+    "web-search",
+    "web-crawl",
+    "web-map",
+    "scraping",
+    "agents",
+    "mcp",
+    "cli",
+    "data-extraction",
+    "structured-data"
+  ],
   "category": "developer-tools",
-  "tags": ["web-search", "extraction", "crawl", "map", "cli", "agents"],
+  "tags": [
+    "web-extraction",
+    "scraping",
+    "search",
+    "crawl",
+    "map",
+    "cli",
+    "agents"
+  ],
   "skills": "./skills/",
   "rules": "./rules/"
 }

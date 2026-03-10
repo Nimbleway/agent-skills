@@ -15,13 +15,13 @@ Patterns for processing multiple inputs, comparing across stores, and normalizin
 
 | Scenario | Path | Pattern |
 |----------|------|---------|
-| 2–5 URLs, display output | Interactive | Call `nimble_agents_run` per URL via MCP, aggregate results |
+| 2–5 URLs, display output | Interactive | Run `nimble agent run` per URL via CLI, aggregate results |
 | 6+ URLs or file output | Codegen | Generate SDK script with `asyncio.gather` or async pipeline |
 | Multi-store comparison | Codegen | Generate script with per-store normalization + merged output |
 | Batch input file (URLs/IDs) | Codegen | Read file, generate async pipeline script |
 | 50+ items per store | Codegen | Async batch pipeline (`/v1/agent/async` + poll) |
 
-**Routing rule:** The interactive batch approach (MCP tool calls) works for small batches (~2–5 items). Beyond that, route to codegen — generate a script using templates from `sdk-patterns.md` (Python) or `rest-api-patterns.md` (other languages).
+**Routing rule:** The interactive batch approach (CLI runs) works for small batches (~2–5 items). Beyond that, route to codegen — generate a script using templates from `sdk-patterns.md` (Python) or `rest-api-patterns.md` (other languages).
 
 ---
 
@@ -47,16 +47,16 @@ User request: *"Compare prices for wireless headphones on Amazon and Walmart, sa
 
 Search for agents for both stores simultaneously:
 
-```json
-{ "tool": "nimble_agents_list", "params": { "query": "amazon search" } }
-{ "tool": "nimble_agents_list", "params": { "query": "walmart search" } }
+```bash
+export PATH="$HOME/go/bin:$PATH"
+nimble agent list --limit 100   # filter results for "amazon" and "walmart" locally
 ```
 
 Results: found `amazon_serp` and `walmart_serp`. On the codegen path with clear matches, narrate the agent choice without presenting options — the user reviews the generated code.
 
 ### Step 3 — Get schemas (parallel)
 
-Call `nimble_agents_get` for both agents. Extract key schema details:
+Run `nimble agent get --template-name` for both agents (CLI). Extract key schema details:
 
 | Agent | Required input | Key output fields |
 |-------|---------------|-------------------|
@@ -86,13 +86,9 @@ nimble = AsyncNimble(api_key=os.environ["NIMBLE_API_KEY"], max_retries=4, timeou
 SEM = asyncio.Semaphore(10)
 
 
-async def run_agent(agent: str, params: dict) -> dict:
+async def run_agent(agent: str, params: dict):
     async with SEM:
-        return await nimble.post(
-            "/v1/agent",
-            body={"agent": agent, "params": params},
-            cast_to=object,
-        )
+        return await nimble.agent.run(agent=agent, params=params)
 
 
 def normalize(store: str, record: dict) -> dict:
@@ -126,9 +122,10 @@ async def main():
         if isinstance(resp, Exception):
             print(f"  {store} failed: {resp}")
             continue
-        parsing = resp.get("data", {}).get("parsing", [])
+        parsing = resp.data.parsing
         if isinstance(parsing, list):
-            rows.extend(normalize(store, r) for r in parsing)
+            # SERP items are typed Pydantic objects — must call .model_dump() before passing to normalize()
+            rows.extend(normalize(store, r.model_dump()) for r in parsing)
 
     # Deduplicate by (store, product_name)
     seen, unique = set(), []
@@ -176,7 +173,7 @@ If all agents share identical field names, skip normalization.
 
 ### Strategy
 
-1. Call `nimble_agents_get` for each agent to read `skills` (output fields).
+1. Run `nimble agent get --template-name <agent>` (CLI) for each agent to read `skills` (output fields).
 2. Compare field names across schemas — identify semantically equivalent fields.
 3. Choose unified field names for the merged output.
 4. Build a mapping function per agent: `{unified_name: agent_specific_name}`.
@@ -212,22 +209,6 @@ walmart_norm = make_normalizer("Walmart", {
 })
 ```
 
-#### TypeScript
-
-```typescript
-function makeNormalizer(store: string, fieldMap: Record<string, string>) {
-  return (record: Record<string, unknown>) => ({
-    store,
-    ...Object.fromEntries(
-      Object.entries(fieldMap).map(([unified, agentField]) => [
-        unified,
-        record[agentField] ?? "",
-      ])
-    ),
-  });
-}
-```
-
 ### Deduplication
 
 After normalization, deduplicate by a composite key — typically `(store, product_name)`:
@@ -247,7 +228,7 @@ Choose the composite key based on what uniquely identifies a record. For search 
 
 When agents are discovered at runtime (not hardcoded), build the field mapping dynamically:
 
-1. Read the `skills` dict from each agent via `nimble_agents_get`.
+1. Read the `skills` dict from each agent via `nimble agent get --template-name` (CLI).
 2. For each unified field, search the agent's properties for a matching or similar name.
 3. Use exact matches first, then fall back to substring/suffix matching:
    - `price` matches `price`, `product_price`, `web_price`
@@ -258,30 +239,26 @@ When agents are discovered at runtime (not hardcoded), build the field mapping d
 
 ## Interactive batch extraction
 
-Pattern for running an agent against several URLs via MCP tool calls and aggregating results.
+Pattern for running an agent against several URLs via CLI commands and aggregating results.
 
 ### When to use
 
-Small batches (2–5 URLs) where calling `nimble_agents_run` per URL is practical. For larger batches, route to codegen instead.
+Small batches (2–5 URLs) where running `nimble agent run` per URL via CLI is practical. For larger batches, route to codegen instead.
 
 ### Walkthrough
 
 **Scenario:** Extract product details from five Amazon product pages using `amazon-product-details`.
 
-**1. Confirm the agent** — call `nimble_agents_get` to verify the agent and inspect input schema.
+**1. Confirm the agent** — run `nimble agent get --template-name amazon-product-details` (CLI) to verify the agent and inspect input schema.
 
 **2. Prepare the URL list** — define the set of URLs to process.
 
-**3. Run per URL** — call `nimble_agents_run` once per URL:
+**3. Run per URL** — run `nimble agent run` once per URL (CLI):
 
-```json
-{
-  "tool": "nimble_agents_run",
-  "params": {
-    "agent_name": "amazon-product-details",
-    "params": { "url": "https://www.amazon.com/dp/B0DGHRT7PS" }
-  }
-}
+```bash
+export PATH="$HOME/go/bin:$PATH"
+nimble --transform "data.parsing" agent run --agent amazon-product-details \
+  --params '{"url": "https://www.amazon.com/dp/B0DGHRT7PS"}'
 ```
 
 **4. Handle errors gracefully** — if a run returns an error for one URL, log it and continue. Do not abort the entire batch.
