@@ -15,6 +15,14 @@ Programmatic browser control — click, scroll, fill forms, wait for elements. U
 
 All actions execute sequentially. Global timeout: 240 seconds.
 
+## Table of Contents
+
+- [CLI flag](#cli-flag)
+- [Python SDK](#python-sdk)
+- [All action types](#all-action-types)
+- [Examples](#examples)
+- [Tips](#tips)
+
 ---
 
 ## CLI flag
@@ -24,6 +32,26 @@ All actions execute sequentially. Global timeout: 240 seconds.
 ```
 
 Pass a JSON array of action objects.
+
+## Python SDK
+
+```python
+from nimble_python import Nimble
+
+nimble = Nimble()
+resp = nimble.extract(
+    url="https://example.com/product",
+    render=True,
+    browser_actions=[
+        {"type": "click", "selector": ".tab-reviews", "required": False},
+        {"type": "wait_for_element", "selector": ".review-list"},
+    ],
+    format="markdown",
+)
+print(resp["data"]["markdown"])
+```
+
+SDK: pass `browser_actions` as a Python list of dicts. Python booleans (`False`) are used instead of JSON `false`.
 
 ---
 
@@ -50,6 +78,8 @@ Add `"required": false` to any action to make it optional — the action chain c
 ---
 
 ## Examples
+
+### CLI
 
 ```bash
 # Click a tab and wait for content
@@ -113,6 +143,54 @@ nimble extract --url "https://example.com" --render \
   --browser-action '[
     {"type": "screenshot", "full_page": true}
   ]' --format screenshot
+```
+
+### Python SDK
+
+```python
+# Click a tab and wait for content
+resp = nimble.extract(
+    url="https://example.com/product",
+    render=True,
+    browser_actions=[
+        {"type": "click", "selector": ".tab-reviews"},
+        {"type": "wait_for_element", "selector": ".review-list"},
+    ],
+    format="markdown",
+)
+
+# Fill search form and submit
+resp = nimble.extract(
+    url="https://example.com/search",
+    render=True,
+    browser_actions=[
+        {"type": "fill", "selector": "#search-input", "value": "running shoes", "mode": "type"},
+        {"type": "press", "key": "Enter"},
+        {"type": "wait_for_element", "selector": ".results"},
+    ],
+    format="markdown",
+)
+
+# Infinite scroll
+resp = nimble.extract(
+    url="https://example.com/feed",
+    render=True,
+    browser_actions=[
+        {"type": "auto_scroll", "max_duration": 15, "idle_timeout": 3},
+    ],
+    format="markdown",
+)
+
+# Dismiss optional cookie banner then extract
+resp = nimble.extract(
+    url="https://example.com",
+    render=True,
+    browser_actions=[
+        {"type": "click", "selector": "#accept-cookies", "required": False},
+        {"type": "wait", "duration": "500ms"},
+    ],
+    format="markdown",
+)
 ```
 
 ---

@@ -11,22 +11,36 @@ description: |
 
 Real-time web search with 8 focus modes. Returns results with titles, URLs, and optionally full content and AI answers.
 
-## Basic usage
+## Table of Contents
 
-```bash
-# Fast search — metadata only, no page fetch (v0.5.0+)
-nimble search --query "React server components" --deep-search=false
+- [Parameters](#parameters)
+- [Focus modes](#focus-modes)
+- [CLI](#cli)
+- [Python SDK](#python-sdk)
+- [Response structure](#response-structure)
 
-# Fast search (v0.4.x — omit --deep-search entirely)
-nimble search --query "React server components"
+---
 
-# Deep search — fetches full content from each result page (v0.5.0+)
-nimble search --query "React server components"
+## Parameters
 
-# With AI-synthesized answer
-nimble search --query "how to implement JWT auth in Node.js" \
-  --focus coding --deep-search=false --include-answer
-```
+| Parameter                 | Type            | Default   | Description                                                                                                       |
+| ------------------------- | --------------- | --------- | ----------------------------------------------------------------------------------------------------------------- |
+| `query`                   | string          | required  | Search query                                                                                                      |
+| `focus`                   | string or array | `general` | Focus mode (see table below) or array of specific agent names e.g. `["amazon_serp", "target_serp"]`               |
+| `deep_search`             | bool            | `true`    | `true` = fetch full page content; `false` = metadata only (5–10× faster)                                          |
+| `include_answer`          | bool            | `false`   | AI-synthesized answer (premium — retry without if 402/403)                                                        |
+| `max_results`             | int             | `10`      | Result count (1–100)                                                                                              |
+| `output_format`           | string          | —         | `plain_text` \| `markdown` \| `simplified_html`                                                                   |
+| `include_domains`         | array           | —         | Restrict to these domains (max 50)                                                                                |
+| `exclude_domains`         | array           | —         | Exclude these domains (max 50)                                                                                    |
+| `time_range`              | string          | —         | `hour` \| `day` \| `week` \| `month` \| `year` — cannot combine with dates                                        |
+| `start_date` / `end_date` | string          | —         | Date range `YYYY-MM-DD` — cannot combine with `time_range`                                                        |
+| `content_type`            | string          | —         | File type filter: `pdf`, `docx`, `xlsx`, `documents`, `spreadsheets`, `presentations` — only with `general` focus |
+| `max_subagents`           | int             | —         | Parallel agents for shopping/social/geo/location (1–5)                                                            |
+| `country`                 | string          | —         | ISO Alpha-2 geo-targeted results (e.g. `US`)                                                                      |
+| `locale`                  | string          | —         | Language code (e.g. `en`, `fr`, `de`)                                                                             |
+
+CLI uses hyphens (`--deep-search`, `--include-answer`). SDK uses underscores (`deep_search`, `include_answer`).
 
 ## Focus modes
 
@@ -41,68 +55,67 @@ nimble search --query "how to implement JWT auth in Node.js" \
 | `geo`      | Geographic and regional data        | "tech companies in Berlin"               |
 | `location` | Local businesses, restaurants       | "italian restaurants San Francisco"      |
 
+## CLI
+
 ```bash
-# News with time filter
-nimble search --query "OpenAI announcements" --focus news --time-range week --deep-search=false
+# Deep search (default — fetches full content)
+nimble search --query "React server components"
 
-# Shopping comparison
-nimble search --query "standing desk under $500" --focus shopping --deep-search=false --include-answer
+# Fast metadata-only
+nimble search --query "OpenAI announcements" --focus news --deep-search=false
 
-# People research — run both social and general in parallel
-nimble search --query "Jane Doe Head of Engineering" --focus social --deep-search=false --include-answer
-nimble search --query "Jane Doe Head of Engineering" --focus general --deep-search=false --include-answer
-
-# Domain-filtered (coding)
+# With AI answer + domain filter
 nimble search --query "Python asyncio best practices" \
-  --focus coding --deep-search=false \
+  --focus coding --deep-search=false --include-answer \
   --include-domain docs.python.org --include-domain realpython.com
-
-# Extract only URLs from results
-nimble --transform "results.#.url" search --query "React tutorials" --deep-search=false
 
 # Date range
 nimble search --query "EU AI Act" --focus news --start-date 2025-01-01 --end-date 2025-12-31
+
+# Extract just URLs
+nimble --transform "results.#.url" search --query "React tutorials" --deep-search=false
 ```
 
-## All flags
+## Python SDK
 
-| Flag                          | Description                                                         |
-| ----------------------------- | ------------------------------------------------------------------- |
-| `--query`                     | Search query (required)                                             |
-| `--deep-search=false`         | Fast metadata-only (5–10× faster)                                   |
-| `--focus`                     | Focus mode (see table above)                                        |
-| `--max-results`               | Result count (default 10)                                           |
-| `--include-answer`            | AI-synthesized answer (premium — retry without if 402/403)          |
-| `--include-domain`            | Restrict to domain (repeatable, max 50)                             |
-| `--exclude-domain`            | Exclude domain (repeatable, max 50)                                 |
-| `--time-range`                | Recency: `hour`, `day`, `week`, `month`, `year`                     |
-| `--start-date` / `--end-date` | Date range (YYYY-MM-DD)                                             |
-| `--content-type`              | File type filter: `pdf`, `docx`, `xlsx` (only with `general` focus) |
-| `--output-format`             | Content format: `markdown`, `plain_text`, `simplified_html`         |
-| `--country` / `--locale`      | Localized results                                                   |
-| `--max-subagents`             | Parallel agents for shopping/social/geo/location (1–10)             |
+```python
+from nimble_python import Nimble
+nimble = Nimble(api_key=os.environ["NIMBLE_API_KEY"])
+
+# Deep search (default)
+resp = nimble.search(query="React server components")
+
+# Fast + AI answer
+resp = nimble.search(
+    query="OpenAI announcements",
+    focus="news",
+    deep_search=False,
+    include_answer=True,
+    time_range="week",
+)
+
+# Custom focus — explicit agent array
+resp = nimble.search(
+    query="best wireless headphones",
+    focus=["amazon_serp", "walmart_serp"],
+    max_results=10,
+)
+
+results = resp.results       # list of result objects
+answer = resp.answer         # AI summary (if include_answer=True)
+```
 
 ## Response structure
 
-```
-total_results   integer
-answer          string  — AI summary (if --include-answer)
-results[]
-  title         string
-  description   string
-  url           string
-  content       string  — full page content (if deep search)
-  metadata
-    position    integer
-    entity_type string
-    country     string
-    locale      string
-request_id      UUID
-```
-
-## Credit costs
-
-| Mode                         | Cost                            |
-| ---------------------------- | ------------------------------- |
-| Fast (`--deep-search=false`) | 1 credit per search             |
-| Deep search                  | 1 credit + 1 per page extracted |
+| Field                            | Type   | Description                           |
+| -------------------------------- | ------ | ------------------------------------- |
+| `total_results`                  | int    | Total results returned                |
+| `results`                        | array  | Search results                        |
+| `results[].title`                | string | Page title                            |
+| `results[].description`          | string | Snippet                               |
+| `results[].url`                  | string | Page URL                              |
+| `results[].content`              | string | Full page content (deep search only)  |
+| `results[].metadata.position`    | int    | Result rank                           |
+| `results[].metadata.entity_type` | string | e.g. `OrganicResult`                  |
+| `answer`                         | string | AI summary (if `include_answer=True`) |
+| `request_id`                     | UUID   | Request identifier                    |

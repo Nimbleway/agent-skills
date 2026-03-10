@@ -15,6 +15,13 @@ Two modes for accessing API data:
 1. **With rendering** (`--render`) — intercepts XHR/fetch calls the browser fires during page load. Use when data is lazy-loaded or triggered by interactions.
 2. **Without rendering** (`--is-xhr`) — calls a known API endpoint directly, no browser. Use when you already know the API URL.
 
+## Table of Contents
+
+- [Mode 1 — Network capture with rendering](#mode-1--network-capture-with-rendering)
+- [Mode 2 — XHR without rendering (--is-xhr)](#mode-2--xhr-without-rendering---is-xhr)
+- [Why use API/network capture over HTML parsing](#why-use-apinetwork-capture-over-html-parsing)
+- [Notes](#notes)
+
 ---
 
 ## Mode 1 — Network capture with rendering
@@ -30,6 +37,23 @@ Intercepts API calls fired by the browser during page load. Returns structured J
 ```
 
 Requires `--render`. Pass a JSON array of filter objects.
+
+### Python SDK
+
+```python
+from nimble_python import Nimble
+
+nimble = Nimble()
+resp = nimble.extract(
+    url="https://example.com/products",
+    render=True,
+    network_capture=[{"url": {"type": "contains", "value": "/api/products"}, "resource_type": ["xhr", "fetch"]}],
+)
+captures = resp["data"]["network_capture"]
+# captures[0]["result"] → list of {request, response} objects
+```
+
+SDK: pass `network_capture` as a Python list of dicts — no JSON serialization needed.
 
 ### Filter parameters
 
@@ -132,6 +156,24 @@ nimble extract --url "https://api.example.com/v1/search" \
   --method POST --is-xhr \
   --headers "Content-Type=application/json" \
    --format markdown
+```
+
+### Python SDK
+
+```python
+# GET — direct API endpoint
+resp = nimble.extract(
+    url="https://api.example.com/v1/markets?q=elections&limit=50",
+    is_xhr=True,
+)
+print(resp["data"]["html"])  # raw API response body
+
+# POST
+resp = nimble.extract(
+    url="https://api.example.com/v1/search",
+    method="POST",
+    is_xhr=True,
+)
 ```
 
 ### Examples

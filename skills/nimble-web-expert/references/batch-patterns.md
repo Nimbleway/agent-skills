@@ -15,14 +15,14 @@ Patterns for running `nimble agent`, `nimble extract`, and `nimble search` in pa
 
 ## When to use batch patterns
 
-| Scenario | Inputs | Method |
-|----------|--------|--------|
-| Run same agent with different params | 2–5 | Parallel bash: `&` + `wait` |
-| Extract multiple URLs | 2–5 | Parallel bash: `&` + `wait` |
-| Run multiple search queries | 2–5 | Parallel bash: `&` + `wait` |
-| Any of the above | 6–20 | `xargs -P` or bash array with `&` + `wait` |
-| Any of the above | 20+ | Generate a Python script with `asyncio` |
-| Multi-site comparison with normalization | any | Parallel bash (small) or Python script (large) |
+| Scenario                                 | Inputs | Method                                         |
+| ---------------------------------------- | ------ | ---------------------------------------------- |
+| Run same agent with different params     | 2–5    | Parallel bash: `&` + `wait`                    |
+| Extract multiple URLs                    | 2–5    | Parallel bash: `&` + `wait`                    |
+| Run multiple search queries              | 2–5    | Parallel bash: `&` + `wait`                    |
+| Any of the above                         | 6–20   | `xargs -P` or bash array with `&` + `wait`     |
+| Any of the above                         | 20+    | Generate a Python script with `asyncio`        |
+| Multi-site comparison with normalization | any    | Parallel bash (small) or Python script (large) |
 
 **Default:** whenever the user provides or implies multiple inputs (list of ASINs, list of keywords, list of URLs, list of queries), use the parallel path — never loop one-by-one.
 
@@ -150,11 +150,11 @@ For 20+ inputs, generate a Python script and run it with `uv run`.
 
 **Which template to use:**
 
-| Command | Template | Why |
-|---------|----------|-----|
+| Command            | Template                     | Why                                                                         |
+| ------------------ | ---------------------------- | --------------------------------------------------------------------------- |
 | `nimble agent run` | Python SDK (`nimble_python`) | Direct SDK call — no subprocess overhead, built-in retries, typed responses |
-| `nimble extract` | CLI subprocess | No Python SDK equivalent for `extract` |
-| `nimble search` | CLI subprocess | No Python SDK equivalent for `search` |
+| `nimble extract`   | CLI subprocess               | No Python SDK equivalent for `extract`                                      |
+| `nimble search`    | CLI subprocess               | No Python SDK equivalent for `search`                                       |
 
 ### Template — parallel agent runs (Python SDK)
 
@@ -219,6 +219,7 @@ asyncio.run(main())
 ```
 
 Run with:
+
 ```bash
 uv run batch.py
 ```

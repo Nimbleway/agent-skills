@@ -8,87 +8,84 @@ description: |
 
 # nimble map — reference
 
-Discovers all URLs on a site in seconds. Returns URL metadata (url, title, description) — run `extract` on results to get page content.
+Discovers all URLs on a site in seconds. Returns URL metadata (url, title, description) — run `extract` on results to get page content. Single synchronous call — no polling required.
 
-## Basic usage
+## Table of Contents
+
+- [Parameters](#parameters)
+- [CLI](#cli)
+- [Python SDK](#python-sdk)
+- [Response](#response)
+- [Common patterns](#common-patterns)
+- [Map vs Crawl](#map-vs-crawl)
+
+---
+
+## Parameters
+
+| Parameter       | CLI flag          | Type   | Default   | Description                                                                          |
+| --------------- | ----------------- | ------ | --------- | ------------------------------------------------------------------------------------ |
+| `url`           | `--url`           | string | required  | Starting URL                                                                         |
+| `limit`         | `--limit`         | int    | `100`     | Max URLs returned (1–100,000)                                                        |
+| `sitemap`       | `--sitemap`       | string | `include` | `include` (sitemap + crawl) \| `only` (sitemap only, fastest) \| `skip` (crawl only) |
+| `domain_filter` | `--domain-filter` | string | —         | `domain` (exact) \| `subdomain` (include subdomains) \| `all` (follow all links)     |
+| `country`       | `--country`       | string | `ALL`     | ISO Alpha-2 proxy location (e.g. `US`)                                               |
+| `locale`        | `--locale`        | string | —         | LCID locale (e.g. `en-US`) or `auto`                                                 |
+
+## CLI
 
 ```bash
-# Discover URLs on a site
-nimble map --url "https://docs.example.com" --limit 100 > .nimble/docs-map.json
+nimble map --url "https://docs.example.com" --limit 100
 
-# Extract just the URLs (JMESPath transform)
-nimble --transform "links.#.url" map --url "https://docs.example.com" --limit 100
-
-# Map a specific path section
-nimble map --url "https://shop.example.com/products/" --limit 200
-
-# Fastest — sitemap only (no crawling)
+# Sitemap only (fastest)
 nimble map --url "https://example.com" --sitemap only --limit 500
+
+# Extract just the URL list
+nimble --transform "links.#.url" map --url "https://docs.example.com" --limit 100
 ```
 
-## All flags
+## Python SDK
 
-| Flag | Default | Description |
-|------|---------|-------------|
-| `--url` | — | Starting URL (required) |
-| `--limit` | 100 | Max URLs returned (1–100,000) |
-| `--sitemap` | `include` | Sitemap usage: `include` (sitemap + crawl), `only` (sitemap only), `skip` (crawl only) |
-| `--domain-filter` | `all` | Domain scope: `domain` (exact), `subdomain` (include subdomains), `all` (all linked) |
-| `--country` | `ALL` | ISO Alpha-2 proxy location (e.g. `US`) or `ALL` |
-| `--locale` | — | LCID format (e.g. `en-US`) — pair with `--country` |
+```python
+from nimble_python import Nimble
+nimble = Nimble(api_key=os.environ["NIMBLE_API_KEY"])
 
-## Response structure
-
-```json
-{
-  "task_id": "UUID",
-  "success": true,
-  "links": [
-    {
-      "url": "https://docs.example.com/api/auth",
-      "title": "Authentication",
-      "description": "How to authenticate with the API"
-    }
-  ]
-}
+resp = nimble.map(url="https://docs.example.com", limit=100, sitemap="include")
+links = resp.links  # list of link objects
+urls = [l.url for l in links]
 ```
+
+## Response
+
+| Field                 | Type    | Description                          |
+| --------------------- | ------- | ------------------------------------ |
+| `task_id`             | string  | Request identifier                   |
+| `success`             | boolean | Whether the request succeeded        |
+| `links`               | array   | Discovered URLs                      |
+| `links[].url`         | string  | The discovered URL                   |
+| `links[].title`       | string  | Page title (if available)            |
+| `links[].description` | string  | Page meta description (if available) |
+
+---
 
 ## Common patterns
 
 ```bash
-# Map → filter → extract specific pages
-nimble --transform "links.#.url" map --url "https://docs.stripe.com" --limit 200 > .nimble/stripe-urls.txt
-grep "charges\|refund" .nimble/stripe-urls.txt
-nimble --transform "data.markdown" extract --url "https://docs.stripe.com/api/charges/object" --format markdown
+# Map → filter → extract
+nimble --transform "links.#.url" map --url "https://docs.stripe.com" --limit 200 > .nimble/urls.txt
+grep "charges\|refund" .nimble/urls.txt
 
-# Map → parallel extract all pages
-nimble --transform "links.#.url" map --url "https://docs.example.com/api" --limit 50 \
-  | python3 -c "
-import sys, subprocess
-urls = sys.stdin.read().strip().split('\n')
-procs = []
-for url in urls[:10]:
-    slug = url.rstrip('/').split('/')[-1]
-    f = open(f'.nimble/doc-{slug}.md', 'w')
-    p = subprocess.Popen(['nimble', '--transform', 'data.markdown', 'extract', '--url', url, '--format', 'markdown'], stdout=f)
-    procs.append((p, f))
-for p, f in procs:
-    p.wait(); f.close()
-print(f'Done: {len(procs)} pages saved to .nimble/')
-"
-
-# Map news/blog section for bulk scraping
-nimble --transform "links.#.url" map \
-  --url "https://techcrunch.com/category/artificial-intelligence/" \
-  --limit 50 > .nimble/tc-ai-urls.txt
-wc -l .nimble/tc-ai-urls.txt
+# Specific path section
+nimble map --url "https://shop.example.com/products/" --limit 200
 ```
 
-## When to use map vs crawl
+---
 
-| | `map` | `crawl` |
-|--|-------|---------|
-| Speed | Fast (seconds) | Slow (async, minutes) |
-| Output | URL list with metadata | Raw HTML per page |
-| Best for | Find the right URL, then selectively extract | Archive all pages at once |
-| LLM use | ✅ Combine with `extract --format markdown` | ⚠️ Returns raw HTML — needs post-processing |
+## Map vs Crawl
+
+|          | `map`                                       | `crawl`                   |
+| -------- | ------------------------------------------- | ------------------------- |
+| Speed    | Seconds (sync)                              | Minutes (async)           |
+| Output   | URL list with metadata                      | Full page content per URL |
+| Best for | Discover URLs, then selectively extract     | Archive all pages at once |
+| LLM use  | ✅ Combine with `extract --format markdown` | ⚠️ Returns raw HTML       |

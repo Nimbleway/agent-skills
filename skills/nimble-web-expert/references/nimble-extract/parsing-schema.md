@@ -12,6 +12,18 @@ Docs: https://docs.nimbleway.com/nimble-sdk/web-tools/extract/features/parsing-s
 
 Structured data extraction using declarative selectors, extractors, and post-processors. Use when you need specific fields as clean structured output rather than free-form markdown.
 
+## Table of Contents
+
+- [CLI flags](#cli-flags)
+- [Python SDK](#python-sdk)
+- [Parser types](#parser-types)
+- [Selector types](#selector-types)
+- [Extractors](#extractors)
+- [Post-processors](#post-processors)
+- [Examples](#examples)
+- [When to use structured parsing vs markdown](#when-to-use-structured-parsing-vs-markdown)
+- [Notes](#notes)
+
 ---
 
 ## CLI flags
@@ -22,6 +34,30 @@ Structured data extraction using declarative selectors, extractors, and post-pro
 ```
 
 Without `--parser`, `--parse` returns cleaned markdown/HTML. With `--parser`, it returns structured JSON matching your schema.
+
+## Python SDK
+
+```python
+from nimble_python import Nimble
+
+nimble = Nimble()
+resp = nimble.extract(
+    url="https://example.com/product",
+    render=True,
+    parse=True,
+    parser={
+        "type": "schema",
+        "fields": {
+            "title": {"type": "terminal", "selector": {"type": "css", "css_selector": "h1"}, "extractor": {"type": "text"}},
+            "price": {"type": "terminal", "selector": {"type": "css", "css_selector": ".price"}, "extractor": {"type": "text", "post_processor": {"type": "number"}}},
+        },
+    },
+)
+print(resp["data"]["parsing"])
+# → {"title": "Product Name", "price": 49.99}
+```
+
+SDK uses underscores for keys (e.g. `post_processor`, `css_selector`). Pass the `parser` dict directly — no JSON serialization needed.
 
 ---
 
@@ -79,6 +115,8 @@ Without `--parser`, `--parse` returns cleaned markdown/HTML. With `--parser`, it
 ---
 
 ## Examples
+
+### CLI
 
 ```bash
 # Single product — extract specific fields
@@ -157,6 +195,54 @@ nimble extract --url "https://example.com/products" --render \
     ]},
     "extractor": {"type": "raw"}
   }'
+```
+
+### Python SDK
+
+```python
+# Single product
+resp = nimble.extract(
+    url="https://example.com/product/123",
+    parse=True,
+    parser={
+        "type": "schema",
+        "fields": {
+            "title": {"type": "terminal", "selector": {"type": "css", "css_selector": "h1.product-title"}, "extractor": {"type": "text"}},
+            "price": {"type": "terminal", "selector": {"type": "css", "css_selector": ".price"}, "extractor": {"type": "text", "post_processor": {"type": "number"}}},
+            "rating": {"type": "terminal", "selector": {"type": "css", "css_selector": ".rating-value"}, "extractor": {"type": "text"}},
+        },
+    },
+)
+print(resp["data"]["parsing"])
+
+# List of products from search results
+resp = nimble.extract(
+    url="https://example.com/search?q=shoes",
+    parse=True,
+    parser={
+        "type": "schema_list",
+        "selector": {"type": "css", "css_selector": ".product-card"},
+        "fields": {
+            "title": {"type": "terminal", "selector": {"type": "css", "css_selector": ".title"}, "extractor": {"type": "text"}},
+            "price": {"type": "terminal", "selector": {"type": "css", "css_selector": ".price"}, "extractor": {"type": "text", "post_processor": {"type": "number"}}},
+            "url": {"type": "terminal", "selector": {"type": "css", "css_selector": "a"}, "extractor": {"type": "attr", "attr": "href", "post_processor": {"type": "url"}}},
+        },
+    },
+)
+for item in resp["data"]["parsing"][:5]:
+    print(item)
+
+# All image URLs as a list
+resp = nimble.extract(
+    url="https://example.com/product",
+    parse=True,
+    parser={
+        "type": "terminal_list",
+        "selector": {"type": "css", "css_selector": "img.product-image"},
+        "extractor": {"type": "attr", "attr": "src", "post_processor": {"type": "url"}},
+    },
+)
+print(resp["data"]["parsing"])
 ```
 
 ---
