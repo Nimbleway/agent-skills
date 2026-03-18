@@ -43,6 +43,7 @@ for i in items[:10]:
 ```
 
 ### Manual extract (if agent unavailable)
+> ⚠ CSS selectors may break on Amazon redesigns. Prefer the `amazon_pdp` agent when available.
 ```bash
 nimble extract --url "https://www.amazon.com/dp/B0CHWRXH8B" --country US --parse \
   --parser '{
@@ -73,6 +74,7 @@ for i in items[:10]:
 ```
 
 ### Manual extract (v0.5.0+)
+> ⚠ CSS selectors may break on Yelp redesigns. Prefer the `yelp_serp` agent when available.
 ```bash
 nimble extract \
   --url "https://www.yelp.com/search?find_desc=italian+restaurant&find_loc=San+Francisco%2C+CA" \
@@ -97,6 +99,7 @@ nimble extract \
 
 ## Target
 
+> ⚠ CSS selectors may break on Target redesigns. If a Target agent becomes available, prefer it.
 ```bash
 nimble extract \
   --url "https://www.target.com/p/-/A-88790928" \

@@ -151,6 +151,8 @@ task_id = resp.task["id"]   # resp.task is a plain dict
 
 ## Known agents — baked-in table
 
+> **Note:** Agent names containing date and random suffixes (e.g. `indeed_search_2026_02_23_vlgtrsgu`) are Nimble-managed and may be updated. Always run `nimble agent list --limit 100` to confirm current names before use.
+
 ### E-commerce — US
 
 | Site                 | Agent                             | Key param      |

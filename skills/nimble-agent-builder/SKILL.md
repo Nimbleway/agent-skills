@@ -158,8 +158,6 @@ Do NOT use AskUserQuestion.
 - **All web search MUST use `nimble search` (CLI).** Never use `WebSearch`, `WebFetch`, `curl`, or `wget`. See [Guardrails](#guardrails).
 - **Mutation tools (`generate`, `update`, `status`, `publish`) are BANNED from the foreground.** Always delegate to a Task agent. See [Delegation model](#delegation-model).
 - **Task agents MUST use `run_in_background=False`.** Background mode breaks MCP access. See [Delegation model](#delegation-model).
-- **Foreground uses CLI only (Bash):** `nimble agent list`, `nimble agent get --template-name`, `nimble agent run`, `nimble search`. No direct MCP calls from the foreground — all MCP tools are delegated to Task agents.
-- **Never use `nimble_find_search_agent`, `nimble_run_search_agent`, `nimble_url_extract`, or any WSA template tools.**
 
 ## Delegation model
 
@@ -182,7 +180,7 @@ The foreground conversation orchestrates and presents results. Task agents handl
 | Agent create/update (`nimble_agents_generate`, `nimble_agents_update_from_agent`, `nimble_agents_update_session`, `nimble_agents_status`, `nimble_agents_publish`) | Step 3     | Launch, present report |
 | Script generation (write code to call existing agent)                                                                                                              | Step 2B    | Launch, present script |
 
-**`nimble_agents_generate`, `nimble_agents_update_from_agent`, `nimble_agents_update_session`, `nimble_agents_status`, and `nimble_agents_publish` are BANNED from the foreground. Always use `Task(subagent_type="general-purpose", run_in_background=False)` for these. All Nimble CLI operations (`nimble agent list`, `nimble agent get`, `nimble agent run`, `nimble search`) run via Bash.**
+**Mutation tools are BANNED from the foreground** — always `Task(subagent_type="general-purpose", run_in_background=False)`. CLI operations run via Bash.
 
 **Why `run_in_background=False`:** Background Task agents (`run_in_background=True`) [cannot access MCP tools](https://github.com/anthropics/claude-code/issues/13254) — they silently fall back to bash/curl and fail. Using `run_in_background=False` ensures MCP tool access. The Task agent still runs in its own context window (no foreground pollution); the only cost is the foreground waits for completion. When this platform limitation is resolved, switch back to `run_in_background=True`.
 
@@ -240,8 +238,6 @@ Only `needs-planning` when ALL of these are absent: a target URL/site/domain, cl
 | Close match (same domain/type, missing fields or different scope) | Show schema gaps + `AskUserQuestion`: "Update this agent" (Recommended) / "Create new agent". **Always recommend update** — it preserves existing extraction logic and is faster than generating from scratch. |
 | 2+ plausible matches                                              | Show table + `AskUserQuestion` with top matches + "Update closest agent" (Recommended). Pick the agent with the most field overlap.                                                                            |
 | 0 matches                                                         | Launch **Discovery Task agent** (Step 1D) → results inform Step 3. **This is the ONLY case where generating a new agent is appropriate.**                                                                      |
-
-**Update is always preferred over generate.** A close-match agent on the same domain already has working URL patterns, pagination logic, and parsing rules. Updating it to add/change fields is a minor refinement. Generating from scratch rebuilds everything and risks lower quality. Only generate when no agent exists for the target domain at all.
 
 **3. Execution mode** — `interactive` (default) or `script`
 
@@ -303,8 +299,6 @@ On receiving the report, the foreground conversation:
 1. Presents key findings to the user.
 2. If data gaps exist (e.g., missing ratings), asks the user via `AskUserQuestion` how to proceed.
 3. Routes to Step 3 (generate) with the discovery context, or Step 2 if existing agents cover the need.
-
-For **multi-source workflows**, launch one Discovery agent per unfamiliar domain in parallel. Gather all reports before presenting the combined plan.
 
 ## Step 2: Run existing agent
 
@@ -473,21 +467,6 @@ End with a concise summary table:
 
 Include the extraction results (or top N if large).
 
-## Documentation & troubleshooting
-
-**For large-scale codegen tasks (Step 2B) only** — consult these when writing scripts that call Nimble APIs at scale. Do NOT load these for interactive runs (Step 2A) or agent creation (Step 3):
-
-1. **`references/sdk-patterns.md`** — correct SDK patterns and common mistakes.
-2. **https://docs.nimbleway.com/llms-full.txt** — full prose docs.
-3. **https://docs.nimbleway.com/openapi.json** — API contract.
-4. **Context7** (if available) — query `nimbleway`.
-
-For interactive runs and agent creation, the CLI output from `nimble agent get --template-name` provides all the information needed.
-
-## Error recovery
-
-Consult **`references/error-recovery.md`** for handling patterns including persistent data source failures, ambiguous agent matches, and the full fallback hierarchy.
-
 ## Additional references
 
 Load reference files **only during large-scale script generation (Step 2B)** or agent creation (Step 3). Do NOT load these for interactive runs (Step 2A) — MCP tool schemas are sufficient.
@@ -509,8 +488,7 @@ Load reference files **only during large-scale script generation (Step 2B)** or 
 
 ## Guardrails
 
-- **Mutation tools (`generate`, `update`, `status`, `publish`) are BANNED from the foreground.** No exceptions — not even "just one quick call". Polling in the foreground floods context. Always use `Task(run_in_background=False)`.
-- **Task agents MUST use `run_in_background=False`.** Background Task agents cannot access MCP tools ([known limitation](https://github.com/anthropics/claude-code/issues/13254)).
+- **Mutation tools are BANNED from the foreground.** No exceptions. Task agents MUST use `run_in_background=False` — background agents can't access MCP tools ([known limitation](https://github.com/anthropics/claude-code/issues/13254)).
 - **All web search MUST use `nimble search` (CLI).** NEVER use `WebSearch`, `WebFetch`, `curl`, or `wget` — in foreground or Task agents.
 - **Every Task agent prompt MUST include the MCP tool registry block** (see [Delegation model](#delegation-model)). Without it, subagents fall back to bash and fail.
 - **Never use bash/curl to call MCP endpoints.** Call MCP tools by name; if unavailable, report the error.

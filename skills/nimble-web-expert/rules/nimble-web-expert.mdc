@@ -20,14 +20,7 @@ For ANY task involving a live website, URL, or current web data — use the Nimb
 
 > `nimble search` and `nimble map` can also be used as intermediate steps to gather URLs or input IDs before running an agent or extract across multiple pages.
 
-**Extract Waterfall** (auto-escalate on failure — extract only):
-
-1. `--format markdown` (no render)
-2. `--render --format markdown`
-3. `--render --driver vx10-pro --format markdown`
-4. `--render --browser-action '[...]'` — for clicks/scroll/forms
-5. `--render --network-capture '[...]'` — for XHR data
-6. Investigate with browser-use or Playwright, then retry 4, 5, or both
+**Extract Waterfall** — see `references/nimble-extract/SKILL.md` for tier details, flags, browser actions, and network capture.
 
 **Save results to files** — don't return large pages into context:
 

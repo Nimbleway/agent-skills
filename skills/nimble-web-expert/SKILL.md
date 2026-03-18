@@ -128,18 +128,7 @@ nimble --transform "data.parsing" agent run --agent <name> --params '{"keyword":
 
 Do NOT run without `--transform "data.parsing"` and then parse raw output. The raw response contains `html` (useless), `headers`, and `parsing` (what you want). The transform flag extracts `parsing` in one shot.
 
-**Quick cheat sheet (see `references/nimble-agents/SKILL.md` for full list):**
-
-| Site              | Agent                               | Key param                  |
-| ----------------- | ----------------------------------- | -------------------------- |
-| Amazon product    | `amazon_pdp`                        | `asin`                     |
-| Amazon search     | `amazon_serp`                       | `keyword`                  |
-| Google SERP (SEO) | `google_search`                     | `query`                    |
-| Google Maps       | `google_maps_search`                | `query`                    |
-| Yelp search       | `yelp_serp`                         | `search_query`, `location` |
-| Zillow listings   | `zillow_plp`                        | `zip_code`, `listing_type` |
-| Indeed jobs       | `indeed_search_2026_02_23_vlgtrsgu` | `location`, `search_term`  |
-| Instagram profile | `instagram_profile_by_account`      | `username`                 |
+For the full agent list (50+ sites), see `references/nimble-agents/SKILL.md`.
 
 ⚠️ `google_search` is for SEO/SERP rank analysis only — not general information retrieval. For finding information, use `nimble search`.
 
@@ -159,19 +148,7 @@ Do NOT run without `--transform "data.parsing"` and then parse raw output. The r
 | Proven site patterns            | copy a recipe                                | `references/recipes.md`                              |
 | 2+ inputs                       | parallel bash `&`+`wait` or generated script | `references/batch-patterns.md`                       |
 
-### Extract waterfall — escalate silently through tiers
-
-Tiers 1–3 are sequential. Tiers 4–5 are alternatives — pick based on what's blocking.
-
-| Tier | When to use                               | Command flag                         |
-| ---- | ----------------------------------------- | ------------------------------------ |
-| 1    | Static pages, docs, news                  | _(no flag)_                          |
-| 2    | SPAs, dynamic content                     | `--render`                           |
-| 3    | E-commerce, social, job boards            | `--render --driver vx10-pro`         |
-| 4    | Data hidden behind clicks/scrolls/forms   | `--render --browser-action '[...]'`  |
-| 5    | Data loaded via XHR/AJAX                  | `--render --network-capture '[...]'` |
-| 4+5  | Interaction triggers XHR                  | combine both flags                   |
-| 6    | Unknown selectors/XHR → investigate first | browser-use or Playwright            |
+For the full extract waterfall (tiers, flags, browser actions, network capture), see `references/nimble-extract/SKILL.md`.
 
 ---
 
