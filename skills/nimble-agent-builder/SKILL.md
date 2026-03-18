@@ -148,8 +148,8 @@ Do NOT use AskUserQuestion.
 ## Core principles
 
 - **Fastest path to data.** Default route: discover agent → get schema → run → display results. Planning and generation are escalation paths.
-- **Always search existing agents first.** Run `nimble agent list --limit 100` (CLI) before considering generate. Hard rule.
-- **Update over generate — always.** When a close-match agent exists (same domain/type, even if missing fields or different scope), update it rather than generating from scratch. Updating preserves proven extraction logic and is faster, cheaper, and more reliable. Only generate a new agent when `nimble agent list --limit 100` returns 0 matches for the target domain. Never offer "Create new agent" as the recommended option when a close match exists.
+- **Always search existing agents first.** Run `nimble agent list --limit 100 --search "<domain or vertical>"` (CLI) before considering generate. Hard rule.
+- **Update over generate — always.** When a close-match agent exists (same domain/type, even if missing fields or different scope), update it rather than generating from scratch. Updating preserves proven extraction logic and is faster, cheaper, and more reliable. Only generate a new agent when the `--search` query returns 0 matches for the target domain. Never offer "Create new agent" as the recommended option when a close match exists.
 - **AskUserQuestion at every decision point in the foreground — no exceptions.** Always present the standard `AskUserQuestion` prompts shown in each step. Never skip them, never auto-advance without asking. Never present choices as plain numbered lists. Constraints: 2–4 options, header max 12 chars, label 1–5 words. Recommended option goes first with "(Recommended)". Note: Task agents NEVER use AskUserQuestion — all decisions are pre-made before launching the Task.
 - **Schema before run — always.** Run `nimble agent get --template-name <name>` (CLI) before `nimble agent run`. Present input parameters and output fields in markdown tables. This applies when switching agents too.
 - **Script generation (Step 2B) is ONLY for large-scale, high-volume tasks.** Never generate code for normal interactive requests. Script mode requires ALL of: scale >50 items AND the user explicitly asks for code/script/CSV/batch output. Multi-source requests, dataset requests, and comparison requests do NOT automatically trigger script mode — run them interactively first. The default path is always: discover → run → display results.
@@ -167,7 +167,7 @@ The foreground conversation orchestrates and presents results. Task agents handl
 
 | CLI command                          | Purpose                          | Max calls    |
 | ------------------------------------ | -------------------------------- | ------------ |
-| `nimble agent list --limit 100`      | Route to existing agent          | 1 (filter locally) |
+| `nimble agent list --limit 100 --search "<domain>"` | Route to existing agent | 1 per domain |
 | `nimble agent get --template-name`   | Display schema before run        | 1 per agent  |
 | `nimble agent run --agent --params`  | Interactive execution (≤5 items) | 1 per item   |
 | `nimble search`                      | Web search / discovery           | As needed    |
@@ -192,7 +192,7 @@ All Task agent prompts MUST include the tool registry block so the subagent know
 
 ```
 **CLI tools (use via Bash — NOT MCP):**
-- `nimble agent list --limit 100` — list available agents
+- `nimble agent list --limit 100 --search "<domain or vertical>"` — search agents by domain/vertical
 - `nimble agent get --template-name <name>` — get agent schema
 - `nimble agent run --agent <name> --params '{...}'` — run an agent
 - `nimble search --query "<query>"` — web search (deep by default)
@@ -230,7 +230,7 @@ From `$ARGUMENTS`, detect 3 things:
 
 Only `needs-planning` when ALL of these are absent: a target URL/site/domain, clear data to extract, a single well-scoped task. Most requests are `clear`.
 
-**2. Agent match** — run `nimble agent list --limit 100` (CLI, Bash) ONCE and filter for the target domain/product type. This is ALWAYS the first action. For multi-source requests (e.g., "compare Amazon and Walmart prices"), run once and filter per source from the results. If no match found for a source, route it to Discovery (Step 1D).
+**2. Agent match** — run `nimble agent list --limit 100 --search "<domain or vertical>"` (CLI, Bash). Use the user's named domain/site as the search term (e.g. `--search "amazon"`, `--search "jobs"`, `--search "ecommerce"`). This is ALWAYS the first action. For multi-source requests (e.g., "compare Amazon and Walmart prices"), run one search per source. If no match found for a source, route it to Discovery (Step 1D).
 
 | Result                                                            | Route                                                                                                                                                                                                          |
 | ----------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -246,7 +246,7 @@ Only `needs-planning` when ALL of these are absent: a target URL/site/domain, cl
 ### Step 1P: Plan mode (rare — only when `needs-planning`)
 
 1. **Clarify** — `AskUserQuestion` to resolve critical unknowns (max 2 questions). Focus on: what site(s), what data fields, what output format.
-2. **Explore** — `nimble agent list --limit 100` (CLI, once) and filter per target domain. For unfamiliar domains, launch Discovery Task agents (Step 1D).
+2. **Explore** — `nimble agent list --limit 100 --search "<domain>"` (CLI, once per domain). For unfamiliar domains, launch Discovery Task agents (Step 1D).
 3. **Present plan** — gap analysis table:
 
 | #   | Site / Data Source   | Agent                  | Status   |
@@ -258,7 +258,7 @@ Only `needs-planning` when ALL of these are absent: a target URL/site/domain, cl
 
 ### Step 1D: Discovery (Task agent — for unfamiliar domains)
 
-Launch when `nimble agent list --limit 100` returns 0 matches for the target domain and it needs exploration. Runs as `Task(subagent_type="general-purpose", run_in_background=False)`. The foreground tells the user: _"Exploring {domain} to understand available data..."_
+Launch when `nimble agent list --limit 100 --search "<domain>"` returns 0 matches for the target domain and it needs exploration. Runs as `Task(subagent_type="general-purpose", run_in_background=False)`. The foreground tells the user: _"Exploring {domain} to understand available data..."_
 
 **Task prompt template:**
 

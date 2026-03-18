@@ -117,7 +117,7 @@ Pre-built agents return clean structured data with zero selector work. Always ch
 
 1. `~/.claude/skills/nimble-web-expert/learned/examples.json` → `agents[]` array
 2. `references/nimble-agents/SKILL.md` → baked-in table (50+ sites)
-3. `nimble agent list --limit 100` → filter by keyword, show table, confirm with user
+3. `nimble agent list --limit 100 --search "<domain or vertical>"` → show table, confirm with user
 4. No match → proceed to extract/search
 
 **Run with `--transform "data.parsing"` — always:**

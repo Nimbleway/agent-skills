@@ -27,17 +27,24 @@ Pre-built agents for specific sites. Always faster and more reliable than manual
 
 **Parameters:**
 
-| Parameter    | CLI flag       | Type   | Default | Description                           |
-| ------------ | -------------- | ------ | ------- | ------------------------------------- |
-| `limit`      | `--limit`      | int    | —       | Results per page                      |
-| `offset`     | `--offset`     | int    | —       | Pagination offset                     |
-| `managed_by` | `--managed-by` | string | —       | Filter by attribution (e.g. `nimble`) |
-| `privacy`    | `--privacy`    | string | —       | Filter by privacy level               |
+| Parameter    | CLI flag       | Type   | Default | Description                                              |
+| ------------ | -------------- | ------ | ------- | -------------------------------------------------------- |
+| `limit`      | `--limit`      | int    | —       | Results per page                                         |
+| `offset`     | `--offset`     | int    | —       | Pagination offset                                        |
+| `search`     | `--search`     | string | —       | Search agents by domain, vertical, or name keyword       |
+| `managed_by` | `--managed-by` | string | —       | Filter by attribution (e.g. `nimble`)                    |
+| `privacy`    | `--privacy`    | string | —       | Filter by privacy level                                  |
 
 **CLI:**
 
 ```bash
+# All agents (broad lookup)
 nimble agent list --limit 100
+
+# Targeted search by domain or vertical (preferred when domain is known)
+nimble agent list --limit 100 --search "amazon"
+nimble agent list --limit 100 --search "ecommerce"
+nimble agent list --limit 100 --search "jobs"
 ```
 
 **Python SDK:**
