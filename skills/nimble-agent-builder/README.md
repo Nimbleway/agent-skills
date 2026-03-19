@@ -22,35 +22,9 @@ Find, generate, update, and run structured-data agents on the Nimble platform. D
 
 ## Setup
 
-### 1. Install the Nimble CLI
+See [Installation in the root README](../../README.md#installation) for CLI install and API key setup.
 
-```bash
-npm i -g @nimble-way/nimble-cli
-```
-
-### 2. Set your API key
-
-Save it permanently to Claude Code settings (no need to export every session):
-
-```bash
-python3 -c "
-import json, pathlib
-key = 'your_api_key'
-p = pathlib.Path.home() / '.claude/settings.json'
-d = json.loads(p.read_text()) if p.exists() else {}
-d.setdefault('env', {})['NIMBLE_API_KEY'] = key
-p.write_text(json.dumps(d, indent=2))
-print('✓ Saved')
-"
-```
-
-Or set it for the current session only:
-
-```bash
-export NIMBLE_API_KEY="your_api_key"
-```
-
-### 3. Connect the Nimble MCP server
+### Connect the Nimble MCP server
 
 #### Claude Code
 

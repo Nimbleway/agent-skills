@@ -175,7 +175,7 @@ nimble agent run --agent google_maps_search --params '{"query": "italian restaur
 
 ```bash
 # Search → extract top results
-nimble search --query "React server components best practices" --focus coding --deep-search=false --include-answer
+nimble search --query "React server components best practices" --focus coding --search-depth lite --include-answer
 nimble --transform "data.markdown" extract --url "https://react.dev/reference/rsc/server-components" --format markdown
 ```
 

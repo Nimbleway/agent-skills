@@ -488,7 +488,7 @@ Load reference files **only during large-scale script generation (Step 2B)** or 
 
 ## Guardrails
 
-- **Mutation tools are BANNED from the foreground.** No exceptions. Task agents MUST use `run_in_background=False` — background agents can't access MCP tools ([known limitation](https://github.com/anthropics/claude-code/issues/13254)).
+- **Mutation tools are BANNED from the foreground.** No exceptions. Task agents MUST use `run_in_background=False` — see [Delegation model](#delegation-model).
 - **All web search MUST use `nimble search` (CLI).** NEVER use `WebSearch`, `WebFetch`, `curl`, or `wget` — in foreground or Task agents.
 - **Every Task agent prompt MUST include the MCP tool registry block** (see [Delegation model](#delegation-model)). Without it, subagents fall back to bash and fail.
 - **Never use bash/curl to call MCP endpoints.** Call MCP tools by name; if unavailable, report the error.

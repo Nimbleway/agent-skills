@@ -11,7 +11,7 @@ For ANY task involving a live website, URL, or current web data — use the Nimb
 
 | User signal | Command |
 | --- | --- |
-| Names a specific site or domain | Check for agent first: `nimble agent list --limit 100` → `nimble agent run` if found |
+| Names a specific site or domain | Check for agent first: `nimble agent list --limit 100 --search "<domain>"` → `nimble agent run` if found |
 | Provides a direct URL | `nimble extract --url "..." --format markdown` |
 | Research, topic, or vertical query | `nimble search` |
 | "Find URLs / sitemap / pages on a site" | `nimble map --url "..."` |

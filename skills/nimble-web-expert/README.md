@@ -23,13 +23,7 @@ Get live web data instantly — fetch any URL, scrape structured data, search th
 
 ## Setup
 
-```bash
-# Install the Nimble CLI
-npm install -g @nimbleway/cli
-
-# Authenticate
-nimble login
-```
+See [Installation in the root README](../../README.md#installation) for CLI install and API key setup.
 
 ### Optional: Nimble Docs MCP (recommended)
 

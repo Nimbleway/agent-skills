@@ -47,7 +47,7 @@ What are you searching for?
 Standard web search across all sources. Use when no specific mode applies or for broad queries.
 
 - Best for: overviews, general questions, company pages, blogs
-- Speed: fastest (1-2s with `--deep-search=false`)
+- Speed: fastest (1-2s with `--search-depth lite`)
 
 ### coding
 

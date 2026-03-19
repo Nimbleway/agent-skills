@@ -169,7 +169,7 @@ The `nimble-web-expert` skill wraps the Nimble CLI. Examples:
 
 ```bash
 # Search the web
-nimble search --query "React server components" --focus coding --deep-search=false
+nimble search --query "React server components" --focus coding --search-depth fast
 
 # Extract content from a URL
 nimble extract --url "https://example.com/article"  --format markdown
@@ -232,8 +232,6 @@ agent-skills/
 │       └── rules/
 │           ├── nimble-agent-builder.mdc  # alwaysApply: mutation tools → Task agents only
 │           └── setup.md                 # one-time setup (loaded on demand)
-├── rules/
-│   └── nimble-tools.mdc    # Cursor rule (auto-loaded by plugin)
 ├── .mcp.json                # Claude Code plugin MCP config
 ├── mcp.json                 # Cursor plugin MCP config
 └── README.md

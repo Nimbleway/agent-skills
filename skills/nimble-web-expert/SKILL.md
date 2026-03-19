@@ -36,7 +36,7 @@ allowed-tools:
   - WebFetch
 license: MIT
 metadata:
-  version: "2.0.0"
+  version: "0.8.0"
   author: Nimbleway
   repository: https://github.com/Nimbleway/agent-skills
 ---
@@ -55,7 +55,6 @@ User request: $ARGUMENTS
 - **Escalate render tiers silently.** Tier 1 → 2 → 3 → … without asking. Surface a decision only when all tiers fail and investigation tools are needed.
 - **Never answer from training data.** Live prices, current news, today's listings → always fetch via Nimble. If unavailable, say so.
 - **AskUserQuestion at every meaningful choice.** Header ≤12 chars, 2–4 options, label 1–5 words, recommended option first. Never present choices as numbered prose.
-- **`run_in_background=False` for all Task agents.** Background mode may block Bash/CLI access. No exceptions.
 - **Save all outputs to `.nimble/`.** Never leave extraction results in memory only.
 - **If bash is denied, stop immediately.** Show the command as text and wait. Never retry with `dangerouslyDisableSandbox`.
 
@@ -200,7 +199,7 @@ The skill maintains `~/.claude/skills/nimble-web-expert/learned/examples.json`.
 - **NEVER retry the same render tier.** If a tier returns empty or blocked, escalate — do not re-run.
 - **NEVER substitute WebFetch for nimble CLI tasks.** WebFetch is a fallback for fetching Nimble docs only.
 - **NEVER load reference files speculatively.** Only read a reference when the current task explicitly needs it.
-- **Task agents MUST use `run_in_background=False`.** No exceptions.
+- **Task agents MUST use `run_in_background=False`.** See [nimble-agent-builder delegation model](../nimble-agent-builder/SKILL.md#delegation-model) for the why.
 - **Hard retry limit.** On error (not empty content): retry at most 2 times with different flags. After 2 errors, report and stop.
 - **Hard 429 rule.** On rate-limit error: stop immediately. Do not retry or switch tiers.
 

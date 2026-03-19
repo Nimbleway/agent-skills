@@ -18,7 +18,7 @@ description: |
 | `403 Forbidden`                   | Same as 402 for some endpoints                                | Same — retry without the premium flag                                                                   |
 | `429 Too Many Requests`           | Rate limit exceeded                                           | Reduce frequency; wait before retrying; upgrade API tier if needed                                      |
 | `404` from `nimble tasks results` | Using the crawl_id instead of task_id                         | Use the per-page task_ids from `nimble crawl status`, not the crawl job id                              |
-| Timeout (search)                  | Deep mode or too many results                                 | Add `--deep-search=false`; reduce `--max-results`                                                       |
+| Timeout (search)                  | Deep mode or too many results                                 | Add `--search-depth lite`; reduce `--max-results`                                                       |
 | Timeout (extract, no render)      | Slow server or large page                                     | Add `--request-timeout 60000`                                                                           |
 | Timeout (extract, with render)    | Page JS takes too long to settle                              | Retry with increased `--render-options '{"timeout": 60000}'`, then 90000. See timeout escalation below. |
 | Empty or minimal content          | JavaScript-rendered page                                      | Add `--render` flag to execute JavaScript before extraction                                             |
@@ -73,10 +73,10 @@ This is a premium feature on Enterprise plans. When it fails:
 
 ```bash
 # If this fails with 402/403:
-nimble search --query "..." --include-answer --deep-search=false
+nimble search --query "..." --include-answer --search-depth lite
 
 # Retry without --include-answer:
-nimble search --query "..." --deep-search=false
+nimble search --query "..." --search-depth lite
 ```
 
 ## Render timeout escalation
@@ -104,7 +104,7 @@ If all 3 attempts timeout, move to Tier 3 (browser-use investigation → browser
 
 | Cause                               | Fix                                                                                 |
 | ----------------------------------- | ----------------------------------------------------------------------------------- |
-| Missing `--deep-search=false`       | Always add `--deep-search=false` — default is slow deep mode                        |
+| Using default search depth          | Add `--search-depth lite` or `fast` — default `deep` is slowest                    |
 | Too many results                    | Reduce `--max-results` (start with 5–10)                                            |
 | `shopping`/`social`/`location` mode | These use subagents — slightly slower by design; reduce `--max-subagents` if needed |
 | Rendering JS                        | `--render` adds 3–5s — only use when content is actually dynamic                    |
