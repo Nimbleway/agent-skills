@@ -1,5 +1,47 @@
 # Changelog
 
+## [0.8.0] - 2026-03-08
+
+### Changed
+- **nimble-agents** skill renamed to **nimble-agent-builder** — clearer name that reflects its purpose (build, discover, and run structured-data agents)
+  - Folder: `skills/nimble-agents/` → `skills/nimble-agent-builder/`
+  - YAML `name:` field updated from `nimble-agents` to `nimble-agent-builder`
+- **nimble-web-expert** skill — major structural overhaul (v2.0.0)
+  - Rewritten as thin hub (~430 lines) with 12 load-on-demand reference files under `references/`
+  - References reorganised into subfolders: `nimble-agents/`, `nimble-crawl/`, `nimble-extract/`, `nimble-map/`, `nimble-search/`
+  - Added YAML `argument-hint`, `allowed-tools` (9 tools), `license`, and `metadata` fields
+  - Added `$ARGUMENTS` variable at top of skill body
+  - Added **Core principles** section (10 hard rules replacing prose CRITICAL BEHAVIOR block)
+  - Added **Response shapes** table (all command/flag combinations with output shape and access pattern)
+  - Added **Final response format** (Step 4 summary table + attribution)
+  - Added **Guardrails** section (11 NEVER/hard rules consolidated at bottom)
+  - Added `run_in_background=False` rule for all Task agents
+  - Added Hard 429 rule and hard retry limit (max 2 on error)
+  - Added AskUserQuestion format constraints: header ≤12 chars, label 1–5 words, `(Recommended)` first
+  - All reference files gained YAML frontmatter (`name`, `description`)
+  - Playwright added as free Tier 6 alternative to browser-use
+  - Nimble Docs MCP section added (`claude mcp add nimble-docs`)
+- Version bumped to 0.8.0 across all plugin configs
+- README.md updated with new skill name and directory structure
+
+## [0.7.0] - 2026-02-28
+
+### Added
+- **nimble-web-expert** skill — extract-first scraping expert replacing `nimble-web-tools`
+  - Lean SKILL.md (~500 lines) covering extract, search, map, crawl, parallelization, and example workflows
+  - 5 reference files: parsing-schema, browser-actions, network-capture, search-focus-modes, error-handling
+  - 2 rules files: nimble-web-expert.mdc (routing), output.md (security)
+  - Render escalation tiers (1-5): static → render → stealth → browser actions → network capture
+  - Geo targeting, parser schemas, XHR mode for public APIs
+
+### Removed
+- **nimble-web-tools** skill (fully replaced by `nimble-web-expert`)
+
+### Changed
+- Version bumped to 0.7.0 across all plugin configs
+- README.md updated with new skill name, directory structure, and examples
+- `rules/nimble-tools.mdc` updated to reference nimble-web-expert
+
 ## [0.6.1] - 2026-02-24
 
 ### Changed

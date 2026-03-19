@@ -1,0 +1,61 @@
+---
+description: Core enforcement rules for nimble-agent-builder. Mutation MCP tools must run in Task agents. Update over generate. Never use WebSearch or WebFetch.
+alwaysApply: true
+---
+
+# Nimble Agent Builder — Always-Apply Rules
+
+## Mutation tools belong in Task agents only
+
+**`nimble_agents_generate`, `nimble_agents_update_from_agent`, `nimble_agents_update_session`, `nimble_agents_status`, and `nimble_agents_publish` are BANNED from the foreground conversation.**
+
+Always delegate them to `Task(subagent_type="general-purpose", run_in_background=False)`. No exceptions — not even "just one quick call".
+
+**Why `run_in_background=False`:** Background Task agents [cannot access MCP tools](https://github.com/anthropics/claude-code/issues/13254) — they silently fall back to bash and fail.
+
+**Foreground uses CLI (Bash) only:**
+
+| Foreground (OK) | Task agent only |
+| --- | --- |
+| `nimble agent list --limit 100` | `nimble_agents_generate` |
+| `nimble agent get --template-name` | `nimble_agents_update_from_agent` |
+| `nimble agent run --agent --params` | `nimble_agents_update_session` |
+| `nimble search` | `nimble_agents_status` |
+| | `nimble_agents_publish` |
+
+## Update over generate — always
+
+When `nimble agent list --limit 100` finds an agent on the same domain — even with missing fields or different scope — **update it** via `nimble_agents_update_from_agent`. Do NOT generate a new agent.
+
+Only use `nimble_agents_generate` when the agent list returns **zero matches** for the target domain.
+
+## Every Task agent prompt must include the MCP tool registry
+
+Copy this block into every Task agent prompt so the subagent knows the exact MCP tool names:
+
+```
+**CLI tools (use via Bash):**
+- `nimble agent list --limit 100`
+- `nimble agent get --template-name <name>`
+- `nimble agent run --agent <name> --params '{...}'`
+- `nimble search --query "<query>"`
+
+**MCP tool registry:**
+| Short name | Full MCP tool name |
+|---|---|
+| nimble_agents_generate | mcp__plugin_nimble_nimble-mcp-server__nimble_agents_generate |
+| nimble_agents_update_from_agent | mcp__plugin_nimble_nimble-mcp-server__nimble_agents_update_from_agent |
+| nimble_agents_update_session | mcp__plugin_nimble_nimble-mcp-server__nimble_agents_update_session |
+| nimble_agents_status | mcp__plugin_nimble_nimble-mcp-server__nimble_agents_status |
+| nimble_agents_publish | mcp__plugin_nimble_nimble-mcp-server__nimble_agents_publish |
+
+Use CLI for list/get/run/search. Use MCP tool calls for generate/update/status/publish. Never curl MCP endpoints.
+```
+
+## Never use WebSearch or WebFetch
+
+All web search must go through `nimble search` (CLI, via Bash). Never use `WebSearch`, `WebFetch`, `curl`, or `wget` — in the foreground or inside Task agents.
+
+## Never use WSA tools
+
+Never call `nimble_find_search_agent`, `nimble_run_search_agent`, or `nimble_url_extract`.

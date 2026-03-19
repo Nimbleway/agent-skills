@@ -1,6 +1,11 @@
 # REST API Patterns
 
-Reference for running Nimble agents via the REST API from TypeScript, Node.js, Go, Ruby, curl, and other non-Python languages. For Python, see `references/sdk-patterns.md`. Other languages (Rust, Java, C#) can adapt the curl or TypeScript patterns — the API is standard JSON + Bearer auth.
+Reference for running Nimble agents from TypeScript/Node, Go, Ruby, curl, and other non-Python languages. For Python, use `references/sdk-patterns.md`.
+
+**Official SDK client libraries available:**
+- **TypeScript/Node** — `npm install @nimble-way/sdk`. See [Node SDK docs](https://docs.nimbleway.com/nimble-sdk/sdks/node).
+- **Go** — `go get github.com/Nimbleway/nimble-go@latest`. See [Go SDK docs](https://docs.nimbleway.com/nimble-sdk/sdks/go).
+- **Ruby, curl, others** — use the raw REST patterns below. The API is standard JSON + Bearer auth.
 
 ## Table of Contents
 
@@ -95,6 +100,14 @@ Response has the same shape as the sync endpoint (`data.parsing`).
 ---
 
 ## TypeScript/Node examples
+
+> **SDK available:** Prefer `@nimble-way/sdk` over raw `fetch` for a first-class API with typed responses.
+> ```typescript
+> import Nimble from "@nimble-way/nimble-js";
+> const nimble = new Nimble({ apiKey: process.env.NIMBLE_API_KEY });
+> const result = await nimble.agent.run({ agent: "amazon_pdp", params: { asin: "B08N5WRWNW" } });
+> ```
+> See [Node SDK docs](https://docs.nimbleway.com/nimble-sdk/sdks/node). Raw `fetch` patterns below are useful for environments without npm (Cloudflare Workers raw mode, Deno without npm compat, etc.).
 
 ### Single agent (sync)
 
@@ -192,6 +205,16 @@ for (let i = 0; i < taskIds.length; i++) {
 ---
 
 ## Go examples
+
+> **SDK available:** Prefer `github.com/Nimbleway/nimble-go` over raw `net/http` for a first-class API.
+> ```go
+> client := nimble.NewClient(option.WithAPIKey(os.Getenv("NIMBLE_API_KEY")))
+> result, err := client.Agent.Run(context.TODO(), nimble.AgentRunParams{
+>     Agent: "amazon_pdp",
+>     Params: map[string]interface{}{"asin": "B08N5WRWNW"},
+> })
+> ```
+> See [Go SDK docs](https://docs.nimbleway.com/nimble-sdk/sdks/go). Raw `net/http` patterns below are useful when you can't add dependencies.
 
 ### Single agent (sync)
 
@@ -410,9 +433,9 @@ Both sync and async endpoints return the same data structure. There are **three*
 | Ecommerce SERP | `array` (list of records) | `amazon_serp`, `walmart_serp` |
 | Non-ecommerce SERP | `object` with nested `entities.{EntityType}` arrays | `google_search`, `google_maps_search` |
 
-**Note:** The REST API (`POST /v1/agent`) returns results at `data.parsing`. The MCP tool `nimble_agents_run` returns results at `data.results`. These are different layers — this document covers the REST API only.
+**Note:** The REST API (`POST /v1/agent`) returns results at `data.parsing`. The CLI `nimble agent run` also returns `data.parsing` (same format). This document covers the REST API layer, used for script/codegen. For interactive use, the CLI is preferred.
 
-**Before generating code**, check the `skills` output from `nimble_agents_get` to determine which shape applies. See `agent-api-reference.md` > "Response shape inference" for the full mapping table.
+**Before generating code**, check the `skills` output from `nimble agent get --template-name <name>` (CLI) to determine which shape applies. See `agent-api-reference.md` > "Response shape inference" for the full mapping table.
 
 ### Non-ecommerce SERP response shape
 
@@ -523,7 +546,7 @@ curl -s ... | jq '.data.parsing'
 | Status | Meaning | Action |
 |--------|---------|--------|
 | 401/403 | Invalid or expired API key | Check `NIMBLE_API_KEY` |
-| 404 | Agent not found | Verify agent name via `nimble_agents_list` |
+| 404 | Agent not found | Verify agent name via `nimble agent list --limit 100` (CLI) |
 | 429 | Rate limited | Back off and retry after delay |
 | 500-504 | Server error | Retry with exponential backoff |
 
