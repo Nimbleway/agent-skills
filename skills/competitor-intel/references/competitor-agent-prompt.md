@@ -11,8 +11,13 @@ Research [Competitor] ([competitor-domain]) for competitive intelligence.
 KNOWN SIGNALS (skip these — already reported):
 [paste known signals from memory, or "None" if first run]
 
-Use the **Bash tool** to execute each nimble command. Run all searches simultaneously
-(make multiple Bash tool calls in a single response):
+RULES:
+- Use the **Bash tool** to execute each nimble command.
+- Do NOT use run_in_background. All Bash calls must be synchronous.
+- Max 8 Bash tool calls total. Do not extract full pages unless a changelog URL
+  is returned in query 3. Keep scope tight.
+
+Run all searches simultaneously (make multiple Bash tool calls in a single response):
 1. nimble search --query "[Competitor] news" --focus news --start-date "[start-date]" --max-results 10 --search-depth lite
 2. nimble search --query "[Competitor] funding OR acquisition OR hiring" --start-date "[start-date]" --max-results 5 --search-depth lite
 3. nimble search --query "site:[competitor-domain] release notes OR changelog OR what's new" --max-results 3 --search-depth lite

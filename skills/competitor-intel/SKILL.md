@@ -56,7 +56,7 @@ constraints (no shell state, no `&`/`wait`, sub-agent permissions, communication
 Follow the preflight pattern from `references/nimble-playbook.md`. Make these Bash
 calls simultaneously:
 
-- 14-days-ago date calculation (see execution-rules.md for cross-platform command)
+- 14-days-ago date calculation (see nimble-playbook.md for cross-platform command)
 - `date +%Y-%m-%d` (today)
 - `nimble --version && echo "NIMBLE_API_KEY=${NIMBLE_API_KEY:+set}"`
 - `cat ~/.nimble/business-profile.json 2>/dev/null`
@@ -68,6 +68,9 @@ From the results:
   from `references/nimble-playbook.md`:
   - **Full mode:** first run OR last run > 14 days ago
   - **Quick refresh:** last run < 14 days ago
+  - **Same-day repeat:** if `last_runs.competitor-intel` is today, check if a report
+    already exists at `~/.nimble/memory/reports/competitor-intel-[today].md`. If so,
+    ask: "Already ran today. Run again for fresh data?" Don't silently re-run.
   - Skip to Step 2
 - No profile → Step 1
 
@@ -109,7 +112,7 @@ Use `site:[domain]` to avoid noise from generic company names. Make two Bash cal
 - `nimble search --query "site:[company-domain] product updates OR changelog OR releases" --start-date "[start-date]" --max-results 5 --search-depth lite`
 - `nimble search --query "[UserCompany] news" --focus news --start-date "[start-date]" --max-results 5 --search-depth lite`
 
-**Fallback if 0 results:** `nimble search --query "site:[company-domain] blog" --max-results 5 --search-depth lite`
+**Fallback if < 3 results:** `nimble search --query "site:[company-domain] blog" --max-results 5 --search-depth lite`
 
 ### Step 3: Parallel Research Per Competitor (sub-agents)
 
@@ -129,13 +132,15 @@ from the business profile:
 
 ### Step 4: Deep Extraction
 
-From all sub-agent results, pick the **top 3-5 P1/P2 articles** for full content.
+**Always extract P1 signals** — funding amounts, leadership changes, and major
+competitive moves deserve confirmed details, not just snippets. For P2, extract
+only if the snippet lacks a date or key detail. Skip P3.
+
 Make one Bash call per URL, all simultaneously:
 
 `nimble extract --url "https://..." --format markdown`
 
 For extraction failures, follow the fallback in `references/nimble-playbook.md`.
-Skip this step if search snippets already have enough detail.
 
 ### Step 5: Analysis & Output
 
@@ -173,8 +178,10 @@ Make all Write calls simultaneously:
 
 ### Step 7: Share & Distribute
 
-Follow `references/memory-and-distribution.md` to offer Notion/Slack sharing based on
-available connectors.
+**Always offer distribution — do not skip this step.** Follow
+`references/memory-and-distribution.md` to offer Notion/Slack sharing based on
+available connectors. Even if the user hasn't set up integrations, offer it once
+per run so they know the option exists.
 
 ### Step 8: Follow-ups
 
