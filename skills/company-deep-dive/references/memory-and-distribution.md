@@ -89,7 +89,10 @@ Detailed company profiles from deep-dive research.
 
 Timestamped **full** skill outputs. Save the complete briefing, not a summary.
 
-**Naming:** `{skill-name}-{YYYY-MM-DD}.md`
+**Naming:** `{skill-name}-{YYYY-MM-DD}.md` — if a skill may produce multiple reports
+per day (e.g., meeting-prep for different companies), add a qualifier:
+`{skill-name}-{qualifier}-{YYYY-MM-DD}.md`. The qualifier is defined in each skill's
+SKILL.md (e.g., company slug for meeting-prep).
 
 ### glossary.md
 

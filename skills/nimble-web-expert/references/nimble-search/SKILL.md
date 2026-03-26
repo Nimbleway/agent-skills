@@ -88,7 +88,7 @@ nimble search --query "EU AI Act" --focus news --search-depth deep \
 # With AI answer + domain filter
 nimble search --query "Python asyncio best practices" \
   --focus coding --search-depth fast --include-answer \
-  --include-domain docs.python.org --include-domain realpython.com
+  --include-domain '["docs.python.org", "realpython.com"]'
 
 # Extract just URLs
 nimble --transform "results.#.url" search --query "React tutorials" --search-depth lite
