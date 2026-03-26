@@ -60,7 +60,10 @@ nimble search --query "company name" --search-depth deep --max-results 5
 
 **Key flags:**
 - `--query` — search query string (required)
-- `--focus` — `general`, `news`, `shopping`, `social`, `coding`, `academic`
+- `--focus` — `general`, `news`, `shopping`, `social`, `coding`, `academic`.
+  **`social`** searches social platform people indices directly (LinkedIn, X) — best
+  for finding specific people. Not available on all plans; if it errors, fall back to
+  `--include-domain '["linkedin.com"]'`.
 - `--max-results` — max results to return
 - `--start-date` / `--end-date` — date filters (YYYY-MM-DD)
 - `--search-depth` — `lite` (cheapest, 1 credit), `deep` (1 + 1/page), `fast` (enterprise only)
