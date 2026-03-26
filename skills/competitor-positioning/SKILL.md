@@ -63,8 +63,8 @@ User request: $ARGUMENTS
 **Argument parsing** — determine what to do before running anything:
 - No arguments → run full workflow (scope confirmation in Step 2)
 - Competitor names (e.g., "Exa, Tavily") → research only those, skip scope confirmation
-- "battlecard [competitor]" → skip to battlecard generation using existing snapshots
-  from memory (no new scraping needed if recent snapshot exists)
+- "battlecard [competitor]" → skip to Battlecard Generation (see below) using
+  existing snapshots from memory
 - "delta" / "what changed" → force delta mode regardless of timing
 
 **Before running any commands**, read `references/nimble-playbook.md` for Claude Code
@@ -160,12 +160,15 @@ Read `references/positioning-agent-prompt.md` for the full agent prompt template
 Follow the sub-agent spawning rules from `references/nimble-playbook.md`
 (bypassPermissions, batch max 4, explicit Bash instruction, fallback on failure).
 
-For each competitor in scope, spawn a sub-agent with `mode: "bypassPermissions"`.
-Use `agents/nimble-researcher.md` as the agent definition if available; if not,
-use a general-purpose agent and inline the prompt from
+For each competitor in scope, spawn a **general-purpose** sub-agent with
+`mode: "bypassPermissions"` and inline the prompt from
 `references/positioning-agent-prompt.md`. Customize the prompt with each competitor's
 name, domain, start-date, and previous positioning snapshot from memory (loaded in
 Step 0).
+
+Do NOT use `agents/nimble-researcher.md` — that agent is scoped for raw data gathering
+and explicitly forbids analysis, but this skill requires interpretive work (identifying
+audience signals, comparing positioning snapshots, assessing structure implications).
 
 Each agent handles the complete research cycle for one competitor:
 1. `nimble map` to discover the site's actual page structure
@@ -268,10 +271,56 @@ Make all Write calls simultaneously:
 available connectors. Marketing teams especially benefit from shared Notion pages
 they can reference in positioning workshops and content planning sessions.
 
+### Battlecard Generation
+
+Triggered by `"battlecard [competitor]"` argument or as a follow-up request.
+
+**Inputs:** Read the competitor's positioning snapshot from
+`~/.nimble/memory/positioning/[name].md` and the user's own baseline from the most
+recent report. If no snapshot exists (or it's stale > 14 days), run Steps 3-4 for
+that competitor first, then return here.
+
+**Output format:**
+
+```
+# Battlecard: [Your Company] vs [Competitor]
+## As of [date]
+
+### Competitor Overview
+- Tagline: [verbatim]
+- Primary CTA: [verbatim]
+- Target audience: [who their messaging speaks to]
+- Pricing model: [type and entry price if known]
+
+### Their Key Claims
+[List each value prop / differentiator they emphasize, verbatim with source URL]
+
+### Our Counter-Positioning
+[For each claim above: our response, proof points, and messaging angle]
+
+### Feature Comparison
+| Capability | Us | Them | Advantage |
+|---|---|---|---|
+
+### Where They Win (acknowledge honestly)
+[Areas where their positioning is stronger or they have genuine advantages]
+
+### Where We Win
+[Our differentiators they can't match, with evidence]
+
+### Objection Handling
+| Prospect Says | Respond With |
+|---|---|
+
+### Recommended Talking Points
+[3-5 concise talking points for sales/marketing conversations]
+```
+
+---
+
 ### Step 8: Follow-ups
 
-- **Generate battlecard** for a competitor → focused head-to-head messaging comparison
-  with counter-positioning talking points
+- **Generate battlecard** for a competitor → runs Battlecard Generation above
 - **Draft counter-messaging** for a specific competitor claim → suggest alternative
   angles and proof points
 - **Content calendar comparison** → map your publishing against competitors' cadence
