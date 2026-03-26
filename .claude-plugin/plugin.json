@@ -11,5 +11,9 @@
   "repository": "https://github.com/Nimbleway/agent-skills",
   "license": "MIT",
   "keywords": ["nimble", "web-extraction", "web-search", "web-crawl", "web-map", "scraping", "agents", "mcp", "cli", "data-extraction", "structured-data", "competitor-intelligence", "meeting-prep", "company-research", "business-intelligence"],
-  "agents": "./agents/"
+  "agents": [
+    "./agents/nimble-researcher.md",
+    "./agents/nimble-analyst.md",
+    "./agents/nimble-setup.md"
+  ]
 }
