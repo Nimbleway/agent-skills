@@ -22,7 +22,9 @@ RULES:
 - Use the **Bash tool** to execute each nimble command.
 - Do NOT use run_in_background. All Bash calls must be synchronous.
 - Max 8 Bash tool calls total. Keep scope tight.
-- Run all searches simultaneously (make multiple Bash tool calls in a single response).
+- Run searches in two groups to stay under API rate limits (10 req/sec shared across
+  all agents): first group = queries 1-2 simultaneously, second group = remaining
+  queries simultaneously after the first group returns.
 - If < 3 total results from the first two queries, retry those without --start-date.
 
 DATE EXTRACTION — check in this order:

@@ -99,28 +99,37 @@ Follow the sub-agent spawning rules from `references/nimble-playbook.md`
 Spawn `nimble-researcher` agents (`agents/nimble-researcher.md`) with
 `mode: "bypassPermissions"`. Each agent researches one dimension of the company.
 
-**Batch 1** (4 agents simultaneously):
+**Important:** The Nimble API has a 10 req/sec rate limit per API key. With each agent
+running 4-5 searches in parallel, limit concurrent agents to 2 per batch to stay under
+the limit. Run overview searches in their own phase, not alongside agent batches.
 
-| Agent | Dimension | Focus |
-|-------|-----------|-------|
-| 1 | **Funding & Financials** | Funding rounds, valuation, revenue signals, investors, financial health |
-| 2 | **Product & Technology** | Products, tech stack, recent launches, engineering blog, open-source |
-| 3 | **Leadership & Team** | Founders, C-suite, key hires, departures, team size, culture signals |
-| 4 | **Recent News & Events** | Press coverage, announcements, partnerships, awards, conferences |
-
-**Batch 2** (1 agent):
-
-| Agent | Dimension | Focus |
-|-------|-----------|-------|
-| 5 | **Market Position** | Competitors, market share, positioning, analyst coverage, customer reviews |
-
-Also run **overview searches** directly (not in sub-agents):
+**Phase A — Overview searches** (run directly, before agents):
 
 - `nimble search --query "site:[domain] about" --max-results 3 --search-depth lite`
 - `nimble search --query "[Company] Wikipedia OR Crunchbase OR Pitchbook" --max-results 5 --search-depth lite`
 
 These give foundational context (founding date, HQ, employee count, mission) that
 frames all dimensional findings.
+
+**Phase B — Batch 1** (2 agents simultaneously):
+
+| Agent | Dimension | Focus |
+|-------|-----------|-------|
+| 1 | **Funding & Financials** | Funding rounds, valuation, revenue signals, investors, financial health |
+| 2 | **Product & Technology** | Products, tech stack, recent launches, engineering blog, open-source |
+
+**Phase C — Batch 2** (2 agents simultaneously):
+
+| Agent | Dimension | Focus |
+|-------|-----------|-------|
+| 3 | **Leadership & Team** | Founders, C-suite, key hires, departures, team size, culture signals |
+| 4 | **Recent News & Events** | Press coverage, announcements, partnerships, awards, conferences |
+
+**Phase D — Batch 3** (1 agent):
+
+| Agent | Dimension | Focus |
+|-------|-----------|-------|
+| 5 | **Market Position** | Competitors, market share, positioning, analyst coverage, customer reviews |
 
 **Refresh mode adjustment:** If prior research exists, pass the known facts to each
 agent as context so they focus on what's new. Agents should use `--start-date` to
