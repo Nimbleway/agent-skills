@@ -64,7 +64,7 @@ Ask the user:
 
 Create the profile:
 ```bash
-mkdir -p ~/.nimble/memory/{competitors,people,companies,reports}
+mkdir -p ~/.nimble/memory/{competitors,people,companies,reports,positioning}
 ```
 
 Write `~/.nimble/business-profile.json` with their answers.

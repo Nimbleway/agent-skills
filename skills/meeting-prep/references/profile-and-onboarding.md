@@ -134,7 +134,7 @@ Present what you found and confirm: "I found that **[Company]** ([domain]) is
 ### Create Profile
 
 ```bash
-mkdir -p ~/.nimble/memory/{competitors,people,companies,reports}
+mkdir -p ~/.nimble/memory/{competitors,people,companies,reports,positioning}
 ```
 
 Write `~/.nimble/business-profile.json` using the schema above.

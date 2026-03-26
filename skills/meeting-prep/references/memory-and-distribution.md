@@ -16,6 +16,7 @@ All persistence lives under `~/.nimble/` — never touch user project files.
     ├── people/                    # Contact profiles for meeting prep
     ├── companies/                 # Deep-dive research results
     ├── reports/                   # Timestamped full skill outputs
+    ├── positioning/               # Per-competitor positioning snapshots
     └── glossary.md                # Industry terms and jargon
 ```
 
@@ -101,7 +102,7 @@ Industry terms and jargon. Updated when the user uses unfamiliar terms.
 ## Bootstrapping (First Run)
 
 ```bash
-mkdir -p ~/.nimble/memory/{competitors,people,companies,reports}
+mkdir -p ~/.nimble/memory/{competitors,people,companies,reports,positioning}
 ```
 
 Create stub files for each competitor from the onboarding flow.
