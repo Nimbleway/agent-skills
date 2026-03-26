@@ -70,6 +70,11 @@ From the results:
 
 Parse the meeting details from `$ARGUMENTS` or ask the user.
 
+**Calendar shortcut:** If the user didn't specify attendees and a calendar connector
+is available — either a calendar MCP tool (look for `list_events` in the tool list)
+or the `gws` CLI (`gws calendar +agenda --today`) — offer to pull today's meetings
+so they can pick one. If neither is available, skip this silently.
+
 **If clear** (e.g., "prep me for my meeting with Sarah Chen at Stripe tomorrow"):
 - Extract: attendee name(s), company, meeting date/time (if given)
 - Confirm briefly: "Preparing briefing for your meeting with **Sarah Chen** at **Stripe**..."
@@ -85,7 +90,7 @@ Parse the meeting details from `$ARGUMENTS` or ask the user.
 
 | Field | Required | Source |
 |-------|----------|--------|
-| Attendee name(s) | Yes | User input |
+| Attendee name(s) | Yes | User input or calendar event |
 | Company | Preferred | User input or inferred from search |
 | Attendee title(s) | Optional | User input or discovered in Step 2 |
 | Meeting type | Optional | User input (discovery, demo, check-in, interview, partnership, internal) |
@@ -338,8 +343,9 @@ actively search for connections rather than just comparing results post-hoc.
   specific attendees, use `company-deep-dive`.
 - **Not a CRM.** This skill gathers live web intelligence. It doesn't manage
   contacts, deals, or pipelines.
-- **Not calendar-aware.** The user tells you who they're meeting. This skill
-  doesn't read calendar events directly.
+- **Not a calendar app.** If a calendar MCP connector is available, this skill
+  can read events to auto-detect attendees. But it doesn't create, modify, or
+  manage calendar events — it only reads them for meeting context.
 
 ---
 

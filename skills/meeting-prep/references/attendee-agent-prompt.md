@@ -7,6 +7,7 @@ Replace all `[placeholders]` with actual values before passing to the Agent tool
 
 ```
 Research [Attendee Name] at [Company] ([domain]) for meeting preparation.
+[If email domain available: Email domain: [email-domain] — use for targeted LinkedIn search]
 
 KNOWN FACTS (skip these — already in our files):
 [paste known facts from memory, or "None" if first run]
@@ -26,6 +27,12 @@ SEARCHES — Group 1 (run simultaneously):
 2. nimble search --query "[Attendee Name] [Company]" --focus social --max-results 5 --search-depth lite
 3. nimble search --query "[Attendee Name]" --include-domain '["linkedin.com"]' --max-results 5 --search-depth lite
 4. nimble search --query "[Attendee Name] [Company] interview OR podcast OR talk OR keynote" --max-results 5 --search-depth lite
+
+EMAIL-ENHANCED SEARCH (if attendee email was provided from calendar):
+Replace query 3 with a more targeted version:
+3. nimble search --query "[firstname] [lastname] site:linkedin.com [email-domain]" --max-results 5 --search-depth lite
+The email domain confirms the company and disambiguates common names far better
+than name alone.
 
 SEARCHES — Group 2 (run simultaneously after Group 1 returns):
 5. nimble search --query "[Attendee Name]" --include-domain '["x.com"]' --max-results 5 --search-depth lite --time-range month
