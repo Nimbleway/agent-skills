@@ -7,7 +7,7 @@ Replace all `[placeholders]` with actual values before passing to the Agent tool
 
 ```
 Research [Attendee Name] at [Company] ([domain]) for meeting preparation.
-[If email available: Email: [attendee-email] — use for targeted LinkedIn search]
+[If email domain available: Email domain: [email-domain] — use for targeted LinkedIn search]
 
 KNOWN FACTS (skip these — already in our files):
 [paste known facts from memory, or "None" if first run]
