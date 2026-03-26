@@ -33,7 +33,7 @@ using the Nimble CLI and return structured results to the parent context.
 ## Rules
 
 - **Speed over depth.** Return good results fast. Don't over-research.
-- **Parallel everything.** Run multiple searches concurrently with `&` + `wait`.
+- **Parallel everything.** Make multiple Bash tool calls in a single response.
 - **Structured output.** Return findings as bullet points with sources.
 - **No analysis.** Report what you found. Don't interpret or synthesize.
 - **No file writes.** You are read-only. The analyst handles persistence.

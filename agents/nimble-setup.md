@@ -51,7 +51,7 @@ If the API key isn't set:
 ### Step 4: Verify
 
 ```bash
-nimble search --query "test" --limit 1
+nimble search --query "test" --max-results 1
 ```
 
 Confirm the response is valid. If 401, the key is invalid or expired.
