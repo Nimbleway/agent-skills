@@ -1,0 +1,317 @@
+---
+name: competitor-positioning
+description: |
+  Marketing team tool for tracking how competitors position themselves online.
+  Scrapes competitor homepages, features pages, pricing pages, and blogs to
+  extract messaging, value props, CTAs, content strategy, and pricing models.
+  Compares against previous snapshots to surface positioning shifts over time
+  with before/after change tracking.
+
+  Produces marketing-ready briefings: messaging matrices, content gap analysis,
+  positioning white space, and battlecard inputs. Not business signals — for
+  funding, hiring, and news, use competitor-intel instead.
+
+  Use this skill proactively when anyone on a marketing team asks about
+  competitors — even if they say "competitive analysis" without specifically
+  mentioning "positioning". If the user's focus is messaging, website copy,
+  content themes, or how competitors present themselves, use this skill.
+
+  Common triggers: "how are competitors positioning themselves", "competitor
+  messaging", "what changed on their site", "competitive positioning",
+  "content gap analysis", "competitor homepage", "marketing competitive brief",
+  "positioning shifts", "competitor content strategy", "what are competitors
+  saying", "messaging comparison", "competitor website analysis", "landing page
+  teardown", "how do they describe their product", "competitor copy",
+  "marketing battlecard", "what's on their homepage", "how is [company]
+  positioning their product", "share of voice", "counter-messaging".
+
+  Do NOT use for business signals like funding/hiring (use competitor-intel),
+  single-company deep dives (use company-deep-dive), or meeting prep (use
+  meeting-prep).
+allowed-tools:
+  - Bash(nimble:*)
+  - Bash(date:*)
+  - Bash(cat:*)
+  - Bash(mkdir:*)
+  - Bash(python3:*)
+  - Bash(echo:*)
+  - Bash(jq:*)
+  - Bash(ls:*)
+  - Read
+  - Write
+  - Edit
+  - Glob
+  - Grep
+  - Agent
+  - AskUserQuestion
+metadata:
+  author: Nimbleway
+  version: 1.0.0
+---
+
+# Competitor Positioning
+
+Marketing-focused competitive positioning analysis powered by Nimble's web data APIs.
+Built for marketing teams who need to understand how competitors present themselves —
+messaging, value props, content themes, pricing — and how that evolves over time.
+
+The output is a **marketing briefing**, not a signal feed. Every insight should answer:
+"what does this mean for our messaging and positioning?"
+
+User request: $ARGUMENTS
+
+**Argument parsing** — determine what to do before running anything:
+- No arguments → run full workflow (scope confirmation in Step 2)
+- Competitor names (e.g., "Exa, Tavily") → research only those, skip scope confirmation
+- "battlecard [competitor]" → skip to battlecard generation using existing snapshots
+  from memory (no new scraping needed if recent snapshot exists)
+- "delta" / "what changed" → force delta mode regardless of timing
+
+**Before running any commands**, read `references/nimble-playbook.md` for Claude Code
+constraints (no shell state, no `&`/`wait`, sub-agent permissions, communication style).
+
+---
+
+## Instructions
+
+### Step 0: Preflight
+
+Follow the preflight pattern from `references/nimble-playbook.md`. Make these Bash
+calls simultaneously:
+
+- 14-days-ago date calculation (see nimble-playbook.md for cross-platform command)
+- `date +%Y-%m-%d` (today)
+- `nimble --version && echo "NIMBLE_API_KEY=${NIMBLE_API_KEY:+set}"`
+- `cat ~/.nimble/business-profile.json 2>/dev/null`
+
+From the results:
+- CLI missing or API key unset → `references/profile-and-onboarding.md`, stop
+- Profile exists → load prior data from two sources:
+  - `~/.nimble/memory/positioning/*.md` — prior positioning snapshots (used for
+    delta detection in Steps 4 + 5)
+  - `~/.nimble/memory/competitors/*.md` — business signals from competitor-intel
+    runs (provides context for *why* positioning may have shifted, e.g., a funding
+    round or leadership change that preceded a messaging pivot)
+  Determine mode:
+  - **Full snapshot:** first run OR no prior positioning data OR last run > 14 days ago
+  - **Delta mode:** last run < 14 days ago — only surface what changed
+  - **Same-day repeat:** if `last_runs.competitor-positioning` is today, check for
+    existing report at `~/.nimble/memory/reports/competitor-positioning-[today].md`.
+    If found, ask: "Already ran today. Run again for fresh data?" Don't silently re-run.
+  - Skip to Step 2
+- No profile → Step 1
+
+### Step 1: First-Run Onboarding (2 prompts max)
+
+This skill shares the competitor list from `competitor-intel`. If a profile already
+exists with competitors, skip onboarding entirely.
+
+If no profile exists, follow `references/profile-and-onboarding.md` for the full
+onboarding flow. The profile and competitor list created here will be shared across
+all business skills.
+
+### Step 2: Confirm Scope
+
+If `$ARGUMENTS` already specifies competitors, use those and skip this step.
+
+Otherwise, check how many competitors are in the profile:
+- **4 or fewer** → proceed with all, no confirmation needed
+- **More than 4** → ask which to focus on (use AskUserQuestion):
+
+  > You have [N] competitors tracked. Which ones should I analyze?
+  > - **All [N]** (~[3-5 × N] Nimble API credits, ~[N × 2] min)
+  > - **[Category A]**: [names] (grouped by `category` from profile)
+  > - **[Category B]**: [names]
+  > - **Let me pick** — I'll list them
+
+  Accept natural language: "just the AI search ones" → resolve from profile categories.
+
+This prevents wasted API credits and wall time on competitors the user doesn't care
+about right now. Each competitor costs ~3-5 Nimble API credits (1 map + 3-4 extracts
++ 2-3 searches).
+
+### Step 3: Capture the User's Own Positioning (baseline)
+
+Before analyzing competitors, capture the user's own positioning as a baseline for
+the messaging matrix.
+
+**First, discover the site structure** to find the right pages to extract:
+
+`nimble --transform "links.#.url" map --url "https://[company-domain]" --sitemap only --limit 200`
+
+From the returned URLs, identify the features/product page and pricing page (look
+for paths containing `/features`, `/product`, `/platform`, `/pricing`, `/plans`).
+
+**Then extract the key pages simultaneously** (homepage + whichever pages map found):
+
+- `nimble extract --url "https://[company-domain]" --format markdown`
+  → Homepage messaging, tagline, hero copy, CTAs
+- `nimble extract --url "[features-page-url]" --format markdown`
+  → Features page structure and emphasis (skip if map found no match)
+- `nimble extract --url "[pricing-page-url]" --format markdown`
+  → Pricing structure and tier naming (skip if map found no match)
+
+If a page extraction returns garbage, note "page not accessible" and continue —
+partial baseline is better than none.
+
+### Step 4: Parallel Research Per Competitor (sub-agents)
+
+Read `references/positioning-agent-prompt.md` for the full agent prompt template.
+Follow the sub-agent spawning rules from `references/nimble-playbook.md`
+(bypassPermissions, batch max 4, explicit Bash instruction, fallback on failure).
+
+For each competitor in scope, spawn a sub-agent with `mode: "bypassPermissions"`.
+Use `agents/nimble-researcher.md` as the agent definition if available; if not,
+use a general-purpose agent and inline the prompt from
+`references/positioning-agent-prompt.md`. Customize the prompt with each competitor's
+name, domain, start-date, and previous positioning snapshot from memory (loaded in
+Step 0).
+
+Each agent handles the complete research cycle for one competitor:
+1. `nimble map` to discover the site's actual page structure
+2. Extract homepage, features, and pricing pages (using discovered URLs)
+3. Search for and extract recent blog posts (2-3 deep dives)
+4. Analyze social proof (case studies, testimonials)
+5. Compare against previous snapshot for changes
+
+The agent returns a structured positioning snapshot — see the prompt template for the
+full output format. No separate blog extraction step is needed; agents handle it.
+
+**If an agent's blog extraction was thin** (< 2 posts extracted), optionally extract
+additional posts from the main context using URLs from the agent's search results.
+
+**Fallback:** If an agent fails entirely, run extractions directly from the main context
+using the same prompt template steps.
+
+### Step 5: Analysis & Output
+
+Frame everything for a marketing team. Use terms they work with: messaging
+hierarchy, share of voice, battlecard inputs, content calendar implications.
+
+When analyzing blog content from agent results, look for:
+- **Recurring narratives** — what story is this company telling repeatedly?
+- **Audience targeting** — are posts aimed at developers, executives, practitioners?
+- **Competitive mentions** — do they name competitors or position against categories?
+- **SEO patterns** — what keywords do titles and headings target?
+- **Content maturity** — original research, thought leadership, or generic how-tos?
+
+**Full snapshot mode** (first run or > 14 days since last):
+
+- **TL;DR for Marketing** — 3-5 key positioning insights the marketing team should
+  act on, each with a specific implication (e.g., "Competitor X shifted tagline from
+  developer-focused to enterprise — consider whether our messaging still differentiates")
+
+- **Messaging Matrix** — build a comparison table with rows for Tagline, Primary CTA,
+  Value Props, Target Audience, and Pricing Model across all competitors including
+  your company. Use verbatim quotes for taglines and CTAs.
+
+- **Per Competitor — Positioning Profile**:
+  - Site structure signals (what pages exist/don't exist, subdomains)
+  - Homepage messaging breakdown (tagline, hero, CTAs, value props)
+  - Features page analysis (what they emphasize, differentiation claims)
+  - Pricing positioning (model, tier strategy, enterprise signals)
+  - Content strategy (blog themes, cadence, audience, content types)
+  - Social proof strategy (who they showcase, what outcomes they highlight)
+
+- **Content Gap Analysis** — what competitors are publishing that you're not:
+  - Topics they cover that you don't
+  - Content formats they use (case studies, benchmarks, ROI calculators)
+  - Audience segments they address in content
+
+- **Positioning White Space** — messaging angles no competitor has claimed strongly:
+  - Unclaimed value props
+  - Underserved audience segments
+  - Narrative gaps
+
+- **Recommended Actions** — specific, actionable next steps for the marketing team
+  (e.g., "Draft counter-messaging for Competitor X's new enterprise positioning",
+  "Prioritize case studies targeting [segment] — 3 competitors already own this space")
+
+**Delta mode** (last run < 14 days) — changes only:
+
+- **What Changed** — per competitor, before/after for each shift:
+  - "Tagline: '[old]' → '[new]'"
+  - "New feature category added: [name]"
+  - "Pricing model shifted from [old] to [new]"
+  - "New blog theme emerging: [topic] (3 posts in last 2 weeks)"
+
+- **Nothing Changed** — list competitors with no positioning shifts
+
+- **Marketing Implications** — what the changes mean for your team's priorities
+
+**Core rules:**
+- Every claim must link to the source page.
+- Deduplicate against `~/.nimble/memory/positioning/*.md` — in delta mode, only
+  surface genuinely new changes.
+- Say "no positioning changes detected" rather than padding with fluff.
+- Use verbatim quotes for taglines, CTAs, and value props — don't paraphrase.
+
+### Step 6: Save & Update Memory
+
+Make all Write calls simultaneously:
+
+- Report → `~/.nimble/memory/reports/competitor-positioning-[date].md`
+  (save the **full briefing**, not a summary — this is the local source of truth)
+
+- Per competitor → save positioning snapshot to
+  `~/.nimble/memory/positioning/[name].md` using the format in
+  `references/positioning-snapshot-format.md`. Append a dated entry to the History
+  section so future runs can detect what changed and when.
+
+- Profile → update `last_runs.competitor-positioning` in
+  `~/.nimble/business-profile.json`
+
+### Step 7: Share & Distribute
+
+**Always offer distribution — do not skip this step.** Follow
+`references/memory-and-distribution.md` to offer Notion/Slack sharing based on
+available connectors. Marketing teams especially benefit from shared Notion pages
+they can reference in positioning workshops and content planning sessions.
+
+### Step 8: Follow-ups
+
+- **Generate battlecard** for a competitor → focused head-to-head messaging comparison
+  with counter-positioning talking points
+- **Draft counter-messaging** for a specific competitor claim → suggest alternative
+  angles and proof points
+- **Content calendar comparison** → map your publishing against competitors' cadence
+- **Go deeper** on a competitor → extract additional pages (about, careers, partners,
+  case studies)
+- **Track a new competitor** → update `competitors`, create positioning snapshot
+- **Skip a competitor** → update `preferences.skip_competitors`
+- **"Looks good"** → done
+
+---
+
+## Agent Teams Mode (Dual-Mode)
+
+Check at startup: `echo $CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS`
+
+**Team mode** (flag set):
+- Use the `Agent` tool with `name:` parameter so teammates are addressable
+- Teammates can use `SendMessage` to share cross-competitor patterns they discover
+  (e.g., "two competitors both shifted to usage-based pricing this month")
+- After all competitor teammates return, spawn a **Marketing Analyst** teammate
+  with all findings as input, focused solely on content gap analysis and positioning
+  white space — this separates data collection from strategic analysis
+- Lead synthesizes the final cross-validated marketing briefing
+
+**Solo mode** (flag not set):
+- Standard fire-and-forget sub-agents (no `SendMessage`, no `name:`)
+- All analysis happens in the main context after agents return
+
+---
+
+## Error Handling
+
+- **Missing API key:** `references/profile-and-onboarding.md`
+- **Page extraction fails (404/garbage):** The map step should prevent most 404s by
+  discovering actual URLs first. If extraction still fails, note "page not accessible"
+  and continue — partial data is better than no data.
+- **Map returns empty:** Some sites block sitemap access. Fall back to extracting
+  the homepage directly and guessing common paths (/features, /pricing, /blog).
+- **Empty blog results:** Some companies don't blog. Note "no active blog detected"
+  and focus on page-based positioning instead.
+- **429 rate limit:** Fewer simultaneous Bash calls
+- **401 expired:** "Regenerate at app.nimbleway.com > API Keys"
+- **Extraction returns raw HTML:** See fallback in `references/nimble-playbook.md`
