@@ -57,7 +57,8 @@ SOURCE_TYPE:
 
 DATE_CONFIDENCE:
 - HIGH: event date explicit in content and matches article date (within 7 days)
-- MEDIUM: event date inferred from temporal language or dateline
+- MEDIUM: event date inferred from temporal language or dateline, or explicit but
+  differs from article date by 8-14 days
 - LOW: article and event dates disagree by > 14 days, or source is DERIVATIVE only
 
 P1 CORROBORATION — for any P1 where SOURCE_TYPE is DERIVATIVE or DATE_CONFIDENCE is LOW,
