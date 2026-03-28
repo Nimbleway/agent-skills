@@ -132,15 +132,64 @@ from the business profile:
 
 ### Step 4: Deep Extraction
 
-**Always extract P1 signals** — funding amounts, leadership changes, and major
-competitive moves deserve confirmed details, not just snippets. For P2, extract
-only if the snippet lacks a date or key detail. Skip P3.
+Extract signals that need date verification OR richer detail. See
+`references/nimble-playbook.md` → "Signal Date Validation" → "Verification Budget"
+for the full rules.
+
+**Must extract:**
+- All P1 signals (funding, M&A, leadership) — need confirmed details AND date verification
+- Any signal with `DATE_CONFIDENCE: LOW` — event date needs verification from page content
+- Any signal where `SOURCE_TYPE: DERIVATIVE` — confirm the event date from the actual
+  page content
+
+**Extract if useful:**
+- P2 signals where the snippet lacks a date or key detail
+
+**Skip:** P3 signals with `DATE_CONFIDENCE: HIGH`.
 
 Make one Bash call per URL, all simultaneously:
 
 `nimble extract --url "https://..." --format markdown`
 
 For extraction failures, follow the fallback in `references/nimble-playbook.md`.
+
+When reading extracted content, determine the **actual event date** from the article body
+(not just the page header date). Look for: explicit dates tied to the event, temporal
+language ("last September", "in Q3"), and datelines.
+
+### Step 4.5: Signal Validation
+
+Before building the report, validate every signal's freshness. See
+`references/nimble-playbook.md` → "Signal Date Validation" for the full pattern.
+
+**For each signal from Step 3, classify it:**
+
+| Check | Result | Action |
+|---|---|---|
+| EVENT_DATE within freshness window + not in memory | **NEW** | Include |
+| EVENT_DATE within window + updates a known signal | **UPDATED** | Include as update |
+| EVENT_DATE outside freshness window | **STALE** | Drop — old event, new article |
+| DATE_CONFIDENCE: LOW + couldn't verify in Step 4 | **UNCERTAIN** | Drop with note |
+
+**P1 corroboration (mandatory)** — any P1 signal with `NEEDS_CORROBORATION: true` MUST
+be corroborated before it can enter the report. This is a hard gate, not a suggestion.
+
+For each flagged P1, run:
+
+`nimble search --query "[Company] [event summary]" --max-results 5 --search-depth lite`
+
+Look for the **primary source** (company blog, press release, official filing). If the
+primary source dates the event outside the freshness window, reclassify as STALE.
+If no primary source is found, reclassify as UNCERTAIN and drop.
+
+**Drop rules:**
+- Event date is outside the freshness window → STALE
+- Only sourced from derivative/aggregator sites with no corroborating primary or major
+  outlet → UNCERTAIN, drop unless verified via extraction
+- Content clearly describes a past event (temporal language like "last year", "back in Q3",
+  "months ago") with event date outside the window → STALE
+
+After validation, you should have a clean list of NEW and UPDATED signals only.
 
 ### Step 5: Analysis & Output
 
@@ -156,23 +205,29 @@ For extraction failures, follow the fallback in `references/nimble-playbook.md`.
 
 **Quick refresh mode** (last run < 14 days) — short format:
 
-- **New Signals** — dated, with competitor name, priority, and source
+- **New Signals** — dated, with competitor name, priority, and clickable source URL
 - **Nothing New** — list competitors with no new signals
 - **Action Items** — only if something requires attention
 
 **Core rules:**
-- Every signal MUST have a date. A 6-month-old funding round is context, not news.
+- Every signal MUST have a verified **event date**. Only events that happened within the
+  freshness window qualify as new signals — older events are background context.
+- Only include signals classified as NEW or UPDATED in Step 4.5. STALE and UNCERTAIN
+  signals have already been dropped.
 - Deduplicate against `~/.nimble/memory/competitors/*.md` — only surface NEW findings.
 - Say "nothing notable this period" rather than padding with fluff.
 - P3 signals: mention briefly or omit if report is long.
 
 ### Step 6: Save & Update Memory
 
+**Only persist signals that passed Step 4.5 validation** (classified as NEW or UPDATED).
+Do not write STALE or UNCERTAIN signals to competitor memory files.
+
 Make all Write calls simultaneously:
 
 - Report → `~/.nimble/memory/reports/competitor-intel-[date].md` (save the **full
   briefing**, not a summary — this is the local source of truth)
-- Per competitor → append new signals to `~/.nimble/memory/competitors/[name].md`
+- Per competitor → append validated signals to `~/.nimble/memory/competitors/[name].md`
   (use the format documented in `references/memory-and-distribution.md`)
 - Profile → update `last_runs.competitor-intel` in `~/.nimble/business-profile.json`
 
@@ -182,6 +237,9 @@ Make all Write calls simultaneously:
 `references/memory-and-distribution.md` to offer Notion/Slack sharing based on
 available connectors. Even if the user hasn't set up integrations, offer it once
 per run so they know the option exists.
+
+**Key rule:** every signal in the distributed report must include a clickable source
+link. A report without source links is incomplete — do not distribute it.
 
 ### Step 8: Follow-ups
 

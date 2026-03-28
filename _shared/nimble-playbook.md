@@ -148,6 +148,84 @@ Don't narrate individual tool calls.
 | `timeout` | Slow response | Retry once, then skip |
 | `empty results` | No matches | Remove `--start-date`, broaden query |
 
+## Signal Date Validation
+
+High-quality intelligence requires distinguishing between when a **page was published**
+and when the **underlying event occurred**. This matters because:
+
+- Syndicated or republished content may carry a different publication date than the
+  original source
+- Secondary coverage (regulatory filings, recap articles, industry roundups) can
+  report on events that happened weeks or months earlier
+
+### Article Date vs Event Date
+
+Every signal has two dates:
+
+| | What it is |
+|---|---|
+| **Article date** | When the page was published |
+| **Event date** | When the underlying event actually happened |
+
+A signal is "new" only if its **event date** falls within the freshness window.
+
+### Event Date Extraction Rules
+
+Sub-agents must determine the event date from content:
+
+1. **Explicit past reference** — "launched in Q3", "appointed last October" → event
+   date is in the past, regardless of the article date
+2. **Temporal language** — "last quarter", "months ago", "earlier this year" → resolve
+   relative to the article date
+3. **Present tense announcement** — "today announces", "is launching" → event date ≈
+   article date
+4. **Dateline** — "NEW YORK, March 15 —" → event date = that dateline date
+5. **If ambiguous** — extract the source URL and check the on-page date
+
+### Source Type Hierarchy
+
+When the same event appears from multiple sources, prefer those closest to the event:
+
+1. **Primary** — the company's own domain, official press release, regulatory filing
+2. **Wire service** — AP, Reuters, Bloomberg
+3. **Major outlet** — original reporting with bylines
+4. **Derivative** — syndicated copies, aggregator sites, recap articles, or content
+   that attributes its information to another source
+
+If the only source for a signal is derivative, corroborate against a primary or major
+source before reporting.
+
+### Freshness Classification
+
+After determining the event date, classify each signal:
+
+| Classification | Meaning | Action |
+|---|---|---|
+| **NEW** | Event date within freshness window, not in memory | Include in report |
+| **UPDATED** | Known event with genuinely new information | Include as update |
+| **STALE** | Old event covered by a recent article | Drop from report |
+| **UNCERTAIN** | Can't determine event date from snippet alone | Extract URL to verify |
+
+### `--start-date` Best Practices
+
+`--start-date` is a useful filter for reducing noise, but always validate event dates
+from the content itself:
+- For news queries (`--focus news`), consider running a parallel undated query to
+  surface original sources alongside recent coverage
+- The existing fallback ("If < 3 results, retry without `--start-date`") remains useful
+
+### Verification Budget
+
+Not every signal needs full verification — budget extract calls by priority:
+
+| Priority | Verification |
+|---|---|
+| **P1** (funding, M&A, leadership) | Always extract + corroborate against primary source |
+| **P2** (product launches, partnerships) | Extract if date is UNCERTAIN or source is derivative |
+| **P3** (blog posts, minor hires) | Trust if date looks plausible; drop if obviously stale |
+
+---
+
 ## Query Construction Tips
 
 - **Be specific:** "Acme Corp product launch 2026" > "Acme Corp"

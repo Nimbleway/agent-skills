@@ -184,6 +184,12 @@ mentions, shared investors, or competitive overlap.
 
 **If < 3 results** from the news searches, retry without `--start-date`.
 
+**Date validation:** When including company news in the briefing, verify that the
+**event date** (when something actually happened) is recent, not just the article date.
+See `references/nimble-playbook.md` → "Signal Date Validation" for details. If a snippet
+uses past-tense language like "last year" or "back in Q3", treat it as background context
+rather than recent news.
+
 **If the company was already researched** (exists in `~/.nimble/memory/companies/`),
 load the existing profile and only run the news search for fresh updates.
 

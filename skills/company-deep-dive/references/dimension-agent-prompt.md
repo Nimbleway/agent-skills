@@ -27,17 +27,32 @@ RULES:
   queries simultaneously after the first group returns.
 - If < 3 total results from the first two queries, retry those without --start-date.
 
-DATE EXTRACTION — check in this order:
-1. additional_data.publish_date field (most reliable)
+DATE EXTRACTION — determine TWO dates for each result:
+
+ARTICLE_DATE (when the page was published):
+1. additional_data.publish_date field
 2. Date patterns in description (e.g., "Mar 14, 2026")
 3. Relative dates in snippets ("2 days ago" → calculate from today [today's date])
 4. If none found, use "~[current month/year]"
 
+EVENT_DATE (when the underlying event actually happened — may differ from article date):
+1. Explicit past references — "launched in Q3", "appointed last October" → use that date
+2. Temporal language — "last quarter", "months ago" → resolve relative to article date
+3. Present tense — "today announces" → event ≈ article date
+4. No temporal clues → event date = article date
+
+SOURCE_TYPE:
+- PRIMARY: company's own domain, press release, regulatory filing
+- MAJOR: original reporting with bylines from recognized outlets
+- DERIVATIVE: syndicated copy, aggregator, recap article, or "as reported by..." content
+
 Return results in this EXACT format (one per signal, no commentary):
 
 SIGNAL: [description]
-DATE: [YYYY-MM-DD or ~YYYY-MM]
+ARTICLE_DATE: [YYYY-MM-DD or ~YYYY-MM]
+EVENT_DATE: [YYYY-MM-DD or ~YYYY-MM]
 URL: [source url]
+SOURCE_TYPE: [PRIMARY|MAJOR|DERIVATIVE]
 TYPE: [type from dimension list below]
 ---
 ```
