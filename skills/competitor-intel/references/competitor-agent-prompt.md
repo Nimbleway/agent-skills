@@ -62,7 +62,7 @@ DATE_CONFIDENCE:
 
 P1 CORROBORATION — for any P1 where SOURCE_TYPE is DERIVATIVE or DATE_CONFIDENCE is LOW,
 check the primary source (counts toward your 8 Bash call budget):
-  nimble search --query "[Company] [event summary] site:[company-domain]" --max-results 3 --search-depth lite
+  nimble search --query "[Competitor] [event summary] site:[competitor-domain]" --max-results 3 --search-depth lite
 If the primary source dates the event differently, use that date.
 
 Return results in this EXACT format (one per signal, no commentary):
