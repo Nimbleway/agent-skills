@@ -183,7 +183,7 @@ primary source dates the event outside the freshness window, reclassify as STALE
 If no primary source is found, reclassify as UNCERTAIN and drop.
 
 **Drop rules:**
-- Event date is > 30 days before the freshness window start → STALE
+- Event date is outside the freshness window → STALE
 - Only sourced from derivative/aggregator sites with no corroborating primary or major
   outlet → UNCERTAIN, drop unless verified via extraction
 - Content clearly describes a past event (temporal language like "last year", "back in Q3",
