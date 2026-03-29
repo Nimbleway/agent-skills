@@ -51,19 +51,19 @@ constraints (no shell state, no `&`/`wait`, sub-agent permissions, communication
 
 ### Step 0: Preflight
 
-Follow the preflight pattern from `references/nimble-playbook.md`. Make these Bash
-calls simultaneously:
-
-- 14-days-ago date calculation (see nimble-playbook.md for cross-platform command)
-- `date +%Y-%m-%d` (today)
-- `nimble --version && echo "NIMBLE_API_KEY=${NIMBLE_API_KEY:+set}"`
-- `cat ~/.nimble/business-profile.json 2>/dev/null`
+Run the preflight pattern from `references/nimble-playbook.md` (4 simultaneous Bash
+calls: date calc, today, CLI check, profile load).
 
 From the results:
 - CLI missing or API key unset → `references/profile-and-onboarding.md`, stop
 - Profile exists → note the user's company (helps frame "them vs us" context).
   Load any existing person profiles from `~/.nimble/memory/people/` for attendees
   you've researched before — skip redundant searches, surface prior meeting notes.
+  Also check `~/.nimble/memory/companies/` for cached company research.
+  **No same-day report check** — meeting-prep is per-meeting, not per-day. Users
+  may prep for multiple meetings in one day. Instead, check entity freshness:
+  if a person/company profile was updated within the last 24 hours, offer to reuse
+  it: "I have a recent profile for **[Name]** from earlier today. Use it, or refresh?"
 - No profile → that's fine. Meeting prep doesn't require onboarding. Proceed to Step 1.
 
 ### Step 1: Gather Meeting Context
@@ -75,9 +75,9 @@ is available — either a calendar MCP tool (look for `list_events` in the tool 
 or the `gws` CLI (`gws calendar +agenda --today`) — offer to pull today's meetings
 so they can pick one. If neither is available, skip this silently.
 
-**If clear** (e.g., "prep me for my meeting with Sarah Chen at Stripe tomorrow"):
+**If clear** (e.g., "prep me for my meeting with Alex Kim at WidgetCo tomorrow"):
 - Extract: attendee name(s), company, meeting date/time (if given)
-- Confirm briefly: "Preparing briefing for your meeting with **Sarah Chen** at **Stripe**..."
+- Confirm briefly: "Preparing briefing for your meeting with **Alex Kim** at **WidgetCo**..."
 
 **If partial** (e.g., "prep me for my meeting tomorrow"):
 - Ask one clarifying question in plain text:
@@ -165,7 +165,7 @@ Before proceeding, verify every attendee has at least a title and company confir
 1. Run a `--focus social` fallback search directly (this searches social platform
    people indices and is the most reliable way to find someone):
    `nimble search --query "[Name] [Company]" --focus social --max-results 5 --search-depth lite`
-2. If `--focus social` errors (plan limitation), fall back to:
+2. If `--focus social` is unavailable, fall back to:
    `nimble search --query "[Name]" --include-domain '["linkedin.com"]' --max-results 5 --search-depth lite`
 3. Try name variations: "[First] [Last]", "[Full Name] [Company] [Title if known]"
 
@@ -182,14 +182,14 @@ Research the attendees' company for meeting-relevant context. This is a lighter 
 of company-deep-dive — focused on what's useful for the conversation, not a full 360°.
 
 **Company name quoting:** If the company name contains common words that cause noisy
-results (e.g., "HD Supply", "Blue Origin", "General Electric"), wrap it in escaped
-quotes: `"\"HD Supply\" news"`. Use `site:[domain]` as an alternative anchor.
+results (e.g., "Acme Supply", "Nova Dynamics", "Global Industries"), wrap it in escaped
+quotes: `"\"Acme Supply\" news"`. Use `--include-domain '["[domain]"]'` as an alternative anchor.
 
 Make these Bash calls simultaneously:
 
 - `nimble search --query "\"[Company]\" news" --focus news --start-date "[14-days-ago]" --max-results 8 --search-depth lite`
 - `nimble search --query "\"[Company]\" product launch OR announcement" --focus news --start-date "[14-days-ago]" --max-results 5 --search-depth lite`
-- `nimble search --query "site:[domain] about" --max-results 3 --search-depth lite`
+- `nimble search --query "about" --include-domain '["[domain]"]' --max-results 3 --search-depth lite`
 - `nimble search --query "\"[Company]\" funding OR raised OR investors" --max-results 5 --search-depth lite`
 
 If your user's company profile exists, also run:
@@ -406,9 +406,8 @@ interests, communication style) that can be loaded by future meeting prep runs.
 ### Step 7: Share & Distribute
 
 **Always offer distribution — do not skip this step.** Follow
-`references/memory-and-distribution.md` to offer Notion/Slack sharing based on
-available connectors. Even if the user hasn't set up integrations, offer it once
-per run so they know the option exists.
+`references/memory-and-distribution.md` for connector detection, sharing flow, and
+source links enforcement.
 
 ### Step 8: Follow-ups
 
@@ -463,14 +462,12 @@ actively search for connections rather than just comparing results post-hoc.
 
 ## Error Handling
 
-- **Missing API key:** `references/profile-and-onboarding.md`
+See `references/nimble-playbook.md` for the standard error table (missing API key, 429,
+401, empty results, extraction garbage). Skill-specific errors:
+
 - **Person not found:** Try variations — full name, first + last, with company name.
   If still nothing: "Couldn't find public information on [Name]. They may have a
   limited online presence. Can you share their title or LinkedIn URL?"
 - **Ambiguous name:** "I found multiple people named [Name]. Which one?"
   Present top candidates with company/title context.
-- **Empty company results:** Retry without `--start-date`. Still empty → note it and
-  focus on attendee-level findings.
-- **429 rate limit:** Fewer simultaneous Bash calls
-- **401 expired:** "Regenerate at app.nimbleway.com > API Keys"
-- **Extraction garbage:** See fallback in `references/nimble-playbook.md`
+- **Empty company results:** Note it and focus on attendee-level findings.

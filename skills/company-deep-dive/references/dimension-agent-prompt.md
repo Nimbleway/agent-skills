@@ -27,24 +27,9 @@ RULES:
   queries simultaneously after the first group returns.
 - If < 3 total results from the first two queries, retry those without --start-date.
 
-DATE EXTRACTION — determine TWO dates for each result:
-
-ARTICLE_DATE (when the page was published):
-1. additional_data.publish_date field
-2. Date patterns in description (e.g., "Mar 14, 2026")
-3. Relative dates in snippets ("2 days ago" → calculate from today [today's date])
-4. If none found, use "~[current month/year]"
-
-EVENT_DATE (when the underlying event actually happened — may differ from article date):
-1. Explicit past references — "launched in Q3", "appointed last October" → use that date
-2. Temporal language — "last quarter", "months ago" → resolve relative to article date
-3. Present tense — "today announces" → event ≈ article date
-4. No temporal clues → event date = article date
-
-SOURCE_TYPE:
-- PRIMARY: company's own domain, press release, regulatory filing
-- MAJOR: original reporting with bylines from recognized outlets
-- DERIVATIVE: syndicated copy, aggregator, recap article, or "as reported by..." content
+DATE EXTRACTION — follow the "Signal Date Validation" rules in references/nimble-playbook.md.
+For each result, determine ARTICLE_DATE, EVENT_DATE, and SOURCE_TYPE using the extraction
+rules and source hierarchy defined there.
 
 Return results in this EXACT format (one per signal, no commentary):
 
@@ -81,11 +66,11 @@ Types: `product|feature|tech-stack|open-source|engineering`
 
 ```
 SEARCHES:
-1. nimble search --query "site:[domain] product OR features OR platform" --max-results 5 --search-depth lite
+1. nimble search --query "product OR features OR platform" --include-domain '["[domain]"]' --max-results 5 --search-depth lite
 2. nimble search --query "[Company] product launch OR new feature OR release" --focus news --start-date "[start-date]" --max-results 10 --search-depth lite
 3. nimble search --query "[Company] tech stack OR engineering OR architecture" --max-results 5 --search-depth lite
 4. nimble search --query "[Company] open source OR GitHub" --max-results 3 --search-depth lite
-5. nimble search --query "site:[domain] blog engineering OR tech" --max-results 3 --search-depth lite
+5. nimble search --query "blog engineering OR tech" --include-domain '["[domain]"]' --max-results 3 --search-depth lite
 ```
 
 ### Leadership & Team

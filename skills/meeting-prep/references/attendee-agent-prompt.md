@@ -30,7 +30,7 @@ SEARCHES — Group 1 (run simultaneously):
 
 EMAIL-ENHANCED SEARCH (if attendee email was provided from calendar):
 Replace query 3 with a more targeted version:
-3. nimble search --query "[firstname] [lastname] site:linkedin.com [email-domain]" --max-results 5 --search-depth lite
+3. nimble search --query "[firstname] [lastname] [email-domain]" --include-domain '["linkedin.com"]' --max-results 5 --search-depth lite
 The email domain confirms the company and disambiguates common names far better
 than name alone.
 
@@ -42,7 +42,7 @@ SEARCHES — Group 2 (run simultaneously after Group 1 returns):
 Query 1 is the primary — finds their role, title, background, and company association.
 Query 2 uses --focus social to search social platform people indices directly — this is
   the most reliable way to find someone's LinkedIn profile and social presence. If it
-  errors (plan limitation), ignore it — query 3 is the fallback.
+  errors or is unavailable, ignore it — query 3 is the fallback.
 Query 3 is the fallback for query 2 — searches LinkedIn via --include-domain. If both
   return results, prefer query 2's results (richer people-index data).
 Query 4 finds interviews and talks where they share their thinking.

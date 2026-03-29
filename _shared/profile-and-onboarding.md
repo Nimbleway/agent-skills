@@ -32,11 +32,11 @@ The business profile at `~/.nimble/business-profile.json` and first-run setup fl
       "Sub-second API response times"
     ],
     "integration_partners": [
-      { "name": "Snowflake", "type": "data warehouse" },
-      { "name": "Salesforce", "type": "CRM" }
+      { "name": "DataStack", "type": "data warehouse" },
+      { "name": "CRMHub", "type": "CRM" }
     ],
     "case_studies": [
-      { "customer": "Fortune 500 retailer", "industry": "retail", "outcome": "3x faster competitive intel" }
+      { "customer": "Large enterprise retailer", "industry": "retail", "outcome": "3x faster competitive intel" }
     ],
     "common_objections": [
       { "objection": "We already use [competitor]", "response": "Our real-time data is fresher — most competitors cache for 24h+" }
@@ -106,20 +106,56 @@ Always confirm: "Got it — removed CompanyX from tracking."
 
 ### Prerequisite Checks
 
-If CLI or API key is missing:
+The preflight pattern in `nimble-playbook.md` runs `nimble --version`. Parse its
+output to check three things: installed, minimum version, and API key.
 
-**CLI missing:**
-> The Nimble CLI is required. Install with: `npm install -g @nimbleway/cli`
+**Minimum CLI version: 0.8.0**
 
-**API key not set:**
+#### CLI missing (command not found)
+
+Don't just tell the user to install — guide them through it:
+
+1. Check if npm is available: `npm --version`
+2. If npm exists:
+   > "The Nimble CLI is required. I'll install it now."
+   >
+   > Run: `npm install -g @nimbleway/cli`
+3. If npm is not available:
+   > "The Nimble CLI requires Node.js/npm. Install Node.js first from
+   > [nodejs.org](https://nodejs.org), then run: `npm install -g @nimbleway/cli`"
+4. After install, verify: `nimble --version`
+5. If verification fails, stop and ask the user to check their PATH.
+
+#### CLI outdated (version < 0.8.0)
+
+Parse the version from `nimble --version` output. If below 0.8.0:
+
+> "Your Nimble CLI is version **[current]** — version **0.8.0+** is required
+> for these skills. Upgrading now..."
+>
+> Run: `npm update -g @nimbleway/cli`
+
+Verify after upgrade: `nimble --version`. If still outdated, suggest:
+`npm uninstall -g @nimbleway/cli && npm install -g @nimbleway/cli`
+
+#### API key not set
+
 > You need a Nimble API key.
 > 1. Go to [app.nimbleway.com](https://app.nimbleway.com) → API Keys
 > 2. Generate a new key
 > 3. Run: `export NIMBLE_API_KEY=your_key_here`
 > 4. Add to `~/.zshrc` or `~/.bashrc` to make permanent.
 
-**API key expired (401):**
+After the user sets it, verify: `echo "NIMBLE_API_KEY=${NIMBLE_API_KEY:+set}"`
+
+#### API key expired (401)
+
 > Your key may have expired (72h TTL). Regenerate at app.nimbleway.com > API Keys.
+
+#### All prerequisites met
+
+Only proceed to Company Setup once CLI is installed, version is >= 0.8.0, and API key
+is set. Don't silently skip any check.
 
 ### Company Setup (2 prompts max)
 
@@ -128,7 +164,7 @@ If CLI or API key is missing:
 > "What's your company's website domain? (e.g., acme.com)"
 
 Verify — make two Bash calls simultaneously:
-- `nimble search --query "site:[domain]" --max-results 3 --search-depth lite`
+- `nimble search --query "[domain]" --include-domain '["[domain]"]' --max-results 3 --search-depth lite`
 - `nimble search --query "[domain] company" --max-results 5 --search-depth lite`
 
 Present what you found and confirm: "I found that **[Company]** ([domain]) is

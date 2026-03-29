@@ -5,7 +5,7 @@ description: |
   skill needs to search the web, find news, or gather raw data about companies,
   competitors, or people. Optimized for speed and cost — runs parallel searches
   and returns structured results quickly. Does not write files or produce analysis;
-  delegates synthesis to nimble-analyst.
+  returns findings to the parent context for synthesis.
 model: haiku
 tools:
   - Read

@@ -24,15 +24,31 @@ Every skill starts with these simultaneous Bash calls:
 - `nimble --version && echo "NIMBLE_API_KEY=${NIMBLE_API_KEY:+set}"`
 - `cat ~/.nimble/business-profile.json 2>/dev/null`
 
-If CLI missing or API key unset → see "Onboarding" section in `references/profile-and-onboarding.md`.
+From the `nimble --version` output, check:
+- **CLI missing** (command not found) → install it interactively
+- **CLI outdated** (version < 0.8.0) → upgrade it
+- **API key unset** → guide setup
+
+See `references/profile-and-onboarding.md` for the full prerequisite checks with
+install/upgrade flows. Don't skip version validation — outdated CLI versions may be
+missing flags or features that skills depend on.
 
 ## Smart Date Windowing
 
 For any skill using `--start-date` based on previous runs:
-- **First run:** 14 days ago
-- **Last run < 3 days ago:** use 7 days ago (too narrow = empty results)
-- **Last run 3-14 days ago:** use the last run date
-- **Last run > 14 days ago:** 14 days ago
+- **First run:** 14 days ago → **full mode**
+- **Last run < 3 days ago:** use 7 days ago (too narrow = empty results) → **quick refresh**
+- **Last run 3-14 days ago:** use the last run date → **quick refresh**
+- **Last run > 14 days ago:** 14 days ago → **full mode**
+- **Same-day repeat:** if `last_runs.{skill-name}` is today, check if a report already
+  exists at `~/.nimble/memory/reports/{skill-name}*[today].md`. If it does, **ask the
+  user before re-running**: "Already ran today. Run again for fresh data?" Don't silently
+  re-run — it wastes API credits and produces near-identical output.
+  **Exception — meeting-prep:** Skip the same-day report check. Meeting-prep is
+  per-meeting, not per-day — users may prep for multiple meetings in a single day.
+  Instead, meeting-prep checks freshness at the entity level: load cached profiles
+  from `~/.nimble/memory/people/` and `~/.nimble/memory/companies/` and offer to
+  reuse recent research rather than blocking the run.
 
 ---
 
@@ -203,8 +219,13 @@ After determining the event date, classify each signal:
 |---|---|---|
 | **NEW** | Event date within freshness window, not in memory | Include in report |
 | **UPDATED** | Known event with genuinely new information | Include as update |
-| **STALE** | Old event covered by a recent article | Drop from report |
-| **UNCERTAIN** | Can't determine event date from snippet alone | Extract URL to verify |
+| **STALE** | Old event covered by a recent article | **DROP — do not include** |
+| **UNCERTAIN** | Can't determine event date from snippet alone | Extract URL to verify; if still uncertain after extraction, **DROP** |
+
+**Hard rule:** Only signals classified as **NEW** or **UPDATED** may appear in reports.
+STALE and UNCERTAIN signals must be dropped entirely — not downgraded, not footnoted,
+not included as "background context." If a signal can't be verified as genuinely recent,
+it doesn't exist as far as the report is concerned.
 
 ### `--start-date` Best Practices
 
@@ -218,18 +239,43 @@ from the content itself:
 
 Not every signal needs full verification — budget extract calls by priority:
 
-| Priority | Verification |
-|---|---|
-| **P1** (funding, M&A, leadership) | Always extract + corroborate against primary source |
-| **P2** (product launches, partnerships) | Extract if date is UNCERTAIN or source is derivative |
-| **P3** (blog posts, minor hires) | Trust if date looks plausible; drop if obviously stale |
+| Priority | Examples | Verification |
+|---|---|---|
+| **P1** (high impact) | Funding, M&A, leadership changes | Always extract + corroborate (see below) |
+| **P2** (medium impact) | Product launches, partnerships, major hires | Extract if date is UNCERTAIN or source is derivative |
+| **P3** (low impact) | Blog posts, minor hires, event appearances | Trust if date looks plausible; drop if obviously stale |
+
+Skills define their own P1/P2/P3 signal types in their SKILL.md. The verification
+budget above applies universally regardless of which signals a skill classifies at
+each level.
+
+### P1 Corroboration (Mandatory)
+
+Any P1 signal sourced from derivative or aggregator sites **must** be corroborated
+before it can appear in a report. This is a hard gate, not a suggestion.
+
+For each P1 signal that needs corroboration:
+
+```bash
+nimble search --query "[Company] [event summary]" --max-results 5 --search-depth lite
+```
+
+Look for the **primary source** (company blog, press release, official filing, regulatory
+document). Check the primary source's date:
+
+- **Primary source dates the event within the freshness window** → signal is NEW, include it
+- **Primary source dates the event outside the freshness window** → reclassify as STALE, drop
+- **No primary source found** → reclassify as UNCERTAIN, drop
+
+Do not report P1 signals that fail corroboration. It's better to miss a real signal than
+to report a stale one as new — trust is the product.
 
 ---
 
 ## Query Construction Tips
 
 - **Be specific:** "Acme Corp product launch 2026" > "Acme Corp"
-- **Use `site:domain`** for companies with generic names
+- **Use `--include-domain '["domain"]'`** for companies with generic names
 - **Fallback on empty:** If < 3 results, retry without `--start-date`
 - **Combine focus modes:** news + general in parallel for broader coverage
 - **Try variations:** "CompanyName" → "Company Name" → domain

@@ -51,13 +51,8 @@ constraints (no shell state, no `&`/`wait`, sub-agent permissions, communication
 
 ### Step 0: Preflight
 
-Follow the preflight pattern from `references/nimble-playbook.md`. Make these Bash
-calls simultaneously:
-
-- 14-days-ago date calculation (see nimble-playbook.md for cross-platform command)
-- `date +%Y-%m-%d` (today)
-- `nimble --version && echo "NIMBLE_API_KEY=${NIMBLE_API_KEY:+set}"`
-- `cat ~/.nimble/business-profile.json 2>/dev/null`
+Run the preflight pattern from `references/nimble-playbook.md` (4 simultaneous Bash
+calls: date calc, today, CLI check, profile load).
 
 From the results:
 - CLI missing or API key unset → `references/profile-and-onboarding.md`, stop
@@ -105,7 +100,7 @@ the limit. Run overview searches in their own phase, not alongside agent batches
 
 **Phase A — Overview searches** (run directly, before agents):
 
-- `nimble search --query "site:[domain] about" --max-results 3 --search-depth lite`
+- `nimble search --query "about" --include-domain '["[domain]"]' --max-results 3 --search-depth lite`
 - `nimble search --query "[Company] Wikipedia OR Crunchbase OR Pitchbook" --max-results 5 --search-depth lite`
 
 These give foundational context (founding date, HQ, employee count, mission) that
@@ -226,9 +221,8 @@ that needs context on this company.
 ### Step 6: Share & Distribute
 
 **Always offer distribution — do not skip this step.** Follow
-`references/memory-and-distribution.md` to offer Notion/Slack sharing based on
-available connectors. Even if the user hasn't set up integrations, offer it once
-per run so they know the option exists.
+`references/memory-and-distribution.md` for connector detection, sharing flow, and
+source links enforcement.
 
 ### Step 7: Follow-ups
 
@@ -275,9 +269,8 @@ funding amount that implies a valuation), it posts a task for the relevant teamm
 
 ## Error Handling
 
-- **Missing API key:** `references/profile-and-onboarding.md`
+See `references/nimble-playbook.md` for the standard error table (missing API key, 429,
+401, empty results, extraction garbage). Skill-specific errors:
+
 - **Company not found:** Retry with domain, alternative names, or parent company
 - **Empty results for a dimension:** Note "No public data found" — don't speculate
-- **429 rate limit:** Fewer simultaneous Bash calls
-- **401 expired:** "Regenerate at app.nimbleway.com > API Keys"
-- **Extraction garbage:** See fallback in `references/nimble-playbook.md`
