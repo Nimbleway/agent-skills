@@ -30,7 +30,7 @@ SEARCHES — Group 1 (run simultaneously):
 
 EMAIL-ENHANCED SEARCH (if attendee email was provided from calendar):
 Replace query 3 with a more targeted version:
-3. nimble search --query "[firstname] [lastname] site:linkedin.com [email-domain]" --max-results 5 --search-depth lite
+3. nimble search --query "[firstname] [lastname] [email-domain]" --include-domain '["linkedin.com"]' --max-results 5 --search-depth lite
 The email domain confirms the company and disambiguates common names far better
 than name alone.
 
