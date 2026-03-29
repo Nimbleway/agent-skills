@@ -368,7 +368,10 @@ going in. This is the "read nothing else" paragraph.]
 | General external | Balanced across all dimensions | Standard format above | No |
 
 **Core rules:**
-- Every factual claim must have a source URL.
+- Every factual claim about an external company or person must have a source URL.
+  Data drawn from the user's own business profile (differentiators, integrations,
+  case studies) should be attributed to the profile rather than requiring an
+  external source.
 - Lead with the Quick Take — most readers stop there.
 - Talking points must be specific to THIS meeting, grounded in research findings.
   Never generate generic conversation starters.
