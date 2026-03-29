@@ -114,6 +114,7 @@ Value Positioning section is generated, so it's worth one question. Use AskUserQ
 > **What's the goal of this meeting?**
 > - **Sales / discovery** — pitching, demo, exploring fit
 > - **Partnership** — integration, co-selling, joint venture
+> - **Board / investor** — board meeting, investor update, fundraising
 > - **Interview** — evaluating a candidate
 > - **General / other** — networking, catch-up, or not sure
 
