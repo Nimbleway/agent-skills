@@ -42,7 +42,7 @@ SEARCHES — Group 2 (run simultaneously after Group 1 returns):
 Query 1 is the primary — finds their role, title, background, and company association.
 Query 2 uses --focus social to search social platform people indices directly — this is
   the most reliable way to find someone's LinkedIn profile and social presence. If it
-  errors (plan limitation), ignore it — query 3 is the fallback.
+  errors or is unavailable, ignore it — query 3 is the fallback.
 Query 3 is the fallback for query 2 — searches LinkedIn via --include-domain. If both
   return results, prefer query 2's results (richer people-index data).
 Query 4 finds interviews and talks where they share their thinking.

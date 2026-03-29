@@ -106,20 +106,56 @@ Always confirm: "Got it — removed CompanyX from tracking."
 
 ### Prerequisite Checks
 
-If CLI or API key is missing:
+The preflight pattern in `nimble-playbook.md` runs `nimble --version`. Parse its
+output to check three things: installed, minimum version, and API key.
 
-**CLI missing:**
-> The Nimble CLI is required. Install with: `npm install -g @nimbleway/cli`
+**Minimum CLI version: 0.8.0**
 
-**API key not set:**
+#### CLI missing (command not found)
+
+Don't just tell the user to install — guide them through it:
+
+1. Check if npm is available: `npm --version`
+2. If npm exists:
+   > "The Nimble CLI is required. I'll install it now."
+   >
+   > Run: `npm install -g @nimbleway/cli`
+3. If npm is not available:
+   > "The Nimble CLI requires Node.js/npm. Install Node.js first from
+   > [nodejs.org](https://nodejs.org), then run: `npm install -g @nimbleway/cli`"
+4. After install, verify: `nimble --version`
+5. If verification fails, stop and ask the user to check their PATH.
+
+#### CLI outdated (version < 0.8.0)
+
+Parse the version from `nimble --version` output. If below 0.8.0:
+
+> "Your Nimble CLI is version **[current]** — version **0.8.0+** is required
+> for these skills. Upgrading now..."
+>
+> Run: `npm update -g @nimbleway/cli`
+
+Verify after upgrade: `nimble --version`. If still outdated, suggest:
+`npm uninstall -g @nimbleway/cli && npm install -g @nimbleway/cli`
+
+#### API key not set
+
 > You need a Nimble API key.
 > 1. Go to [app.nimbleway.com](https://app.nimbleway.com) → API Keys
 > 2. Generate a new key
 > 3. Run: `export NIMBLE_API_KEY=your_key_here`
 > 4. Add to `~/.zshrc` or `~/.bashrc` to make permanent.
 
-**API key expired (401):**
+After the user sets it, verify: `echo "NIMBLE_API_KEY=${NIMBLE_API_KEY:+set}"`
+
+#### API key expired (401)
+
 > Your key may have expired (72h TTL). Regenerate at app.nimbleway.com > API Keys.
+
+#### All prerequisites met
+
+Only proceed to Company Setup once CLI is installed, version is >= 0.8.0, and API key
+is set. Don't silently skip any check.
 
 ### Company Setup (2 prompts max)
 

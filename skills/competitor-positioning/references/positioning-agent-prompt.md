@@ -1,6 +1,6 @@
 # Competitor Positioning Agent Prompt
 
-Use this template when spawning per-competitor `nimble-researcher` agents in Step 3.
+Use this template when spawning per-competitor sub-agents in Step 3.
 Replace all `[placeholders]` with actual values before passing to the Agent tool.
 
 ---

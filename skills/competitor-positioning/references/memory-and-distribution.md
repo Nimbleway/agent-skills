@@ -109,15 +109,26 @@ Create stub files for each competitor from the onboarding flow.
 
 ## Differential Analysis
 
-The key feature across all skills. When a skill runs:
+The key feature across all skills — only surface what's genuinely new.
 
-1. Read `~/.nimble/memory/{category}/{name}.md` for previous findings
-2. Run fresh search with date filter
-3. Compare new results against stored history
-4. Surface only **genuinely new** signals
+### Dedup Lifecycle
 
-"WidgetCo raised a Series C" is noise if already in memory.
-"WidgetCo just hired a new CTO" is a new signal worth highlighting.
+Memory loading happens at two points in every skill:
+
+1. **Step 0 (Preflight):** Load relevant memory files for context. This tells the skill
+   what's already known so it can pass known signals to sub-agents for dedup during
+   research. For example, competitor-intel loads `~/.nimble/memory/competitors/*.md`;
+   meeting-prep loads `~/.nimble/memory/people/*.md`.
+
+2. **Analysis step (before report generation):** Final dedup check. Compare all findings
+   from research against loaded memory. Only signals classified as NEW or UPDATED (per
+   the freshness classification in `nimble-playbook.md`) make it into the report.
+
+### What "new" means
+
+- "WidgetCo raised a Series C" is noise if already in memory
+- "WidgetCo just hired a new CTO" is a new signal worth highlighting
+- "WidgetCo raised a Series C" with a new detail (amount, lead investor) is an UPDATE
 
 ## Learning from Corrections
 
@@ -140,6 +151,26 @@ Always confirm the update to the user.
 - **Read on demand.** Only load files when the skill actually needs them.
 - **Update profile after every run.** At minimum, `last_runs` timestamp.
 - **Handle missing gracefully.** If a file doesn't exist, create it.
+
+---
+
+## Source Links Enforcement
+
+**Every signal in every report must include a clickable source URL.** This is a hard
+requirement — reports without source links are incomplete and must not be distributed.
+
+What counts as a source link:
+- A direct URL to the article, press release, or page where the signal was found
+- The URL returned by `nimble search` in the result's `url` field
+- For extracted content, the URL passed to `nimble extract --url`
+
+What does NOT count:
+- A company's homepage (unless the signal is specifically about homepage content)
+- A generic domain without a path (e.g., `https://widgetco.com`)
+- "Source: web search" or any non-clickable attribution
+
+If a signal has no source URL after research and extraction, drop it from the report.
+An unsourced signal is worse than a missing one — it can't be verified and erodes trust.
 
 ---
 

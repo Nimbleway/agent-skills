@@ -51,13 +51,8 @@ constraints (no shell state, no `&`/`wait`, sub-agent permissions, communication
 
 ### Step 0: Preflight
 
-Follow the preflight pattern from `references/nimble-playbook.md`. Make these Bash
-calls simultaneously:
-
-- 14-days-ago date calculation (see nimble-playbook.md for cross-platform command)
-- `date +%Y-%m-%d` (today)
-- `nimble --version && echo "NIMBLE_API_KEY=${NIMBLE_API_KEY:+set}"`
-- `cat ~/.nimble/business-profile.json 2>/dev/null`
+Run the preflight pattern from `references/nimble-playbook.md` (4 simultaneous Bash
+calls: date calc, today, CLI check, profile load).
 
 From the results:
 - CLI missing or API key unset → `references/profile-and-onboarding.md`, stop
@@ -165,7 +160,7 @@ Before proceeding, verify every attendee has at least a title and company confir
 1. Run a `--focus social` fallback search directly (this searches social platform
    people indices and is the most reliable way to find someone):
    `nimble search --query "[Name] [Company]" --focus social --max-results 5 --search-depth lite`
-2. If `--focus social` errors (plan limitation), fall back to:
+2. If `--focus social` is unavailable, fall back to:
    `nimble search --query "[Name]" --include-domain '["linkedin.com"]' --max-results 5 --search-depth lite`
 3. Try name variations: "[First] [Last]", "[Full Name] [Company] [Title if known]"
 
@@ -406,9 +401,8 @@ interests, communication style) that can be loaded by future meeting prep runs.
 ### Step 7: Share & Distribute
 
 **Always offer distribution — do not skip this step.** Follow
-`references/memory-and-distribution.md` to offer Notion/Slack sharing based on
-available connectors. Even if the user hasn't set up integrations, offer it once
-per run so they know the option exists.
+`references/memory-and-distribution.md` for connector detection, sharing flow, and
+source links enforcement.
 
 ### Step 8: Follow-ups
 
@@ -463,14 +457,12 @@ actively search for connections rather than just comparing results post-hoc.
 
 ## Error Handling
 
-- **Missing API key:** `references/profile-and-onboarding.md`
+See `references/nimble-playbook.md` for the standard error table (missing API key, 429,
+401, empty results, extraction garbage). Skill-specific errors:
+
 - **Person not found:** Try variations — full name, first + last, with company name.
   If still nothing: "Couldn't find public information on [Name]. They may have a
   limited online presence. Can you share their title or LinkedIn URL?"
 - **Ambiguous name:** "I found multiple people named [Name]. Which one?"
   Present top candidates with company/title context.
-- **Empty company results:** Retry without `--start-date`. Still empty → note it and
-  focus on attendee-level findings.
-- **429 rate limit:** Fewer simultaneous Bash calls
-- **401 expired:** "Regenerate at app.nimbleway.com > API Keys"
-- **Extraction garbage:** See fallback in `references/nimble-playbook.md`
+- **Empty company results:** Note it and focus on attendee-level findings.

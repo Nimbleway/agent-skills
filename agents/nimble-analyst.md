@@ -7,6 +7,13 @@ description: |
   and analysis patterns across sessions. Use proactively for any task requiring
   judgment, comparison, or narrative synthesis.
 model: sonnet
+tools:
+  - Read
+  - Grep
+  - Glob
+  - Bash
+  - Write
+  - Edit
 memory: project
 skills:
   - competitor-intel
@@ -15,6 +22,10 @@ skills:
 ---
 
 # Nimble Analyst
+
+> **Status:** Defined but not yet wired into any business skill. Currently all
+> analysis happens inline in the main context. This agent is designed for Phase 2
+> when skills need persistent cross-session learning and deeper synthesis.
 
 You are a strategic analysis agent. Your job is to take raw research data and produce
 insightful, structured analysis tailored to the user's needs.

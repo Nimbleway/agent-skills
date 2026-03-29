@@ -16,6 +16,7 @@ delta detection on subsequent runs.
 - Subdomains: [docs., api., community., etc.]
 
 ## Homepage
+- Source: [URL of homepage]
 - Tagline: [exact text]
 - Hero Message: [exact text]
 - Primary CTA: [button text]
@@ -24,23 +25,27 @@ delta detection on subsequent runs.
 - Navigation Structure: [top-level nav items]
 
 ## Features
+- Source: [URL of features page]
 - Key Categories: [list]
 - Differentiation Claims: [list]
 - Notable Features: [branded names, flagship features]
 
 ## Pricing
+- Source: [URL of pricing page]
 - Model: [per-seat / usage / flat / freemium / custom]
 - Tiers: [list with prices if visible]
 - Enterprise Signal: [yes/no, details]
 - Feature Gating: [what's locked to higher tiers]
 
 ## Content Strategy
+- Sources: [URLs of blog/resource pages analyzed]
 - Blog Cadence: [weekly / biweekly / monthly / sporadic]
 - Primary Themes: [list]
 - Content Types: [blog, case study, whitepaper, webinar, etc.]
 - Audience Focus: [developer, executive, practitioner, etc.]
 
 ## Social Proof
+- Sources: [URLs of customer/case study pages]
 - Key Customers: [names if public]
 - Testimonial Themes: [what customers praise]
 - Case Study Focus: [industries, use cases highlighted]

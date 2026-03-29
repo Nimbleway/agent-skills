@@ -53,13 +53,8 @@ constraints (no shell state, no `&`/`wait`, sub-agent permissions, communication
 
 ### Step 0: Preflight
 
-Follow the preflight pattern from `references/nimble-playbook.md`. Make these Bash
-calls simultaneously:
-
-- 14-days-ago date calculation (see nimble-playbook.md for cross-platform command)
-- `date +%Y-%m-%d` (today)
-- `nimble --version && echo "NIMBLE_API_KEY=${NIMBLE_API_KEY:+set}"`
-- `cat ~/.nimble/business-profile.json 2>/dev/null`
+Run the preflight pattern from `references/nimble-playbook.md` (4 simultaneous Bash
+calls: date calc, today, CLI check, profile load).
 
 From the results:
 - CLI missing or API key unset → `references/profile-and-onboarding.md`, stop
@@ -234,12 +229,8 @@ Make all Write calls simultaneously:
 ### Step 7: Share & Distribute
 
 **Always offer distribution — do not skip this step.** Follow
-`references/memory-and-distribution.md` to offer Notion/Slack sharing based on
-available connectors. Even if the user hasn't set up integrations, offer it once
-per run so they know the option exists.
-
-**Key rule:** every signal in the distributed report must include a clickable source
-link. A report without source links is incomplete — do not distribute it.
+`references/memory-and-distribution.md` for connector detection, sharing flow, and
+source links enforcement.
 
 ### Step 8: Follow-ups
 
@@ -268,8 +259,5 @@ Check at startup: `echo $CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS`
 
 ## Error Handling
 
-- **Missing API key:** `references/profile-and-onboarding.md`
-- **Empty results:** Retry without `--start-date`. Still empty → broaden query.
-- **429 rate limit:** Fewer simultaneous Bash calls
-- **401 expired:** "Regenerate at app.nimbleway.com > API Keys"
-- **Extraction garbage:** See fallback in `references/nimble-playbook.md`
+See `references/nimble-playbook.md` for the standard error table (missing API key, 429,
+401, empty results, extraction garbage). No skill-specific errors beyond those.

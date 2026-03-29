@@ -1,29 +1,17 @@
 ---
 name: competitor-positioning
 description: |
-  Marketing team tool for tracking how competitors position themselves online.
-  Scrapes competitor homepages, features pages, pricing pages, and blogs to
-  extract messaging, value props, CTAs, content strategy, and pricing models.
-  Compares against previous snapshots to surface positioning shifts over time
-  with before/after change tracking.
+  Tracks how competitors position themselves online — scrapes homepages,
+  features, pricing, and blogs to extract messaging, value props, CTAs, and
+  pricing models. Compares against previous snapshots to surface positioning
+  shifts with before/after tracking. Produces messaging matrices, content gap
+  analysis, white space maps, and battlecard inputs.
 
-  Produces marketing-ready briefings: messaging matrices, content gap analysis,
-  positioning white space, and battlecard inputs. Not business signals — for
-  funding, hiring, and news, use competitor-intel instead.
-
-  Use this skill proactively when anyone on a marketing team asks about
-  competitors — even if they say "competitive analysis" without specifically
-  mentioning "positioning". If the user's focus is messaging, website copy,
-  content themes, or how competitors present themselves, use this skill.
-
-  Common triggers: "how are competitors positioning themselves", "competitor
-  messaging", "what changed on their site", "competitive positioning",
-  "content gap analysis", "competitor homepage", "marketing competitive brief",
-  "positioning shifts", "competitor content strategy", "what are competitors
-  saying", "messaging comparison", "competitor website analysis", "landing page
-  teardown", "how do they describe their product", "competitor copy",
-  "marketing battlecard", "what's on their homepage", "how is [company]
-  positioning their product", "share of voice", "counter-messaging".
+  Use when anyone asks about competitor messaging, positioning, website copy,
+  content strategy, or how competitors present themselves. Triggers: "competitor
+  positioning", "messaging comparison", "content gap", "what changed on their
+  site", "competitor homepage", "landing page teardown", "marketing battlecard",
+  "how do they describe their product", "share of voice", "counter-messaging".
 
   Do NOT use for business signals like funding/hiring (use competitor-intel),
   single-company deep dives (use company-deep-dive), or meeting prep (use
@@ -76,13 +64,8 @@ constraints (no shell state, no `&`/`wait`, sub-agent permissions, communication
 
 ### Step 0: Preflight
 
-Follow the preflight pattern from `references/nimble-playbook.md`. Make these Bash
-calls simultaneously:
-
-- 14-days-ago date calculation (see nimble-playbook.md for cross-platform command)
-- `date +%Y-%m-%d` (today)
-- `nimble --version && echo "NIMBLE_API_KEY=${NIMBLE_API_KEY:+set}"`
-- `cat ~/.nimble/business-profile.json 2>/dev/null`
+Run the preflight pattern from `references/nimble-playbook.md` (4 simultaneous Bash
+calls: date calc, today, CLI check, profile load).
 
 From the results:
 - CLI missing or API key unset → `references/profile-and-onboarding.md`, stop
@@ -267,8 +250,8 @@ Make all Write calls simultaneously:
 ### Step 7: Share & Distribute
 
 **Always offer distribution — do not skip this step.** Follow
-`references/memory-and-distribution.md` to offer Notion/Slack sharing based on
-available connectors. Marketing teams especially benefit from shared Notion pages
+`references/memory-and-distribution.md` for connector detection, sharing flow, and
+source links enforcement. Marketing teams especially benefit from shared Notion pages
 they can reference in positioning workshops and content planning sessions.
 
 ### Battlecard Generation
@@ -353,7 +336,9 @@ Check at startup: `echo $CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS`
 
 ## Error Handling
 
-- **Missing API key:** `references/profile-and-onboarding.md`
+See `references/nimble-playbook.md` for the standard error table (missing API key, 429,
+401, empty results, extraction garbage). Skill-specific errors:
+
 - **Page extraction fails (404/garbage):** The map step should prevent most 404s by
   discovering actual URLs first. If extraction still fails, note "page not accessible"
   and continue — partial data is better than no data.
@@ -361,6 +346,3 @@ Check at startup: `echo $CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS`
   the homepage directly and guessing common paths (/features, /pricing, /blog).
 - **Empty blog results:** Some companies don't blog. Note "no active blog detected"
   and focus on page-based positioning instead.
-- **429 rate limit:** Fewer simultaneous Bash calls
-- **401 expired:** "Regenerate at app.nimbleway.com > API Keys"
-- **Extraction returns raw HTML:** See fallback in `references/nimble-playbook.md`
