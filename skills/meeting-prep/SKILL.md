@@ -384,7 +384,7 @@ going in. This is the "read nothing else" paragraph.]
   Every value mapping must reference a specific finding about the attendee's
   company paired with a specific capability from the user's profile or research.
 - If `sales_context` is missing from the profile, note it once at the end of the
-  Value Positioning section: "Tip: Run onboarding again or edit your profile at
+  Value Positioning section: "Tip: Edit your profile at
   `~/.nimble/business-profile.json` to add sales context (differentiators,
   integrations, case studies) for richer positioning next time."
 
