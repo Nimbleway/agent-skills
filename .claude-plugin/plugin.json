@@ -11,6 +11,13 @@
   "repository": "https://github.com/Nimbleway/agent-skills",
   "license": "MIT",
   "keywords": ["nimble", "web-extraction", "web-search", "web-crawl", "web-map", "scraping", "agents", "mcp", "cli", "data-extraction", "structured-data", "competitor-intelligence", "meeting-prep", "company-research", "business-intelligence"],
+  "skills": [
+    "./skills/core/",
+    "./skills/productivity/",
+    "./skills/business-research/",
+    "./skills/marketing/"
+  ],
+  "_skills_roadmap_note": "Future verticals: ./skills/sales/, ./skills/hr/, ./skills/healthcare/, ./skills/legal/, ./skills/retail/, ./skills/finance/ — add to skills array when first skill ships",
   "agents": [
     "./agents/nimble-researcher.md",
     "./agents/nimble-analyst.md"
