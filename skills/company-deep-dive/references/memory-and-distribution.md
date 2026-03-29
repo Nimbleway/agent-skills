@@ -43,7 +43,7 @@ One file per competitor. Append new findings under dated headers — never overw
 ## Signals
 ### 2026-03-20
 - Launched new enterprise tier pricing — [source URL]
-- Hired VP of Sales from Salesforce — [source URL]
+- Hired VP of Sales from CRMHub — [source URL]
 
 ### 2026-03-13
 - Announced partnership with AWS — [source URL]
@@ -54,14 +54,14 @@ One file per competitor. Append new findings under dated headers — never overw
 One file per contact. Used by meeting-prep skill.
 
 ```markdown
-# Sarah Chen
+# Alex Kim
 
 ## Current Role
 VP of Engineering at WidgetCo (since 2024)
 
 ## Background
-- Previously: Senior Director at Google Cloud (2019-2024)
-- Education: MS CS Stanford
+- Previously: Senior Director at CloudCorp (2019-2024)
+- Education: MS Computer Science, top-10 program
 
 ## Notes from Previous Meetings
 ### 2026-03-15

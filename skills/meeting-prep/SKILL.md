@@ -70,9 +70,9 @@ is available — either a calendar MCP tool (look for `list_events` in the tool 
 or the `gws` CLI (`gws calendar +agenda --today`) — offer to pull today's meetings
 so they can pick one. If neither is available, skip this silently.
 
-**If clear** (e.g., "prep me for my meeting with Sarah Chen at Stripe tomorrow"):
+**If clear** (e.g., "prep me for my meeting with Alex Kim at WidgetCo tomorrow"):
 - Extract: attendee name(s), company, meeting date/time (if given)
-- Confirm briefly: "Preparing briefing for your meeting with **Sarah Chen** at **Stripe**..."
+- Confirm briefly: "Preparing briefing for your meeting with **Alex Kim** at **WidgetCo**..."
 
 **If partial** (e.g., "prep me for my meeting tomorrow"):
 - Ask one clarifying question in plain text:
@@ -177,8 +177,8 @@ Research the attendees' company for meeting-relevant context. This is a lighter 
 of company-deep-dive — focused on what's useful for the conversation, not a full 360°.
 
 **Company name quoting:** If the company name contains common words that cause noisy
-results (e.g., "HD Supply", "Blue Origin", "General Electric"), wrap it in escaped
-quotes: `"\"HD Supply\" news"`. Use `--include-domain '["[domain]"]'` as an alternative anchor.
+results (e.g., "Acme Supply", "Nova Dynamics", "Global Industries"), wrap it in escaped
+quotes: `"\"Acme Supply\" news"`. Use `--include-domain '["[domain]"]'` as an alternative anchor.
 
 Make these Bash calls simultaneously:
 

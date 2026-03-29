@@ -32,11 +32,11 @@ The business profile at `~/.nimble/business-profile.json` and first-run setup fl
       "Sub-second API response times"
     ],
     "integration_partners": [
-      { "name": "Snowflake", "type": "data warehouse" },
-      { "name": "Salesforce", "type": "CRM" }
+      { "name": "DataStack", "type": "data warehouse" },
+      { "name": "CRMHub", "type": "CRM" }
     ],
     "case_studies": [
-      { "customer": "Fortune 500 retailer", "industry": "retail", "outcome": "3x faster competitive intel" }
+      { "customer": "Large enterprise retailer", "industry": "retail", "outcome": "3x faster competitive intel" }
     ],
     "common_objections": [
       { "objection": "We already use [competitor]", "response": "Our real-time data is fresher — most competitors cache for 24h+" }
