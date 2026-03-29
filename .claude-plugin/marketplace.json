@@ -9,7 +9,13 @@
     "version": "0.9.0",
     "category": "data",
     "tags": ["web-search", "extraction", "crawl", "map", "cli", "agents", "structured-data", "competitor-intelligence", "meeting-prep", "company-research", "business-intelligence"],
-    "homepage": "https://www.nimbleway.com",
-    "repository": "https://github.com/Nimbleway/agent-skills"
+    "skills": [
+      "./skills/core/nimble-web-expert",
+      "./skills/core/nimble-agent-builder",
+      "./skills/productivity/meeting-prep",
+      "./skills/business-research/competitor-intel",
+      "./skills/business-research/company-deep-dive",
+      "./skills/marketing/competitor-positioning"
+    ]
   }]
 }

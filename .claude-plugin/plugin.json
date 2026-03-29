@@ -17,7 +17,6 @@
     "./skills/business-research/",
     "./skills/marketing/"
   ],
-  "_skills_roadmap_note": "Future verticals: ./skills/sales/, ./skills/hr/, ./skills/healthcare/, ./skills/legal/, ./skills/retail/, ./skills/finance/ — add to skills array when first skill ships",
   "agents": [
     "./agents/nimble-researcher.md",
     "./agents/nimble-analyst.md"
