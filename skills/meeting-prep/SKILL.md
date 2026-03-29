@@ -93,7 +93,7 @@ so they can pick one. If neither is available, skip this silently.
 | Attendee name(s) | Yes | User input or calendar event |
 | Company | Preferred | User input or inferred from search |
 | Attendee title(s) | Optional | User input or discovered in Step 2 |
-| Meeting type | Optional | User input (discovery, demo, check-in, interview, partnership, internal) |
+| Meeting type | Required | User input, inferred, or asked (discovery, demo, check-in, interview, partnership, internal) |
 | Meeting date/time | Optional | User input |
 | Additional context | Optional | User notes ("they're evaluating our product", "board member intro") |
 
@@ -106,9 +106,24 @@ so they can pick one. If neither is available, skip this silently.
 | "board", "investor" | Board / investor |
 | "partner", "integration" | Partnership |
 | "check-in", "sync", "1:1" with colleague | Internal |
-| No signal | General external |
+| No signal | Ask (see below) |
 
-The meeting type shapes the briefing focus (see Step 5).
+**If no signal** — don't guess "general external." The meeting type gates whether the
+Value Positioning section is generated, so it's worth one question. Use AskUserQuestion:
+
+> **What's the goal of this meeting?**
+> - **Sales / discovery** — pitching, demo, exploring fit
+> - **Partnership** — integration, co-selling, joint venture
+> - **Interview** — evaluating a candidate
+> - **General / other** — networking, catch-up, or not sure
+
+Map the answer to the meeting type. If the user picks "General / other", treat as
+general external (no value positioning section).
+
+The meeting type shapes the briefing focus — specifically, it determines whether the
+Value Positioning section (Step 3.5 + Step 5) is generated. Value positioning activates
+for: **sales/discovery, partnership, board/investor**. It is skipped for: **interview,
+internal, general external**.
 
 ### Step 2: Per-Attendee Research (sub-agents)
 
@@ -193,14 +208,61 @@ rather than recent news.
 **If the company was already researched** (exists in `~/.nimble/memory/companies/`),
 load the existing profile and only run the news search for fresh updates.
 
+### Step 3.5: Value Positioning Research
+
+**Skip this step** if the meeting type is interview, internal, or general external.
+
+This step cross-references what you learned about the attendee's company (Step 3) with
+the user's own business profile to find concrete positioning angles. It requires that
+`business-profile.json` exists with at least `company.name` and `company.domain`.
+
+**Load the user's sales context** from `~/.nimble/business-profile.json`:
+- `sales_context.key_differentiators` — what makes the user's product unique
+- `sales_context.integration_partners` — tools the user's product connects with
+- `sales_context.case_studies` — similar customers and outcomes
+- `sales_context.common_objections` — pre-built objection responses
+- `competitors` — tracked competitors (check if the attendee's company uses any)
+
+If `sales_context` doesn't exist in the profile, the skill still works — the value
+positioning section will rely on web research alone rather than profile-enriched data.
+Mention at the end: "Tip: Add sales context to your profile for richer positioning
+next time."
+
+**Make these Bash calls simultaneously** (3-5 searches depending on available data):
+
+1. `nimble search --query "\"[AttendeeCompany]\" tech stack OR tools OR platform OR uses" --max-results 5 --search-depth lite`
+   → Discover what tools/platforms they use — match against `integration_partners`
+
+2. `nimble search --query "\"[AttendeeCompany]\" [UserCompany] OR [user-domain]" --max-results 5 --search-depth lite`
+   → Any existing relationship, mentions, or competitive overlap (skip if already run in Step 3)
+
+3. `nimble search --query "\"[AttendeeCompany]\" challenges OR pain points OR struggling OR migrating" --max-results 5 --search-depth lite`
+   → Pain signals to map against user's value props
+
+4. (If `competitors` list exists) `nimble search --query "\"[AttendeeCompany]\" [CompetitorName1] OR [CompetitorName2]" --max-results 5 --search-depth lite`
+   → Check if they use a competitor — critical for displacement positioning
+
+5. (If `case_studies` exist with matching industry) `nimble search --query "[UserCompany] [attendee-industry] case study OR customer story" --max-results 5 --search-depth lite`
+   → Find published case studies in the attendee's industry to reference
+
+**From the results, extract:**
+- Tools/platforms they use (for integration hooks)
+- Pain signals or challenges (for value mapping)
+- Competitor usage (for displacement angles)
+- Industry match to existing case studies (for social proof)
+
+This data feeds directly into the Value Positioning section in Step 5.
+
 ### Step 4: Deep Extraction
 
-From Steps 2-3, identify the **top 3-5 most informative URLs** across all results.
+From Steps 2-3.5, identify the **top 3-5 most informative URLs** across all results.
 Prioritize:
 - Attendee's own LinkedIn posts, articles, or talks
 - Recent company announcements directly relevant to the meeting
 - Interviews or profiles of the attendee
 - The company's about/team page (if attendee title wasn't found)
+- (If value positioning active) Pages revealing their tech stack or tool usage
+- (If value positioning active) Articles about their challenges or migration plans
 
 Make one Bash call per URL, all simultaneously:
 
@@ -248,10 +310,37 @@ going in. This is the "read nothing else" paragraph.]
   discussion — e.g., recent product launch you might discuss, funding that
   signals growth, leadership change affecting priorities]
 
+## Value Positioning
+*[Only for sales/discovery, partnership, and board/investor meetings. Omit entirely
+  for interview, internal, and general external meetings.]*
+
+### Value Mapping
+[Match their specific needs/pain points to your capabilities. Every mapping must
+  be grounded in research from Step 3.5, not generic claims.
+  Format: "They [specific finding with source] → Your product [specific capability]"]
+
+### Integration Hooks
+[Tools/platforms they use that your product integrates with. Only include
+  integrations confirmed from research (their tech stack) AND your profile
+  (integration_partners). If no overlap found, say so honestly.]
+
+### Recommended Positioning
+[2-3 sentences on how to frame your pitch for THIS specific company and person.
+  Consider: their company stage, recent news, the attendee's role and priorities,
+  and any competitive displacement opportunity. This is the "elevator pitch
+  calibrated to this meeting" paragraph.]
+
+### Reference Customers
+[Similar companies from your case_studies that match their industry, size, or
+  use case. Include the outcome/metric if available. If no matching case studies,
+  omit this subsection rather than forcing a weak match.]
+
 ## Talking Points
 [3-5 specific, actionable conversation starters grounded in the research.
   Not generic "ask about their priorities" — specific: "Ask about their
-  migration from [old tool] to [new tool] that they announced last month."]
+  migration from [old tool] to [new tool] that they announced last month."
+  When value positioning is active, weave 1-2 positioning angles into the
+  talking points naturally — don't make every talking point a sales pitch.]
 
 ## Watch Out For
 [1-3 things to be aware of — sensitive topics (recent layoffs, bad press),
@@ -263,14 +352,14 @@ going in. This is the "read nothing else" paragraph.]
 
 **Meeting type adaptations:**
 
-| Type | Emphasis | Add to briefing |
-|------|----------|-----------------|
-| Sales / discovery | Buyer authority, pain signals, competitive stack | "Qualification signals" section |
-| Interview | Candidate's work history depth, cultural signals | "Assessment angles" section |
-| Board / investor | Financial context, market position, portfolio overlap | "Key metrics to reference" section |
-| Partnership | Mutual benefit signals, integration opportunities | "Alignment opportunities" section |
-| Internal | Skip company research, focus on person's recent work | Lighter format, no company section |
-| General external | Balanced across all dimensions | Standard format above |
+| Type | Emphasis | Add to briefing | Value Positioning |
+|------|----------|-----------------|-------------------|
+| Sales / discovery | Buyer authority, pain signals, competitive stack | "Qualification signals" section | **Yes** — full section |
+| Partnership | Mutual benefit signals, integration opportunities | "Alignment opportunities" section | **Yes** — focus on integration hooks |
+| Board / investor | Financial context, market position, portfolio overlap | "Key metrics to reference" section | **Yes** — focus on recommended positioning |
+| Interview | Candidate's work history depth, cultural signals | "Assessment angles" section | No |
+| Internal | Skip company research, focus on person's recent work | Lighter format, no company section | No |
+| General external | Balanced across all dimensions | Standard format above | No |
 
 **Core rules:**
 - Every factual claim must have a source URL.
@@ -281,6 +370,14 @@ going in. This is the "read nothing else" paragraph.]
   role or background.
 - If memory has prior meeting notes, surface open items and continuity points
   prominently — this is the highest-value content.
+- Value Positioning claims must be grounded in research from Step 3.5. Never
+  generate generic positioning advice like "highlight your product's strengths."
+  Every value mapping must reference a specific finding about the attendee's
+  company paired with a specific capability from the user's profile or research.
+- If `sales_context` is missing from the profile, note it once at the end of the
+  Value Positioning section: "Tip: Run onboarding again or edit your profile at
+  `~/.nimble/business-profile.json` to add sales context (differentiators,
+  integrations, case studies) for richer positioning next time."
 
 ### Step 6: Save to Memory
 
