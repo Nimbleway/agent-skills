@@ -20,7 +20,7 @@ RULES:
 Run all searches simultaneously (make multiple Bash tool calls in a single response):
 1. nimble search --query "[Competitor] news" --focus news --start-date "[start-date]" --max-results 10 --search-depth lite
 2. nimble search --query "[Competitor] funding OR acquisition OR hiring" --start-date "[start-date]" --max-results 5 --search-depth lite
-3. nimble search --query "site:[competitor-domain] release notes OR changelog OR what's new" --max-results 3 --search-depth lite
+3. nimble search --query "release notes OR changelog OR what's new" --include-domain '["[competitor-domain]"]' --max-results 3 --search-depth lite
 4. nimble search --query "[Competitor]" --include-domain '["x.com", "linkedin.com"]' --max-results 10 --search-depth lite --time-range week
 5. nimble search --query "[Competitor] reviews G2 OR Capterra" --max-results 5 --search-depth lite
 

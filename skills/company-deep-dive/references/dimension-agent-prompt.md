@@ -66,11 +66,11 @@ Types: `product|feature|tech-stack|open-source|engineering`
 
 ```
 SEARCHES:
-1. nimble search --query "site:[domain] product OR features OR platform" --max-results 5 --search-depth lite
+1. nimble search --query "product OR features OR platform" --include-domain '["[domain]"]' --max-results 5 --search-depth lite
 2. nimble search --query "[Company] product launch OR new feature OR release" --focus news --start-date "[start-date]" --max-results 10 --search-depth lite
 3. nimble search --query "[Company] tech stack OR engineering OR architecture" --max-results 5 --search-depth lite
 4. nimble search --query "[Company] open source OR GitHub" --max-results 3 --search-depth lite
-5. nimble search --query "site:[domain] blog engineering OR tech" --max-results 3 --search-depth lite
+5. nimble search --query "blog engineering OR tech" --include-domain '["[domain]"]' --max-results 3 --search-depth lite
 ```
 
 ### Leadership & Team

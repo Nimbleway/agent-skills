@@ -100,7 +100,7 @@ the limit. Run overview searches in their own phase, not alongside agent batches
 
 **Phase A — Overview searches** (run directly, before agents):
 
-- `nimble search --query "site:[domain] about" --max-results 3 --search-depth lite`
+- `nimble search --query "about" --include-domain '["[domain]"]' --max-results 3 --search-depth lite`
 - `nimble search --query "[Company] Wikipedia OR Crunchbase OR Pitchbook" --max-results 5 --search-depth lite`
 
 These give foundational context (founding date, HQ, employee count, mission) that

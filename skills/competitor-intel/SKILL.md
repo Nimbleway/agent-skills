@@ -77,7 +77,7 @@ From the results:
 
 Verify — make two Bash calls simultaneously:
 
-- `nimble search --query "site:[domain]" --max-results 3 --search-depth lite`
+- `nimble search --query "[domain]" --include-domain '["[domain]"]' --max-results 3 --search-depth lite`
 - `nimble search --query "[domain] company" --max-results 5 --search-depth lite`
 
 **Prompt 2** — confirm company + choose competitor method (use AskUserQuestion):
@@ -102,12 +102,12 @@ integrations, preferences).
 
 ### Step 2: Research the User's Company
 
-Use `site:[domain]` to avoid noise from generic company names. Make two Bash calls:
+Use `--include-domain` to avoid noise from generic company names. Make two Bash calls:
 
-- `nimble search --query "site:[company-domain] product updates OR changelog OR releases" --start-date "[start-date]" --max-results 5 --search-depth lite`
+- `nimble search --query "product updates OR changelog OR releases" --include-domain '["[company-domain]"]' --start-date "[start-date]" --max-results 5 --search-depth lite`
 - `nimble search --query "[UserCompany] news" --focus news --start-date "[start-date]" --max-results 5 --search-depth lite`
 
-**Fallback if < 3 results:** `nimble search --query "site:[company-domain] blog" --max-results 5 --search-depth lite`
+**Fallback if < 3 results:** `nimble search --query "blog" --include-domain '["[company-domain]"]' --max-results 5 --search-depth lite`
 
 ### Step 3: Parallel Research Per Competitor (sub-agents)
 

@@ -164,7 +164,7 @@ is set. Don't silently skip any check.
 > "What's your company's website domain? (e.g., acme.com)"
 
 Verify — make two Bash calls simultaneously:
-- `nimble search --query "site:[domain]" --max-results 3 --search-depth lite`
+- `nimble search --query "[domain]" --include-domain '["[domain]"]' --max-results 3 --search-depth lite`
 - `nimble search --query "[domain] company" --max-results 5 --search-depth lite`
 
 Present what you found and confirm: "I found that **[Company]** ([domain]) is

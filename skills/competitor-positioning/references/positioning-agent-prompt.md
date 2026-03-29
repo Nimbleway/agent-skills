@@ -62,14 +62,14 @@ note "Page not accessible" and move on.
 
 PHASE 2: BLOG & CONTENT (run all simultaneously)
 
-5. nimble search --query "site:[competitor-domain] blog" --max-results 10 --search-depth lite
+5. nimble search --query "blog" --include-domain '["[competitor-domain]"]' --max-results 10 --search-depth lite
    → Find blog index or recent posts
 
 6. nimble search --query "[Competitor] blog OR content OR resources" --start-date "[start-date]" --max-results 10 --search-depth lite
    → Recent content across the web
    NOTE: Verify actual publish dates from extracted content to ensure accuracy.
 
-7. nimble search --query "site:[competitor-domain] case study OR customer story OR testimonial" --max-results 5 --search-depth lite
+7. nimble search --query "case study OR customer story OR testimonial" --include-domain '["[competitor-domain]"]' --max-results 5 --search-depth lite
    → Social proof and customer-facing messaging
 
 ---

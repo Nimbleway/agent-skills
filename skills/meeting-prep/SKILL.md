@@ -178,13 +178,13 @@ of company-deep-dive — focused on what's useful for the conversation, not a fu
 
 **Company name quoting:** If the company name contains common words that cause noisy
 results (e.g., "HD Supply", "Blue Origin", "General Electric"), wrap it in escaped
-quotes: `"\"HD Supply\" news"`. Use `site:[domain]` as an alternative anchor.
+quotes: `"\"HD Supply\" news"`. Use `--include-domain '["[domain]"]'` as an alternative anchor.
 
 Make these Bash calls simultaneously:
 
 - `nimble search --query "\"[Company]\" news" --focus news --start-date "[14-days-ago]" --max-results 8 --search-depth lite`
 - `nimble search --query "\"[Company]\" product launch OR announcement" --focus news --start-date "[14-days-ago]" --max-results 5 --search-depth lite`
-- `nimble search --query "site:[domain] about" --max-results 3 --search-depth lite`
+- `nimble search --query "about" --include-domain '["[domain]"]' --max-results 3 --search-depth lite`
 - `nimble search --query "\"[Company]\" funding OR raised OR investors" --max-results 5 --search-depth lite`
 
 If your user's company profile exists, also run:

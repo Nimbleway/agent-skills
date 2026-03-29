@@ -270,7 +270,7 @@ to report a stale one as new — trust is the product.
 ## Query Construction Tips
 
 - **Be specific:** "Acme Corp product launch 2026" > "Acme Corp"
-- **Use `site:domain`** for companies with generic names
+- **Use `--include-domain '["domain"]'`** for companies with generic names
 - **Fallback on empty:** If < 3 results, retry without `--start-date`
 - **Combine focus modes:** news + general in parallel for broader coverage
 - **Try variations:** "CompanyName" → "Company Name" → domain
