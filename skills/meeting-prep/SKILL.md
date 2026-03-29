@@ -214,8 +214,13 @@ load the existing profile and only run the news search for fresh updates.
 **Skip this step** if the meeting type is interview, internal, or general external.
 
 This step cross-references what you learned about the attendee's company (Step 3) with
-the user's own business profile to find concrete positioning angles. It requires that
+the user's own business profile to find concrete positioning angles. It works best when
 `business-profile.json` exists with at least `company.name` and `company.domain`.
+
+**If no profile exists**, skip searches that reference the user's company or competitors
+(searches 2, 4, 5) and rely on generic research (searches 1, 3) for positioning insights.
+The Value Positioning section will be thinner but still useful — pain-to-solution mapping
+and tech stack discovery work without a profile.
 
 **Load the user's sales context** from `~/.nimble/business-profile.json`:
 - `sales_context.key_differentiators` — what makes the user's product unique
