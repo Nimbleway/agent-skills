@@ -26,6 +26,22 @@ The business profile at `~/.nimble/business-profile.json` and first-run setup fl
     "notion": { "reports_page_id": "" },
     "slack": { "channel": "" }
   },
+  "sales_context": {
+    "key_differentiators": [
+      "Only platform with real-time web data access",
+      "Sub-second API response times"
+    ],
+    "integration_partners": [
+      { "name": "Snowflake", "type": "data warehouse" },
+      { "name": "Salesforce", "type": "CRM" }
+    ],
+    "case_studies": [
+      { "customer": "Fortune 500 retailer", "industry": "retail", "outcome": "3x faster competitive intel" }
+    ],
+    "common_objections": [
+      { "objection": "We already use [competitor]", "response": "Our real-time data is fresher — most competitors cache for 24h+" }
+    ]
+  },
   "last_runs": {
     "competitor-intel": "2026-03-20T14:30:00Z",
     "meeting-prep": "2026-03-22T09:00:00Z"
@@ -50,6 +66,7 @@ Key fields:
 - `industry_keywords` — for industry-level searches
 - `preferences.skip_competitors` — competitors to exclude
 - `last_runs.{skill-name}` — timestamp for time-aware searches
+- `sales_context` — value positioning data (differentiators, integrations, case studies, objections)
 - `integrations` — Notion/Slack config for report distribution
 
 ## Updating the Profile
