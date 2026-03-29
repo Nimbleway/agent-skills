@@ -41,9 +41,14 @@ For any skill using `--start-date` based on previous runs:
 - **Last run 3-14 days ago:** use the last run date → **quick refresh**
 - **Last run > 14 days ago:** 14 days ago → **full mode**
 - **Same-day repeat:** if `last_runs.{skill-name}` is today, check if a report already
-  exists at `~/.nimble/memory/reports/{skill-name}-[today].md`. If it does, **ask the
+  exists at `~/.nimble/memory/reports/{skill-name}*[today].md`. If it does, **ask the
   user before re-running**: "Already ran today. Run again for fresh data?" Don't silently
   re-run — it wastes API credits and produces near-identical output.
+  **Exception — meeting-prep:** Skip the same-day report check. Meeting-prep is
+  per-meeting, not per-day — users may prep for multiple meetings in a single day.
+  Instead, meeting-prep checks freshness at the entity level: load cached profiles
+  from `~/.nimble/memory/people/` and `~/.nimble/memory/companies/` and offer to
+  reuse recent research rather than blocking the run.
 
 ---
 

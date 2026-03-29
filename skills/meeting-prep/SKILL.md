@@ -59,6 +59,11 @@ From the results:
 - Profile exists → note the user's company (helps frame "them vs us" context).
   Load any existing person profiles from `~/.nimble/memory/people/` for attendees
   you've researched before — skip redundant searches, surface prior meeting notes.
+  Also check `~/.nimble/memory/companies/` for cached company research.
+  **No same-day report check** — meeting-prep is per-meeting, not per-day. Users
+  may prep for multiple meetings in one day. Instead, check entity freshness:
+  if a person/company profile was updated within the last 24 hours, offer to reuse
+  it: "I have a recent profile for **[Name]** from earlier today. Use it, or refresh?"
 - No profile → that's fine. Meeting prep doesn't require onboarding. Proceed to Step 1.
 
 ### Step 1: Gather Meeting Context
