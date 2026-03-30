@@ -10,8 +10,8 @@
     "category": "data",
     "tags": ["web-search", "extraction", "crawl", "map", "cli", "agents", "structured-data", "competitor-intelligence", "meeting-prep", "company-research", "business-intelligence"],
     "skills": [
-      "./skills/core/nimble-web-expert",
-      "./skills/core/nimble-agent-builder",
+      "./skills/web-search-tools/nimble-web-expert",
+      "./skills/web-search-tools/nimble-agent-builder",
       "./skills/productivity/meeting-prep",
       "./skills/business-research/competitor-intel",
       "./skills/business-research/company-deep-dive",
