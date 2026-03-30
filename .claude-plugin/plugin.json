@@ -1,6 +1,6 @@
 {
   "name": "nimble",
-  "version": "0.9.0",
+  "version": "0.10.0",
   "description": "Nimble web data toolkit and business workflow skills. Search, extract, map, and crawl any website — plus one-command business intelligence skills (competitive intel, meeting prep, company research) that turn live web data into actionable insights.",
   "author": {
     "name": "Nimble",
@@ -11,6 +11,12 @@
   "repository": "https://github.com/Nimbleway/agent-skills",
   "license": "MIT",
   "keywords": ["nimble", "web-extraction", "web-search", "web-crawl", "web-map", "scraping", "agents", "mcp", "cli", "data-extraction", "structured-data", "competitor-intelligence", "meeting-prep", "company-research", "business-intelligence"],
+  "skills": [
+    "./skills/web-search-tools/",
+    "./skills/productivity/",
+    "./skills/business-research/",
+    "./skills/marketing/"
+  ],
   "agents": [
     "./agents/nimble-researcher.md",
     "./agents/nimble-analyst.md"
