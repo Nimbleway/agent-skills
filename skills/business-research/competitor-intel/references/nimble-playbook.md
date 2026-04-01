@@ -132,7 +132,7 @@ nimble agent list --limit 100
 nimble agent list --limit 100 --search "amazon"
 
 # Inspect an agent's schema (input params + output fields)
-nimble agent get --template-name <agent_name>
+nimble agent get --agent <agent_name>
 
 # Run an agent (sync — waits for result)
 nimble agent run --agent <agent_name> --params '{"key": "value"}'
@@ -163,6 +163,28 @@ nimble agent run-async --agent <agent_name> --params '{"key": "value"}' \
 
 **Workflow:** Always `nimble agent get` before `nimble agent run` to understand the
 expected input params and output fields.
+
+## MCP Fallback (when CLI is not installed)
+
+If the Nimble CLI is not installed or unavailable, all commands above have equivalent
+MCP tools that can be called directly. Prefer CLI when available; fall back to MCP
+otherwise.
+
+| CLI command | MCP tool |
+|---|---|
+| `nimble search` | `mcp__plugin_nimble_nimble-mcp-server__nimble_search` |
+| `nimble extract` | `mcp__plugin_nimble_nimble-mcp-server__nimble_extract` |
+| `nimble extract` (async) | `mcp__plugin_nimble_nimble-mcp-server__nimble_extract_async` |
+| `nimble map` | `mcp__plugin_nimble_nimble-mcp-server__nimble_map` |
+| `nimble agent list` | `mcp__plugin_nimble_nimble-mcp-server__nimble_agents_list` |
+| `nimble agent get` | `mcp__plugin_nimble_nimble-mcp-server__nimble_agents_get` |
+| `nimble agent run` | `mcp__plugin_nimble_nimble-mcp-server__nimble_agents_run` |
+| `nimble agent run-async` | `mcp__plugin_nimble_nimble-mcp-server__nimble_agent_run_async` |
+
+**Detection:** The preflight check (`nimble --version`) determines CLI availability.
+If it returns "command not found", switch all subsequent commands to their MCP equivalents.
+MCP tools accept the same parameters as CLI flags — just pass them as tool arguments
+instead of command-line flags.
 
 ## Parallel Execution
 
