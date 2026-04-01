@@ -121,6 +121,49 @@ Response is JSON with `data.markdown` containing clean content.
 nimble map --url "https://example.com/blog" --limit 20
 ```
 
+## Agents
+
+Pre-built extraction templates for structured data from specific sites (Amazon, LinkedIn,
+Google, etc.). Use when you need structured fields rather than raw page content.
+
+```bash
+# List available agents (search by domain or vertical)
+nimble agent list --limit 100
+nimble agent list --limit 100 --search "amazon"
+
+# Inspect an agent's schema (input params + output fields)
+nimble agent get --template-name <agent_name>
+
+# Run an agent (sync — waits for result)
+nimble agent run --agent <agent_name> --params '{"key": "value"}'
+
+# Run an agent (async — returns task_id, poll for results)
+nimble agent run-async --agent <agent_name> --params '{"key": "value"}' \
+  --callback-url "https://your.server/callback"
+```
+
+**Key flags for `run` / `run-async`:**
+- `--agent` — agent name from `nimble agent list` (required)
+- `--params` — JSON object with agent input parameters (required)
+- `--localization` — enable zip_code/store_id localization (agent-dependent)
+
+**Additional flags for `run-async`:**
+- `--callback-url` — POST callback when task completes
+- `--storage-type` — `s3` or `gs`
+- `--storage-url` — destination bucket URL
+- `--storage-compress` — gzip the stored output
+- `--storage-object-name` — custom filename instead of task_id
+
+**Response:** `data.parsing` contains the structured output. Shape depends on agent type:
+- **PDP** (product/profile/detail) → flat dict
+- **SERP / list** → array of objects
+- **Google Search** → `{"entities": {"OrganicResult": [...], ...}}`
+
+**Async task states:** `pending` → `success` or `error`. Poll with `nimble task results --id <task_id>`.
+
+**Workflow:** Always `nimble agent get` before `nimble agent run` to understand the
+expected input params and output fields.
+
 ## Parallel Execution
 
 Make **multiple Bash tool calls in a single response**. Claude Code runs them in
