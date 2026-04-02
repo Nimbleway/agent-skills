@@ -1,21 +1,37 @@
 {
   "name": "nimble-plugin-marketplace",
   "owner": { "name": "Nimble", "email": "support@nimbleway.com" },
-  "metadata": { "description": "Official Nimble plugin: web data toolkit and business workflow skills" },
-  "plugins": [{
-    "name": "nimble",
-    "source": "./",
-    "description": "Web data toolkit and business workflow skills. Search, extract, map, and crawl any website — plus one-command business intelligence skills that turn live web data into actionable insights.",
-    "version": "0.10.0",
-    "category": "data",
-    "tags": ["web-search", "extraction", "crawl", "map", "cli", "agents", "structured-data", "competitor-intelligence", "meeting-prep", "company-research", "business-intelligence"],
-    "skills": [
-      "./skills/web-search-tools/nimble-web-expert",
-      "./skills/web-search-tools/nimble-agent-builder",
-      "./skills/productivity/meeting-prep",
-      "./skills/business-research/competitor-intel",
-      "./skills/business-research/company-deep-dive",
-      "./skills/marketing/competitor-positioning"
-    ]
-  }]
+  "metadata": {
+    "description": "Official Nimble plugin: web data toolkit and business workflow skills"
+  },
+  "plugins": [
+    {
+      "name": "nimble",
+      "source": "./",
+      "description": "Real-time web scraping and data extraction for AI agents - powered by Nimble. Search, extract, map, and crawl any site on the web with built-in unblocking and stealth capabilities. Get structured data from pre-built web search agents, or build your own reusable extraction workflows. The definitive web data toolkit for AI-native development.",
+      "version": "0.10.0",
+      "category": "data",
+      "tags": [
+        "web-search",
+        "extraction",
+        "crawl",
+        "map",
+        "cli",
+        "agents",
+        "structured-data",
+        "competitor-intelligence",
+        "meeting-prep",
+        "company-research",
+        "business-intelligence"
+      ],
+      "skills": [
+        "./skills/web-search-tools/nimble-web-expert",
+        "./skills/web-search-tools/nimble-agent-builder",
+        "./skills/productivity/meeting-prep",
+        "./skills/business-research/competitor-intel",
+        "./skills/business-research/company-deep-dive",
+        "./skills/marketing/competitor-positioning"
+      ]
+    }
+  ]
 }
