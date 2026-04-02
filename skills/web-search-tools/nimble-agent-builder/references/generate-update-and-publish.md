@@ -2,7 +2,7 @@
 
 Task agent workflow for creating, updating, and publishing agents with automated validation.
 
-**HARD RULE: `nimble_agents_generate`, `nimble_agents_update_from_agent`, `nimble_agents_update_session`, `nimble_agents_status`, and `nimble_agents_publish` are BANNED from the foreground conversation.** This entire workflow MUST run inside a `Task(subagent_type="general-purpose", run_in_background=False)` agent. Using `run_in_background=False` is a **temporary workaround** for a known platform limitation: background Task agents cannot access MCP tools ([#13254](https://github.com/anthropics/claude-code/issues/13254)). The Task agent runs in its own context window regardless — foreground mode only means the main conversation waits for completion. Revert to `run_in_background=True` once the platform issue is resolved. No exceptions in the meantime — not even for a single update or status check.
+**This entire workflow runs inside a Task agent** because generation takes 1-3 minutes (poll loop). The Task agent uses CLI commands (`nimble agent generate`, `get-generation`, `publish`) via Bash. If CLI is unavailable, it falls back to MCP tools.
 
 ## Overview — Closed-loop lifecycle
 
@@ -350,21 +350,23 @@ Generate/update agent workflow.
 
 export PATH="$HOME/go/bin:$PATH"
 
-**CLI tools (use via Bash — NOT MCP):**
+**CLI tools (use via Bash):**
 - `nimble agent get --template-name <name>` — get agent schema / input properties
+- `nimble agent generate --agent-name <name> --prompt "<prompt>" --url "<url>"` — create agent
+- `nimble agent generate --agent-name <name> --from-agent <name> --prompt "<prompt>"` — iterate on existing agent
+- `nimble agent get-generation --generation-id <id>` — poll generation status
+- `nimble agent publish --agent-name <name> --version-id <id>` — publish agent
 - `nimble search --query "<query>" --max-results 5` — web search (deep by default)
 - `nimble map --url <url> --limit 50` — discover URL patterns on a site
 
-**MCP tool registry (call these as MCP tool invocations, NOT bash/curl):**
-| Short name | Full MCP tool name |
-|------------|--------------------|
-| nimble_agents_generate | mcp__plugin_nimble_nimble-mcp-server__nimble_agents_generate |
-| nimble_agents_update_from_agent | mcp__plugin_nimble_nimble-mcp-server__nimble_agents_update_from_agent |
-| nimble_agents_update_session | mcp__plugin_nimble_nimble-mcp-server__nimble_agents_update_session |
-| nimble_agents_status | mcp__plugin_nimble_nimble-mcp-server__nimble_agents_status |
-| nimble_agents_publish | mcp__plugin_nimble_nimble-mcp-server__nimble_agents_publish |
+**MCP fallback (only if CLI is not installed):**
+| CLI command | MCP tool |
+|---|---|
+| nimble agent generate | mcp__plugin_nimble_nimble-mcp-server__nimble_agents_generate |
+| nimble agent get-generation | mcp__plugin_nimble_nimble-mcp-server__nimble_agents_status |
+| nimble agent publish | mcp__plugin_nimble_nimble-mcp-server__nimble_agents_publish |
 
-**CRITICAL: Use CLI (Bash) for get/search/map. Use MCP tool calls ONLY for generate/update/status/publish. NEVER use WebSearch, WebFetch, curl, or wget. NEVER construct MCP endpoint URLs manually. If an MCP tool is unavailable, report the error — do NOT work around it.**
+**CRITICAL: Prefer CLI for all operations. Use MCP only when CLI is unavailable. NEVER use WebSearch, WebFetch, curl, or wget. NEVER construct MCP endpoint URLs manually.**
 
 **Session ID:** {session_id}
 **Agent intent:** {user_prompt}
@@ -433,14 +435,13 @@ When generating multiple agents (e.g., multi-store comparison), launch Task agen
 
 ## Key rules
 
-- **Generate/update ALWAYS runs as a Task agent with `run_in_background=False`.** No exceptions. Background mode (`run_in_background=True`) breaks MCP tool access.
+- **Generate/update runs as a Task agent.** Generation takes 1-3 minutes — use a Task agent for the poll loop.
 - **AskUserQuestion happens ONCE in the foreground before launching.** The Task agent NEVER asks the user anything.
-- **Validation uses a generated SDK script** (`uv run`), NOT individual MCP tool calls.
+- **Validation uses a generated SDK script** (`uv run`), NOT individual CLI/MCP calls.
 - **5 consecutive poll errors/issue-messages → auto-trigger update loop.** Hard rule, no exceptions.
-- `nimble_agents_generate` is for initial creation only. Existing-agent refinement starts with `nimble_agents_update_from_agent`, then all recovery/follow-ups use `nimble_agents_update_session`.
-- Generate a UUID session_id once; **never create a new one.** Use the same session_id for all updates and recovery.
+- `nimble agent generate` is for initial creation. Use `--from-agent` to iterate on existing agents.
 - **All web search MUST use `nimble search`** (CLI, via Bash). NEVER use built-in `WebSearch`, `WebFetch`, or `curl` for searching. Agent listing is already done in the foreground routing step.
-- **Every Task prompt MUST include the MCP tool registry block** with full tool names. Without it, the subagent may fail to find MCP tools and fall back to bash.
+- **Every Task prompt MUST include the CLI commands block.** See the template above.
 - 80% pass rate is the minimum threshold for publishing with validation.
 - Max 2 update cycles before escalating to the user.
 - **Overall timeout: 15 minutes wall-clock.** Stop and report if exceeded. Use `max_turns=50` on Task launch.

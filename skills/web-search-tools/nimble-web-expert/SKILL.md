@@ -63,7 +63,7 @@ User request: $ARGUMENTS
 | Skill                              | Best for                                                                   | Key commands                                     |
 | ---------------------------------- | -------------------------------------------------------------------------- | ------------------------------------------------ |
 | **nimble-web-expert** (this skill) | Real-time data — fetch any URL, search, map, crawl, run existing agents    | `extract`, `search`, `map`, `crawl`, `agent run` |
-| **nimble-agent-builder**           | Build reusable agents — create, refine, publish named extraction templates | MCP: `generate`, `update`, `publish`             |
+| **nimble-agent-builder**           | Build reusable agents — create, refine, publish named extraction templates | CLI: `generate`, `get-generation`, `publish`     |
 
 **Hand off to nimble-agent-builder only when all of these are true:** the user has signalled a recurring/scheduled need, the pattern is repetitive (same site, same fields), and they've seen and approved the results. Don't ask after every extract — only when language clearly signals a recurring workflow ("I want to do this every day", "build me a pipeline", "make this reusable").
 
@@ -142,7 +142,9 @@ For the full agent list (50+ sites), see `references/nimble-agents/SKILL.md`.
 | Search the live web             | `nimble search`                              | `references/nimble-search/SKILL.md`                  |
 | Discover URLs on a site         | `nimble map`                                 | `references/nimble-map/SKILL.md`                     |
 | Bulk crawl a section            | `nimble crawl run`                           | `references/nimble-crawl/SKILL.md`                   |
-| Poll async task / fetch results | `nimble tasks get` / `nimble tasks results`  | `references/nimble-tasks/SKILL.md`                   |
+| Batch agents (up to 1,000)      | `nimble agent run-batch`                     | `references/nimble-agents/SKILL.md`                  |
+| Batch extract (up to 1,000)     | `nimble extract-batch`                       | `references/nimble-extract/SKILL.md`                 |
+| Poll tasks / batches / results  | `nimble tasks` / `nimble batches`            | `references/nimble-tasks/SKILL.md`                   |
 | Unknown selectors or XHR path   | browser-use or Playwright investigation      | `references/nimble-extract/browser-investigation.md` |
 | Proven site patterns            | copy a recipe                                | `references/recipes.md`                              |
 | 2+ inputs                       | parallel bash `&`+`wait` or generated script | `references/batch-patterns.md`                       |
@@ -217,7 +219,7 @@ Load only when needed:
 | `references/nimble-search/SKILL.md`                  | Search flags, all 8 focus modes                                               |
 | `references/nimble-map/SKILL.md`                     | Map flags, response structure                                                 |
 | `references/nimble-crawl/SKILL.md`                   | Full async crawl workflow                                                     |
-| `references/nimble-tasks/SKILL.md`                   | Poll task status, fetch results — for agent run-async and crawl page tasks    |
+| `references/nimble-tasks/SKILL.md`                   | Poll tasks/batches, fetch results — for async, batch, and crawl operations    |
 | `references/nimble-extract/browser-investigation.md` | Tier 6 — CSS selector/XHR discovery with browser-use or Playwright            |
 | `references/nimble-extract/parsing-schema.md`        | Parser types, selectors, extractors, post-processors                          |
 | `references/nimble-extract/browser-actions.md`       | Full browser action types and parameters                                      |

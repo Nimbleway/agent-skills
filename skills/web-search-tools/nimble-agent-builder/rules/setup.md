@@ -1,13 +1,22 @@
 ---
-description: One-time setup for Nimble Agent Builder MCP server. Load when the MCP prerequisite check in SKILL.md fails.
+description: One-time setup for Nimble Agent Builder. Load when neither CLI nor MCP is available.
 alwaysApply: false
 ---
 
 # Nimble Agent Builder Setup
 
-## MCP server (required)
+## CLI (preferred)
 
-The MCP server is what makes agent generation, update, and publish possible. Without it, this skill can only run existing agents via CLI.
+The Nimble CLI supports all operations including agent generation, polling, and publishing.
+
+```bash
+npm i -g @nimble-way/nimble-cli
+export NIMBLE_API_KEY="your-api-key-here"
+```
+
+## MCP server (fallback)
+
+If the CLI cannot be installed, the MCP server provides equivalent functionality.
 
 **Add with one command:**
 

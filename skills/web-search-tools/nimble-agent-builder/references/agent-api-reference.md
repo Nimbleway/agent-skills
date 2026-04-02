@@ -1,12 +1,13 @@
 # Agent API Reference
 
-Reference for Nimble agent CLI commands, MCP tools, and input parameter mapping.
+Reference for Nimble agent CLI commands and input parameter mapping.
 
-**CLI commands** (run via Bash — foreground and Task agents):
-- `nimble agent list`, `nimble agent get`, `nimble agent run`, `nimble search`
+**CLI commands** (run via Bash — primary for all operations):
+- `nimble agent list`, `nimble agent get`, `nimble agent run`, `nimble agent run-async`
+- `nimble agent generate`, `nimble agent get-generation`, `nimble agent publish`
+- `nimble search`, `nimble extract`, `nimble map`
 
-**MCP tools** (Task agents only — never call from foreground):
-- `nimble_agents_generate`, `nimble_agents_update_from_agent`, `nimble_agents_update_session`, `nimble_agents_status`, `nimble_agents_publish`
+**MCP tools** (fallback when CLI is not installed)
 
 ---
 
@@ -122,9 +123,16 @@ Structured results with titles, URLs, and content snippets.
 
 ---
 
+## MCP tools (fallback when CLI is not installed)
+
+The CLI equivalents are preferred: `nimble agent generate`, `nimble agent get-generation`,
+`nimble agent publish`. Use MCP tools below only if CLI is unavailable.
+
+---
+
 ## MCP: nimble_agents_generate
 
-Start agent creation for a new agent. **Task agents only.**
+Start agent creation for a new agent. CLI equivalent: `nimble agent generate`.
 
 ### Parameters
 
@@ -151,7 +159,7 @@ On HTTP 429/quota errors: stop and report. Do not start a new session.
 
 ## MCP: nimble_agents_update_from_agent
 
-Start refinement from an existing agent. **Task agents only.**
+Start refinement from an existing agent. CLI equivalent: `nimble agent generate --from-agent`.
 
 ### Parameters
 
@@ -175,7 +183,7 @@ At least one of `prompt`, `input_schema`, or `output_schema` is required.
 
 ## MCP: nimble_agents_update_session
 
-Continue an existing generate or update session. **Task agents only.**
+Continue an existing generate or update session. CLI equivalent: `nimble agent generate --from-agent`.
 
 ### Parameters
 
@@ -201,7 +209,7 @@ At least one of `prompt`, `input_schema`, or `output_schema` is required.
 
 ## MCP: nimble_agents_status
 
-Poll the status of a generate or update session (read-only). **Task agents only.**
+Poll the status of a generate or update session (read-only). CLI equivalent: `nimble agent get-generation`.
 
 ### Parameters
 
@@ -219,7 +227,7 @@ Poll the status of a generate or update session (read-only). **Task agents only.
 
 ## MCP: nimble_agents_publish
 
-Save a generated agent so it becomes searchable and reusable. **Task agents only.**
+Save a generated agent so it becomes searchable and reusable. CLI equivalent: `nimble agent publish`.
 
 ### Parameters
 
