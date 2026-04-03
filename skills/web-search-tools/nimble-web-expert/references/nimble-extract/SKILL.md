@@ -22,6 +22,7 @@ Fetches a URL and returns its content. The workhorse command — use for any URL
 - [Parser schemas — structured extraction](#parser-schemas--structured-extraction)
 - [Geo targeting](#geo-targeting)
 - [Async extract](#async-extract)
+- [Batch extract](#batch-extract)
 - [Parallelization](#parallelization)
 - [Response](#response)
 
@@ -287,6 +288,85 @@ async def extract():
 
 asyncio.run(extract())
 ```
+
+---
+
+## Batch extract
+
+Submit up to 1,000 URLs in a single request. Uses an `inputs` + `shared_inputs` pattern
+— shared config applies to all items, per-item values override.
+
+**Parameters:**
+
+| Parameter       | CLI flag          | Type  | Default  | Description                                                     |
+| --------------- | ----------------- | ----- | -------- | --------------------------------------------------------------- |
+| `inputs`        | `--input`         | array | required | Array of per-URL requests, each with at least `url`             |
+| `shared_inputs` | `--shared-inputs` | JSON  | —        | Defaults applied to all items (render, format, driver, delivery)|
+
+**`shared_inputs` fields:**
+
+- **Extraction defaults** (overridable per item): `render`, `driver`, `formats`, `country`, `locale`, `parse`, `parser`
+- **Delivery params** (batch-wide, not overridable): `storage_type`, `storage_url`, `storage_compress`, `storage_object_name`, `callback_url`
+
+**CLI:**
+
+```bash
+nimble extract-batch \
+  --shared-inputs render=true --shared-inputs format=markdown \
+  --input '{"url": "https://example.com/page-1"}' \
+  --input '{"url": "https://example.com/page-2"}' \
+  --input '{"url": "https://example.com/page-3"}'
+```
+
+**Python SDK:**
+
+```python
+resp = nimble.extract_batch(
+    inputs=[
+        {"url": "https://example.com/page-1"},
+        {"url": "https://example.com/page-2"},
+        {"url": "https://example.com/page-3"},
+    ],
+    shared_inputs={"render": True, "formats": ["markdown"]},
+)
+batch_id = resp["batch_id"]
+```
+
+**Node SDK:**
+
+```javascript
+const resp = await nimble.extractBatch({
+  inputs: [
+    { url: "https://example.com/page-1" },
+    { url: "https://example.com/page-2" },
+    { url: "https://example.com/page-3" },
+  ],
+  sharedInputs: { render: true, formats: ["markdown"] },
+});
+const batchId = resp.batch_id;
+```
+
+**Response:**
+
+```json
+{
+  "batch_id": "b7e1a2f3-...",
+  "batch_size": 3,
+  "tasks": [
+    { "id": "task-001-uuid", "state": "pending", "batch_id": "b7e1a2f3-..." }
+  ]
+}
+```
+
+**Polling:** Use `nimble batches progress --batch-id <batch_id>` to check completion,
+then `nimble batches get --batch-id <batch_id>` to get all task IDs, then
+`nimble tasks results --task-id <id>` for each successful task.
+See `nimble-tasks` reference for the full polling flow.
+
+**Delivery options:**
+- **Polling** — check status with batch/task IDs (default)
+- **Webhooks** — pass `callback_url` in `shared_inputs`; Nimble POSTs on completion
+- **Cloud storage** — set `storage_type` + `storage_url` in `shared_inputs`
 
 ---
 

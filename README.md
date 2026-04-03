@@ -1,7 +1,7 @@
 # Nimble Web Data Toolkit
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![Version](https://img.shields.io/badge/version-0.8.0-green)](https://github.com/Nimbleway/agent-skills)
+[![Version](https://img.shields.io/badge/version-0.10.1-green)](https://github.com/Nimbleway/agent-skills)
 
 Extract-first scraping expert, URL discovery, web search, and structured data agents via the Nimble CLI. One plugin for Claude Code, Cursor, and Vercel Agent Skills.
 
@@ -140,26 +140,26 @@ All three platforms read the same `skills/` directory. Platform-specific files c
 
 ### CLI Commands
 
-List, inspect, and run agents via the Nimble CLI (available anywhere via Bash):
+All operations are available via the Nimble CLI:
 
 | Command | Description |
 | --- | --- |
+| `nimble search --query "<q>"` | Real-time web search |
+| `nimble extract --url "<url>" --format markdown` | Extract content from a URL |
+| `nimble map --url "<url>" --limit 20` | Discover URLs on a site |
 | `nimble agent list --limit 100` | Browse available agents |
 | `nimble agent get --template-name <name>` | Get agent schema and input parameters |
-| `nimble --transform "data.parsing" agent run --agent <name> --params '{...}'` | Execute an agent and get structured results |
-| `nimble search --query "<q>"` | Real-time web search |
+| `nimble agent run --agent <name> --params '{...}'` | Execute an agent (sync) |
+| `nimble agent run-async --agent <name> --params '{...}'` | Execute an agent (async) |
+| `nimble agent run-batch --input '{...}' --input '{...}'` | Execute an agent in batch |
+| `nimble agent generate --agent-name <name> --prompt "<prompt>" --url "<url>"` | Create a new agent via natural language |
+| `nimble agent get-generation --generation-id <id>` | Poll generation status |
+| `nimble agent publish --agent-name <name> --version-id <id>` | Publish a generated agent |
 
-### MCP Tools
+### MCP Tools (fallback)
 
-Used for agent creation and publishing — **Task agents only**, never called from the foreground:
-
-| Tool | Description |
-| --- | --- |
-| `nimble_agents_generate` | Create a new agent via natural language |
-| `nimble_agents_update_from_agent` | Refine an existing agent |
-| `nimble_agents_update_session` | Continue a generate/update session |
-| `nimble_agents_status` | Poll generation status |
-| `nimble_agents_publish` | Save a generated agent for reuse |
+If the CLI is not installed, equivalent MCP tools are available as a fallback. See the
+[MCP server setup](#claude-code) for connection instructions.
 
 ## Quick Start
 
@@ -230,7 +230,7 @@ agent-skills/
 │       │   ├── batch-patterns.md
 │       │   └── error-recovery.md
 │       └── rules/
-│           ├── nimble-agent-builder.mdc  # alwaysApply: mutation tools → Task agents only
+│           ├── nimble-agent-builder.mdc  # alwaysApply: CLI primary, MCP fallback
 │           └── setup.md                 # one-time setup (loaded on demand)
 ├── .mcp.json                # Claude Code plugin MCP config
 ├── mcp.json                 # Cursor plugin MCP config

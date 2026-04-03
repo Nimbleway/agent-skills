@@ -16,6 +16,7 @@ Pre-built agents for specific sites. Always faster and more reliable than manual
 - [2. Get agent details (schema)](#2-get-agent-details-schema)
 - [3. Run agent (sync)](#3-run-agent-sync)
 - [4. Run agent (async)](#4-run-agent-async)
+- [5. Run agent (batch)](#5-run-agent-batch)
 - [Response shapes](#response-shapes)
 - [Known agents — baked-in table](#known-agents--baked-in-table)
 - [Agent gallery](#agent-gallery)
@@ -143,6 +144,84 @@ task_id = resp.task["id"]   # resp.task is a plain dict
 ```
 
 **Task states:** `pending` → `success` or `error` — poll and fetch results via `nimble-tasks` reference.
+
+---
+
+## 5. Run agent (batch)
+
+Submit up to 1,000 agent requests in a single call. Uses an `inputs` + `shared_inputs`
+pattern — shared config applies to all items, per-item params override.
+
+**Parameters:**
+
+| Parameter       | CLI flag          | Type  | Default  | Description                                           |
+| --------------- | ----------------- | ----- | -------- | ----------------------------------------------------- |
+| `inputs`        | `--input`         | array | required | Array of per-item inputs (up to 1,000)                |
+| `shared_inputs` | `--shared-inputs` | JSON  | required | Shared config: `agent` (required) + default `params`  |
+
+Each item in `inputs` contains a `params` object with agent-specific inputs (e.g. `asin`,
+`keyword`). Per-item `params` are merged with `shared_inputs.params` — per-item values
+take priority.
+
+**CLI:**
+
+```bash
+nimble agent run-batch \
+  --shared-inputs agent=amazon_serp \
+  --input '{"params": {"keyword": "iphone 15"}}' \
+  --input '{"params": {"keyword": "iphone 16"}}' \
+  --input '{"params": {"keyword": "iphone 16 pro"}}'
+```
+
+**Python SDK:**
+
+```python
+resp = nimble.agent.batch(
+    inputs=[
+        {"params": {"keyword": "iphone 15"}},
+        {"params": {"keyword": "iphone 16"}},
+        {"params": {"keyword": "iphone 16 pro"}},
+    ],
+    shared_inputs={"agent": "amazon_serp"},
+)
+batch_id = resp["batch_id"]
+```
+
+**Node SDK:**
+
+```javascript
+const resp = await nimble.agent.batch({
+  inputs: [
+    { params: { keyword: "iphone 15" } },
+    { params: { keyword: "iphone 16" } },
+    { params: { keyword: "iphone 16 pro" } },
+  ],
+  sharedInputs: { agent: "amazon_serp" },
+});
+const batchId = resp.batch_id;
+```
+
+**Response:**
+
+```json
+{
+  "batch_id": "b7e1a2f3-...",
+  "batch_size": 3,
+  "tasks": [
+    { "id": "task-001-uuid", "state": "pending", "batch_id": "b7e1a2f3-..." }
+  ]
+}
+```
+
+**Polling:** Use `nimble batches progress --batch-id <batch_id>` to check completion,
+then `nimble batches get --batch-id <batch_id>` to get all task IDs, then
+`nimble tasks results --task-id <id>` for each successful task.
+See `nimble-tasks` reference for the full polling flow.
+
+**Delivery options:**
+- **Polling** — check status with batch/task IDs (default)
+- **Webhooks** — pass `callback_url` in `shared_inputs`; Nimble POSTs on completion
+- **Cloud storage** — set `storage_type` + `storage_url` in `shared_inputs`
 
 ---
 

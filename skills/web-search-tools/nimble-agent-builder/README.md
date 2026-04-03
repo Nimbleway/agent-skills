@@ -17,8 +17,8 @@ Find, generate, update, and run structured-data agents on the Nimble platform. D
 ## Requirements
 
 - **Nimble API key** — [online.nimbleway.com/signup](https://online.nimbleway.com/signup)
-- **Nimble CLI** — for agent discovery and running (`nimble agent list/get/run`)
-- **Nimble MCP server** connected to your AI tool — for agent generation, update, and publish
+- **Nimble CLI** — for all operations (`nimble agent list/get/run/generate/publish`)
+- **Nimble MCP server** (optional fallback) — used only when CLI is not installed
 
 ## Setup
 
@@ -56,37 +56,32 @@ claude mcp add --transport http nimble-mcp-server https://mcp.nimbleway.com/mcp 
 
 The skill has two tool groups depending on what you need:
 
-**`nimble agent` (CLI) — search and run existing agents**
+**All operations use the Nimble CLI:**
 
-| Action | What happens |
+| Action | Command |
 | --- | --- |
 | Search for an agent | `nimble agent list --limit 100` → filtered by domain |
 | Inspect its schema | `nimble agent get --template-name <name>` → shows fields + params |
 | Run it | `nimble agent run --agent <name> --params '{...}'` → returns structured data |
-
-**`nimble MCP` — create, refine, and publish agents**
-
-| Action | What happens |
-| --- | --- |
-| No existing agent found | `nimble_agents_generate` → builds a new agent for the target site |
-| Existing agent needs changes | `nimble_agents_update_from_agent` or `nimble_agents_update_session` → refines in place |
-| Output validated | `nimble_agents_publish` → agent becomes available in `nimble agent list` |
-| Output invalid | loops back to refine until valid |
+| Create a new agent | `nimble agent generate --agent-name <name> --prompt "..." --url "..."` |
+| Refine an existing agent | `nimble agent generate --from-agent <name> --prompt "..."` |
+| Poll generation status | `nimble agent get-generation --generation-id <id>` |
+| Publish | `nimble agent publish --agent-name <name> --version-id <id>` |
 
 Once published, the agent is immediately available to `nimble agent run` — and to **nimble-web-expert**'s agent check.
 
 **Key rules:**
 
 - Always search for an existing agent before generating — update a close match rather than building from scratch
-- Mutation tools (`generate`, `update`, `publish`) always run inside Task agents — never in the foreground
-- All Task agents use `run_in_background=False` to preserve MCP access
+- Agent creation (generate → poll → publish) runs in a background Task agent because generation takes 1-3 minutes
+- MCP tools are available as a fallback when CLI is not installed
 - For one-off fetches or web searches, use **nimble-web-expert** instead
 
 ## Reference files
 
 | File                                        | Purpose                                                    |
 | ------------------------------------------- | ---------------------------------------------------------- |
-| `references/agent-api-reference.md`         | MCP tool reference, input parameter mapping                |
+| `references/agent-api-reference.md`         | CLI + MCP tool reference, input parameter mapping          |
 | `references/sdk-patterns.md`                | Python SDK patterns, async endpoint, batch pipelines       |
 | `references/rest-api-patterns.md`           | REST API for TypeScript, Node, curl                        |
 | `references/batch-patterns.md`              | Multi-store comparison, normalization, codegen walkthrough |

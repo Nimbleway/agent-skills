@@ -115,11 +115,169 @@ Response is JSON with `data.markdown` containing clean content.
 2. Search for the same article title on a different domain
 3. Skip — don't waste time on broken pages
 
+### Extract async & batch
+
+```bash
+# Async — submit single URL, get task_id, poll for results
+nimble extract-async --url "https://example.com/page" --render --format markdown
+
+# Batch — up to 1,000 URLs in one request
+nimble extract-batch \
+  --shared-inputs render=true --shared-inputs format=markdown \
+  --input '{"url": "https://example.com/page-1"}' \
+  --input '{"url": "https://example.com/page-2"}'
+```
+
+Poll async tasks with `nimble tasks get --task-id <id>` and fetch results with
+`nimble tasks results --task-id <id>`. Poll batches with
+`nimble batches progress --batch-id <id>`.
+
 ## Map
 
 ```bash
 nimble map --url "https://example.com/blog" --limit 20
 ```
+
+## Agents
+
+Pre-built extraction templates for structured data from specific sites (Amazon, LinkedIn,
+Google, etc.). Use when you need structured fields rather than raw page content.
+
+```bash
+# List available agents (search by domain or vertical)
+nimble agent list --limit 100
+nimble agent list --limit 100 --search "amazon"
+
+# Inspect an agent's schema (input params + output fields)
+nimble agent get --template-name <agent_name>
+
+# Run an agent (sync — waits for result)
+nimble agent run --agent <agent_name> --params '{"key": "value"}'
+
+# Run an agent (async — returns task_id, poll for results)
+nimble agent run-async --agent <agent_name> --params '{"key": "value"}' \
+  --callback-url "https://your.server/callback"
+```
+
+**Key flags for `run` / `run-async`:**
+- `--agent` — agent name from `nimble agent list` (required)
+- `--params` — JSON object with agent input parameters (required)
+- `--localization` — enable zip_code/store_id localization (agent-dependent)
+
+**Additional flags for `run-async`:**
+- `--callback-url` — POST callback when task completes
+- `--storage-type` — `s3` or `gs`
+- `--storage-url` — destination bucket URL
+- `--storage-compress` — gzip the stored output
+- `--storage-object-name` — custom filename instead of task_id
+
+**Response:** `data.parsing` contains the structured output. Shape depends on agent type:
+- **PDP** (product/profile/detail) → flat dict
+- **SERP / list** → array of objects
+- **Google Search** → `{"entities": {"OrganicResult": [...], ...}}`
+
+**Async task states:** `pending` → `success` or `error`. Poll with `nimble tasks results --task-id <task_id>`.
+
+### Agent batch
+
+```bash
+# Up to 1,000 agent requests in one call
+nimble agent run-batch \
+  --shared-inputs agent=amazon_serp \
+  --input '{"params": {"keyword": "iphone 15"}}' \
+  --input '{"params": {"keyword": "iphone 16"}}'
+```
+
+Returns a `batch_id`. Poll with `nimble batches progress --batch-id <id>`, then
+fetch individual results with `nimble tasks results --task-id <id>`.
+
+### Tasks & batches polling
+
+```bash
+# Single async task
+nimble tasks get --task-id <task_id>          # check status
+nimble tasks results --task-id <task_id>      # fetch results
+
+# Batch
+nimble batches progress --batch-id <batch_id> # lightweight progress check
+nimble batches get --batch-id <batch_id>      # all task IDs + states
+nimble batches list --limit 20                # list all batches
+nimble tasks list --limit 20                  # list all tasks
+```
+
+**Workflow:** Always `nimble agent get` before `nimble agent run` to understand the
+expected input params and output fields.
+
+## Agent Creation (generate → poll → iterate → publish)
+
+Create custom extraction agents for any website. The full lifecycle is available via CLI.
+
+```bash
+# Generate a new agent
+nimble agent generate \
+  --agent-name niche_store_pdp \
+  --prompt "Extract product name, price, rating, and first 5 reviews" \
+  --url "https://example.com/products/widget-pro"
+
+# Refine an existing agent (clone + apply new prompt)
+nimble agent generate \
+  --agent-name niche_store_pdp \
+  --from-agent niche_store_pdp \
+  --prompt "Add a discount_percentage field"
+
+# Poll generation status (async — typically 1-3 min)
+nimble agent get-generation --generation-id <generation_id>
+
+# Publish when satisfied
+nimble agent publish --agent-name niche_store_pdp --version-id <version_id>
+```
+
+**Key flags for `generate`:**
+- `--agent-name` — name for the agent (required)
+- `--prompt` — natural language description of what to extract (required)
+- `--url` — sample URL to analyze (required)
+- `--from-agent` — existing agent to clone and refine (for iteration)
+- `--input-schema` — custom input schema (optional, inferred if omitted)
+- `--output-schema` — custom output schema (optional, inferred if omitted)
+- `--metadata` — additional metadata (optional)
+
+**Generation response:** returns `id` (generation ID), `status` (`queued` → `in_progress`
+→ `success` / `failed`), and `generated_version_id` on success.
+
+**Workflow:** Generate → poll with `get-generation` until `success` → optionally iterate
+with `--from-agent` → publish with `version-id`.
+
+**Polling:** Generation takes 1-3 minutes. Run the generate → poll → publish loop as a
+background Task agent so the user isn't blocked waiting. The Task agent should poll
+`nimble agent get-generation` every 10 seconds until `status` is `success` or `failed`,
+then publish automatically (or report failure). Present results to the user when done.
+
+## MCP Fallback (when CLI is not installed)
+
+If the Nimble CLI is not installed or unavailable, all commands above have equivalent
+MCP tools that can be called directly. Prefer CLI when available; fall back to MCP
+otherwise.
+
+| CLI command | MCP tool |
+|---|---|
+| `nimble search` | `mcp__plugin_nimble_nimble-mcp-server__nimble_search` |
+| `nimble extract` | `mcp__plugin_nimble_nimble-mcp-server__nimble_extract` |
+| `nimble extract-async` | `mcp__plugin_nimble_nimble-mcp-server__nimble_extract_async` |
+| `nimble extract-batch` | SDK / REST API (`POST /v1/extract/batch`) |
+| `nimble map` | `mcp__plugin_nimble_nimble-mcp-server__nimble_map` |
+| `nimble agent list` | `mcp__plugin_nimble_nimble-mcp-server__nimble_agents_list` |
+| `nimble agent get` | `mcp__plugin_nimble_nimble-mcp-server__nimble_agents_get` |
+| `nimble agent run` | `mcp__plugin_nimble_nimble-mcp-server__nimble_agents_run` |
+| `nimble agent run-async` | `mcp__plugin_nimble_nimble-mcp-server__nimble_agent_run_async` |
+| `nimble agent run-batch` | SDK / REST API (`POST /v1/agents/batch`) |
+| `nimble agent generate` | `mcp__plugin_nimble_nimble-mcp-server__nimble_agents_generate` |
+| `nimble agent get-generation` | `mcp__plugin_nimble_nimble-mcp-server__nimble_agents_status` |
+| `nimble agent publish` | `mcp__plugin_nimble_nimble-mcp-server__nimble_agents_publish` |
+
+**Detection:** The preflight check (`nimble --version`) determines CLI availability.
+If it returns "command not found", switch all subsequent commands to their MCP equivalents.
+MCP tools accept the same parameters as CLI flags — just pass them as tool arguments
+instead of command-line flags.
 
 ## Parallel Execution
 

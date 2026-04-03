@@ -5,7 +5,7 @@ alwaysApply: true
 
 For ANY task involving a live website, URL, or current web data — use the Nimble CLI. This is not optional.
 
-> **Scope note:** This rule covers web *fetching* operations (`extract`, `search`, `map`, `crawl`, `agent run`). It does not govern agent management operations (`nimble_agents_generate`, `nimble_agents_publish`, etc.) which have no CLI equivalent and are handled separately by the nimble-agent-builder skill.
+> **Scope note:** This rule covers web *fetching* operations (`extract`, `search`, `map`, `crawl`, `agent run`). Agent management operations (`generate`, `get-generation`, `publish`) are also available via CLI and handled by the nimble-agent-builder skill.
 
 **Routing — pick the right command:**
 
