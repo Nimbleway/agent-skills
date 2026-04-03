@@ -33,7 +33,7 @@ commands/                        # Slash commands
 scripts/                         # Repo tooling
 ```
 
-Verticals are just grouping folders — add new ones freely. The plugin manifests in `.claude-plugin/` and `.cursor-plugin/` point to verticals, not individual skills.
+Verticals are just grouping folders — add new ones freely. `.claude-plugin/plugin.json` lists vertical directories explicitly; `.cursor-plugin/plugin.json` points to `./skills/` (all verticals). Update the relevant manifest when adding or removing verticals or agents.
 
 ## Commands
 
@@ -57,7 +57,7 @@ Every skill follows the [Agent Skills specification](https://agentskills.io/spec
 
 ### Naming & structure
 - Name: `{domain}-{action}`, lowercase, hyphenated. Folder name must match frontmatter `name`.
-- SKILL.md < 500 lines. Use progressive disclosure: frontmatter (always loaded) → body (on trigger) → `references/` (on demand).
+- Aim to keep SKILL.md under ~500 lines. Use progressive disclosure: frontmatter (always loaded) → body (on trigger) → `references/` (on demand).
 
 ### SKILL.md frontmatter
 ```yaml
@@ -81,7 +81,7 @@ metadata:
 - Skill-specific logic (output format, entity research, agent team composition) stays in SKILL.md.
 
 ### Data access
-- Use `nimble search` / `nimble extract` via Bash — never Anthropic's built-in WebSearch or WebFetch.
+- Use `nimble search` / `nimble extract` via Bash for web data access.
 
 ### Agent definitions (`agents/`)
 
