@@ -196,7 +196,7 @@ results:
 
 Do NOT skip this — if the run fails between steps, the user loses all progress.
 
-### Step 5: Cross-Reference and Verify
+### Step 4: Cross-Reference and Verify
 
 For each practitioner, compare claimed data against extracted NPI data. Follow the
 verification logic in `references/npi-verification-patterns.md`:
@@ -218,7 +218,7 @@ verification logic in `references/npi-verification-patterns.md`:
 See `references/npi-verification-patterns.md` for the detailed criteria for each
 status and the mismatch severity levels (Critical vs Warning).
 
-### Step 6: WSA Supplementary Verification (Optional)
+### Step 5: WSA Supplementary Verification (Optional)
 
 If the user requested regulatory verification beyond NPI lookup, or if Step 5
 left practitioners as Unverified that might benefit from additional sources:
@@ -237,7 +237,7 @@ nimble search --query "[practice-name] [city] [state]" --max-results 5 --search-
 nimble search --query "[name] [credentials] clinical trials OR FDA OR board certification" --max-results 5 --search-depth lite
 ```
 
-### Step 7: Deduplication & Confidence Scoring
+### Step 6: Deduplication & Confidence Scoring
 
 Follow the Entity Deduplication pattern from `references/nimble-playbook.md`.
 Skill-specific dedup rules are in `references/provider-extraction-patterns.md`.
@@ -254,7 +254,7 @@ Each status includes a confidence qualifier:
 - **Medium confidence** — single NPI source, likely name match
 - **Low confidence** — weak name match, partial field matches
 
-### Step 8: Output
+### Step 7: Output
 
 Present results as a verification report — showing status per practitioner with
 specific mismatch details. Group by verification status, include a "What This
@@ -275,7 +275,7 @@ review: [brief description of critical issues]. [U] could not be verified —
 |---|------|---------|------------|-------------|--------|--------|
 | 1 | Dr. Jane Smith | MD, Retinal Surgery, TX | Active (NPI 1234567890) | Verified | — | [NPI](url) |
 | 2 | Dr. John Doe | OD, Ophthalmology, CA | Active (NPI 0987654321) | Partially Verified | Subspecialty differs | [NPI](url) |
-| 3 | Dr. Alex Chen | MD, Dentistry, NY | Not Found | Unverified | No NPI match | — |
+| 3 | Dr. Alex Chen | MD, Dentistry, NY | Not Found | Unverified | No NPI match | [NPPES query](api-url) |
 | 4 | Dr. Pat Lee | DO, Cardiology, FL | Deactivated | Flagged | NPI deactivated 2024-01 | [NPI](url) |
 
 ## Flagged Practitioners (Requires Human Review)
@@ -315,7 +315,7 @@ your data quality. Suggest next steps for unverified/flagged records.]
 **Source links are mandatory.** Every verification finding must trace back to a
 source URL.
 
-### Step 9: Save to Memory
+### Step 8: Save to Memory
 
 Make all Write calls simultaneously:
 
@@ -325,14 +325,14 @@ Make all Write calls simultaneously:
   `~/.nimble/business-profile.json` (only if profile exists)
 - Clean up checkpoint (complete run) or keep (partial run)
 
-**Update sibling artifacts:** If a CSV was exported during this session (check the
-working directory for `*providers*.csv`), update it with verification columns (NPI,
-NPI Status, NPI Taxonomy, Verification Status). The user expects the CSV to reflect
-the full pipeline state — don't wait to be asked. Similarly, if `providers.json` or
-`enriched.json` exists for this slug under `~/.nimble/memory/`, merge NPI numbers
-and verification status into those files.
+**Update sibling artifacts:** If `providers.json` or `enriched.json` exists for this
+slug under `~/.nimble/memory/`, merge NPI numbers and verification status into those
+files. Generate a verified CSV export at
+`~/.nimble/memory/healthcare-providers-verify/{slug}/verified-{date}.csv` with all
+verification columns (NPI, NPI Status, NPI Taxonomy, Verification Status). Offer
+this export path in Step 9 so the user can copy it where needed.
 
-### Step 10: Share, Distribute & Follow-ups
+### Step 9: Share, Distribute & Follow-ups
 
 **Always offer distribution — do not skip.** Follow
 `references/memory-and-distribution.md` for connector detection and sharing flow.
@@ -365,7 +365,7 @@ For batch verification (10+ practitioners), use `nimble-researcher` agents
 Follow the sub-agent spawning rules from `references/nimble-playbook.md`
 (bypassPermissions, batch max 4, explicit Bash instruction, fallback on failure).
 
-**Spawn pattern:** One agent per batch of 5 practitioners. Each agent runs Steps 3-5
+**Spawn pattern:** One agent per batch of 5 practitioners. Each agent runs Steps 3-4
 for its assigned practitioners and returns verification records. Tell each agent to
 use `nimble extract-batch` for its NPI result URLs where possible — one batch call
 per agent is faster than sequential calls.
