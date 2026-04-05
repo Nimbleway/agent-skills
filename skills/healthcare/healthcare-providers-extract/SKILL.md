@@ -59,8 +59,8 @@ Run the preflight pattern from `references/nimble-playbook.md` (4 simultaneous B
 calls: date calc, today, CLI check, profile load).
 
 **Also simultaneously** — run WSA discovery and setup:
-- `mkdir -p ~/.nimble/memory/{reports,healthcare-providers/checkpoints}`
-- `ls ~/.nimble/memory/healthcare-providers/checkpoints/ 2>/dev/null`
+- `mkdir -p ~/.nimble/memory/{reports,healthcare-providers-extract/checkpoints}`
+- `ls ~/.nimble/memory/healthcare-providers-extract/checkpoints/ 2>/dev/null`
 - Run Layer 1 (vertical) and Layer 3 (general tools) WSA discovery from
   `references/wsa-reference.md`. Layer 2 (session-specific) runs after Step 1 when
   you know the user's specialty.
@@ -175,7 +175,7 @@ practice URL. Skill-specific settings:
 
 For 6+ practices, use sub-agents (see Sub-Agent Strategy below).
 
-Save checkpoint: `~/.nimble/memory/healthcare-providers/checkpoints/{slug}/mapping.json`
+Save checkpoint: `~/.nimble/memory/healthcare-providers-extract/checkpoints/{slug}/mapping.json`
 
 ### Step 4: Page Extraction
 
@@ -187,7 +187,7 @@ For all other practices, follow the Page Extraction with Retry pattern from
 `references/nimble-playbook.md`. Scale using the Scaled Execution pattern from
 the same reference.
 
-Save checkpoint: `~/.nimble/memory/healthcare-providers/checkpoints/{slug}/extraction.json`
+Save checkpoint: `~/.nimble/memory/healthcare-providers-extract/checkpoints/{slug}/extraction.json`
 
 ### Step 5: Structured Parsing
 
@@ -262,7 +262,7 @@ Extracted [N] providers from [M] practice websites. [H] with complete profiles,
 Make all Write calls simultaneously:
 
 - Report -> `~/.nimble/memory/reports/healthcare-providers-extract-{slug}-{date}.md`
-- Provider data -> `~/.nimble/memory/healthcare-providers/{slug}/providers.json`
+- Provider data -> `~/.nimble/memory/healthcare-providers-extract/{slug}/providers.json`
 - Profile -> update `last_runs.healthcare-providers-extract` in
   `~/.nimble/business-profile.json` (only if profile exists)
 - Clean up checkpoint (complete run) or keep (partial run)
