@@ -51,18 +51,18 @@ edtech, healthtech, devtools, developer tools, productivity software
 
 **Pass 1 -- Product discovery** (find the players):
 ```
-nimble search --query "{vertical} site:g2.com" --max-results 20 --search-depth standard
-nimble search --query "{vertical} site:capterra.com" --max-results 20 --search-depth standard
-nimble search --query "best {vertical} software {current_year}" --max-results 20 --search-depth standard
-nimble search --query "{vertical} site:producthunt.com" --max-results 10 --search-depth standard
-nimble search --query "{vertical} open source github" --max-results 10 --search-depth standard
+nimble search --query "{vertical} site:g2.com" --max-results 20 --search-depth lite
+nimble search --query "{vertical} site:capterra.com" --max-results 20 --search-depth lite
+nimble search --query "best {vertical} software {current_year}" --max-results 20 --search-depth lite
+nimble search --query "{vertical} site:producthunt.com" --max-results 10 --search-depth lite
+nimble search --query "{vertical} open source github" --max-results 10 --search-depth lite
 ```
 
 **Pass 2 -- Financial & traction discovery** (funding, market context):
 ```
-nimble search --query "{vertical} site:crunchbase.com" --max-results 15 --search-depth standard
-nimble search --query "{vertical} startup funding raised" --focus news --max-results 15 --search-depth standard
-nimble search --query "{vertical} market landscape players" --max-results 15 --search-depth standard
+nimble search --query "{vertical} site:crunchbase.com" --max-results 15 --search-depth lite
+nimble search --query "{vertical} startup funding raised" --focus news --max-results 15 --search-depth lite
+nimble search --query "{vertical} market landscape players" --max-results 15 --search-depth lite
 ```
 
 **Enrichment targets:**
