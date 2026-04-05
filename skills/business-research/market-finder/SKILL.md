@@ -6,7 +6,7 @@ description: |
   breakdown. Vertical presets (Healthcare, SaaS, Restaurants, Legal,
   Auto/Home) auto-select WSA routing, or use custom keywords.
 
-  Use this skill for city-wide, state-wide, or nationwide business discovery
+  Designed for city-wide, state-wide, or nationwide business discovery
   and market sizing. Common triggers: "find all X in Y", "build a list of",
   "market sizing", "account universe", "how many X in Y", "TAM for",
   "discover all", "prospect list", "ophthalmology practices in Florida",
