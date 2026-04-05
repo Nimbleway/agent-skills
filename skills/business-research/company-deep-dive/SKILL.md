@@ -33,7 +33,7 @@ allowed-tools:
   - AskUserQuestion
 metadata:
   author: Nimbleway
-  version: 0.12.0
+  version: 0.12.1
 ---
 
 # Company Deep Dive

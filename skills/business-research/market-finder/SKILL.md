@@ -1,23 +1,22 @@
 ---
 name: market-finder
 description: |
-  Discovers all businesses of a given type in a given geography using Nimble
-  WSAs. Returns a deduplicated, scored list with source counts and geographic
-  breakdown. Vertical presets (Healthcare, SaaS, Restaurants, Legal,
-  Auto/Home) auto-select WSA routing, or use custom keywords.
+  Discovers all businesses of a given type in any geography using Nimble
+  WSAs. Two modes: Discovery finds businesses from scratch; Audit compares
+  a user's existing list (Google Sheet, CSV, inline) against fresh
+  discovery, categorizing entries as matched, discovered-only, or
+  reference-only. Vertical presets (Healthcare, SaaS, Restaurants, Legal,
+  Auto/Home) auto-select WSA routing.
 
-  Designed for city-wide, state-wide, or nationwide business discovery
-  and market sizing. Common triggers: "find all X in Y", "build a list of",
-  "market sizing", "account universe", "how many X in Y", "TAM for",
-  "discover all", "prospect list", "ophthalmology practices in Florida",
-  "SaaS project management tools", "dentists in Texas",
-  "Italian restaurants in Chicago", "law firms in the Northeast".
+  Triggers: "find all X in Y", "build a list of", "market sizing",
+  "account universe", "how many X in Y", "TAM for", "discover all",
+  "audit my list", "compare against", "what am I missing", "gap analysis",
+  "verify my business list", "prospect list".
 
-  Do NOT use for competitor monitoring (use competitor-intel), company
-  deep dives (use company-deep-dive), or single-neighborhood exploration
-  with social enrichment and maps (use local-places instead).
-
-  Requires the Nimble CLI for live web data via WSAs.
+  Do NOT use for competitor monitoring — use competitor-intel instead.
+  Do NOT use for company deep dives — use company-deep-dive instead.
+  Do NOT use for neighborhood-level exploration with social enrichment
+  — use local-places instead.
 allowed-tools:
   - Bash(nimble:*)
   - Bash(date:*)
@@ -36,7 +35,7 @@ allowed-tools:
   - AskUserQuestion
 metadata:
   author: Nimbleway
-  version: 0.12.0
+  version: 0.12.1
 ---
 
 # Market Finder
@@ -68,19 +67,41 @@ From the results:
   skip enrichment and only discover new metros.
 - No profile -> fine. Market-finder doesn't require onboarding. Proceed to Step 1.
 
-### Step 1: Parse Request & Starting Questions
+### Step 1: Parse Request & Detect Mode
 
-Parse `$ARGUMENTS` for business type, geography, and any qualifiers. Extract:
+Parse `$ARGUMENTS` for business type, geography, qualifiers, and **mode detection**.
+
+#### Mode detection
+
+Check `$ARGUMENTS` for a reference list. Read `references/audit-mode.md` for the
+full detection signals and parsing rules.
+
+| Signal | Mode |
+|--------|------|
+| Google Sheet URL, CSV path, or inline list of 3+ businesses | **Audit** |
+| Explicit audit language ("audit my list", "compare against", "gap analysis") | **Audit** |
+| No reference list provided | **Discovery** (default) |
+
+If a reference list is present but intent is ambiguous, ask: "Want me to **audit**
+your list against fresh discovery, or use it as a starting point?"
+
+If audit language is detected but no reference list is provided, ask: "You mentioned
+auditing — please provide your list (Google Sheet URL, CSV file path, or paste inline)."
+Do not proceed with Audit mode until a reference list is received.
+
+#### Extract fields
 
 | Field | Required | Source |
 |-------|----------|--------|
 | Business type / vertical | Yes | User input ("dentists", "SaaS CRM tools") |
 | Geography | Yes (except SaaS) | User input ("Florida", "Austin TX", "nationwide") |
+| Reference list | Audit mode only | Google Sheet URL, CSV path, or inline |
 | Qualification criteria | Optional | User input ("must have website", "10+ reviews") |
 | Output preference | Optional | User input ("quick summary", "full dataset") |
 
 **If both type and geography are clear** from `$ARGUMENTS`, confirm briefly and
-proceed: "Finding **dentists** in **Florida**..."
+proceed: "Finding **dentists** in **Florida**..." (or "Auditing your list against
+**dentists** in **Florida**..." in Audit mode)
 
 **If partial or ambiguous**, ask one combined question (counts as 1 of max 2
 AskUserQuestion prompts):
@@ -271,6 +292,26 @@ SaaS vertical (funding + directory presence matter more than review count):
 
 Display as: `*** High`, `** Medium`, `* Low`
 
+### Step 7b: Audit Comparison (Audit mode only)
+
+**Skip this step in Discovery mode.**
+
+Read `references/audit-mode.md` for the full matching algorithm, normalization rules,
+and output template.
+
+1. **Parse reference list** — detect format (Google Sheet / CSV / inline), extract
+   records, normalize to `{name, domain, city, state, phone}` per the parsing rules
+   in `references/audit-mode.md`
+2. **Run three matching layers** in order (domain → name+city → phone). Once an entity
+   matches at any layer, stop. Track which layer produced the match.
+3. **Categorize** every entity:
+   - `matched` — in both reference list and discovery results
+   - `discovered_only` — found by discovery, not in reference list
+   - `reference_only` — in reference list, not found by discovery
+4. **Calculate coverage score** — `matched / reference_count × 100`
+
+Proceed to Step 8 with the categorized results.
+
 ### Step 8: Output
 
 ```
@@ -325,13 +366,25 @@ with tier-based grouping):
 **Source links are mandatory.** Every entity must have at least one clickable source
 URL (Google Maps link, Yelp listing, website, BBB profile, G2 page, or GitHub repo).
 
+**Audit output variant** (when in Audit mode, replace the Discovery output above):
+Use the audit output template from `references/audit-mode.md`. Key sections: Summary
+with coverage score, Matched table, Discovered Only table (expansion candidates),
+Reference Only table (coverage gaps), and "What This Means" interpretation.
+
 ### Step 9: Save to Memory
 
 Make all Write calls simultaneously:
 
+**Discovery mode:**
 - Report -> `~/.nimble/memory/reports/market-finder-{slug}-{date}.md`
 - Entity data -> `~/.nimble/memory/market-finder/{slug}/entities.json`
-  (structured JSON with all discovered + enriched records)
+
+**Audit mode:**
+- Report -> `~/.nimble/memory/reports/market-finder-audit-{slug}-{date}.md`
+- Structured data -> `~/.nimble/memory/market-finder/{slug}/audit-{date}.json`
+  (all three categories with match metadata)
+
+**Both modes:**
 - Profile -> update `last_runs.market-finder` in `~/.nimble/business-profile.json`
   (only if profile exists)
 - Clean up checkpoint (complete run) or keep (partial run)
@@ -347,11 +400,20 @@ Slack: TL;DR with total count + top 10 entities only.
 
 ### Step 11: Follow-ups
 
+**Discovery mode follow-ups:**
 - **"Tell me more about #N"** -> show full detail for that entity
 - **"Filter by [criteria]"** -> re-filter existing results
 - **"Expand to [new geography]"** -> add metros and re-run discovery
 - **"Export as CSV"** -> generate CSV from entities.json
 - **"Run enrichment on all"** -> extend enrichment beyond top entities
+- **"Audit against my existing list"** -> switch to Audit mode with this run's results
+- **"Looks good"** -> done
+
+**Audit mode follow-ups:**
+- **"Export discovered-only as CSV for outreach?"** -> CSV of expansion candidates
+- **"Investigate reference-only gaps?"** -> targeted searches for reference_only entries
+- **"Run company-deep-dive on new discoveries?"** -> deep research on discovered_only
+- **"Re-run with a different geography?"** -> audit the same list against a new area
 - **"Looks good"** -> done
 
 **Sibling skill suggestions:**
@@ -360,7 +422,6 @@ Slack: TL;DR with total count + top 10 entities only.
 > - Run `company-deep-dive` for a full 360 profile on any business from this list
 > - Run `competitor-positioning` to compare top players in this market
 > - Run `local-places` for neighborhood-level discovery with social enrichment and maps
-> - When Audit mode ships, run `market-finder` again with `--audit` to verify data quality
 
 ---
 
@@ -410,3 +471,9 @@ See `references/nimble-playbook.md` for the standard error table (missing API ke
   (e.g., "practice" could be medical, dental, legal)
 - **SaaS with geography:** If the selected preset has no geo-tiling but the user
   specified a geography, offer it as a search qualifier instead.
+- **Reference list parse failure:** If Google Sheet extraction returns garbage or
+  CSV is malformed, ask the user to paste the data inline instead.
+- **Empty reference list:** If parsed list has 0 valid records, warn and offer to
+  switch to Discovery mode.
+- **No matches found:** If all three matching layers produce zero matches, report
+  it — a 0% coverage score is valid and informative.

@@ -36,7 +36,7 @@ allowed-tools:
   - WebFetch
 license: MIT
 metadata:
-  version: "0.12.0"
+  version: "0.12.1"
   author: Nimbleway
   repository: https://github.com/Nimbleway/agent-skills
 ---
