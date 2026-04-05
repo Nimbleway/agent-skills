@@ -237,7 +237,7 @@ async def run():
 ```bash
 # Submit batch
 BATCH_ID=$(nimble agent run-batch \
-  --shared-inputs agent=amazon_serp \
+  --shared-inputs 'agent: amazon_serp' \
   --input '{"params": {"keyword": "iphone 15"}}' \
   --input '{"params": {"keyword": "iphone 16"}}' \
   | python3 -c "import json,sys; print(json.load(sys.stdin)['batch_id'])")
