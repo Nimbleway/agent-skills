@@ -34,7 +34,7 @@ allowed-tools:
   - AskUserQuestion
 metadata:
   author: Nimbleway
-  version: 0.10.1
+  version: 0.10.2
 ---
 
 # Competitor Positioning

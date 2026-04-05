@@ -111,9 +111,11 @@ Response is JSON with `data.markdown` containing clean content.
 - `--render` — render JavaScript using a browser
 
 **Extraction fallback** (if `data.markdown` is mostly JavaScript/boilerplate):
-1. Retry with `--render --format markdown`
-2. Search for the same article title on a different domain
-3. Skip — don't waste time on broken pages
+1. **Garbage check:** If `data.markdown` has < 100 characters of meaningful content
+   (after stripping nav/footer boilerplate), treat it as garbage.
+2. Retry with `--render --format markdown` (handles JS-heavy/SPA pages)
+3. If still garbage: search for the same article title on a different domain
+4. If still nothing: skip and log — never abort a batch for a single extraction failure
 
 ### Extract async & batch
 
@@ -132,11 +134,28 @@ Poll async tasks with `nimble tasks get --task-id <id>` and fetch results with
 `nimble tasks results --task-id <id>`. Poll batches with
 `nimble batches progress --batch-id <id>`.
 
-## Map
+## Map & Site Mapping
 
 ```bash
 nimble map --url "https://example.com/blog" --limit 20
 ```
+
+### Site Mapping Pattern
+
+Use `nimble map` to discover a site's page structure, then score and filter pages by
+relevance before extracting.
+
+1. **Discover:** `nimble map --url {url} --limit {cap}` — returns a list of URLs
+2. **Score:** Each skill defines a keyword/weight table for URL path segments
+   (e.g., `/providers` = High, `/about` = Medium, `/blog` = Low). Score each
+   discovered page against the table.
+3. **Filter:** Keep pages scoring above the skill's threshold. Always include the
+   homepage as a fallback.
+4. **Fallback:** If `nimble map` returns < 3 candidates, use
+   `nimble search --query "site:{domain} {keywords}" --max-results 10 --search-depth lite`
+
+Each skill provides its own keyword/weight table in SKILL.md — the pattern here is
+the discover → score → filter → fallback flow.
 
 ## Agents
 
@@ -177,6 +196,10 @@ nimble agent run-async --agent <agent_name> --params '{"key": "value"}' \
 - **Google Search** → `{"entities": {"OrganicResult": [...], ...}}`
 
 **Async task states:** `pending` → `success` or `error`. Poll with `nimble tasks results --task-id <task_id>`.
+
+**Fallback rule:** If no agent exists for the target domain, fall back to
+`nimble search` + `nimble extract`. Don't fail silently — log which domains
+lacked agent coverage so agent-builder can fill gaps later.
 
 ### Agent batch
 
@@ -254,30 +277,9 @@ then publish automatically (or report failure). Present results to the user when
 
 ## MCP Fallback (when CLI is not installed)
 
-If the Nimble CLI is not installed or unavailable, all commands above have equivalent
-MCP tools that can be called directly. Prefer CLI when available; fall back to MCP
-otherwise.
-
-| CLI command | MCP tool |
-|---|---|
-| `nimble search` | `mcp__plugin_nimble_nimble-mcp-server__nimble_search` |
-| `nimble extract` | `mcp__plugin_nimble_nimble-mcp-server__nimble_extract` |
-| `nimble extract-async` | `mcp__plugin_nimble_nimble-mcp-server__nimble_extract_async` |
-| `nimble extract-batch` | SDK / REST API (`POST /v1/extract/batch`) |
-| `nimble map` | `mcp__plugin_nimble_nimble-mcp-server__nimble_map` |
-| `nimble agent list` | `mcp__plugin_nimble_nimble-mcp-server__nimble_agents_list` |
-| `nimble agent get` | `mcp__plugin_nimble_nimble-mcp-server__nimble_agents_get` |
-| `nimble agent run` | `mcp__plugin_nimble_nimble-mcp-server__nimble_agents_run` |
-| `nimble agent run-async` | `mcp__plugin_nimble_nimble-mcp-server__nimble_agent_run_async` |
-| `nimble agent run-batch` | SDK / REST API (`POST /v1/agents/batch`) |
-| `nimble agent generate` | `mcp__plugin_nimble_nimble-mcp-server__nimble_agents_generate` |
-| `nimble agent get-generation` | `mcp__plugin_nimble_nimble-mcp-server__nimble_agents_status` |
-| `nimble agent publish` | `mcp__plugin_nimble_nimble-mcp-server__nimble_agents_publish` |
-
-**Detection:** The preflight check (`nimble --version`) determines CLI availability.
-If it returns "command not found", switch all subsequent commands to their MCP equivalents.
-MCP tools accept the same parameters as CLI flags — just pass them as tool arguments
-instead of command-line flags.
+If `nimble --version` returns "command not found", fall back to the Nimble MCP server.
+All CLI commands have MCP equivalents — discover them via the MCP tool list. MCP tools
+accept the same parameters as CLI flags, passed as tool arguments instead of flags.
 
 ## Parallel Execution
 
@@ -427,6 +429,83 @@ document). Check the primary source's date:
 
 Do not report P1 signals that fail corroboration. It's better to miss a real signal than
 to report a stale one as new — trust is the product.
+
+---
+
+## Entity Deduplication
+
+When a skill collects entity records from multiple sources (directories, search results,
+extracted pages), deduplicate before reporting. This is distinct from signal-level
+differential analysis (see `memory-and-distribution.md`) — entity dedup merges records
+for the *same entity* across sources within a single run.
+
+Three-layer pattern (generic — each skill customizes the specifics):
+
+1. **Exact ID match** — If the entity type has a canonical ID (place_id, NPI number,
+   domain), match on that first. Exact match = same entity, merge fields.
+2. **Domain normalization** — Strip `www.`, trailing slashes, protocol. Compare root
+   domains. `www.acme.com/` and `acme.com` are the same entity.
+3. **Fuzzy name + location** — Normalize names (lowercase, strip punctuation, common
+   suffixes like "Inc", "LLC"). Compare with location context if available. This catches
+   "Acme Corp" vs "ACME Corporation" at the same address.
+
+Track `source_count` per entity — entities confirmed by multiple sources are higher
+quality. Each skill defines which layers apply and any domain-specific matching rules
+in SKILL.md.
+
+---
+
+## Entity Confidence Scoring
+
+Rate each entity's data completeness so users know what to trust.
+
+Generic formula — each skill defines its own target field list (N fields):
+- **High** — All target fields found + confirmed by 2+ sources (`source_count >= 2`)
+- **Medium** — >50% of target fields found
+- **Low** — ≤50% of target fields found
+
+Display the confidence level in output (e.g., `⬤⬤⬤ High`, `⬤⬤○ Medium`,
+`⬤○○ Low`). Each skill defines its field list and may add criteria (e.g., requiring
+a verified phone number for High in a provider directory skill).
+
+---
+
+## Input Parsing Pattern
+
+Skills that accept batch input (lists of URLs, companies, locations) should detect
+the input type automatically:
+
+| Input signature | Type | Action |
+|----------------|------|--------|
+| Contains `docs.google.com/spreadsheets` | Google Sheet URL | Read sheet directly |
+| Path ends in `.csv` and file exists | CSV file | Read and parse as CSV |
+| Contains multiple URLs (one per line or comma-separated) | Inline URL list | Parse directly |
+| Otherwise | Unknown | Ask user for input |
+
+Normalize all inputs to a uniform list of records before batch processing. Don't
+assume a specific format — detect and adapt.
+
+---
+
+## Large Job Confirmation
+
+Before executing a batch, estimate total API calls from the job parameters.
+
+- **≤ 1,000 estimated calls:** Proceed without confirmation
+- **> 1,000 estimated calls:** Show the estimate and ask the user to confirm
+
+Pattern: **calculate → display → gate → execute**
+
+```
+Estimated API calls: ~2,400 (120 URLs × 1 map + 1 extract + ~18 sub-pages each)
+This may take 15-20 minutes. Proceed? [Y/n]
+```
+
+When the estimate exceeds the threshold, prefer batch APIs (`extract-batch`,
+`agent run-batch`) over individual calls — they're more efficient and have built-in
+progress tracking via `nimble batches progress`. The threshold and estimation formula
+are generic. Each skill calculates its own estimate based on input size and expected
+operations per record.
 
 ---
 

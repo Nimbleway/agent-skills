@@ -111,15 +111,175 @@ Response is JSON with `data.markdown` containing clean content.
 - `--render` — render JavaScript using a browser
 
 **Extraction fallback** (if `data.markdown` is mostly JavaScript/boilerplate):
-1. Retry with `--render --format markdown`
-2. Search for the same article title on a different domain
-3. Skip — don't waste time on broken pages
+1. **Garbage check:** If `data.markdown` has < 100 characters of meaningful content
+   (after stripping nav/footer boilerplate), treat it as garbage.
+2. Retry with `--render --format markdown` (handles JS-heavy/SPA pages)
+3. If still garbage: search for the same article title on a different domain
+4. If still nothing: skip and log — never abort a batch for a single extraction failure
 
-## Map
+### Extract async & batch
+
+```bash
+# Async — submit single URL, get task_id, poll for results
+nimble extract-async --url "https://example.com/page" --render --format markdown
+
+# Batch — up to 1,000 URLs in one request
+nimble extract-batch \
+  --shared-inputs render=true --shared-inputs format=markdown \
+  --input '{"url": "https://example.com/page-1"}' \
+  --input '{"url": "https://example.com/page-2"}'
+```
+
+Poll async tasks with `nimble tasks get --task-id <id>` and fetch results with
+`nimble tasks results --task-id <id>`. Poll batches with
+`nimble batches progress --batch-id <id>`.
+
+## Map & Site Mapping
 
 ```bash
 nimble map --url "https://example.com/blog" --limit 20
 ```
+
+### Site Mapping Pattern
+
+Use `nimble map` to discover a site's page structure, then score and filter pages by
+relevance before extracting.
+
+1. **Discover:** `nimble map --url {url} --limit {cap}` — returns a list of URLs
+2. **Score:** Each skill defines a keyword/weight table for URL path segments
+   (e.g., `/providers` = High, `/about` = Medium, `/blog` = Low). Score each
+   discovered page against the table.
+3. **Filter:** Keep pages scoring above the skill's threshold. Always include the
+   homepage as a fallback.
+4. **Fallback:** If `nimble map` returns < 3 candidates, use
+   `nimble search --query "site:{domain} {keywords}" --max-results 10 --search-depth lite`
+
+Each skill provides its own keyword/weight table in SKILL.md — the pattern here is
+the discover → score → filter → fallback flow.
+
+## Agents
+
+Pre-built extraction templates for structured data from specific sites (Amazon, LinkedIn,
+Google, etc.). Use when you need structured fields rather than raw page content.
+
+```bash
+# List available agents (search by domain or vertical)
+nimble agent list --limit 100
+nimble agent list --limit 100 --search "amazon"
+
+# Inspect an agent's schema (input params + output fields)
+nimble agent get --template-name <agent_name>
+
+# Run an agent (sync — waits for result)
+nimble agent run --agent <agent_name> --params '{"key": "value"}'
+
+# Run an agent (async — returns task_id, poll for results)
+nimble agent run-async --agent <agent_name> --params '{"key": "value"}' \
+  --callback-url "https://your.server/callback"
+```
+
+**Key flags for `run` / `run-async`:**
+- `--agent` — agent name from `nimble agent list` (required)
+- `--params` — JSON object with agent input parameters (required)
+- `--localization` — enable zip_code/store_id localization (agent-dependent)
+
+**Additional flags for `run-async`:**
+- `--callback-url` — POST callback when task completes
+- `--storage-type` — `s3` or `gs`
+- `--storage-url` — destination bucket URL
+- `--storage-compress` — gzip the stored output
+- `--storage-object-name` — custom filename instead of task_id
+
+**Response:** `data.parsing` contains the structured output. Shape depends on agent type:
+- **PDP** (product/profile/detail) → flat dict
+- **SERP / list** → array of objects
+- **Google Search** → `{"entities": {"OrganicResult": [...], ...}}`
+
+**Async task states:** `pending` → `success` or `error`. Poll with `nimble tasks results --task-id <task_id>`.
+
+**Fallback rule:** If no agent exists for the target domain, fall back to
+`nimble search` + `nimble extract`. Don't fail silently — log which domains
+lacked agent coverage so agent-builder can fill gaps later.
+
+### Agent batch
+
+```bash
+# Up to 1,000 agent requests in one call
+nimble agent run-batch \
+  --shared-inputs agent=amazon_serp \
+  --input '{"params": {"keyword": "iphone 15"}}' \
+  --input '{"params": {"keyword": "iphone 16"}}'
+```
+
+Returns a `batch_id`. Poll with `nimble batches progress --batch-id <id>`, then
+fetch individual results with `nimble tasks results --task-id <id>`.
+
+### Tasks & batches polling
+
+```bash
+# Single async task
+nimble tasks get --task-id <task_id>          # check status
+nimble tasks results --task-id <task_id>      # fetch results
+
+# Batch
+nimble batches progress --batch-id <batch_id> # lightweight progress check
+nimble batches get --batch-id <batch_id>      # all task IDs + states
+nimble batches list --limit 20                # list all batches
+nimble tasks list --limit 20                  # list all tasks
+```
+
+**Workflow:** Always `nimble agent get` before `nimble agent run` to understand the
+expected input params and output fields.
+
+## Agent Creation (generate → poll → iterate → publish)
+
+Create custom extraction agents for any website. The full lifecycle is available via CLI.
+
+```bash
+# Generate a new agent
+nimble agent generate \
+  --agent-name niche_store_pdp \
+  --prompt "Extract product name, price, rating, and first 5 reviews" \
+  --url "https://example.com/products/widget-pro"
+
+# Refine an existing agent (clone + apply new prompt)
+nimble agent generate \
+  --agent-name niche_store_pdp \
+  --from-agent niche_store_pdp \
+  --prompt "Add a discount_percentage field"
+
+# Poll generation status (async — typically 1-3 min)
+nimble agent get-generation --generation-id <generation_id>
+
+# Publish when satisfied
+nimble agent publish --agent-name niche_store_pdp --version-id <version_id>
+```
+
+**Key flags for `generate`:**
+- `--agent-name` — name for the agent (required)
+- `--prompt` — natural language description of what to extract (required)
+- `--url` — sample URL to analyze (required)
+- `--from-agent` — existing agent to clone and refine (for iteration)
+- `--input-schema` — custom input schema (optional, inferred if omitted)
+- `--output-schema` — custom output schema (optional, inferred if omitted)
+- `--metadata` — additional metadata (optional)
+
+**Generation response:** returns `id` (generation ID), `status` (`queued` → `in_progress`
+→ `success` / `failed`), and `generated_version_id` on success.
+
+**Workflow:** Generate → poll with `get-generation` until `success` → optionally iterate
+with `--from-agent` → publish with `version-id`.
+
+**Polling:** Generation takes 1-3 minutes. Run the generate → poll → publish loop as a
+background Task agent so the user isn't blocked waiting. The Task agent should poll
+`nimble agent get-generation` every 10 seconds until `status` is `success` or `failed`,
+then publish automatically (or report failure). Present results to the user when done.
+
+## MCP Fallback (when CLI is not installed)
+
+If `nimble --version` returns "command not found", fall back to the Nimble MCP server.
+All CLI commands have MCP equivalents — discover them via the MCP tool list. MCP tools
+accept the same parameters as CLI flags, passed as tool arguments instead of flags.
 
 ## Parallel Execution
 
@@ -269,6 +429,83 @@ document). Check the primary source's date:
 
 Do not report P1 signals that fail corroboration. It's better to miss a real signal than
 to report a stale one as new — trust is the product.
+
+---
+
+## Entity Deduplication
+
+When a skill collects entity records from multiple sources (directories, search results,
+extracted pages), deduplicate before reporting. This is distinct from signal-level
+differential analysis (see `memory-and-distribution.md`) — entity dedup merges records
+for the *same entity* across sources within a single run.
+
+Three-layer pattern (generic — each skill customizes the specifics):
+
+1. **Exact ID match** — If the entity type has a canonical ID (place_id, NPI number,
+   domain), match on that first. Exact match = same entity, merge fields.
+2. **Domain normalization** — Strip `www.`, trailing slashes, protocol. Compare root
+   domains. `www.acme.com/` and `acme.com` are the same entity.
+3. **Fuzzy name + location** — Normalize names (lowercase, strip punctuation, common
+   suffixes like "Inc", "LLC"). Compare with location context if available. This catches
+   "Acme Corp" vs "ACME Corporation" at the same address.
+
+Track `source_count` per entity — entities confirmed by multiple sources are higher
+quality. Each skill defines which layers apply and any domain-specific matching rules
+in SKILL.md.
+
+---
+
+## Entity Confidence Scoring
+
+Rate each entity's data completeness so users know what to trust.
+
+Generic formula — each skill defines its own target field list (N fields):
+- **High** — All target fields found + confirmed by 2+ sources (`source_count >= 2`)
+- **Medium** — >50% of target fields found
+- **Low** — ≤50% of target fields found
+
+Display the confidence level in output (e.g., `⬤⬤⬤ High`, `⬤⬤○ Medium`,
+`⬤○○ Low`). Each skill defines its field list and may add criteria (e.g., requiring
+a verified phone number for High in a provider directory skill).
+
+---
+
+## Input Parsing Pattern
+
+Skills that accept batch input (lists of URLs, companies, locations) should detect
+the input type automatically:
+
+| Input signature | Type | Action |
+|----------------|------|--------|
+| Contains `docs.google.com/spreadsheets` | Google Sheet URL | Read sheet directly |
+| Path ends in `.csv` and file exists | CSV file | Read and parse as CSV |
+| Contains multiple URLs (one per line or comma-separated) | Inline URL list | Parse directly |
+| Otherwise | Unknown | Ask user for input |
+
+Normalize all inputs to a uniform list of records before batch processing. Don't
+assume a specific format — detect and adapt.
+
+---
+
+## Large Job Confirmation
+
+Before executing a batch, estimate total API calls from the job parameters.
+
+- **≤ 1,000 estimated calls:** Proceed without confirmation
+- **> 1,000 estimated calls:** Show the estimate and ask the user to confirm
+
+Pattern: **calculate → display → gate → execute**
+
+```
+Estimated API calls: ~2,400 (120 URLs × 1 map + 1 extract + ~18 sub-pages each)
+This may take 15-20 minutes. Proceed? [Y/n]
+```
+
+When the estimate exceeds the threshold, prefer batch APIs (`extract-batch`,
+`agent run-batch`) over individual calls — they're more efficient and have built-in
+progress tracking via `nimble batches progress`. The threshold and estimation formula
+are generic. Each skill calculates its own estimate based on input size and expected
+operations per record.
 
 ---
 
