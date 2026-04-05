@@ -86,14 +86,15 @@ From the preflight results:
 
 ### Step 1: Parse Input + Starting Questions
 
-**Chained-from-extract shortcut:** Check for recent extract output:
+**Chained-from-extract shortcut:** Check for a same-day extract report:
 ```bash
-ls ~/.nimble/memory/healthcare-providers-extract/*/providers.json 2>/dev/null
+ls ~/.nimble/memory/reports/healthcare-providers-extract-*$(date +%Y-%m-%d).md 2>/dev/null
 ```
-If a `providers.json` exists from today, use it as input. The practice domains and
-page URL patterns are already known — construct individual bio page URLs from the
-site's URL convention (e.g., `/physicians/dr-{name}/`, `/retina-specialists/{name}-md/`)
-and skip Step 3 entirely. This avoids N unnecessary web searches.
+If a same-day report exists, parse the `{slug}` from the filename and load
+`~/.nimble/memory/healthcare-providers-extract/{slug}/providers.json`. The practice
+domains and page URL patterns are already known — construct individual bio page URLs
+from the site's URL convention and skip Step 3 entirely. This avoids N unnecessary
+web searches. If no same-day report exists, do not reuse old `providers.json` files.
 
 Parse `$ARGUMENTS` for input type using the Input Parsing Pattern from
 `references/nimble-playbook.md`. Key routing:
@@ -178,26 +179,11 @@ echo '{...}' > ~/.nimble/memory/healthcare-providers-enrich/checkpoints/{slug}/s
 
 ### Step 4: Extract Missing Fields
 
-Choose extraction strategy based on provider count per the Scaled Execution pattern
-from `references/nimble-playbook.md`:
-
-**1-10 URLs:** Individual parallel calls:
-```bash
-nimble extract --url "[bio-page-url]" --format markdown
-```
-
-**11+ URLs:** Use `nimble extract-batch` — one API call, server-side parallelism:
-```bash
-nimble extract-batch \
-  --shared-inputs 'format: markdown' \
-  --input '{"url": "https://example.com/dr-smith/"}' \
-  --input '{"url": "https://example.com/dr-jones/"}'
-```
-Poll with `nimble batches progress --batch-id <id>`. This is one API call vs N,
-runs server-side, and avoids rate limits.
-
-Follow the Page Extraction with Retry pattern from `references/nimble-playbook.md`
-for garbage detection and `--render` fallback.
+Choose extraction strategy based on provider count. Follow the Scaled Execution
+pattern from `references/nimble-playbook.md` — it covers individual calls (1-10),
+`extract-batch` (11-100), and the confirmation gate for larger jobs. Use the Page
+Extraction with Retry pattern from the same reference for garbage detection and
+retry logic.
 
 Parse extracted content for missing fields using the detection patterns from
 `references/provider-extraction-patterns.md` (credential regex, specialty keywords,
@@ -245,6 +231,8 @@ confidence criteria are in `references/provider-extraction-patterns.md`.
 ### Step 7: Output
 
 Present results as an enrichment diff — showing what was added to each provider.
+Group by practice, sort by confidence within each group, and include a "What This
+Means" section at the end with actionable next steps.
 
 ```markdown
 # Provider Enrichment: [N] Providers Updated
@@ -284,6 +272,10 @@ Enriched [P] of [T] providers. Added [A] total fields: [breakdown by field type]
 
 ## Sources
 [Clickable URL for every page used, grouped by provider]
+
+## What This Means
+[Actionable interpretation: which providers are ready to contact, which need more
+data, what the enrichment coverage tells you about this list's quality]
 ```
 
 **Source links are mandatory.** Every added field must trace back to a source URL.

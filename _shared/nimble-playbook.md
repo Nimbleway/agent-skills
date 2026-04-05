@@ -40,17 +40,21 @@ the second skill can skip redundant preflight work. Detect a sibling handoff by
 checking for same-day output from the upstream skill:
 
 ```bash
-ls ~/.nimble/memory/{upstream-skill}/*/providers.json 2>/dev/null
 ls ~/.nimble/memory/reports/{upstream-skill}-*$(date +%Y-%m-%d).md 2>/dev/null
 ```
+
+Use the dated report as the recency signal — data files under `memory/{skill}/` may
+not have dates in their filenames, so always verify via the report timestamp. If a
+same-day report exists, parse the slug from the filename and load the corresponding
+data files.
 
 **If same-day sibling output exists:**
 - **Skip CLI check and profile load** — they were validated minutes ago
 - **Reuse WSA Layer 1 and Layer 3 inventory** — the catalog hasn't changed. Only
   re-run Layer 2 if the specialty or context changed.
 - **Use the sibling's structured output directly** — if the upstream skill produced
-  `providers.json` with practice domains and page URLs, don't re-search for what's
-  already known. Construct URLs from known patterns instead of running N web searches.
+  data files with domains and page URLs, don't re-search for what's already known.
+  Construct URLs from known patterns instead of running N web searches.
 
 **If no same-day sibling output exists:** Run full preflight as normal.
 
