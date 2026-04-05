@@ -312,7 +312,7 @@ Submit up to 1,000 URLs in a single request. Uses an `inputs` + `shared_inputs` 
 
 ```bash
 nimble extract-batch \
-  --shared-inputs render=true --shared-inputs format=markdown \
+  --shared-inputs 'render: true' --shared-inputs 'format: markdown' \
   --input '{"url": "https://example.com/page-1"}' \
   --input '{"url": "https://example.com/page-2"}' \
   --input '{"url": "https://example.com/page-3"}'

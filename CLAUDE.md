@@ -6,7 +6,7 @@
 
 Two layers of skills:
 - **Core data skills** (`nimble-web-expert`, `nimble-agent-builder`) — the raw capabilities: fetch a URL, run a search, build a reusable extraction agent
-- **Business intelligence skills** (`competitor-intel`, `meeting-prep`, `company-deep-dive`, `competitor-positioning`) — one-command workflows that turn live web data into actionable reports
+- **Business intelligence skills** (`competitor-intel`, `meeting-prep`, `company-deep-dive`, `competitor-positioning`, `healthcare-providers-extract`) — one-command workflows that turn live web data into actionable reports
 
 Business skills are built on top of core skills — they call `nimble search` / `nimble extract` under the hood. The two core skills also form a feedback loop: web-expert runs agents built by agent-builder, and when a one-off lookup becomes recurring, agent-builder turns it into a reusable pipeline.
 
@@ -21,7 +21,9 @@ export NIMBLE_API_KEY="your-key"   # or set in ~/.claude/settings.json under env
 
 ```
 skills/
-  {vertical}/                    # Skills grouped by vertical (e.g., web-search-tools/)
+  {vertical}/                    # Skills grouped by vertical
+                                 #   business-research/, healthcare/, marketing/,
+                                 #   productivity/, web-search-tools/
     {skill-name}/                #   Each skill = SKILL.md + optional references/
       SKILL.md                   #   Skill definition (frontmatter + instructions)
       references/                #   On-demand docs, loaded when needed
@@ -80,11 +82,21 @@ metadata:
 - Never manually copy-paste shared logic into a SKILL.md — reference it via `references/`.
 - Skill-specific logic (output format, entity research, agent team composition) stays in SKILL.md.
 - When referencing shared patterns from SKILL.md, say "do X" and point to the playbook for "how X works" — don't restate the pattern inline.
+- The restatement test: if `_shared/nimble-playbook.md` changed, would SKILL.md become
+  wrong? If yes, SKILL.md is restating, not referencing. Grep for shared pattern
+  signatures (`nimble map`, `nimble extract --`, `--render`, scaling tier tables) — if
+  found inline in SKILL.md, it's a DRY violation.
 - If a skill has multiple execution paths (e.g., geographic vs SaaS), each path must be first-class with its own discovery, scoring, output template, and error handling.
 
 ### Data access
 - Use `nimble search` / `nimble extract` via Bash for web data access.
-- WSA names are dynamic (include dates/hashes) — never hardcode them in skills. Discover at runtime via `nimble agent list --search "{domain}"`, then `nimble agent get --template-name {name}` to validate params.
+- WSA names are dynamic — never hardcode them in skills or reference files, not even
+  Nimble-managed agents. Discover at runtime using 3 layers: (1) vertical search
+  (`nimble agent list --search "healthcare"`), (2) session-specific search (user's
+  specialty, directories they mention), (3) general tools (`google_maps`, `yelp`, `bbb`).
+  Validate with `nimble agent get --template-name {name}` before running.
+- WSA reference files must teach discovery strategy, not list known agents. The test:
+  if 10 new WSAs were added tomorrow, would the skill find them automatically?
 - `--search-depth` valid values: `lite`, `fast`, `deep` (not `standard`). Use `lite` for discovery, `deep` for full content.
 - `nimble agent list --limit` max is 250.
 - Always verify CLI commands with real data before writing them into SKILL.md — `--help` alone isn't enough.
@@ -116,7 +128,7 @@ Skills spawn agents with `mode: "bypassPermissions"` (they don't inherit parent 
 
 Plugin manifests live in `.claude-plugin/plugin.json` and `.cursor-plugin/plugin.json`. They declare which `skills/` directories and `agents/` files are included. Update these when adding or removing a skill.
 
-When adding a new skill, also add it to `.claude-plugin/marketplace.json` `skills` array. Version bump (minor) must touch ALL files: both plugin.json manifests, marketplace.json, README.md badge, and every `skills/**/SKILL.md` `metadata.version` field.
+When adding a new skill, also add it to `.claude-plugin/marketplace.json` `skills` array. Version bump (minor) must touch ALL files: both plugin.json manifests, marketplace.json, README.md badge, and every `skills/**/SKILL.md` `metadata.version` field. Grep for the version number itself (e.g., `0.12.1`) — some files quote it (`"0.12.1"`), some don't.
 
 ## Conventions
 

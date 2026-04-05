@@ -167,7 +167,7 @@ take priority.
 
 ```bash
 nimble agent run-batch \
-  --shared-inputs agent=amazon_serp \
+  --shared-inputs 'agent: amazon_serp' \
   --input '{"params": {"keyword": "iphone 15"}}' \
   --input '{"params": {"keyword": "iphone 16"}}' \
   --input '{"params": {"keyword": "iphone 16 pro"}}'
