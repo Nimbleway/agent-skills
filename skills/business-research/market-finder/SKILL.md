@@ -13,9 +13,10 @@ description: |
   "audit my list", "compare against", "what am I missing", "gap analysis",
   "verify my business list", "prospect list".
 
-  Do NOT use for competitor monitoring (use competitor-intel), company
-  deep dives (use company-deep-dive), or neighborhood-level exploration
-  with social enrichment (use local-places).
+  Do NOT use for competitor monitoring — use competitor-intel instead.
+  Do NOT use for company deep dives — use company-deep-dive instead.
+  Do NOT use for neighborhood-level exploration with social enrichment
+  — use local-places instead.
 allowed-tools:
   - Bash(nimble:*)
   - Bash(date:*)
