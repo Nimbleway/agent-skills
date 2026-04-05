@@ -48,7 +48,7 @@ Parse the markdown table. Map columns by header name (case-insensitive):
 ### CSV file
 
 ```bash
-cat {file_path}
+cat -- "{file_path}"
 ```
 
 Parse as CSV. Same column mapping as above.
