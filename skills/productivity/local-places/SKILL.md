@@ -26,6 +26,7 @@ allowed-tools:
   - Bash(echo:*)
   - Bash(jq:*)
   - Bash(ls:*)
+  - Bash(open:*)
   - Read
   - Write
   - Edit
@@ -121,14 +122,14 @@ Before any API calls, resolve the location to avoid wasted searches.
 **If unambiguous**, infer the full location (city + state/country) and confirm inline:
 "Searching **Williamsburg, Brooklyn, NY**..."
 
-After disambiguation, derive the `neighborhood-slug` for checkpointing:
-lowercase, hyphenated (e.g., `williamsburg-brooklyn-ny`).
+After disambiguation, derive the `slug` for checkpointing and file paths:
+lowercase, hyphenated, includes city + state/country (e.g., `williamsburg-brooklyn-ny`).
 
 ### Step 3: Check for Existing Checkpoint
 
 Follow the Checkpointing & Resume pattern from `references/memory-and-distribution.md`.
 
-Check: `cat ~/.nimble/memory/local-places/checkpoints/{neighborhood-slug}/discovery.json 2>/dev/null`
+Check: `cat ~/.nimble/memory/local-places/checkpoints/{slug}/discovery.json 2>/dev/null`
 
 - **Checkpoint found** -> offer: "Found previous run ({N} places from {date}).
   Resume and fill gaps, or start fresh?"
@@ -138,6 +139,19 @@ Check: `cat ~/.nimble/memory/local-places/checkpoints/{neighborhood-slug}/discov
 
 Read `references/wsa-pipeline.md` for the full WSA-to-phase mapping and category
 detection logic.
+
+**Validate WSA schemas first** -- run simultaneously to confirm param names:
+
+```bash
+nimble agent get --template-name google_maps_search
+```
+
+```bash
+nimble agent get --template-name yelp_serp
+```
+
+Use the returned parameter names in the calls below. The examples show expected
+params, but always confirm with `nimble agent get` since WSA schemas may change.
 
 **Primary discovery** -- run simultaneously:
 
@@ -149,7 +163,9 @@ nimble agent run --agent google_maps_search --params '{"query": "[place-type] in
 nimble agent run --agent yelp_serp --params '{"search_query": "[place-type]", "location": "[location]"}'
 ```
 
-**Tertiary (if available):**
+**Tertiary (conditional):** Run `bbb_org_business_search` only if primary + secondary
+return < 10 combined unique results, or if the user explicitly asked for
+credibility/trust data:
 
 ```bash
 nimble agent run --agent bbb_org_business_search --params '{"query": "[place-type] [location]"}'
@@ -204,18 +220,30 @@ Google Maps discovery. Save checkpoint:
 **Auto-trigger** when the place type category matches food/drink keywords.
 See `references/wsa-pipeline.md` for the category detection logic.
 
-If triggered, run simultaneously:
+If triggered, search for delivery listings first, then fetch details:
+
+**Discovery** -- run simultaneously:
 
 ```bash
 nimble agent run --agent doordash_serp --params '{"query": "[place-name] [location]"}'
 ```
 
 ```bash
-nimble agent run --agent uber_eats_pdp --params '{"url": "[uber-eats-url]"}'
+nimble search --query "[place-name] [location] site:ubereats.com" --max-results 1 --search-depth lite
 ```
 
-Only run for places that appear on delivery platforms. Skip if category is not
-food/drink (gyms, yoga studios, etc.).
+**Detail** -- for places found on delivery platforms, fetch full details:
+
+```bash
+nimble agent run --agent doordash_pdp --params '{"url": "[doordash-url-from-serp]"}'
+```
+
+```bash
+nimble agent run --agent uber_eats_pdp --params '{"url": "[uber-eats-url-from-search]"}'
+```
+
+Only run detail calls for places that returned a valid delivery URL. Skip if
+category is not food/drink (gyms, yoga studios, etc.).
 
 ### Step 8: Deduplication & Confidence Scoring
 
