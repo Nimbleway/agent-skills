@@ -13,10 +13,10 @@ description: |
   Accepts practice URLs (pasted, CSV, Google Sheet) or discovers practices
   via Google Maps when given specialty + location. Single sites or 100+ URLs.
 
-  Do NOT use for filling data gaps — use healthcare-providers-enrich.
-  Do NOT use for credential validation — use healthcare-providers-verify.
-  Do NOT use for discovering practices — use market-finder or local-places.
-  Do NOT use for general extraction — use nimble-web-expert.
+  Do NOT use for filling data gaps — use healthcare-providers-enrich instead.
+  Do NOT use for credential validation — use healthcare-providers-verify instead.
+  Do NOT use for discovering practices — use market-finder or local-places instead.
+  Do NOT use for general extraction — use nimble-web-expert instead.
 allowed-tools:
   - Bash(nimble:*)
   - Bash(date:*)
