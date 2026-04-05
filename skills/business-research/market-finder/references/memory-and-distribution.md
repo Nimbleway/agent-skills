@@ -1,0 +1,254 @@
+# Memory & Distribution
+
+How skills persist knowledge across sessions and distribute reports to external tools.
+
+---
+
+## Memory Architecture
+
+All persistence lives under `~/.nimble/` — never touch user project files.
+
+```
+~/.nimble/
+├── business-profile.json          # Tier 1: Hot cache (see profile-and-onboarding.md)
+└── memory/                        # Tier 2: Deep storage (loaded on demand)
+    ├── competitors/               # Accumulated intel per competitor
+    ├── people/                    # Contact profiles for meeting prep
+    ├── companies/                 # Deep-dive research results
+    ├── reports/                   # Timestamped full skill outputs
+    ├── positioning/               # Per-competitor positioning snapshots
+    └── glossary.md                # Industry terms and jargon
+```
+
+**Tier 1** (`business-profile.json`) — loaded every session. See
+`references/profile-and-onboarding.md` for the full schema and update patterns.
+
+**Tier 2** (`memory/`) — loaded on demand when a skill needs deeper context.
+
+## Deep Storage Formats
+
+### competitors/
+
+One file per competitor. Append new findings under dated headers — never overwrite.
+
+```markdown
+# WidgetCo
+
+## Key Facts
+- Domain: widgetco.com
+- HQ: San Francisco
+- Funding: Series C ($45M, Jan 2026)
+- CEO: Jane Smith
+
+## Signals
+### 2026-03-20
+- Launched new enterprise tier pricing — [source URL]
+- Hired VP of Sales from CRMHub — [source URL]
+
+### 2026-03-13
+- Announced partnership with AWS — [source URL]
+```
+
+### people/
+
+One file per contact. Used by meeting-prep skill.
+
+```markdown
+# Alex Kim
+
+## Current Role
+VP of Engineering at WidgetCo (since 2024)
+
+## Background
+- Previously: Senior Director at CloudCorp (2019-2024)
+- Education: MS Computer Science, top-10 program
+
+## Notes from Previous Meetings
+### 2026-03-15
+- Interested in our API performance benchmarks
+- Prefers technical depth over high-level summaries
+```
+
+### companies/
+
+Detailed company profiles from deep-dive research.
+
+```markdown
+# Target Corp
+
+## Overview
+- Industry: Enterprise SaaS | Founded: 2015 | HQ: Austin, TX | ~500 employees
+
+## Financials
+- Last funding: Series B ($30M, Sep 2025) | Revenue: Est. $40M ARR
+
+## Recent News
+(dated entries, same format as competitors/)
+```
+
+### reports/
+
+Timestamped **full** skill outputs. Save the complete briefing, not a summary.
+
+**Naming:** `{skill-name}-{YYYY-MM-DD}.md` — if a skill may produce multiple reports
+per day (e.g., meeting-prep for different companies), add a qualifier:
+`{skill-name}-{qualifier}-{YYYY-MM-DD}.md`. The qualifier is defined in each skill's
+SKILL.md (e.g., company slug for meeting-prep).
+
+### glossary.md
+
+Industry terms and jargon. Updated when the user uses unfamiliar terms.
+
+## Bootstrapping (First Run)
+
+```bash
+mkdir -p ~/.nimble/memory/{competitors,people,companies,reports,positioning}
+```
+
+Create stub files for each competitor from the onboarding flow.
+
+## Differential Analysis
+
+The key feature across all skills — only surface what's genuinely new.
+
+### Dedup Lifecycle
+
+Memory loading happens at two points in every skill:
+
+1. **Step 0 (Preflight):** Load relevant memory files for context. This tells the skill
+   what's already known so it can pass known signals to sub-agents for dedup during
+   research. For example, competitor-intel loads `~/.nimble/memory/competitors/*.md`;
+   meeting-prep loads `~/.nimble/memory/people/*.md`.
+
+2. **Analysis step (before report generation):** Final dedup check. Compare all findings
+   from research against loaded memory. Only signals classified as NEW or UPDATED (per
+   the freshness classification in `nimble-playbook.md`) make it into the report.
+
+### What "new" means
+
+- "WidgetCo raised a Series C" is noise if already in memory
+- "WidgetCo just hired a new CTO" is a new signal worth highlighting
+- "WidgetCo raised a Series C" with a new detail (amount, lead investor) is an UPDATE
+
+## Learning from Corrections
+
+When the user corrects the skill, update both tiers:
+
+| Correction | Profile update | Deep storage update |
+|------------|---------------|-------------------|
+| "Skip CompanyX" | `preferences.skip_competitors` | Archive file |
+| "Track CompanyY" | `competitors` list | Create stub file |
+| "That info is wrong" | — | Update the file |
+| "ARR means Annual Recurring Revenue" | — | Add to `glossary.md` |
+| "I prefer bullet points" | `preferences.output_format` | — |
+
+Always confirm the update to the user.
+
+## Checkpointing & Resume
+
+For multi-phase pipelines (map → extract → enrich → score), save intermediate results
+so failed or interrupted runs can resume without re-doing completed work.
+
+### Storage
+
+```
+~/.nimble/memory/{skill-name}/checkpoints/{slug}/
+├── map.json           # Phase 1 output
+├── extract.json       # Phase 2 output
+└── enrich.json        # Phase 3 output
+```
+
+`{slug}` is a stable identifier derived from the run's input parameters (e.g., URL
+domain, search query hash). Same input = same slug = resumable.
+
+### Checkpoint format
+
+Each phase file is JSON:
+```json
+{
+  "phase": "extract",
+  "status": "complete",
+  "timestamp": "2026-04-03T15:30:00Z",
+  "record_count": 47,
+  "data": [ ... ]
+}
+```
+
+`status` is `"complete"` or `"partial"` (interrupted mid-phase).
+
+### Resume logic
+
+On re-run with the same parameters:
+1. Detect existing checkpoint directory for the slug
+2. Offer: **"Found previous run (47 records from Apr 3). Resume and fill gaps, or start fresh?"**
+3. If resume: skip phases where `status = "complete"`, re-run where `status = "partial"`
+   or file is missing
+4. If start fresh: delete the checkpoint directory and begin from phase 1
+
+### Rules
+
+- One checkpoint directory per unique run (keyed by slug)
+- Clean up checkpoints older than 30 days on skill startup
+- Don't checkpoint trivial runs (< 5 records) — the overhead isn't worth it
+
+## Rules
+
+- **Never touch user project files.** All persistence under `~/.nimble/`.
+- **Append, don't overwrite.** Deep storage grows over time with dated sections.
+- **Read on demand.** Only load files when the skill actually needs them.
+- **Update profile after every run.** At minimum, `last_runs` timestamp.
+- **Handle missing gracefully.** If a file doesn't exist, create it.
+
+---
+
+## Source Links Enforcement
+
+**Every signal in every report must include a clickable source URL.** This is a hard
+requirement — reports without source links are incomplete and must not be distributed.
+
+What counts as a source link:
+- A direct URL to the article, press release, or page where the signal was found
+- The URL returned by `nimble search` in the result's `url` field
+- For extracted content, the URL passed to `nimble extract --url`
+
+What does NOT count:
+- A company's homepage (unless the signal is specifically about homepage content)
+- A generic domain without a path (e.g., `https://widgetco.com`)
+- "Source: web search" or any non-clickable attribution
+
+If a signal has no source URL after research and extraction, drop it from the report.
+An unsourced signal is worse than a missing one — it can't be verified and erodes trust.
+
+---
+
+## Report Distribution
+
+After presenting output, offer sharing based on available MCP connectors.
+
+### Connector Detection
+
+Check before presenting options:
+- **Notion:** `mcp__plugin_Notion_notion__notion-create-pages`
+- **Slack:** Any Slack MCP tool
+
+### Sharing Flow
+
+Use `AskUserQuestion` with only the available options:
+
+> **Share this report?**
+> - **Save to Notion** — full report as a page
+> - **Send to Slack** — TL;DR to a channel
+> - **Both**
+> - **Skip**
+
+**Notion:** Create a dated subpage. If `integrations.notion.reports_page_id` exists
+in the profile, use it as parent. Otherwise ask and save the ID for next time.
+
+**Slack:** Post **TL;DR only** — Slack is for alerts, not full reports. If
+`integrations.slack.channel` exists, use it. Otherwise ask and save.
+
+**Neither available** (first run only):
+> **Tip:** If you connect a Notion or Slack MCP server, I can save reports or post
+> TL;DRs to your team automatically.
+
+Don't repeat this tip on subsequent runs.

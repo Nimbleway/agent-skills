@@ -487,25 +487,64 @@ assume a specific format — detect and adapt.
 
 ---
 
-## Large Job Confirmation
+## Scaled Execution
 
-Before executing a batch, estimate total API calls from the job parameters.
+When a skill needs to run multiple WSA or API calls, choose the execution tier
+based on the estimated number of requests. Each skill calculates its own estimate
+from input size and operations per record.
 
-- **≤ 1,000 estimated calls:** Proceed without confirmation
-- **> 1,000 estimated calls:** Show the estimate and ask the user to confirm
+| Estimated calls | Strategy | How |
+|----------------|----------|-----|
+| **1–10** | Individual calls | `nimble agent run` in parallel Bash calls (max 4 concurrent) |
+| **11–100** | Single batch | `nimble agent run-batch` — one API call, server-side parallelism, poll for results |
+| **100–1,000** | Multiple batches | Split into batches of up to 1,000. Use sub-agents to prepare inputs and process results |
+| **>1,000** | Confirmation gate + batches | Show estimate, ask user to confirm before proceeding, then execute via batches |
 
-Pattern: **calculate → display → gate → execute**
+### Individual calls (1–10)
+
+Run up to 4 concurrent Bash calls per the Parallel Execution rules above.
+
+### Batch calls (11+)
+
+```bash
+nimble agent run-batch \
+  --shared-inputs agent={agent_name} \
+  --input '{"params": {...}}' \
+  --input '{"params": {...}}'
+```
+
+Returns a `batch_id`. Poll progress:
+```bash
+nimble batches progress --batch-id {batch_id}
+```
+
+Fetch results when complete:
+```bash
+nimble batches get --batch-id {batch_id}
+nimble tasks results --task-id {task_id}
+```
+
+Batch API handles up to 1,000 requests per call with server-side orchestration.
+For >1,000 requests, split into multiple batch calls.
+
+### Large job confirmation (>1,000)
+
+Before executing, show the estimate and ask the user to confirm:
 
 ```
-Estimated API calls: ~2,400 (120 URLs × 1 map + 1 extract + ~18 sub-pages each)
-This may take 15-20 minutes. Proceed? [Y/n]
+Estimated API calls: ~2,400 (120 locations × 3 WSAs per location × ~7 enrichment)
+This is a large job. Proceed? [Y/n]
 ```
 
-When the estimate exceeds the threshold, prefer batch APIs (`extract-batch`,
-`agent run-batch`) over individual calls — they're more efficient and have built-in
-progress tracking via `nimble batches progress`. The threshold and estimation formula
-are generic. Each skill calculates its own estimate based on input size and expected
-operations per record.
+Pattern: **estimate → display → gate → execute**
+
+### Why batch over individual calls
+
+Individual `nimble agent run` calls each require a separate HTTP round-trip and
+Bash tool invocation. At scale (dozens+) this is slow, unreliable, and wasteful
+on a local machine. Batch APIs move orchestration server-side — one API call
+triggers all requests, and you poll for results. Always prefer batch when above
+the individual threshold.
 
 ---
 
