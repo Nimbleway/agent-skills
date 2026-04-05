@@ -85,6 +85,10 @@ full detection signals and parsing rules.
 If a reference list is present but intent is ambiguous, ask: "Want me to **audit**
 your list against fresh discovery, or use it as a starting point?"
 
+If audit language is detected but no reference list is provided, ask: "You mentioned
+auditing — please provide your list (Google Sheet URL, CSV file path, or paste inline)."
+Do not proceed with Audit mode until a reference list is received.
+
 #### Extract fields
 
 | Field | Required | Source |
