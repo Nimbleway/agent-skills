@@ -9,7 +9,7 @@
       "name": "nimble",
       "source": "./",
       "description": "Real-time web search and data extraction for AI agents \u2013 powered by Nimble. Search, extract, map, and crawl any site on the web with built-in stealth, JS rendering, and retries. Get clean, structured web data from any public webpage with pre-built Web Search Agents, or build your own reusable extraction templates. The definitive web data toolkit for AI-native development.",
-      "version": "0.13.0",
+      "version": "0.14.0",
       "category": "data",
       "tags": [
         "web-search",
@@ -33,7 +33,8 @@
         "./skills/business-research/company-deep-dive",
         "./skills/business-research/market-finder",
         "./skills/marketing/competitor-positioning",
-        "./skills/healthcare/healthcare-providers-extract"
+        "./skills/healthcare/healthcare-providers-extract",
+        "./skills/healthcare/healthcare-providers-enrich"
       ]
     }
   ]

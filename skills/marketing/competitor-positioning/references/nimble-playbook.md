@@ -33,6 +33,30 @@ See `references/profile-and-onboarding.md` for the full prerequisite checks with
 install/upgrade flows. Don't skip version validation — outdated CLI versions may be
 missing flags or features that skills depend on.
 
+## Sibling Handoff
+
+When skills in the same family chain together (e.g., extract → enrich → verify),
+the second skill can skip redundant preflight work. Detect a sibling handoff by
+checking for same-day output from the upstream skill:
+
+```bash
+ls ~/.nimble/memory/{upstream-skill}/*/providers.json 2>/dev/null
+ls ~/.nimble/memory/reports/{upstream-skill}-*$(date +%Y-%m-%d).md 2>/dev/null
+```
+
+**If same-day sibling output exists:**
+- **Skip CLI check and profile load** — they were validated minutes ago
+- **Reuse WSA Layer 1 and Layer 3 inventory** — the catalog hasn't changed. Only
+  re-run Layer 2 if the specialty or context changed.
+- **Use the sibling's structured output directly** — if the upstream skill produced
+  `providers.json` with practice domains and page URLs, don't re-search for what's
+  already known. Construct URLs from known patterns instead of running N web searches.
+
+**If no same-day sibling output exists:** Run full preflight as normal.
+
+This pattern is optional — skills MUST still work standalone without sibling output.
+The handoff is a fast path, not a requirement.
+
 ## Smart Date Windowing
 
 For any skill using `--start-date` based on previous runs:
@@ -78,11 +102,11 @@ nimble search --query "company name" --search-depth deep --max-results 5
 - `--query` — search query string (required)
 - `--focus` — `general`, `news`, `shopping`, `social`, `coding`, `academic`.
   **`social`** searches social platform people indices directly (LinkedIn, X) — best
-  for finding specific people. Not available on all plans; if it errors, fall back to
-  `--include-domain '["linkedin.com"]'`.
+  for finding specific people. If it errors, use
+  `--include-domain '["linkedin.com"]'` as an alternative approach.
 - `--max-results` — max results to return
 - `--start-date` / `--end-date` — date filters (YYYY-MM-DD)
-- `--search-depth` — `lite` (cheapest, 1 credit), `deep` (1 + 1/page), `fast` (enterprise only)
+- `--search-depth` — `lite` (1 credit), `deep` (1 + 1/page)
 - `--include-domain` — JSON array of domains, e.g., `'["x.com", "linkedin.com"]'`
 - `--time-range` — e.g., `week`
 - `--country` — geo-targeted results (e.g., "US", "IL")
@@ -502,8 +526,8 @@ from input size and operations per record.
 
 | Estimated calls | Strategy | How |
 |----------------|----------|-----|
-| **1–10** | Individual calls | `nimble agent run` in parallel Bash calls (max 4 concurrent) |
-| **11–100** | Single batch | `nimble agent run-batch` — one API call, server-side parallelism, poll for results |
+| **1–10** | Individual calls | Parallel Bash calls (max 4 concurrent) |
+| **11–100** | Single batch | `extract-batch` or `agent run-batch` — one API call, server-side parallelism, poll for results |
 | **100–1,000** | Multiple batches | Split into batches of up to 1,000. Use sub-agents to prepare inputs and process results |
 | **>1,000** | Confirmation gate + batches | Show estimate, ask user to confirm before proceeding, then execute via batches |
 
@@ -513,6 +537,17 @@ Run up to 4 concurrent Bash calls per the Parallel Execution rules above.
 
 ### Batch calls (11+)
 
+**For page extraction (11+ URLs):**
+```bash
+nimble extract-batch \
+  --shared-inputs 'format: markdown' \
+  --input '{"url": "https://example.com/page-1"}' \
+  --input '{"url": "https://example.com/page-2"}'
+```
+
+Add `--shared-inputs 'render: true'` if pages need JavaScript rendering.
+
+**For WSA/agent calls (11+ entities):**
 ```bash
 nimble agent run-batch \
   --shared-inputs 'agent: {agent_name}' \
@@ -520,7 +555,7 @@ nimble agent run-batch \
   --input '{"params": {...}}'
 ```
 
-Returns a `batch_id`. Poll progress:
+Both return a `batch_id`. Poll progress:
 ```bash
 nimble batches progress --batch-id {batch_id}
 ```
@@ -533,6 +568,11 @@ nimble tasks results --task-id {task_id}
 
 Batch API handles up to 1,000 requests per call with server-side orchestration.
 For >1,000 requests, split into multiple batch calls.
+
+**Sub-agents should also batch.** When spawning sub-agents for parallel work, tell
+each agent to use `extract-batch` or `agent run-batch` for its assigned items
+rather than making individual calls. One batch call per agent is faster and more
+reliable than 5-6 sequential calls.
 
 ### Large job confirmation (>1,000)
 
