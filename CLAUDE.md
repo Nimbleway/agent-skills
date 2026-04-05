@@ -51,13 +51,13 @@ Every skill follows the [Agent Skills specification](https://agentskills.io/spec
 
 ### Writing style
 - Clarity over cleverness. Specific over vague. Active voice over passive.
-- Short paragraphs (2-4 sentences). One idea per section.
+- Short paragraphs (2-4 sentences). One idea per section. Exception: intro taglines (one sentence after `# Skill Name`) are intentionally short.
 - Challenge every token: "Does the agent really need this to do the job?"
 - Say nothing notable rather than padding with fluff.
 
 ### Naming & structure
 - Name: `{domain}-{action}`, lowercase, hyphenated. Folder name must match frontmatter `name`.
-- Aim to keep SKILL.md under ~500 lines. Use progressive disclosure: frontmatter (always loaded) → body (on trigger) → `references/` (on demand).
+- Aim to keep SKILL.md under ~500 lines. Use progressive disclosure: frontmatter (always loaded) → body (on trigger) → `references/` directory (on demand). The `references/` directory IS the dedicated deeper layer — SKILL.md does not need a `## References` heading.
 
 ### SKILL.md frontmatter
 ```yaml
@@ -65,7 +65,7 @@ Every skill follows the [Agent Skills specification](https://agentskills.io/spec
 name: skill-name
 description: |
   [What it does] + [When to use it] + [Key capabilities]. Max 1024 chars.
-  Third-person voice. Include trigger phrases and negative triggers.
+  Third-person voice. Include trigger phrases and negative triggers (use "Do NOT use for X — use Y instead" format).
 allowed-tools:
   - Bash(nimble:*)
   - Bash(date:*)
@@ -76,12 +76,18 @@ metadata:
 ```
 
 ### DRY
-- Shared patterns live in `_shared/` — edit there, then `bash scripts/sync-shared.sh`.
-- Never copy-paste shared logic into a SKILL.md — reference it.
+- Shared patterns live in `_shared/` — edit there, then `bash scripts/sync-shared.sh`. The sync script copies `_shared/` files into each skill's `references/` directory — these synced copies are expected and not duplication.
+- Never manually copy-paste shared logic into a SKILL.md — reference it via `references/`.
 - Skill-specific logic (output format, entity research, agent team composition) stays in SKILL.md.
+- When referencing shared patterns from SKILL.md, say "do X" and point to the playbook for "how X works" — don't restate the pattern inline.
+- If a skill has multiple execution paths (e.g., geographic vs SaaS), each path must be first-class with its own discovery, scoring, output template, and error handling.
 
 ### Data access
 - Use `nimble search` / `nimble extract` via Bash for web data access.
+- WSA names are dynamic (include dates/hashes) — never hardcode them in skills. Discover at runtime via `nimble agent list --search "{domain}"`, then `nimble agent get --template-name {name}` to validate params.
+- `--search-depth` valid values: `lite`, `fast`, `deep` (not `standard`). Use `lite` for discovery, `deep` for full content.
+- `nimble agent list --limit` max is 250.
+- Always verify CLI commands with real data before writing them into SKILL.md — `--help` alone isn't enough.
 
 ### Agent definitions (`agents/`)
 
@@ -109,6 +115,8 @@ Skills spawn agents with `mode: "bypassPermissions"` (they don't inherit parent 
 ## Publishing
 
 Plugin manifests live in `.claude-plugin/plugin.json` and `.cursor-plugin/plugin.json`. They declare which `skills/` directories and `agents/` files are included. Update these when adding or removing a skill.
+
+When adding a new skill, also add it to `.claude-plugin/marketplace.json` `skills` array. Version bump (minor) must touch ALL files: both plugin.json manifests, marketplace.json, README.md badge, and every `skills/**/SKILL.md` `metadata.version` field.
 
 ## Conventions
 
