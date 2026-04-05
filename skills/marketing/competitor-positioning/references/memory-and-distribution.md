@@ -144,6 +144,53 @@ When the user corrects the skill, update both tiers:
 
 Always confirm the update to the user.
 
+## Checkpointing & Resume
+
+For multi-phase pipelines (map → extract → enrich → score), save intermediate results
+so failed or interrupted runs can resume without re-doing completed work.
+
+### Storage
+
+```
+~/.nimble/memory/{skill-name}/checkpoints/{slug}/
+├── map.json           # Phase 1 output
+├── extract.json       # Phase 2 output
+└── enrich.json        # Phase 3 output
+```
+
+`{slug}` is a stable identifier derived from the run's input parameters (e.g., URL
+domain, search query hash). Same input = same slug = resumable.
+
+### Checkpoint format
+
+Each phase file is JSON:
+```json
+{
+  "phase": "extract",
+  "status": "complete",
+  "timestamp": "2026-04-03T15:30:00Z",
+  "record_count": 47,
+  "data": [ ... ]
+}
+```
+
+`status` is `"complete"` or `"partial"` (interrupted mid-phase).
+
+### Resume logic
+
+On re-run with the same parameters:
+1. Detect existing checkpoint directory for the slug
+2. Offer: **"Found previous run (47 records from Apr 3). Resume and fill gaps, or start fresh?"**
+3. If resume: skip phases where `status = "complete"`, re-run where `status = "partial"`
+   or file is missing
+4. If start fresh: delete the checkpoint directory and begin from phase 1
+
+### Rules
+
+- One checkpoint directory per unique run (keyed by slug)
+- Clean up checkpoints older than 30 days on skill startup
+- Don't checkpoint trivial runs (< 5 records) — the overhead isn't worth it
+
 ## Rules
 
 - **Never touch user project files.** All persistence under `~/.nimble/`.
