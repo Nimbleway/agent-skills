@@ -98,7 +98,7 @@ nimble search --query "Company" --include-domain '["x.com", "linkedin.com"]' --m
 # Deep search (full page content — only for comprehensive analysis, costs more)
 nimble search --query "company name" --search-depth deep --max-results 5
 
-# Fast search (enterprise only — do not use by default)
+# Fast search (premium tier — not used by default)
 # nimble search --query "company name" --search-depth fast --max-results 10
 ```
 
