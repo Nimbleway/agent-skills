@@ -1,7 +1,7 @@
 # Nimble Web Search Skills & Plugin
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![Version](https://img.shields.io/badge/version-0.10.2-green)](https://github.com/Nimbleway/agent-skills)
+[![Version](https://img.shields.io/badge/version-0.11.0-green)](https://github.com/Nimbleway/agent-skills)
 
 Unlock the web for your AI agents — search, scrape, extract structured data, and run business intelligence workflows, all powered by Nimble's web data infrastructure. One plugin for Claude Code, Cursor, and any platform that supports the [Agent Skills spec](https://agentskills.io/specification.md).
 
@@ -11,7 +11,7 @@ Unlock the web for your AI agents — search, scrape, extract structured data, a
 | -------- | ------------ |
 | **[Business Research](skills/business-research/)** | Competitor monitoring and 360° company research — sourced reports with funding, leadership, product, and market signals |
 | **[Marketing](skills/marketing/)** | Track how competitors position themselves — messaging shifts, pricing changes, content gaps, battlecard inputs |
-| **[Productivity](skills/productivity/)** | Walk into any meeting fully briefed — attendee backgrounds, company context, talking points, relationship mapping |
+| **[Productivity](skills/productivity/)** | Walk into any meeting fully briefed — attendee backgrounds, company context, talking points, relationship mapping. Discover and score local businesses in any neighborhood with interactive maps |
 | **[Web Data Toolkit](skills/web-search-tools/)** | Search, scrape, extract, map, and crawl any website — plus build reusable extraction agents that run at scale |
 
 **Business Research**, **Marketing**, and **Productivity** skills are one-command workflows. They spawn parallel sub-agents, gather live web data via Nimble APIs, synthesize findings, and deliver structured reports with dates and source URLs. They learn from previous runs and only surface what's new.
