@@ -125,7 +125,7 @@ nimble extract-async --url "https://example.com/page" --render --format markdown
 
 # Batch — up to 1,000 URLs in one request
 nimble extract-batch \
-  --shared-inputs render=true --shared-inputs format=markdown \
+  --shared-inputs 'render: true' --shared-inputs 'format: markdown' \
   --input '{"url": "https://example.com/page-1"}' \
   --input '{"url": "https://example.com/page-2"}'
 ```
@@ -206,7 +206,7 @@ lacked agent coverage so agent-builder can fill gaps later.
 ```bash
 # Up to 1,000 agent requests in one call
 nimble agent run-batch \
-  --shared-inputs agent=amazon_serp \
+  --shared-inputs 'agent: amazon_serp' \
   --input '{"params": {"keyword": "iphone 15"}}' \
   --input '{"params": {"keyword": "iphone 16"}}'
 ```
@@ -445,13 +445,20 @@ Three-layer pattern (generic — each skill customizes the specifics):
    domain), match on that first. Exact match = same entity, merge fields.
 2. **Domain normalization** — Strip `www.`, trailing slashes, protocol. Compare root
    domains. `www.acme.com/` and `acme.com` are the same entity.
-3. **Fuzzy name + location** — Normalize names (lowercase, strip punctuation, common
-   suffixes like "Inc", "LLC"). Compare with location context if available. This catches
-   "Acme Corp" vs "ACME Corporation" at the same address.
+3. **Fuzzy name + location** — Normalize names before comparing:
+   - Lowercase all characters
+   - Strip titles and honorifics (`Dr.`, `Mr.`, `Ms.`, etc.)
+   - Strip credential suffixes (`MD`, `DDS`, `Inc`, `LLC`, `Corp`, etc.)
+   - Strip common noise words (`The`, `and`, `of`, `&`)
+   - Collapse whitespace and punctuation
+   - Compare normalized names with location context if available
+   This catches cross-source variations like "Dr. Jane Smith, MD" (Maps) vs
+   "Jane Smith" (Yelp) vs "Smith Eye Care LLC" (BBB). Each source formats names
+   differently — always normalize before comparing.
 
 Track `source_count` per entity — entities confirmed by multiple sources are higher
 quality. Each skill defines which layers apply and any domain-specific matching rules
-in SKILL.md.
+in its reference files.
 
 ---
 
@@ -508,7 +515,7 @@ Run up to 4 concurrent Bash calls per the Parallel Execution rules above.
 
 ```bash
 nimble agent run-batch \
-  --shared-inputs agent={agent_name} \
+  --shared-inputs 'agent: {agent_name}' \
   --input '{"params": {...}}' \
   --input '{"params": {...}}'
 ```
