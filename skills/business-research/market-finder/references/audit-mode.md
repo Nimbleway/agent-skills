@@ -165,6 +165,10 @@ After all three matching layers complete:
 # Market Finder Audit: [Business Type] in [Geography]
 *Audited [R] reference entries against [D] discovered businesses | [Date]*
 
+## TL;DR
+[M/R × 100]% coverage — [M] of [R] reference entries verified, [DO] new businesses
+discovered, [RO] in your list but not found by discovery.
+
 ## Summary
 - **Reference list:** [R] entries
 - **Discovered:** [D] businesses
