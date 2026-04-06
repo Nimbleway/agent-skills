@@ -10,12 +10,13 @@ Unlock the web for your AI agents — search, scrape, extract structured data, a
 | Category | What you get |
 | -------- | ------------ |
 | **[Business Research](skills/business-research/)** | Competitor monitoring, 360° company research, and market discovery — find all businesses of a given type in any geography with multi-source verification |
-| **[Healthcare](skills/healthcare/)** | Extract structured practitioner data from practice websites, enrich existing provider lists with missing fields, and verify credentials against the NPI registry — names, credentials, specialties, contact info, education, reviews, and regulatory data across any healthcare vertical |
 | **[Marketing](skills/marketing/)** | Track how competitors position themselves — messaging shifts, pricing changes, content gaps, battlecard inputs |
 | **[Productivity](skills/productivity/)** | Walk into any meeting fully briefed — attendee backgrounds, company context, talking points, relationship mapping. Discover and score local businesses in any neighborhood with interactive maps |
 | **[Web Data Toolkit](skills/web-search-tools/)** | Search, scrape, extract, map, and crawl any website — plus build reusable extraction agents that run at scale |
 
 **Business Research**, **Marketing**, and **Productivity** skills are one-command workflows. They spawn parallel sub-agents, gather live web data via Nimble APIs, synthesize findings, and deliver structured reports with dates and source URLs. They learn from previous runs and only surface what's new.
+
+These skills also extend into specific industries — starting with **[Healthcare](skills/healthcare/)**: extract structured practitioner data from practice websites, enrich provider lists with missing fields, and verify credentials against the NPI registry.
 
 **Web Data Toolkit** skills expose Nimble's raw capabilities for any web task. They also power the business skills under the hood — and form a feedback loop: web-expert runs agents built by agent-builder, and when a one-off lookup becomes recurring, agent-builder turns it into a reusable pipeline.
 
