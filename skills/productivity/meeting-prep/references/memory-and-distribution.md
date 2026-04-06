@@ -44,6 +44,7 @@ navigable, queryable, and self-maintaining:
 ├── log.md                         # Chronological activity log (append-only)
 ├── backlog.md                     # Research questions and knowledge gaps
 ├── synthesis/                     # Cross-entity analysis pages
+│   ├── index.md                   # Per-directory catalog (same format as others)
 │   └── competitive-landscape.md   # (created dynamically when patterns emerge)
 ├── competitors/
 │   ├── index.md                   # Per-directory entity catalog
@@ -150,15 +151,17 @@ findings. Grep-friendly format for answering "what did I learn this week?"
 
 ### Rules
 
-- **Append at the end of the file** (oldest first, newest last). This is a pure
-  append — no read-insert-rewrite needed. LLMs read the whole file; humans use
+- **Append at the end of the file** (oldest first, newest last). Normal writes are
+  pure appends — no read-insert-rewrite needed. LLMs read the whole file; humans use
   `grep "^## \[" log.md | tail -10` for recent entries.
 - **Format:** `## [YYYY-MM-DD] skill-name` — enables `grep "^## \[" log.md | tail -10`.
 - **Content:** List entities created/updated (as `[[path/entity]]` links), then 2-3
   bullet points of key findings. Keep entries concise — this is a log, not a report.
-- **Rotate entries older than 90 days.** On each write, check the oldest entries
-  (at the top of the file). If older than 90 days, remove them. The full reports in
-  `reports/` are the permanent record — `log.md` is for recent activity scanning.
+- **Rotate entries older than 90 days** as a separate maintenance step. After
+  appending the new entry, check the oldest entries (at the top). If older than 90
+  days, remove them. This rotation is not part of the normal append — it's a periodic
+  cleanup that triggers during writes. The full reports in `reports/` are the
+  permanent record; `log.md` is for recent activity scanning.
 - **Created on first skill run** if missing.
 
 ---

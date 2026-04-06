@@ -351,6 +351,7 @@ Don't narrate individual tool calls.
 | `401 Unauthorized` | Expired key | Regenerate at app.nimbleway.com |
 | `429 Too Many Requests` | Rate limit | Fewer simultaneous calls |
 | `timeout` | Slow response | Retry once, then skip |
+| `500 Server Error` | Transient server failure | Retry once without `--focus`; if persistent, simplify query |
 | `empty results` | No matches | Remove `--start-date`, broaden query |
 
 ## Signal Date Validation

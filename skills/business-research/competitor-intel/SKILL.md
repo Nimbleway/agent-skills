@@ -59,8 +59,10 @@ calls: date calc, today, CLI check, profile load, index.md load).
 From the results:
 - CLI missing or API key unset → `references/profile-and-onboarding.md`, stop
 - Profile exists → read `~/.nimble/memory/competitors/index.md` to identify which
-  competitor files exist and their last-updated dates, then load the relevant
-  `~/.nimble/memory/competitors/*.md` files for known signals
+  competitor files exist and their last-updated dates. If the index doesn't exist
+  (first run or upgrade), fall back to reading all `~/.nimble/memory/competitors/*.md`
+  directly — the index is an optimization, not a gate. Then load the relevant
+  competitor files for known signals
   (used for dedup in Steps 3 + 5). Follow cross-references (`[[path/entity]]` links)
   to load related context. Determine mode using smart date windowing
   from `references/nimble-playbook.md`:
