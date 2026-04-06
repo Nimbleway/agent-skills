@@ -36,7 +36,7 @@ allowed-tools:
   - AskUserQuestion
 metadata:
   author: Nimbleway
-  version: 0.15.1
+  version: 0.16.0
 ---
 
 # Local Places
@@ -135,41 +135,54 @@ Check: `cat ~/.nimble/memory/local-places/checkpoints/{slug}/discovery.json 2>/d
   Resume and fill gaps, or start fresh?"
 - **No checkpoint** -> proceed to Step 4
 
-### Step 4: Discovery (WSA Phase 1)
+### Step 4: WSA Discovery
 
-Read `references/wsa-pipeline.md` for the full WSA-to-phase mapping and category
-detection logic.
-
-**Validate WSA schemas first** -- run simultaneously to confirm param names:
+Discover available WSAs for all phases before execution. Run these searches
+simultaneously:
 
 ```bash
-nimble agent get --template-name google_maps_search
+nimble agent list --search "maps" --limit 20
 ```
 
 ```bash
-nimble agent get --template-name yelp_serp
-```
-
-Use the returned parameter names in the calls below. The examples show expected
-params, but always confirm with `nimble agent get` since WSA schemas may change.
-
-**Primary discovery** -- run simultaneously:
-
-```bash
-nimble agent run --agent google_maps_search --params '{"query": "[place-type] in [location]"}'
+nimble agent list --search "reviews" --limit 20
 ```
 
 ```bash
-nimble agent run --agent yelp_serp --params '{"search_query": "[place-type]", "location": "[location]"}'
+nimble agent list --search "social" --limit 20
 ```
-
-**Tertiary (conditional):** Run `bbb_org_business_search` only if primary + secondary
-return < 10 combined unique results, or if the user explicitly asked for
-credibility/trust data:
 
 ```bash
-nimble agent run --agent bbb_org_business_search --params '{"query": "[place-type] [location]"}'
+nimble agent list --search "{place-type}" --limit 20
 ```
+
+From the combined results:
+1. Filter by `entity_type`: SERP for discovery, PDP/Profile for enrichment/detail
+2. Prefer `managed_by: "nimble"` over `managed_by: "community"`
+3. Classify into phases -- see `references/wsa-pipeline.md` for classification strategy
+4. Validate each with `nimble agent get --template-name {name}` to confirm params
+5. Cache all discovered WSA names + validated params for the rest of the run
+
+If no WSAs found for a phase, that phase falls back to `nimble search`.
+
+### Step 5: Primary Search (Phase 1)
+
+Read `references/wsa-pipeline.md` for category detection logic.
+
+Run discovered maps/location WSAs simultaneously, using the validated params from
+Step 4:
+
+```bash
+nimble agent run --agent {discovered_maps_wsa} --params '{...validated params...}'
+```
+
+```bash
+nimble agent run --agent {discovered_review_site_wsa} --params '{...validated params...}'
+```
+
+**Tertiary (conditional):** Run discovered credibility WSAs only if primary +
+secondary return < 10 combined unique results, or if the user asked for
+credibility/trust data.
 
 If any WSA fails or returns empty, fall back to:
 `nimble search --query "[place-type] in [location]" --max-results 20 --search-depth lite`
@@ -182,70 +195,62 @@ If any WSA fails or returns empty, fall back to:
 3. Save checkpoint:
    `~/.nimble/memory/local-places/checkpoints/{slug}/discovery.json`
 
-### Step 5: Social Enrichment (WSA Phase 2)
+### Step 6: Social Enrichment (Phase 2)
 
-For each discovered place that has a Facebook page or Instagram handle, run
-enrichment WSAs. See `references/wsa-pipeline.md` for the full mapping.
-
-Batch max **4 concurrent Bash calls** to respect rate limits. For places with
-social handles found in discovery:
+For each discovered place that has a Facebook page or Instagram handle, run the
+social WSAs discovered in Step 4. Batch max **4 concurrent Bash calls**.
 
 ```bash
-nimble agent run --agent facebook_page --params '{"url": "https://facebook.com/[page]"}'
+nimble agent run --agent {discovered_social_wsa} --params '{...validated params...}'
 ```
 
-```bash
-nimble agent run --agent instagram_profile_by_account --params '{"account": "[handle]"}'
-```
-
-Skip `tiktok_account` unless the user specifically asked for social depth or chose
-"Comprehensive" / "Deep dive" in Step 1.
+Run each discovered social WSA for places with matching handles. Skip social
+platforms for which no WSA was discovered. If no social WSAs were found in Step 4,
+skip this phase entirely.
 
 Save checkpoint: `~/.nimble/memory/local-places/checkpoints/{slug}/social.json`
 
-### Step 6: Reviews (WSA Phase 3)
+### Step 7: Reviews (Phase 3)
 
-For the top places (by source count and data completeness), pull reviews:
+For the top places (by source count and data completeness), run the review WSAs
+discovered in Step 4:
 
 ```bash
-nimble agent run --agent google_maps_reviews --params '{"place_id": "[place_id]"}'
+nimble agent run --agent {discovered_reviews_wsa} --params '{...validated params...}'
 ```
 
-Batch max 4 concurrent calls. Focus on places that have a `place_id` from
-Google Maps discovery. Save checkpoint:
+Batch max 4 concurrent calls. Focus on places that have a `place_id` or equivalent
+identifier from Phase 1 discovery. If no review WSAs were found in Step 4, fall
+back to: `nimble search --query "[place-name] reviews" --max-results 5 --search-depth lite`
+
+Save checkpoint:
 `~/.nimble/memory/local-places/checkpoints/{slug}/reviews.json`
 
-### Step 7: Food/Drink Bonus (WSA Phase 4)
+### Step 8: Food/Drink Bonus (Phase 4)
 
 **Auto-trigger** when the place type category matches food/drink keywords.
 See `references/wsa-pipeline.md` for the category detection logic.
 
-If triggered, search for delivery listings first, then fetch details:
-
-**Discovery** -- run simultaneously:
-
-```bash
-nimble agent run --agent doordash_serp --params '{"query": "[place-name] [location]"}'
-```
+If triggered, run the delivery/food WSAs discovered in Step 4. Discovery first,
+then detail:
 
 ```bash
-nimble search --query "[place-name] [location] site:ubereats.com" --max-results 1 --search-depth lite
+nimble agent run --agent {discovered_delivery_serp_wsa} --params '{...validated params...}'
 ```
 
-**Detail** -- for places found on delivery platforms, fetch full details:
+For places found on delivery platforms, fetch full details using discovered
+detail WSAs:
 
 ```bash
-nimble agent run --agent doordash_pdp --params '{"url": "[doordash-url-from-serp]"}'
+nimble agent run --agent {discovered_delivery_detail_wsa} --params '{...validated params...}'
 ```
 
-```bash
-nimble agent run --agent uber_eats_pdp --params '{"url": "[uber-eats-url-from-search]"}'
-```
+If no delivery WSAs were found in Step 4, fall back to:
+`nimble search --query "[place-name] [location] delivery" --max-results 3 --search-depth lite`
 
-Only run detail calls for places that returned a valid delivery URL. Skip if
-category is not food/drink (gyms, yoga studios, etc.).
+Only run for food/drink categories. Skip if category doesn't match.
 
-### Step 8: Deduplication & Confidence Scoring
+### Step 9: Deduplication & Confidence Scoring
 
 **Deduplication:** Run a final dedup pass across all phases following the Entity
 Deduplication pattern from `references/nimble-playbook.md`. Merge fields from
@@ -270,7 +275,7 @@ Scoring criteria:
 - **Medium** (5-7/8 fields OR 2+ sources with partial data) -> `** Medium`
 - **Low** (<=4/8 fields, single source, few/no reviews) -> `* Low`
 
-### Step 9: Output
+### Step 10: Output
 
 Present results as a numbered table sorted by confidence (High first), then by
 rating within each tier.
@@ -318,7 +323,7 @@ sufficient data from WSA results.
 > "Want details on any place? Say 'tell me more about #3' or ask for the
 > interactive map."
 
-### Step 10: Interactive Map (on request or "Deep dive" mode)
+### Step 11: Interactive Map (on request or "Deep dive" mode)
 
 Generate an HTML file with Leaflet.js + OpenStreetMap tiles. See
 `references/wsa-pipeline.md` for the full map generation pattern and color scheme.
@@ -328,9 +333,10 @@ Save to: `~/.nimble/memory/local-places/{slug}-map-{date}.html`
 Open in browser: `open ~/.nimble/memory/local-places/{slug}-map-{date}.html`
 
 Only generate automatically if the user chose "Deep dive with map" in Step 1.
+For map generation details, see `references/wsa-pipeline.md`.
 Otherwise, offer it as a follow-up action.
 
-### Step 11: Save to Memory
+### Step 12: Save to Memory
 
 Make all Write calls simultaneously:
 
@@ -341,7 +347,7 @@ Make all Write calls simultaneously:
   (only if profile exists)
 - Clean up checkpoint (complete run) or keep (partial run)
 
-### Step 12: Share & Distribute
+### Step 13: Share & Distribute
 
 **Always offer distribution -- do not skip this step.** Follow
 `references/memory-and-distribution.md` for connector detection, sharing flow, and
@@ -350,10 +356,10 @@ source links enforcement.
 Notion: full results table as a dated subpage.
 Slack: TL;DR with top 5 places only.
 
-### Step 13: Follow-ups
+### Step 14: Follow-ups
 
 - **"Tell me more about #N"** -> show full detail for that place
-- **"Show the map"** -> generate interactive map (Step 10)
+- **"Show the map"** -> generate interactive map (Step 11)
 - **"Add filters"** -> re-search with additional constraints
 - **"Search nearby area"** -> expand to adjacent neighborhoods
 - **"Export as CSV"** -> generate CSV from places.json
@@ -377,7 +383,8 @@ Follow the sub-agent spawning rules from `references/nimble-playbook.md`
 (bypassPermissions, batch max 4, explicit Bash instruction, fallback on failure).
 For WSA calls at scale (11+ entities), tell agents to use `agent run-batch` instead
 of individual calls. See the Scaled Execution pattern in
-`references/nimble-playbook.md` for tier selection.
+`references/nimble-playbook.md` for tier selection. Pass the discovered WSA names
+from Step 4 to each agent so they use the same cached names.
 
 **Spawn pattern:** One agent per batch of 10 places for social enrichment.
 Each agent runs the Phase 2 WSAs for its batch and returns structured results.
@@ -412,8 +419,8 @@ See `references/nimble-playbook.md` for the standard error table (missing API ke
   to `nimble search` for that place/query. Log the failure but don't skip the place.
 - **WSA/Search timeout:** Retry once, then skip that call and continue — consistent
   with the playbook's timeout policy.
-- **WSA not found:** If a WSA from the pipeline doesn't exist (e.g., `bbb_org_business_search`),
-  skip it silently and rely on other discovery sources. Log which WSAs were unavailable.
+- **WSA not found:** If no WSAs are discovered for a phase, skip that phase's WSA
+  calls and fall back to `nimble search`. Log which phases had no WSA coverage.
 - **Location not found:** "Couldn't find results for [location]. Could you be more specific?
   Try including city and state (e.g., 'Williamsburg, Brooklyn, NY')."
 - **No results for place type:** "No [place type] found in [location]. Want to try a

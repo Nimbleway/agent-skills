@@ -35,7 +35,7 @@ allowed-tools:
   - AskUserQuestion
 metadata:
   author: Nimbleway
-  version: 0.15.1
+  version: 0.16.0
 ---
 
 # Competitor Intelligence
@@ -69,6 +69,8 @@ From the results:
   - Skip to Step 2
 - No profile → Step 1
 
+**Note:** Step 2 (WSA Discovery) runs after onboarding but before any research.
+
 ### Step 1: First-Run Onboarding (2 prompts max)
 
 **Prompt 1** — ask in plain text (NOT AskUserQuestion with options):
@@ -100,7 +102,21 @@ user's industry keywords. See `references/profile-and-onboarding.md` for the ful
 profile schema (company, competitors with domains/categories, industry_keywords,
 integrations, preferences).
 
-### Step 2: Research the User's Company
+### Step 2: WSA Discovery
+
+For each competitor domain and the user's domain, discover available WSAs:
+
+```bash
+nimble agent list --search "{domain}" --limit 20
+```
+
+Run one search per domain simultaneously. From the results, filter for WSAs with
+`entity_type` matching SERP or PDP, prefer `managed_by: "nimble"`, and validate
+each with `nimble agent get --template-name {name}`. Cache discovered WSA names +
+params for the run. Use discovered WSAs alongside `nimble search` in Steps 3-4
+for richer data. If no WSAs found, continue with `nimble search` alone.
+
+### Step 3: Research the User's Company
 
 Use `--include-domain` to avoid noise from generic company names. Make two Bash calls:
 
@@ -109,7 +125,7 @@ Use `--include-domain` to avoid noise from generic company names. Make two Bash 
 
 **Fallback if < 3 results:** `nimble search --query "blog" --include-domain '["[company-domain]"]' --max-results 5 --search-depth lite`
 
-### Step 3: Parallel Research Per Competitor (sub-agents)
+### Step 4: Parallel Research Per Competitor (sub-agents)
 
 Read `references/competitor-agent-prompt.md` for the full agent prompt template.
 Follow the sub-agent spawning rules from `references/nimble-playbook.md`
@@ -117,7 +133,8 @@ Follow the sub-agent spawning rules from `references/nimble-playbook.md`
 
 Spawn `nimble-researcher` agents (`agents/nimble-researcher.md`) with
 `mode: "bypassPermissions"`. Customize the prompt template with each competitor's
-name, domain, start-date, and known signals from memory (loaded in Step 0).
+name, domain, start-date, known signals from memory (loaded in Step 0), and any
+discovered WSA names from Step 2 so agents can use them for enrichment.
 
 **Call estimation & Scaled Execution:** Before launching agents, estimate total API
 calls: ~6 searches per competitor × N competitors + ~2 industry searches + extractions.
@@ -131,7 +148,7 @@ from the business profile:
 - `nimble search --query "[industry_keyword] AI agents OR automation" --focus news --start-date "[start-date]" --max-results 5 --search-depth lite`
 - `nimble search --query "[industry_keyword] regulation OR compliance OR pricing" --focus news --start-date "[start-date]" --max-results 5 --search-depth lite`
 
-### Step 4: Deep Extraction
+### Step 5: Deep Extraction
 
 Extract signals that need date verification OR richer detail. See
 `references/nimble-playbook.md` → "Signal Date Validation" → "Verification Budget"
@@ -158,7 +175,7 @@ When reading extracted content, determine the **actual event date** from the art
 (not just the page header date). Look for: explicit dates tied to the event, temporal
 language ("last September", "in Q3"), and datelines.
 
-### Step 4.5: Signal Validation
+### Step 5.5: Signal Validation
 
 Before building the report, validate every signal's freshness. See
 `references/nimble-playbook.md` → "Signal Date Validation" for the full pattern.
@@ -192,7 +209,7 @@ If no primary source is found, reclassify as UNCERTAIN and drop.
 
 After validation, you should have a clean list of NEW and UPDATED signals only.
 
-### Step 5: Analysis & Output
+### Step 6: Analysis & Output
 
 **Full mode** (first run or > 14 days since last) — structured briefing:
 
@@ -213,15 +230,15 @@ After validation, you should have a clean list of NEW and UPDATED signals only.
 **Core rules:**
 - Every signal MUST have a verified **event date**. Only events that happened within the
   freshness window qualify as new signals — older events are background context.
-- Only include signals classified as NEW or UPDATED in Step 4.5. STALE and UNCERTAIN
+- Only include signals classified as NEW or UPDATED in Step 5.5. STALE and UNCERTAIN
   signals have already been dropped.
 - Deduplicate against `~/.nimble/memory/competitors/*.md` — only surface NEW findings.
 - Say "nothing notable this period" rather than padding with fluff.
 - P3 signals: mention briefly or omit if report is long.
 
-### Step 6: Save & Update Memory
+### Step 7: Save & Update Memory
 
-**Only persist signals that passed Step 4.5 validation** (classified as NEW or UPDATED).
+**Only persist signals that passed Step 5.5 validation** (classified as NEW or UPDATED).
 Do not write STALE or UNCERTAIN signals to competitor memory files.
 
 Make all Write calls simultaneously:
@@ -232,18 +249,25 @@ Make all Write calls simultaneously:
   (use the format documented in `references/memory-and-distribution.md`)
 - Profile → update `last_runs.competitor-intel` in `~/.nimble/business-profile.json`
 
-### Step 7: Share & Distribute
+### Step 8: Share & Distribute
 
 **Always offer distribution — do not skip this step.** Follow
 `references/memory-and-distribution.md` for connector detection, sharing flow, and
 source links enforcement.
 
-### Step 8: Follow-ups
+### Step 9: Follow-ups
 
 - **Go deeper** on a competitor → more focused searches
 - **Skip a competitor** → update `preferences.skip_competitors`
 - **Add a competitor** → update `competitors`, create memory stub
 - **"Looks good"** → done
+
+**Sibling skill suggestions:**
+
+> **Next steps:**
+> - Run `competitor-positioning` to analyze how competitors present themselves online
+> - Run `company-deep-dive` for a full 360 profile on any competitor from this report
+> - Run `meeting-prep` if you're meeting with someone at a competitor
 
 ---
 
@@ -254,7 +278,7 @@ Check at startup: `echo $CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS`
 **Team mode** (flag set): Spawn full **teammates** instead of sub-agents:
 
 - **Lead** (you): Assign competitors, synthesize the final briefing
-- **One teammate per competitor**: Uses `references/competitor-agent-prompt.md` —
+- **One teammate per competitor**: Uses `references/competitor-agent-prompt.md` with discovered WSAs —
   teammates can message each other when they find overlapping signals
 - **Devil's Advocate** (optional): Challenges findings, looks for blind spots
 - Lead synthesizes a **cross-validated** briefing with higher confidence

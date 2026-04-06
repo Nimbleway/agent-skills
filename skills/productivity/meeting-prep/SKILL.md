@@ -33,7 +33,7 @@ allowed-tools:
   - AskUserQuestion
 metadata:
   author: Nimbleway
-  version: 0.15.1
+  version: 0.16.0
 ---
 
 # Meeting Prep
@@ -126,7 +126,20 @@ Value Positioning section (Step 3.5 + Step 5) is generated. Value positioning ac
 for: **sales/discovery, partnership, board/investor**. It is skipped for: **interview,
 internal, general external**.
 
-### Step 2: Per-Attendee Research (sub-agents)
+### Step 2: WSA Discovery
+
+Discover available WSAs for each attendee's company domain:
+
+```bash
+nimble agent list --search "{company-domain}" --limit 20
+```
+
+Run one search per unique company simultaneously. Filter for SERP/PDP WSAs,
+prefer `managed_by: "nimble"`, validate with `nimble agent get --template-name {name}`.
+Cache discovered names + params. Pass them to attendee agents in Step 3 for richer
+data. If no WSAs found, continue with `nimble search` alone.
+
+### Step 3: Per-Attendee Research (sub-agents)
 
 Read `references/attendee-agent-prompt.md` for the full agent prompt template.
 Follow the sub-agent spawning rules from `references/nimble-playbook.md`
@@ -137,7 +150,8 @@ If a profile exists and is < 30 days old, load it as known context and pass it t
 agent so it focuses on what's new. If > 30 days old, run a full refresh.
 
 Spawn `nimble-researcher` agents (`agents/nimble-researcher.md`) with
-`mode: "bypassPermissions"`. One agent per attendee.
+`mode: "bypassPermissions"`. One agent per attendee. Pass discovered WSA names
+from Step 2 to each agent for enrichment.
 
 **Important:** The Nimble API has a 10 req/sec rate limit per API key. With each agent
 running 4-5 searches, limit concurrent agents to 2 per batch. For 3+ attendees, batch
@@ -163,7 +177,7 @@ the main context instead of spawning an agent — saves overhead.
 **Fallback:** If any agent fails or returns empty, run those searches directly from
 the main context. Don't leave gaps in the briefing.
 
-### Step 2.5: Gap Check
+### Step 3.5: Gap Check
 
 Before proceeding, verify every attendee has at least a title and company confirmed.
 
@@ -182,7 +196,7 @@ role. Consider asking for their LinkedIn URL."
 Also collect **LinkedIn profile URLs** for each attendee during this step if not already
 found. These are high-value for the final briefing output and Notion distribution.
 
-### Step 3: Company Research
+### Step 4: Company Research
 
 Research the attendees' company for meeting-relevant context. This is a lighter version
 of company-deep-dive — focused on what's useful for the conversation, not a full 360°.
@@ -215,16 +229,17 @@ rather than recent news.
 **If the company was already researched** (exists in `~/.nimble/memory/companies/`),
 load the existing profile and only run the news search for fresh updates.
 
-### Step 3.5: Value Positioning Research
+### Step 4.5: Value Positioning Research
 
 **Skip this step** if the meeting type is interview, internal, or general external.
 
-This step cross-references what you learned about the attendee's company (Step 3) with
+This step cross-references what you learned about the attendee's company (Step 4) with
 the user's own business profile to find concrete positioning angles. It works best when
 `business-profile.json` exists with at least `company.name` and `company.domain`.
 
 **If no profile exists**, skip searches that reference the user's company or competitors
 (searches 2, 4, 5) and rely on generic research (searches 1, 3) for positioning insights.
+Use any WSAs discovered in Step 2 for richer attendee company data.
 The Value Positioning section will be thinner but still useful — pain-to-solution mapping
 and tech stack discovery work without a profile.
 
@@ -265,9 +280,9 @@ next time."
 
 This data feeds directly into the Value Positioning section in Step 5.
 
-### Step 4: Deep Extraction
+### Step 5: Deep Extraction
 
-From Steps 2-3.5, identify the **top 3-5 most informative URLs** across all results.
+From Steps 3-4.5, identify the **top 3-5 most informative URLs** across all results.
 Prioritize:
 - Attendee's own LinkedIn posts, articles, or talks
 - Recent company announcements directly relevant to the meeting
@@ -285,7 +300,7 @@ For extraction failures, follow the fallback in `references/nimble-playbook.md`.
 **Single attendee + known company:** Skip company extraction, focus on person URLs.
 **Multiple attendees:** Prioritize person-specific URLs over company-level ones.
 
-### Step 5: Synthesize Briefing
+### Step 6: Synthesize Briefing
 
 Structure the output as a meeting prep briefing. Adapt focus based on meeting type.
 
@@ -385,7 +400,7 @@ going in. This is the "read nothing else" paragraph.]
   role or background.
 - If memory has prior meeting notes, surface open items and continuity points
   prominently — this is the highest-value content.
-- Value Positioning claims must be grounded in research from Step 3.5. Never
+- Value Positioning claims must be grounded in research from Step 4.5. Never
   generate generic positioning advice like "highlight your product's strengths."
   Every value mapping must reference a specific finding about the attendee's
   company paired with a specific capability from the user's profile or research.
@@ -394,7 +409,7 @@ going in. This is the "read nothing else" paragraph.]
   `~/.nimble/business-profile.json` to add sales context (differentiators,
   integrations, case studies) for richer positioning next time."
 
-### Step 6: Save to Memory
+### Step 7: Save to Memory
 
 Make all Write calls simultaneously:
 
@@ -409,18 +424,21 @@ Make all Write calls simultaneously:
 The person profile in `people/` should contain structured key facts (role, background,
 interests, communication style) that can be loaded by future meeting prep runs.
 
-### Step 7: Share & Distribute
+### Step 8: Share & Distribute
 
 **Always offer distribution — do not skip this step.** Follow
 `references/memory-and-distribution.md` for connector detection, sharing flow, and
 source links enforcement.
 
-### Step 8: Follow-ups
+### Step 9: Follow-ups
 
 - **Go deeper** on an attendee → more focused person research
 - **Add attendees** → research additional people joining the meeting
 - **"What about [topic]?"** → targeted search on specific dimension
 - **"Looks good"** → done
+- **Sibling skills:** `company-deep-dive` for a full 360 on the company,
+  `competitor-intel` to track them as a competitor, `competitor-positioning`
+  to compare messaging before a sales meeting
 
 ---
 
@@ -448,21 +466,16 @@ How cross-attendee discovery works:
 This produces higher-quality relationship maps than solo mode because teammates
 actively search for connections rather than just comparing results post-hoc.
 
-**Solo mode** (flag not set): Standard sub-agent flow from Step 2.
+**Solo mode** (flag not set): Standard sub-agent flow from Step 3.
 
 ---
 
 ## What This Skill Is NOT
 
-- **Not competitor monitoring.** For tracking multiple competitors over time, use
-  `competitor-intel`. This skill researches people and their companies for meetings.
-- **Not a company deep dive.** For comprehensive single-company research without
-  specific attendees, use `company-deep-dive`.
-- **Not a CRM.** This skill gathers live web intelligence. It doesn't manage
-  contacts, deals, or pipelines.
-- **Not a calendar app.** If a calendar MCP connector is available, this skill
-  can read events to auto-detect attendees. But it doesn't create, modify, or
-  manage calendar events — it only reads them for meeting context.
+- **Not competitor monitoring** — use `competitor-intel` for tracking competitors
+- **Not a company deep dive** — use `company-deep-dive` for research without attendees
+- **Not a CRM** — gathers web intelligence, doesn't manage contacts or pipelines
+- **Not a calendar app** — reads events for context but doesn't manage them
 
 ---
 

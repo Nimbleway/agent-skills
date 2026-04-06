@@ -1,71 +1,56 @@
 # WSA Pipeline for Local Places
 
-Skill-specific WSA mappings, category detection, location disambiguation, and
-interactive map generation. For general WSA execution rules (invocation, parsing,
-fallback), see `nimble-playbook.md`.
+WSA discovery strategy, phase classification, category detection, location
+disambiguation, and interactive map generation. For general WSA execution rules
+(invocation, parsing, fallback), see `nimble-playbook.md`.
 
 ---
 
-## WSA-to-Phase Mapping
+## WSA Discovery Strategy
 
-### Phase 1 -- Discovery
+WSA names are dynamic and change frequently. Discover all WSAs at runtime in
+Step 4 using `nimble agent list --search`. Never hardcode WSA names.
 
-| WSA | Managed By | Purpose | Key Params |
-|-----|-----------|---------|------------|
-| `google_maps_search` | Nimble | **Primary** -- geo-targeted, structured place data | `query` |
-| `yelp_serp` | Nimble | **Secondary** -- catches businesses missing from Google | `search_query`, `location` |
-| `bbb_org_business_search` | Community | **Tertiary** -- credibility validation | `query` |
+### Discovery search terms
 
-**Execution order:** Run primary + secondary simultaneously. Run tertiary only if
-primary + secondary return < 10 combined unique results, or if the user asked for
-credibility/trust data.
+Run these simultaneously to find WSAs for all phases:
 
-**Fallback:** If both primary and secondary WSAs fail:
-```bash
-nimble search --query "[place-type] in [location]" --max-results 20 --search-depth lite
-```
+| Search term | Finds WSAs for | Phase |
+|-------------|---------------|-------|
+| `"maps"` | Geo-targeted place discovery (maps, location data) | Phase 1 |
+| `"reviews"` | Review content and ratings | Phase 3 |
+| `"social"`, `"facebook"`, `"instagram"` | Social profile enrichment | Phase 2 |
+| `"{place-type}"` (e.g., "restaurant", "gym") | Vertical-specific discovery and detail | Phase 1 / Phase 4 |
+| `"delivery"`, `"food"` | Delivery platform data (DoorDash, Uber Eats) | Phase 4 |
 
-### Phase 2 -- Social Enrichment
+### Classification rules
 
-| WSA | Managed By | Purpose | Key Params |
-|-----|-----------|---------|------------|
-| `facebook_page` | Nimble | Follower count, bio, external links, verified URLs | `url` |
-| `instagram_profile_by_account` | Nimble | Follower count, bio, post count | `account` |
-| `tiktok_account` | Nimble | Profile metadata | *(see schema)* |
+After discovery, classify each WSA into a phase by its `entity_type` and description:
 
-**Trigger:** Run for any place that has a social handle or Facebook URL found during
-discovery. Skip places with no social presence detected.
+| Phase | Purpose | entity_type signals | Description signals |
+|-------|---------|-------------------|-------------------|
+| **Phase 1 -- Discovery** | Find places in a location | SERP | "search", "maps", "listings", "location" |
+| **Phase 2 -- Social** | Enrich with social data | Profile | "facebook", "instagram", "tiktok", "social" |
+| **Phase 3 -- Reviews** | Pull review content | PDP, Profile | "reviews", "ratings", "customer" |
+| **Phase 4 -- Food/Drink** | Delivery platform data | SERP, PDP | "doordash", "ubereats", "delivery", "menu" |
 
-**Finding social handles:** Look for these fields in discovery results:
-- Google Maps: `website` field may link to social profiles
-- Yelp: business page may list social links
-- Direct search fallback: `nimble search --query "[place-name] [location] facebook OR instagram" --max-results 3 --search-depth lite`
+Prefer `managed_by: "nimble"` over `managed_by: "community"` when multiple WSAs
+serve the same purpose.
 
-### Phase 3 -- Reviews
+### Phase execution
 
-| WSA | Managed By | Purpose | Key Params |
-|-----|-----------|---------|------------|
-| `google_maps_reviews` | Nimble | Detailed review content + ratings | `place_id` |
-| `bbb_org_customer_reviews` | Community | Trust/complaint data | *(see schema)* |
+- **Phase 1:** Run primary + secondary discovery WSAs simultaneously. Run tertiary
+  only if < 10 combined unique results.
+- **Phase 2:** Run for places with social handles found in Phase 1. Trigger social
+  handle search if not in discovery results:
+  `nimble search --query "[place-name] [location] facebook OR instagram" --max-results 3 --search-depth lite`
+- **Phase 3:** Run for places with a `place_id` or equivalent ID from Phase 1.
+  Prioritize High/Medium confidence places.
+- **Phase 4:** Auto-trigger for food/drink categories only (see Category Detection).
 
-**Trigger:** Run for places with a `place_id` from Google Maps discovery. Prioritize
-High and Medium confidence places first. Skip Low confidence places unless the user
-asks for comprehensive coverage.
+### Fallback
 
-### Phase 4 -- Food/Drink Bonus
-
-| WSA | Managed By | Purpose | Key Params |
-|-----|-----------|---------|------------|
-| `doordash_serp` | Nimble | Delivery availability, menu items, pricing | `query` |
-| `doordash_pdp` | Nimble | Detailed menu, delivery fee, ratings | *(see schema)* |
-| `uber_eats_pdp` | Nimble | Delivery availability, ratings, menu | `url` |
-
-**Trigger:** Auto-triggered when category matches food/drink (see Category Detection
-below). Only run for places that appear on delivery platforms.
-
-### Phase 5 -- Fallback
-
-For domains not covered by any WSA:
+For any phase where no WSA was discovered:
 ```bash
 nimble search --query "[place-name] [location]" --max-results 5 --search-depth lite
 nimble extract --url "[place-website]" --format markdown

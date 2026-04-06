@@ -33,7 +33,7 @@ allowed-tools:
   - AskUserQuestion
 metadata:
   author: Nimbleway
-  version: 0.15.1
+  version: 0.16.0
 ---
 
 # Company Deep Dive
@@ -85,7 +85,25 @@ Parse the target company from `$ARGUMENTS` or the user's message.
 If they say "quick overview", "brief", or "summary", run a **quick mode** that skips
 deep extraction (Step 3) and produces a shorter report.
 
-### Step 2: Parallel Research Across Dimensions (sub-agents)
+### Step 2: WSA Discovery
+
+Discover available WSAs for the target company's domain:
+
+```bash
+nimble agent list --search "{company-domain}" --limit 20
+```
+
+```bash
+nimble agent list --search "{company-name}" --limit 20
+```
+
+Run both simultaneously. From the results, filter for WSAs with `entity_type`
+matching SERP or PDP, prefer `managed_by: "nimble"`, and validate each with
+`nimble agent get --template-name {name}`. Cache discovered WSA names + params
+for the run. Pass them to dimension agents in Step 3 for enrichment alongside
+`nimble search`. If no WSAs found, continue with `nimble search` alone.
+
+### Step 3: Parallel Research Across Dimensions (sub-agents)
 
 Read `references/dimension-agent-prompt.md` for the full agent prompt template.
 Follow the sub-agent spawning rules from `references/nimble-playbook.md`
@@ -93,6 +111,8 @@ Follow the sub-agent spawning rules from `references/nimble-playbook.md`
 
 Spawn `nimble-researcher` agents (`agents/nimble-researcher.md`) with
 `mode: "bypassPermissions"`. Each agent researches one dimension of the company.
+Pass discovered WSA names from Step 2 to each agent so they can use them for
+enrichment alongside `nimble search`.
 
 **Important:** The Nimble API has a 10 req/sec rate limit per API key. With each agent
 running 4-5 searches in parallel, limit concurrent agents to 2 per batch to stay under
@@ -139,7 +159,7 @@ filter for recent data only.
 **Fallback:** If any agent fails or returns empty, run those dimension searches
 directly from the main context. Don't leave gaps in the report.
 
-### Step 3: Deep Extraction
+### Step 4: Deep Extraction
 
 From all agents' results, identify the **top 5-8 most informative URLs** across
 dimensions. Prioritize:
@@ -157,7 +177,10 @@ For extraction failures, follow the fallback in `references/nimble-playbook.md`.
 
 **Quick mode:** Skip this step entirely. Report from search snippets only.
 
-### Step 4: Synthesize Report
+**WSA enrichment:** If WSAs were discovered in Step 2, use them here for richer
+extraction on key URLs before falling back to `nimble extract`.
+
+### Step 5: Synthesize Report
 
 Structure the output as a **360° Company Report**:
 
@@ -210,7 +233,7 @@ growth signals, and strategic bets. This is insight, not summary.]
   earnings calls, or conference talks when found.
 - In refresh mode: lead with "What's New Since [last date]" before the full sections.
 
-### Step 5: Save to Memory
+### Step 6: Save to Memory
 
 Make all Write calls simultaneously:
 
@@ -224,18 +247,25 @@ The company profile in `companies/` should contain structured key facts (overvie
 financials, leadership, products) that can be loaded by future runs of any skill
 that needs context on this company.
 
-### Step 6: Share & Distribute
+### Step 7: Share & Distribute
 
 **Always offer distribution — do not skip this step.** Follow
 `references/memory-and-distribution.md` for connector detection, sharing flow, and
 source links enforcement.
 
-### Step 7: Follow-ups
+### Step 8: Follow-ups
 
 - **Go deeper** on a dimension → focused searches on that topic
 - **Compare with another company** → side-by-side analysis
 - **"What about [specific topic]?"** → targeted search + extraction
 - **"Looks good"** → done
+
+**Sibling skill suggestions:**
+
+> **Next steps:**
+> - Run `competitor-intel` to track this company as a competitor over time
+> - Run `meeting-prep` if you're meeting with someone at this company
+> - Run `competitor-positioning` to analyze their messaging vs yours
 
 ---
 
@@ -256,7 +286,7 @@ Lead (you): Create shared tasks, wait for all teammates to complete, then synthe
 the final report. When a teammate finds a claim that another should verify (e.g., a
 funding amount that implies a valuation), it posts a task for the relevant teammate.
 
-**Solo mode** (flag not set): Standard sub-agent flow from Step 2.
+**Solo mode** (flag not set): Standard sub-agent flow from Step 3.
 
 ---
 
