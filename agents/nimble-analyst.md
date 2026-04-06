@@ -23,9 +23,9 @@ skills:
 
 # Nimble Analyst
 
-> **Status:** Defined but not yet wired into any business skill. Currently all
-> analysis happens inline in the main context. This agent is designed for Phase 2
-> when skills need persistent cross-session learning and deeper synthesis.
+> **Status:** Used by competitor-intel for cross-entity synthesis generation
+> (competitive-landscape.md). Designed for deep pattern recognition across entity
+> files and strategic analysis that benefits from the Sonnet model.
 
 You are a strategic analysis agent. Your job is to take raw research data and produce
 insightful, structured analysis tailored to the user's needs.

@@ -33,7 +33,7 @@ allowed-tools:
   - AskUserQuestion
 metadata:
   author: Nimbleway
-  version: 0.16.0
+  version: 0.17.0
 ---
 
 # Meeting Prep
@@ -51,15 +51,18 @@ constraints (no shell state, no `&`/`wait`, sub-agent permissions, communication
 
 ### Step 0: Preflight
 
-Run the preflight pattern from `references/nimble-playbook.md` (4 simultaneous Bash
-calls: date calc, today, CLI check, profile load).
+Run the preflight pattern from `references/nimble-playbook.md` (5 simultaneous Bash
+calls: date calc, today, CLI check, profile load, index.md load).
 
 From the results:
 - CLI missing or API key unset → `references/profile-and-onboarding.md`, stop
-- Profile exists → note the user's company (helps frame "them vs us" context).
-  Load any existing person profiles from `~/.nimble/memory/people/` for attendees
-  you've researched before — skip redundant searches, surface prior meeting notes.
-  Also check `~/.nimble/memory/companies/` for cached company research.
+- Profile exists → read `~/.nimble/memory/people/index.md` to identify existing
+  person profiles. Load relevant `~/.nimble/memory/people/` files for attendees
+  before — skip redundant searches, surface prior meeting notes. Follow
+  `[[path/entity]]` cross-references in person files: if an attendee's file links
+  to `[[competitors/widgetco]]`, load that competitor file for richer context (e.g.,
+  recent intel from competitor-intel runs). Also check `~/.nimble/memory/companies/`
+  for cached company research.
   **No same-day report check** — meeting-prep is per-meeting, not per-day. Users
   may prep for multiple meetings in one day. Instead, check entity freshness:
   if a person/company profile was updated within the last 24 hours, offer to reuse
@@ -415,11 +418,16 @@ Make all Write calls simultaneously:
 
 - Report → `~/.nimble/memory/reports/meeting-prep-[company-slug]-[date].md`
 - Per attendee → `~/.nimble/memory/people/[name-slug].md`
-  (use the format in `references/memory-and-distribution.md`)
+  (use the format in `references/memory-and-distribution.md`). Add `[[path/entity]]`
+  cross-references for the attendee's employer (e.g., `[[competitors/widgetco]]` or
+  `[[companies/widgetco]]`) and any other discovered relationships.
 - Company profile → update `~/.nimble/memory/companies/[company-slug].md` if new
-  company data was found
+  company data was found. Add reverse cross-references to the people researched
+  (e.g., `[[people/alex-kim]]`).
 - Profile → update `last_runs.meeting-prep` in `~/.nimble/business-profile.json`
   (only if profile exists)
+- Follow the wiki update pattern from `references/memory-and-distribution.md`: update
+  `index.md` rows for all affected entity files, append a `log.md` entry for this run.
 
 The person profile in `people/` should contain structured key facts (role, background,
 interests, communication style) that can be loaded by future meeting prep runs.
@@ -481,17 +489,9 @@ actively search for connections rather than just comparing results post-hoc.
 
 ## Error Handling
 
-See `references/nimble-playbook.md` for the standard error table (missing API key, 429,
-401, empty results, extraction garbage). Skill-specific errors:
+See `references/nimble-playbook.md` for the standard error table. Skill-specific errors:
 
-- **Search 500:** Retry once without `--focus` flag. If still failing, retry with a
-  simplified query (shorter terms, no date filter). Log the failure but don't skip
-  the attendee.
-- **Search timeout:** Retry once, then skip that call and continue — consistent with
-  the playbook's timeout policy.
-- **Person not found:** Try variations — full name, first + last, with company name.
-  If still nothing: "Couldn't find public information on [Name]. They may have a
-  limited online presence. Can you share their title or LinkedIn URL?"
-- **Ambiguous name:** "I found multiple people named [Name]. Which one?"
-  Present top candidates with company/title context.
+- **Person not found:** Try name variations (full, first+last, with company). If still
+  nothing: "Couldn't find public info on [Name]. Can you share their title or LinkedIn?"
+- **Ambiguous name:** Present top candidates with company/title context and ask.
 - **Empty company results:** Note it and focus on attendee-level findings.

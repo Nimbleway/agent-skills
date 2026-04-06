@@ -34,7 +34,7 @@ allowed-tools:
   - AskUserQuestion
 metadata:
   author: Nimbleway
-  version: 0.16.0
+  version: 0.17.0
 ---
 
 # Healthcare Providers Verify
@@ -59,8 +59,8 @@ session by following the Sibling Handoff pattern from `references/nimble-playboo
 If same-day output exists, skip CLI check and profile load, and reuse WSA Layer 1/3
 inventory. Only re-run Layer 2 if the verification focus changed.
 
-**Otherwise, run full preflight** from `references/nimble-playbook.md` (4 simultaneous
-Bash calls: date calc, today, CLI check, profile load).
+**Otherwise, run full preflight** from `references/nimble-playbook.md` (5 simultaneous
+Bash calls: date calc, today, CLI check, profile load, index.md load).
 
 **Also simultaneously** — run WSA discovery and setup:
 - `mkdir -p ~/.nimble/memory/{reports,healthcare-providers-verify/checkpoints}`
@@ -323,6 +323,8 @@ Make all Write calls simultaneously:
 - Verification data -> `~/.nimble/memory/healthcare-providers-verify/{slug}/verified.json`
 - Profile -> update `last_runs.healthcare-providers-verify` in
   `~/.nimble/business-profile.json` (only if profile exists)
+- Follow the wiki update pattern from `references/memory-and-distribution.md`: update
+  `index.md` rows for all affected entity files, append a `log.md` entry for this run.
 - Clean up checkpoint (complete run) or keep (partial run)
 
 **Update sibling artifacts:** If `providers.json` or `enriched.json` exists for this

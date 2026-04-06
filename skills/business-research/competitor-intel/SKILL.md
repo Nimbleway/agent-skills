@@ -35,7 +35,7 @@ allowed-tools:
   - AskUserQuestion
 metadata:
   author: Nimbleway
-  version: 0.16.0
+  version: 0.17.0
 ---
 
 # Competitor Intelligence
@@ -53,13 +53,18 @@ constraints (no shell state, no `&`/`wait`, sub-agent permissions, communication
 
 ### Step 0: Preflight
 
-Run the preflight pattern from `references/nimble-playbook.md` (4 simultaneous Bash
-calls: date calc, today, CLI check, profile load).
+Run the preflight pattern from `references/nimble-playbook.md` (5 simultaneous Bash
+calls: date calc, today, CLI check, profile load, index.md load).
 
 From the results:
 - CLI missing or API key unset → `references/profile-and-onboarding.md`, stop
-- Profile exists → read all `~/.nimble/memory/competitors/*.md` for known signals
-  (used for dedup in Steps 3 + 5). Determine mode using smart date windowing
+- Profile exists → read `~/.nimble/memory/competitors/index.md` to identify which
+  competitor files exist and their last-updated dates. If the index doesn't exist
+  (first run or upgrade), fall back to reading all `~/.nimble/memory/competitors/*.md`
+  directly — the index is an optimization, not a gate. Then load the relevant
+  competitor files for known signals
+  (used for dedup in Steps 3 + 5). Follow cross-references (`[[path/entity]]` links)
+  to load related context. Determine mode using smart date windowing
   from `references/nimble-playbook.md`:
   - **Full mode:** first run OR last run > 14 days ago
   - **Quick refresh:** last run < 14 days ago
@@ -246,8 +251,32 @@ Make all Write calls simultaneously:
 - Report → `~/.nimble/memory/reports/competitor-intel-[date].md` (save the **full
   briefing**, not a summary — this is the local source of truth)
 - Per competitor → append validated signals to `~/.nimble/memory/competitors/[name].md`
-  (use the format documented in `references/memory-and-distribution.md`)
+  (use the format documented in `references/memory-and-distribution.md`). Add
+  `[[path/entity]]` cross-references for relationships discovered during research
+  (e.g., key people → `[[people/name]]`, related competitors → `[[competitors/name]]`).
 - Profile → update `last_runs.competitor-intel` in `~/.nimble/business-profile.json`
+- Follow the wiki update pattern from `references/memory-and-distribution.md`: update
+  `index.md` rows for all affected entity files, append a `log.md` entry for this run.
+
+### Step 7.5: Synthesis Page Generation
+
+If 3+ competitors were researched in this run, OR the existing
+`~/.nimble/memory/synthesis/competitive-landscape.md` has stale source timestamps
+(source entity files were updated since generation), generate or refresh the synthesis
+page.
+
+Use the `nimble-analyst` agent (`agents/nimble-analyst.md`) with
+`mode: "bypassPermissions"` to synthesize patterns across all competitor files. The
+agent should read all `~/.nimble/memory/competitors/*.md` files and produce a
+`competitive-landscape.md` following the format in
+`references/memory-and-distribution.md` — market map, feature comparison, pricing
+comparison, key patterns, and strategic implications. Cite source entity files with
+`[[competitors/name]]` links.
+
+Also append any unanswered questions to `~/.nimble/memory/backlog.md`
+(e.g., competitors where key data like pricing or funding is missing).
+
+After generating, update `index.md` with the synthesis page entry.
 
 ### Step 8: Share & Distribute
 

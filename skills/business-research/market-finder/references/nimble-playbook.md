@@ -23,6 +23,7 @@ Every skill starts with these simultaneous Bash calls:
 - `date +%Y-%m-%d` (today)
 - `nimble --version && echo "NIMBLE_API_KEY=${NIMBLE_API_KEY:+set}"`
 - `cat ~/.nimble/business-profile.json 2>/dev/null`
+- `cat ~/.nimble/memory/index.md 2>/dev/null` (global wiki index — know what directories have data)
 
 From the `nimble --version` output, check:
 - **CLI missing** (command not found) → install it interactively
@@ -350,6 +351,7 @@ Don't narrate individual tool calls.
 | `401 Unauthorized` | Expired key | Regenerate at app.nimbleway.com |
 | `429 Too Many Requests` | Rate limit | Fewer simultaneous calls |
 | `timeout` | Slow response | Retry once, then skip |
+| `500 Server Error` | Transient server failure | Retry once without `--focus`; if persistent, simplify query |
 | `empty results` | No matches | Remove `--start-date`, broaden query |
 
 ## Signal Date Validation

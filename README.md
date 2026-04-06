@@ -1,7 +1,7 @@
 # Nimble Web Search Skills & Plugin
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![Version](https://img.shields.io/badge/version-0.16.0-green)](https://github.com/Nimbleway/agent-skills)
+[![Version](https://img.shields.io/badge/version-0.17.0-green)](https://github.com/Nimbleway/agent-skills)
 
 Unlock the web for your AI agents — search, scrape, extract structured data, and run business intelligence workflows, all powered by Nimble's web data infrastructure. One plugin for Claude Code, Cursor, and any platform that supports the [Agent Skills spec](https://agentskills.io/specification.md).
 
@@ -92,9 +92,21 @@ nimble search --query "AI agent frameworks" --max-results 10
 
 ## How It Works
 
-Business skills follow a shared pattern: **preflight** (check CLI, load profile) → **parallel research** (spawn sub-agents for concurrent data gathering) → **analysis** (synthesize findings, deduplicate against previous runs) → **report** (structured output with sources) → **distribute** (offer Notion/Slack delivery).
+Nimble Web Search Skills follow a shared pattern: **preflight** (check CLI, load profile) → **parallel research** (spawn sub-agents for concurrent data gathering) → **analysis** (synthesize findings, deduplicate against previous runs) → **report** (structured output with sources) → **distribute** (offer Notion/Slack delivery).
 
 Core skills expose the Nimble CLI directly — search, extract, map, crawl, and manage extraction agents.
+
+### Local Web Knowledge Wiki
+
+Skills maintain a local web knowledge wiki at `~/.nimble/memory/` — live web intelligence that compounds across sessions, so your agent never starts from scratch. Inspired by [Karpathy's LLM Wiki](https://gist.github.com/karpathy/442a6bf555914893e9891c11519de94f): an AI-maintained, human-owned knowledge base that gets smarter with every run.
+
+- **Local-first indexes** — per-directory entity catalogs for instant lookup, no vector DB needed
+- **Obsidian-compatible** — `[[wiki links]]` cross-reference people, companies, and competitors. Open `~/.nimble/memory/` in Obsidian to browse your intelligence graph
+- **Cross-entity synthesis** — patterns across competitors, pricing trends, and market signals are surfaced automatically
+- **Ad-hoc insights** — say "remember this" mid-conversation and it compounds into the right entity page
+- **Activity log** — grep-friendly record of what was learned, when, and by which skill
+
+Every finding carries a verified event date and source URL. Stale signals are dropped, not reported — your context is always current.
 
 ### Platform Compatibility
 

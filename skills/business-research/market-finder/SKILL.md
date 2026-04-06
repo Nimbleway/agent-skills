@@ -35,7 +35,7 @@ allowed-tools:
   - AskUserQuestion
 metadata:
   author: Nimbleway
-  version: 0.16.0
+  version: 0.17.0
 ---
 
 # Market Finder
@@ -53,8 +53,8 @@ constraints (no shell state, no `&`/`wait`, sub-agent permissions, communication
 
 ### Step 0: Preflight
 
-Run the preflight pattern from `references/nimble-playbook.md` (4 simultaneous Bash
-calls: date calc, today, CLI check, profile load).
+Run the preflight pattern from `references/nimble-playbook.md` (5 simultaneous Bash
+calls: date calc, today, CLI check, profile load, index.md load).
 
 Also simultaneously:
 - `mkdir -p ~/.nimble/memory/{reports,market-finder/checkpoints}`
@@ -387,6 +387,8 @@ Make all Write calls simultaneously:
 **Both modes:**
 - Profile -> update `last_runs.market-finder` in `~/.nimble/business-profile.json`
   (only if profile exists)
+- Follow the wiki update pattern from `references/memory-and-distribution.md`: update
+  `index.md` rows for all affected entity files, append a `log.md` entry for this run.
 - Clean up checkpoint (complete run) or keep (partial run)
 
 ### Step 10: Share & Distribute

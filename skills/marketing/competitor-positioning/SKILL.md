@@ -34,7 +34,7 @@ allowed-tools:
   - AskUserQuestion
 metadata:
   author: Nimbleway
-  version: 0.16.0
+  version: 0.17.0
 ---
 
 # Competitor Positioning
@@ -64,8 +64,8 @@ constraints (no shell state, no `&`/`wait`, sub-agent permissions, communication
 
 ### Step 0: Preflight
 
-Run the preflight pattern from `references/nimble-playbook.md` (4 simultaneous Bash
-calls: date calc, today, CLI check, profile load).
+Run the preflight pattern from `references/nimble-playbook.md` (5 simultaneous Bash
+calls: date calc, today, CLI check, profile load, index.md load).
 
 From the results:
 - CLI missing or API key unset → `references/profile-and-onboarding.md`, stop
@@ -264,10 +264,14 @@ Make all Write calls simultaneously:
 - Per competitor → save positioning snapshot to
   `~/.nimble/memory/positioning/[name].md` using the format in
   `references/positioning-snapshot-format.md`. Append a dated entry to the History
-  section so future runs can detect what changed and when.
+  section so future runs can detect what changed and when. Add `[[competitors/name]]`
+  cross-references to link positioning snapshots to competitor intel files.
 
 - Profile → update `last_runs.competitor-positioning` in
   `~/.nimble/business-profile.json`
+
+- Follow the wiki update pattern from `references/memory-and-distribution.md`: update
+  `index.md` rows for all affected entity files, append a `log.md` entry for this run.
 
 ### Step 8: Share & Distribute
 
