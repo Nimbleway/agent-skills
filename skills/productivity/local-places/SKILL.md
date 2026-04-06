@@ -408,9 +408,10 @@ Check at startup: `echo $CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS`
 See `references/nimble-playbook.md` for the standard error table (missing API key, 429,
 401, empty results, extraction garbage). Skill-specific errors:
 
-- **Search/WSA 500/timeout:** Retry the call once. If a WSA call fails with 500 or
-  timeout, retry once with the same params. If still failing, fall back to
-  `nimble search` for that place/query. Log the failure but don't skip the place.
+- **WSA/Search 500:** Retry once with the same params. If still failing, fall back
+  to `nimble search` for that place/query. Log the failure but don't skip the place.
+- **WSA/Search timeout:** Retry once, then skip that call and continue — consistent
+  with the playbook's timeout policy.
 - **WSA not found:** If a WSA from the pipeline doesn't exist (e.g., `bbb_org_business_search`),
   skip it silently and rely on other discovery sources. Log which WSAs were unavailable.
 - **Location not found:** "Couldn't find results for [location]. Could you be more specific?

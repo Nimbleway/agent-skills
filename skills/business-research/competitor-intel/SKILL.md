@@ -268,6 +268,8 @@ Check at startup: `echo $CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS`
 See `references/nimble-playbook.md` for the standard error table (missing API key, 429,
 401, empty results, extraction garbage). Skill-specific errors:
 
-- **Search 500/timeout:** Retry once without `--focus` flag. If still failing, retry
-  with a simplified query (shorter terms, no date filter). Log the failure but don't
-  skip the competitor — partial data is better than a gap.
+- **Search 500:** Retry once without `--focus` flag. If still failing, retry with a
+  simplified query (shorter terms, no date filter). Log the failure but don't skip
+  the competitor.
+- **Search timeout:** Retry once, then skip that call and continue — consistent with
+  the playbook's timeout policy.
