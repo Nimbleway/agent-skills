@@ -122,7 +122,7 @@ Map the answer to the meeting type. If the user picks "General / other", treat a
 general external (no value positioning section).
 
 The meeting type shapes the briefing focus — specifically, it determines whether the
-Value Positioning section (Step 3.5 + Step 5) is generated. Value positioning activates
+Value Positioning section (Step 4.5 + Step 6) is generated. Value positioning activates
 for: **sales/discovery, partnership, board/investor**. It is skipped for: **interview,
 internal, general external**.
 
@@ -343,7 +343,7 @@ going in. This is the "read nothing else" paragraph.]
 
 ### Value Mapping
 [Match their specific needs/pain points to your capabilities. Every mapping must
-  be grounded in research from Step 3.5, not generic claims.
+  be grounded in research from Step 4.5, not generic claims.
   Format: "They [specific finding with source] → Your product [specific capability]"]
 
 ### Integration Hooks

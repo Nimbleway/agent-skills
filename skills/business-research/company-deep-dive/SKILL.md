@@ -83,11 +83,12 @@ Parse the target company from `$ARGUMENTS` or the user's message.
 
 **Scope selection** — if the user hasn't specified depth, default to **full deep dive**.
 If they say "quick overview", "brief", or "summary", run a **quick mode** that skips
-deep extraction (Step 3) and produces a shorter report.
+the Deep Extraction step and produces a shorter report.
 
 ### Step 2: WSA Discovery
 
-Discover available WSAs for the target company's domain:
+Discover available WSAs for the target company's domain. Run both searches
+simultaneously:
 
 ```bash
 nimble agent list --search "{company-domain}" --limit 20
@@ -97,9 +98,9 @@ nimble agent list --search "{company-domain}" --limit 20
 nimble agent list --search "{company-name}" --limit 20
 ```
 
-Run both simultaneously. From the results, filter for WSAs with `entity_type`
-matching SERP or PDP, prefer `managed_by: "nimble"`, and validate each with
-`nimble agent get --template-name {name}`. Cache discovered WSA names + params
+From the results, filter for WSAs with `entity_type` matching SERP or PDP, and
+prefer `managed_by: "nimble"`. Validate each with
+`nimble agent get --template-name {name}`, then cache discovered WSA names + params
 for the run. Pass them to dimension agents in Step 3 for enrichment alongside
 `nimble search`. If no WSAs found, continue with `nimble search` alone.
 

@@ -163,7 +163,8 @@ From the combined results:
 4. Validate each with `nimble agent get --template-name {name}` to confirm params
 5. Cache all discovered WSA names + validated params for the rest of the run
 
-If no WSAs found for a phase, that phase falls back to `nimble search`.
+If no WSAs found for a phase, that phase falls back to `nimble search`. Log
+which phases had WSA coverage and which are using fallback.
 
 ### Step 5: Primary Search (Phase 1)
 
