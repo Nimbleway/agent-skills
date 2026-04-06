@@ -132,6 +132,14 @@ Plugin manifests live in `.claude-plugin/plugin.json` and `.cursor-plugin/plugin
 
 When adding a new skill, also add it to `.claude-plugin/marketplace.json` `skills` array. Version bump (minor) must touch ALL files: both plugin.json manifests, marketplace.json, README.md badge, and every `skills/**/SKILL.md` `metadata.version` field. Grep for the version number itself (e.g., `0.12.1`) — some files quote it (`"0.12.1"`), some don't.
 
+## Memory Wiki Architecture
+
+`~/.nimble/memory/` is a local web knowledge wiki with Obsidian-compatible `[[wikilinks]]`.
+Architecture documented in `_shared/memory-and-distribution.md` — read it before modifying
+memory patterns. Per-directory indexes are optimizations, not gates — always fall back to
+reading files directly if index is missing.
+- When removing skill-specific error handling in favor of shared playbook, verify the playbook covers all error types being removed
+
 ## Conventions
 
 - Commits: conventional commits (`feat:`, `fix:`, `test:`, `docs:`)
