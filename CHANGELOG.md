@@ -1,5 +1,15 @@
 # Changelog
 
+## [0.16.0] - 2026-04-06
+
+### Changed
+- All 5 business skills now discover WSAs dynamically at runtime via `nimble agent list --search` instead of hardcoding agent names
+- **local-places** — replaced 10 hardcoded WSA names across Steps 4-7 with a new WSA Discovery step (Step 4) that discovers, classifies, and caches WSAs for all phases
+- **competitor-intel**, **company-deep-dive**, **meeting-prep**, **competitor-positioning** — added slim WSA discovery step before main execution, prioritizing search/extract/crawl/map WSAs
+- `wsa-pipeline.md` reference converted from static WSA inventory to discovery strategy document
+- Added sibling skill suggestions to follow-up sections across all business skills
+- Fixed weakness language in competitor-positioning battlecard template
+
 ## [0.15.1] - 2026-04-06
 
 ### Changed

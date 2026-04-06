@@ -34,7 +34,7 @@ allowed-tools:
   - AskUserQuestion
 metadata:
   author: Nimbleway
-  version: 0.15.1
+  version: 0.16.0
 ---
 
 # Competitor Positioning
@@ -113,7 +113,20 @@ This prevents wasted API credits and wall time on competitors the user doesn't c
 about right now. Each competitor costs ~3-5 Nimble API credits (1 map + 3-4 extracts
 + 2-3 searches).
 
-### Step 3: Capture the User's Own Positioning (baseline)
+### Step 3: WSA Discovery
+
+For each competitor domain and the user's domain, discover available WSAs:
+
+```bash
+nimble agent list --search "{domain}" --limit 20
+```
+
+Run one search per domain simultaneously. Filter for SERP/PDP WSAs, prefer
+`managed_by: "nimble"`, validate with `nimble agent get --template-name {name}`.
+Cache discovered names + params. Pass them to competitor agents in Step 5 for
+richer extraction. If no WSAs found, continue with `nimble search/extract/map`.
+
+### Step 4: Capture the User's Own Positioning (baseline)
 
 Before analyzing competitors, capture the user's own positioning as a baseline for
 the messaging matrix.
@@ -137,7 +150,7 @@ for paths containing `/features`, `/product`, `/platform`, `/pricing`, `/plans`)
 If a page extraction returns garbage, note "page not accessible" and continue —
 partial baseline is better than none.
 
-### Step 4: Parallel Research Per Competitor (sub-agents)
+### Step 5: Parallel Research Per Competitor (sub-agents)
 
 Read `references/positioning-agent-prompt.md` for the full agent prompt template.
 Follow the sub-agent spawning rules from `references/nimble-playbook.md`
@@ -152,8 +165,8 @@ page extractions instead of individual calls. See the Scaled Execution pattern i
 For each competitor in scope, spawn a **general-purpose** sub-agent with
 `mode: "bypassPermissions"` and inline the prompt from
 `references/positioning-agent-prompt.md`. Customize the prompt with each competitor's
-name, domain, start-date, and previous positioning snapshot from memory (loaded in
-Step 0).
+name, domain, start-date, previous positioning snapshot from memory (loaded in
+Step 0), and any discovered WSA names from Step 3 for richer data access.
 
 Do NOT use `agents/nimble-researcher.md` — that agent is scoped for raw data gathering
 and explicitly forbids analysis, but this skill requires interpretive work (identifying
@@ -175,7 +188,7 @@ additional posts from the main context using URLs from the agent's search result
 **Fallback:** If an agent fails entirely, run extractions directly from the main context
 using the same prompt template steps.
 
-### Step 5: Analysis & Output
+### Step 6: Analysis & Output
 
 Frame everything for a marketing team. Use terms they work with: messaging
 hierarchy, share of voice, battlecard inputs, content calendar implications.
@@ -238,7 +251,10 @@ When analyzing blog content from agent results, look for:
 - Say "no positioning changes detected" rather than padding with fluff.
 - Use verbatim quotes for taglines, CTAs, and value props — don't paraphrase.
 
-### Step 6: Save & Update Memory
+**WSA enrichment:** If WSAs were discovered in Step 3, agents should use them
+alongside `nimble map`/`nimble extract` for richer page data.
+
+### Step 7: Save & Update Memory
 
 Make all Write calls simultaneously:
 
@@ -253,7 +269,7 @@ Make all Write calls simultaneously:
 - Profile → update `last_runs.competitor-positioning` in
   `~/.nimble/business-profile.json`
 
-### Step 7: Share & Distribute
+### Step 8: Share & Distribute
 
 **Always offer distribution — do not skip this step.** Follow
 `references/memory-and-distribution.md` for connector detection, sharing flow, and
@@ -266,7 +282,7 @@ Triggered by `"battlecard [competitor]"` argument or as a follow-up request.
 
 **Inputs:** Read the competitor's positioning snapshot from
 `~/.nimble/memory/positioning/[name].md` and the user's own baseline from the most
-recent report. If no snapshot exists (or it's stale > 14 days), run Steps 3-4 for
+recent report. If no snapshot exists (or it's stale > 14 days), run Steps 4-5 for
 that competitor first, then return here.
 
 **Output format:**
@@ -295,7 +311,7 @@ that competitor first, then return here.
 [Areas where their positioning is stronger or they have genuine advantages]
 
 ### Where We Win
-[Our differentiators they can't match, with evidence]
+[Our unique advantages, with evidence]
 
 ### Objection Handling
 | Prospect Says | Respond With |
@@ -307,7 +323,7 @@ that competitor first, then return here.
 
 ---
 
-### Step 8: Follow-ups
+### Step 9: Follow-ups
 
 - **Generate battlecard** for a competitor → runs Battlecard Generation above
 - **Draft counter-messaging** for a specific competitor claim → suggest alternative
@@ -318,6 +334,13 @@ that competitor first, then return here.
 - **Track a new competitor** → update `competitors`, create positioning snapshot
 - **Skip a competitor** → update `preferences.skip_competitors`
 - **"Looks good"** → done
+
+**Sibling skill suggestions:**
+
+> **Next steps:**
+> - Run `competitor-intel` for business signals (funding, hiring, product launches)
+> - Run `company-deep-dive` for a full 360 profile on any competitor
+> - Run `meeting-prep` if you're meeting with someone at a competitor
 
 ---
 
