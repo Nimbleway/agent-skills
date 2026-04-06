@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.15.1] - 2026-04-06
+
+### Changed
+- All 5 business skills now reference Scaled Execution pattern from `nimble-playbook.md` with call estimation guidance
+- Added explicit 500 retry and timeout handling to error sections of company-deep-dive, meeting-prep, competitor-positioning, local-places, and competitor-intel
+
 ## [0.8.0] - 2026-03-08
 
 ### Changed
