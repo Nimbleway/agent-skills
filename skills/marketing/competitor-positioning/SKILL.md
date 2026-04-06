@@ -34,7 +34,7 @@ allowed-tools:
   - AskUserQuestion
 metadata:
   author: Nimbleway
-  version: 0.15.0
+  version: 0.15.1
 ---
 
 # Competitor Positioning
@@ -142,6 +142,12 @@ partial baseline is better than none.
 Read `references/positioning-agent-prompt.md` for the full agent prompt template.
 Follow the sub-agent spawning rules from `references/nimble-playbook.md`
 (bypassPermissions, batch max 4, explicit Bash instruction, fallback on failure).
+
+**Call estimation & Scaled Execution:** Before launching agents, estimate total API
+calls: ~1 map + 3 extractions + 3 searches per competitor = ~7 × N calls (plus baseline
+from Step 3). For 2+ competitors (14+ calls), tell agents to use `extract-batch` for
+page extractions instead of individual calls. See the Scaled Execution pattern in
+`references/nimble-playbook.md` for tier selection.
 
 For each competitor in scope, spawn a **general-purpose** sub-agent with
 `mode: "bypassPermissions"` and inline the prompt from
@@ -339,6 +345,9 @@ Check at startup: `echo $CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS`
 See `references/nimble-playbook.md` for the standard error table (missing API key, 429,
 401, empty results, extraction garbage). Skill-specific errors:
 
+- **Search 500/timeout:** Retry once without `--focus` flag. If still failing, retry
+  with a simplified query (shorter terms, no date filter). Log the failure but don't
+  skip the competitor — partial data is better than a gap.
 - **Page extraction fails (404/garbage):** The map step should prevent most 404s by
   discovering actual URLs first. If extraction still fails, note "page not accessible"
   and continue — partial data is better than no data.

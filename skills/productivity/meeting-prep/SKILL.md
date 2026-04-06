@@ -33,7 +33,7 @@ allowed-tools:
   - AskUserQuestion
 metadata:
   author: Nimbleway
-  version: 0.15.0
+  version: 0.15.1
 ---
 
 # Meeting Prep
@@ -142,6 +142,12 @@ Spawn `nimble-researcher` agents (`agents/nimble-researcher.md`) with
 **Important:** The Nimble API has a 10 req/sec rate limit per API key. With each agent
 running 4-5 searches, limit concurrent agents to 2 per batch. For 3+ attendees, batch
 in groups of 2.
+
+**Call estimation & Scaled Execution:** Before launching agents, estimate total API
+calls: ~5 searches per attendee + ~4 company searches + 3-5 extractions = ~(5 × N) + 9
+calls. For 3+ attendees (15+ calls), tell agents to use `extract-batch` for page
+extractions instead of individual calls. See the Scaled Execution pattern in
+`references/nimble-playbook.md` for tier selection.
 
 **Batch 1** (2 agents simultaneously):
 - Attendee 1 research
@@ -465,6 +471,9 @@ actively search for connections rather than just comparing results post-hoc.
 See `references/nimble-playbook.md` for the standard error table (missing API key, 429,
 401, empty results, extraction garbage). Skill-specific errors:
 
+- **Search 500/timeout:** Retry once without `--focus` flag. If still failing, retry
+  with a simplified query (shorter terms, no date filter). Log the failure but don't
+  skip the attendee — partial data is better than a gap.
 - **Person not found:** Try variations — full name, first + last, with company name.
   If still nothing: "Couldn't find public information on [Name]. They may have a
   limited online presence. Can you share their title or LinkedIn URL?"

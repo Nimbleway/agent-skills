@@ -36,7 +36,7 @@ allowed-tools:
   - AskUserQuestion
 metadata:
   author: Nimbleway
-  version: 0.15.0
+  version: 0.15.1
 ---
 
 # Local Places
@@ -375,6 +375,9 @@ For comprehensive searches (50+ places), use `nimble-researcher` agents
 
 Follow the sub-agent spawning rules from `references/nimble-playbook.md`
 (bypassPermissions, batch max 4, explicit Bash instruction, fallback on failure).
+For WSA calls at scale (11+ entities), tell agents to use `agent run-batch` instead
+of individual calls. See the Scaled Execution pattern in
+`references/nimble-playbook.md` for tier selection.
 
 **Spawn pattern:** One agent per batch of 10 places for social enrichment.
 Each agent runs the Phase 2 WSAs for its batch and returns structured results.
@@ -405,6 +408,9 @@ Check at startup: `echo $CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS`
 See `references/nimble-playbook.md` for the standard error table (missing API key, 429,
 401, empty results, extraction garbage). Skill-specific errors:
 
+- **Search/WSA 500/timeout:** Retry the call once. If a WSA call fails with 500 or
+  timeout, retry once with the same params. If still failing, fall back to
+  `nimble search` for that place/query. Log the failure but don't skip the place.
 - **WSA not found:** If a WSA from the pipeline doesn't exist (e.g., `bbb_org_business_search`),
   skip it silently and rely on other discovery sources. Log which WSAs were unavailable.
 - **Location not found:** "Couldn't find results for [location]. Could you be more specific?
