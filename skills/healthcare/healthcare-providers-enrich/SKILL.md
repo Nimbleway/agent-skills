@@ -35,7 +35,7 @@ allowed-tools:
   - AskUserQuestion
 metadata:
   author: Nimbleway
-  version: 0.16.0
+  version: 0.17.0
 ---
 
 # Healthcare Providers Enrich
@@ -60,8 +60,8 @@ Handoff pattern from `references/nimble-playbook.md`. If same-day extract output
 exists, skip CLI check and profile load, and reuse WSA Layer 1/3 inventory. Only
 re-run Layer 2 if the specialty changed.
 
-**Otherwise, run full preflight** from `references/nimble-playbook.md` (4 simultaneous
-Bash calls: date calc, today, CLI check, profile load).
+**Otherwise, run full preflight** from `references/nimble-playbook.md` (5 simultaneous
+Bash calls: date calc, today, CLI check, profile load, index.md load).
 
 **Also simultaneously** — run WSA discovery and setup:
 - `mkdir -p ~/.nimble/memory/{reports,healthcare-providers-enrich/checkpoints}`
@@ -288,6 +288,8 @@ Make all Write calls simultaneously:
 - Enriched data -> `~/.nimble/memory/healthcare-providers-enrich/{slug}/enriched.json`
 - Profile -> update `last_runs.healthcare-providers-enrich` in
   `~/.nimble/business-profile.json` (only if profile exists)
+- Follow the wiki update pattern from `references/memory-and-distribution.md`: update
+  `index.md` rows for all affected entity files, append a `log.md` entry for this run.
 - Clean up checkpoint (complete run) or keep (partial run)
 
 ### Step 9: Share & Distribute

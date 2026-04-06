@@ -1,5 +1,22 @@
 # Changelog
 
+## [0.17.0] - 2026-04-07
+
+### Added
+- **Two-tier wiki index** — global `index.md` (one line per directory) + per-directory `{dir}/index.md` catalogs for scalable entity lookup
+- **Chronological activity log** (`log.md`) — append-only timestamped record of skill runs and findings, rotated at 90 days
+- **Cross-entity references** — Obsidian-compatible `[[path/entity]]` wiki links between related entities (people → companies, competitors → competitors)
+- **Ad-hoc insights** — "save this" / "remember that" files insights into relevant entity pages with `[ad-hoc]` tags
+- **Cross-entity synthesis pages** (`synthesis/`) — dynamically created when patterns emerge across 3+ entities, with YAML source tracking for deterministic staleness detection
+- **Research backlog** (`backlog.md`) — tracks knowledge gaps and unanswered questions across skill runs
+
+### Changed
+- All 9 business skills now run 5 preflight calls (added index load) and reference wiki update patterns in their save steps
+- **competitor-intel** — new Step 7.5 generates synthesis pages using `nimble-analyst` agent; save step adds cross-references and appends to backlog
+- **meeting-prep** — preflight follows cross-references from person files to load related competitor/company context
+- **company-deep-dive** — save step adds cross-references for discovered people and related competitors
+- Bootstrapping now creates `synthesis/` directory alongside existing entity directories
+
 ## [0.16.0] - 2026-04-06
 
 ### Changed

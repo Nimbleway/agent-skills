@@ -33,7 +33,7 @@ allowed-tools:
   - AskUserQuestion
 metadata:
   author: Nimbleway
-  version: 0.16.0
+  version: 0.17.0
 ---
 
 # Company Deep Dive
@@ -51,13 +51,14 @@ constraints (no shell state, no `&`/`wait`, sub-agent permissions, communication
 
 ### Step 0: Preflight
 
-Run the preflight pattern from `references/nimble-playbook.md` (4 simultaneous Bash
-calls: date calc, today, CLI check, profile load).
+Run the preflight pattern from `references/nimble-playbook.md` (5 simultaneous Bash
+calls: date calc, today, CLI check, profile load, index.md load).
 
 From the results:
 - CLI missing or API key unset → `references/profile-and-onboarding.md`, stop
-- Profile exists → note it for context (company name helps frame the research). Check
-  if the target company is already in `~/.nimble/memory/companies/` for prior research.
+- Profile exists → note it for context (company name helps frame the research). Read
+  `~/.nimble/memory/companies/index.md` to check if the target company already has
+  prior research. Follow `[[path/entity]]` cross-references to load related context.
   - **Prior research exists:** Load it. Run in **refresh mode** — focus on what's new
     since the last report date. Tell the user: "I have prior research on [Company]
     from [date]. Refreshing with latest data."
@@ -240,9 +241,14 @@ Make all Write calls simultaneously:
 
 - Report → `~/.nimble/memory/reports/company-deep-dive-[date].md`
 - Company profile → `~/.nimble/memory/companies/[company-name-slug].md`
-  (use the format in `references/memory-and-distribution.md`)
+  (use the format in `references/memory-and-distribution.md`). Add `[[path/entity]]`
+  cross-references for key people discovered (e.g., `[[people/jane-smith]]`),
+  competitors in the same space (e.g., `[[competitors/widgetco]]`), and any other
+  related entities.
 - If profile exists → update `last_runs.company-deep-dive` in
   `~/.nimble/business-profile.json`
+- Follow the wiki update pattern from `references/memory-and-distribution.md`: update
+  `index.md` rows for all affected entity files, append a `log.md` entry for this run.
 
 The company profile in `companies/` should contain structured key facts (overview,
 financials, leadership, products) that can be loaded by future runs of any skill
