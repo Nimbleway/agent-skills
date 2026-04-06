@@ -6,6 +6,85 @@
 - All 5 business skills now reference Scaled Execution pattern from `nimble-playbook.md` with call estimation guidance
 - Added explicit 500 retry and timeout handling to error sections of company-deep-dive, meeting-prep, competitor-positioning, local-places, and competitor-intel
 
+## [0.15.0] - 2026-04-05
+
+### Added
+- **healthcare-providers-verify** skill — cross-references provider data against authoritative sources (NPI registry, state licensing boards) for accuracy verification
+
+## [0.14.0] - 2026-04-05
+
+### Added
+- **healthcare-providers-enrich** skill — enriches extracted provider records with reviews, credentials, and contact info from multiple web sources
+
+## [0.13.0] - 2026-04-05
+
+### Added
+- **healthcare-providers-extract** skill — first skill in the `healthcare/` vertical; extracts structured practitioner directories from any web source using dynamic WSA discovery
+
+### Changed
+- Fixed `--shared-inputs` YAML syntax in shared playbook
+- Strengthened entity dedup normalization rules
+
+## [0.12.1] - 2026-04-05
+
+### Added
+- Audit mode for **market-finder** skill — validates a reference list against live web data, scores market presence, and produces gap analysis
+
+## [0.12.0] - 2026-04-05
+
+### Added
+- **market-finder** skill in `business-research/` — discovers all businesses of a given type in any geography using Nimble WSAs
+- 6 vertical presets (Healthcare, SaaS, Restaurants, Legal, Auto/Home, Custom) with dynamic WSA discovery
+- SaaS treated as first-class vertical with two-pass discovery and funding verification
+- Shared "Scaled Execution" pattern added to `_shared/nimble-playbook.md` (tiered: individual → batch → multi-batch → confirmation gate)
+
+## [0.11.0] - 2026-04-05
+
+### Added
+- **local-places** skill in `productivity/` — discovers, enriches, and scores local businesses using Nimble WSAs (Google Maps, Yelp, Facebook, Instagram, DoorDash, Uber Eats)
+- Skill-specific WSA pipeline reference with category detection, location disambiguation, and interactive Leaflet.js map generation
+
+## [0.10.2] - 2026-04-03
+
+### Added
+- `CONTRIBUTING.md` with contributor guidelines
+- Shared patterns and conventions for new skill development
+
+### Changed
+- Rewrote README with category-level skill table
+- Fixed sync script for shared reference distribution
+
+## [0.10.1] - 2026-04-02
+
+### Added
+- `CLAUDE.md` with repo context, skill authoring rules, and conventions
+
+### Changed
+- Added agent CLI commands (`nimble agent list`, `nimble agent get`, `nimble agent run`) to all business skill playbooks
+- Added MCP fallback table and fixed `agent get` flag syntax
+- Updated plugin descriptions across both manifests
+
+## [0.10.0] - 2026-03-30
+
+### Changed
+- Grouped skills into vertical directories: `business-research/`, `healthcare/`, `marketing/`, `productivity/`, `web-search-tools/`
+- Updated `plugin.json` and `marketplace.json` for grouped directory structure
+- Standardized author metadata across all skills
+
+## [0.9.0] - 2026-03-26
+
+### Added
+- **Business skills foundation** — shared references (`_shared/nimble-playbook.md`, `profile-and-onboarding.md`, `memory-and-distribution.md`), custom sub-agents (`nimble-researcher`, `nimble-analyst`)
+- **competitor-intel** skill — ongoing competitor monitoring with signal classification and delta detection
+- **company-deep-dive** skill — 360-degree company research from web sources
+- **meeting-prep** skill — attendee research and meeting briefings with calendar detection
+- **competitor-positioning** skill — marketing-focused positioning analysis with before/after change tracking
+
+### Changed
+- Added signal date validation to filter stale events from reports
+- Added value positioning section to meeting-prep briefings
+- Enforced DRY across all business skills: replaced `site:` operator with `--include-domain`, standardized placeholder names, added same-day detection
+
 ## [0.8.0] - 2026-03-08
 
 ### Changed
