@@ -1,5 +1,16 @@
 # Changelog
 
+## [0.18.0] - 2026-04-13
+
+### Added
+- **`seo/` vertical** — 6 new skills covering the full SEO lifecycle using full Nimble CLI (map, crawl, extract, search, agents):
+  - **seo-keyword-research** — discovers keyword opportunities from live SERPs, clusters by intent, estimates difficulty from competitor page strength (not fabricated scores)
+  - **seo-rank-tracker** — tracks keyword positions over time via live SERP queries, stores JSON snapshots, produces delta reports with smart date windowing
+  - **seo-site-audit** — full-crawl technical + on-page audit with JS rendering across 7 categories (meta, headings, schema, links, content, technical, CWV); auto-escalates render tier for SPAs
+  - **seo-content-gap** — maps user site + competitors in parallel, compares topic coverage, validates gaps against live SERPs, prioritizes as Quick Wins / Strategic Bets / Nice-to-Have
+  - **seo-competitor-keywords** — reverse-engineers on-page SEO strategy via full-site crawl; extracts titles, H1s, meta, headings, anchor text, alt text; clusters into themes with per-domain snapshots for delta detection
+  - **seo-ai-visibility** — queries Google AI Overviews, Perplexity, and ChatGPT proxy signals; detects brand mentions and citations; computes AI Visibility Score and Share of AI Voice
+
 ## [0.17.0] - 2026-04-07
 
 ### Added
