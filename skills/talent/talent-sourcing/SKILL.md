@@ -123,9 +123,9 @@ Search for people matching the role criteria. Use Boolean-style query constructi
 
 ```bash
 nimble search --query "site:linkedin.com/in [Role] [Location] [Key Skills]" \
-  --max-results 15 --search-depth standard
+  --max-results 15 --search-depth fast
 nimble search --query "[Role] [Location] linkedin profile [Skill1] [Skill2]" \
-  --max-results 10 --search-depth standard
+  --max-results 10 --search-depth fast
 ```
 
 If a LinkedIn WSA was discovered in Step 2, use it instead with the role title,
@@ -135,9 +135,9 @@ location, and skill keywords as inputs.
 
 ```bash
 nimble search --query "site:indeed.com resume [Role] [Location] [Key Skills]" \
-  --max-results 10 --search-depth standard
+  --max-results 10 --search-depth fast
 nimble search --query "[Role] resume [Location] [Key Skills]" \
-  --max-results 10 --search-depth standard
+  --max-results 10 --search-depth fast
 ```
 
 **Agent 3 — GitHub (technical roles only)**
@@ -146,23 +146,23 @@ Skip this agent for non-technical roles (e.g. Sales, Marketing, Operations).
 
 ```bash
 nimble search --query "site:github.com [Role] [Location] [Key Skills]" \
-  --max-results 10 --search-depth standard
+  --max-results 10 --search-depth fast
 nimble search --query "github [Key Skills] developer [Location] open to work" \
-  --max-results 10 --search-depth standard
+  --max-results 10 --search-depth fast
 ```
 
 **Agent 4 — AngelList / Wellfound + Communities**
 
 ```bash
 nimble search --query "site:wellfound.com [Role] [Location] [Key Skills]" \
-  --max-results 10 --search-depth standard
+  --max-results 10 --search-depth fast
 nimble search --query "[Role] [Location] open to work OR seeking opportunities \
-  [Key Skills]" --max-results 10 --search-depth standard
+  [Key Skills]" --max-results 10 --search-depth fast
 ```
 
 Each agent returns: candidate name (if available), profile URL, current title,
-location snippet, inferred skills, and any availability signals ("open to work",
-"seeking", "available").
+location snippet, inferred skills, availability signals ("open to work", "seeking",
+"available") with event date (if available) and source URL.
 
 ### Step 4: Deep Profile Extraction
 
@@ -210,12 +210,18 @@ Group candidates into tiers:
 
 ### Step 6: Output
 
+Before presenting results, check `~/.nimble/memory/talent-sourcing/[role-slug].md` —
+if a candidate was surfaced in a prior run, mark them `(previously surfaced)` rather
+than re-presenting them as new.
+
 Present a structured candidate report:
 
 ```
 ## Candidate Report: [Role] in [Location]
 Searched: LinkedIn, Indeed, GitHub, Wellfound
 Found: [N] candidates | Tier 1: [N] | Tier 2: [N] | Tier 3: [N]
+
+**TL;DR:** [2-3 sentence summary of the strongest candidates and any notable patterns]
 
 ---
 
@@ -226,11 +232,17 @@ Found: [N] candidates | Tier 1: [N] | Tier 2: [N] | Tier 3: [N]
 - **Location:** [Location]
 - **Skills:** [Skill1], [Skill2], [Skill3]
 - **Experience:** [X years, notable employers]
-- **Availability:** [open to work / recently changed jobs / unknown]
+- **Availability:** [signal] — [event date or "date unknown"] — [source URL]
 - **Profile:** [URL]
 - **Contact signals:** [email / personal site / GitHub]
 
 ...
+
+---
+
+### What This Means
+[1-2 sentences on hiring outlook: supply/demand signal, speed recommendation, any
+standout sourcing channel]
 ```
 
 Omit fields where data is unavailable. Do not fabricate details — use "unknown"
@@ -239,12 +251,11 @@ Tier 1 result.
 
 ### Step 7: Save to Memory
 
-Save the full candidate report simultaneously:
+Make all Write calls simultaneously:
 
-```bash
-~/.nimble/memory/reports/talent-sourcing-[role-slug]-[date].md
-~/.nimble/memory/talent-sourcing/[role-slug].md
-```
+- Report → `~/.nimble/memory/reports/talent-sourcing-{YYYY-MM-DD}.md` (full candidate report with all tiers)
+- Per-role → `~/.nimble/memory/talent-sourcing/[role-slug].md` (candidate list; write or update)
+- Profile → update `last_runs.talent-sourcing` in `~/.nimble/business-profile.json` using the python3 snippet in `references/profile-and-onboarding.md`. Skip if the file does not exist.
 
 Update `~/.nimble/memory/talent-sourcing/index.md` with a row for this search.
 Follow the wiki update pattern from `references/memory-and-distribution.md`.
