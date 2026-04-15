@@ -35,7 +35,8 @@
         "./skills/marketing/competitor-positioning",
         "./skills/healthcare/healthcare-providers-extract",
         "./skills/healthcare/healthcare-providers-enrich",
-        "./skills/healthcare/healthcare-providers-verify"
+        "./skills/healthcare/healthcare-providers-verify",
+        "./skills/talent/talent-sourcing"
       ]
     }
   ]

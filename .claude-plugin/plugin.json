@@ -32,7 +32,8 @@
     "./skills/productivity/",
     "./skills/business-research/",
     "./skills/marketing/",
-    "./skills/healthcare/"
+    "./skills/healthcare/",
+    "./skills/talent/"
   ],
   "agents": ["./agents/nimble-researcher.md", "./agents/nimble-analyst.md"]
 }
