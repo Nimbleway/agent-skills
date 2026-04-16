@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.18.0] - 2026-04-13
+
+### Added
+- **`seo-intel`** — single-skill SEO intelligence toolkit covering the full lifecycle via 7 router-dispatched workflows: keyword research, rank tracking, technical site audit, content gap analysis, competitor keyword reverse-engineering, AI visibility measurement (ChatGPT, Perplexity, Google AI, Gemini, Grok), and GitHub repository SEO. One install, one entry point — intent detection routes to the right workflow, and workflows chain naturally across a session.
+
+### Changed
+- **`_shared/`** — removed `ai-platform-profiles.md` (only SEO-specific) and `output-quality.md` (marginal value, overlaps playbook) from the shared sync set
+
 ## [0.17.0] - 2026-04-07
 
 ### Added

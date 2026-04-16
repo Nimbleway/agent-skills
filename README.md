@@ -1,7 +1,7 @@
 # Nimble Web Search Skills & Plugin
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![Version](https://img.shields.io/badge/version-0.17.0-green)](https://github.com/Nimbleway/agent-skills)
+[![Version](https://img.shields.io/badge/version-0.18.0-green)](https://github.com/Nimbleway/agent-skills)
 
 Unlock the web for your AI agents — search, scrape, extract structured data, and run business intelligence workflows, all powered by Nimble's web data infrastructure. One plugin for Claude Code, Cursor, and any platform that supports the [Agent Skills spec](https://agentskills.io/specification.md).
 
@@ -11,6 +11,7 @@ Unlock the web for your AI agents — search, scrape, extract structured data, a
 | -------- | ------------ |
 | **[Business Research](skills/business-research/)** | Competitor monitoring, 360° company research, and market discovery — find all businesses of a given type in any geography with multi-source verification |
 | **[Marketing](skills/marketing/)** | Track how competitors position themselves — messaging shifts, pricing changes, content gaps, battlecard inputs |
+| **[SEO](skills/seo/)** | All-in-one SEO intelligence (`seo-intel`) — keyword research, rank tracking, technical site audits with JS rendering, content gap analysis, competitor on-page teardowns, AI visibility across 5 platforms, and GitHub repo SEO. Single entry point with intent-based routing |
 | **[Productivity](skills/productivity/)** | Walk into any meeting fully briefed — attendee backgrounds, company context, talking points, relationship mapping. Discover and score local businesses in any neighborhood with interactive maps |
 | **[Web Data Toolkit](skills/web-search-tools/)** | Search, scrape, extract, map, and crawl any website — plus build reusable extraction agents that run at scale |
 
