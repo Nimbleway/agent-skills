@@ -1,52 +1,8 @@
----
-name: seo-site-audit
-description: |
-  Full-crawl technical + on-page SEO audit with JavaScript rendering. Maps a
-  site with `nimble map`, extracts pages with `nimble extract --render` (or
-  `nimble crawl` at scale), and analyzes meta tags, heading structure, schema
-  markup, internal links, thin content, duplicates, and Core Web Vitals signals.
-  Unlike checklist skills, this one crawls the real site and reads JS-rendered
-  content — catching schema markup that client-side plugins inject and SPAs
-  that static fetchers miss.
-
-  Use when the user asks to audit a site, check SEO health, find missing meta
-  tags, validate schema, or crawl for on-page issues. Triggers: "SEO audit",
-  "site audit", "technical SEO", "check my site for SEO issues", "meta tags
-  audit", "schema markup check", "internal links audit", "thin content",
-  "duplicate content", "crawl my site for SEO", "SEO health check".
-
-  Do NOT use for keyword research — use `seo-keyword-research`. Do NOT use
-  for backlink analysis. Do NOT use for competitor SEO comparison — use
-  `competitor-positioning` or `competitor-intel`.
-allowed-tools:
-  - Bash(nimble:*)
-  - Bash(date:*)
-  - Bash(cat:*)
-  - Bash(mkdir:*)
-  - Bash(python3:*)
-  - Bash(echo:*)
-  - Bash(jq:*)
-  - Bash(ls:*)
-  - Read
-  - Write
-  - Edit
-  - Glob
-  - Grep
-  - Agent
-  - AskUserQuestion
-metadata:
-  author: Nimbleway
-  version: 0.18.0
----
 
 # SEO Site Audit
 
 Full-crawl technical and on-page SEO audit powered by Nimble's web data APIs.
 
-User request: $ARGUMENTS
-
-**Before running any commands**, read `references/nimble-playbook.md` for Claude Code
-constraints (no shell state, no `&`/`wait`, sub-agent permissions, communication style).
 
 ---
 
@@ -99,47 +55,43 @@ Parse the domain, optional path prefix, scan size (Quick/Standard/Comprehensive 
 
 ### Step 3: Site Discovery
 
-Discover all URLs on the target site:
+Discover URLs on the target site using the map pattern in
+`references/nimble-playbook.md` (Mapping section). Pass `--limit` equal to
+roughly twice the chosen scan size and include the sitemap so orphan pages
+are caught.
 
-```bash
-nimble map --url "https://{domain}" --limit {scan_size * 2} --sitemap include
-```
-
-If a path prefix was specified (e.g., `/blog`), filter discovered URLs to keep only
-those matching the prefix. Always keep the homepage regardless of prefix.
-
-Store the discovered URL list for sampling in Step 4.
+If a path prefix was specified (e.g., `/blog`), filter discovered URLs to
+keep only those matching the prefix. Always keep the homepage regardless of
+prefix. Store the discovered URL list for sampling in Step 4.
 
 ### Step 4: Sampling Strategy
 
 If the site returned more URLs than the chosen scan size, select a representative
 sample:
 
-- **Always include:** homepage (prepend `https://{domain}/` if `nimble map` did not
-  return it), `/sitemap.xml` (check), `/robots.txt` (check)
+- **Always include:** homepage (prepend `https://{domain}/` if the map step did
+  not return it), `/sitemap.xml` (check), `/robots.txt` (check)
 - **Depth 1** (primary landing pages): all pages one click from homepage
 - **Depth 2** (content cross-section): proportional selection across site sections
   (e.g., `/blog/`, `/products/`, `/docs/`)
 - **Paginated pages:** at least one paginated URL per section (page-2, page-3)
 - **Orphans:** a few URLs that appeared in the sitemap but not in the link graph
 
-If `nimble map` returned fewer URLs than the scan size, use all of them.
+If the map step returned fewer URLs than the scan size, use all of them.
 
 ### Step 5: Execution Tier Selection
 
-Choose the extraction strategy based on page count:
+Choose the extraction strategy from `references/nimble-playbook.md` →
+Scaled Execution based on the final sampled page count:
 
-| Pages | Strategy | Implementation |
-|-------|----------|----------------|
-| < 11 | Individual | Parallel `nimble extract --render` calls (max 4 concurrent) |
-| 11–500 | Batch | `nimble extract-batch --shared-inputs 'format: markdown' --shared-inputs 'render: true' --input '{"url": "..."}' ...` |
-| 500+ | Crawl | `nimble crawl run --url "https://{domain}" --limit {N} --name "seo-audit-{domain-slug}-{date}"` then poll with `nimble crawl status --name "..."` |
+- **Small** sets: parallel individual extractions (JS-rendered).
+- **Medium** sets: `extract-batch` with shared inputs.
+- **Large** sets: async `crawl` with periodic status polling.
 
-For crawl jobs, poll every 30 seconds up to 10 minutes. If the crawl hasn't
-completed, use partial results and note the incomplete coverage in the report.
-
-See `references/nimble-playbook.md` → Scaled Execution for the full batch and
-polling patterns.
+Scale thresholds, concurrency caps, batch-input syntax, and crawl-status
+polling cadence all live in the shared playbook — do not restate them
+inline. When the crawl tier is used, treat partial results as acceptable
+and note the incomplete coverage in the report.
 
 ### Step 6: Render Tier and Extraction Mode
 
@@ -372,7 +324,7 @@ Total pages discovered: {X}. Sections: {list}. Depth distribution.
 ## What This Means
 Where to start, estimated effort, expected impact on search visibility.
 
-## Next Steps
+Recommended follow-ups:
 - Run `seo-keyword-research` to find optimization targets for pages that pass
   the audit
 - Run `seo-content-gap` to discover content opportunities versus competitors

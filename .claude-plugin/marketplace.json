@@ -36,13 +36,7 @@
         "./skills/healthcare/healthcare-providers-extract",
         "./skills/healthcare/healthcare-providers-enrich",
         "./skills/healthcare/healthcare-providers-verify",
-        "./skills/seo/seo-keyword-research",
-        "./skills/seo/seo-rank-tracker",
-        "./skills/seo/seo-site-audit",
-        "./skills/seo/seo-content-gap",
-        "./skills/seo/seo-competitor-keywords",
-        "./skills/seo/seo-ai-visibility",
-        "./skills/seo/seo-github"
+        "./skills/seo/seo-intel"
       ]
     }
   ]

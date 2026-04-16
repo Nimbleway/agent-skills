@@ -1,52 +1,8 @@
----
-name: seo-ai-visibility
-description: |
-  Measures how a brand appears in AI-generated answers across Google AI
-  Overviews, Perplexity, and ChatGPT source signals. Runs real queries via
-  `nimble search` and `nimble extract --render`, detects brand mentions and
-  domain citations, compares against competitors, and produces an AI
-  Visibility Score and Share of AI Voice. Unlike optimization-checklist
-  skills, this one actually queries the AI surfaces and reports what it finds.
-
-  Use when the user wants to audit brand visibility in AI search, check
-  ChatGPT/Perplexity/AI Overview presence, or benchmark share of AI voice.
-  Triggers: "AI visibility", "AI search presence", "AI citation", "GEO
-  audit", "AI Overview check", "brand in ChatGPT", "brand in Perplexity",
-  "AI search monitoring", "generative engine optimization audit", "AI brand
-  visibility", "share of AI voice".
-
-  Do NOT use for traditional SEO audits — use `seo-site-audit`. Do NOT use
-  for keyword research — use `seo-keyword-research`. Do NOT use for
-  content-level optimization — use `seo-content-gap`.
-allowed-tools:
-  - Bash(nimble:*)
-  - Bash(date:*)
-  - Bash(cat:*)
-  - Bash(mkdir:*)
-  - Bash(python3:*)
-  - Bash(echo:*)
-  - Bash(jq:*)
-  - Bash(ls:*)
-  - Read
-  - Write
-  - Edit
-  - Glob
-  - Grep
-  - Agent
-  - AskUserQuestion
-metadata:
-  author: Nimbleway
-  version: 0.18.0
----
 
 # AI Visibility Audit
 
 Measures brand presence across AI-generated answers and surfaces competitive gaps.
 
-User request: $ARGUMENTS
-
-**Before running any commands**, read `references/nimble-playbook.md` for Claude Code
-constraints (no shell state, no `&`/`wait`, sub-agent permissions, communication style).
 
 ---
 
@@ -117,19 +73,35 @@ the list for user confirmation. Target 20-40 queries.
 
 ### Step 4: WSA Discovery
 
-Search for relevant agents in parallel:
+Never hardcode agent template names — discover them dynamically every run
+and validate before use, per `references/nimble-playbook.md`.
+
+Search for relevant agents in parallel. Run separate searches per surface so
+the AI platform agents and the SERP agents can be discovered independently:
 
 ```bash
+# SERP surfaces
 nimble agent list --search "google serp" --limit 100
 nimble agent list --search "search engine" --limit 100
+
+# AI platform surfaces
+nimble agent list --search "chatgpt" --limit 50
+nimble agent list --search "perplexity" --limit 50
+nimble agent list --search "google ai" --limit 50
+nimble agent list --search "gemini" --limit 50
+nimble agent list --search "grok" --limit 50
 ```
 
-For any promising agents, validate with `nimble agent get --template-name {name}`.
-Use WSA agents if they provide structured SERP data (AI Overview fields, featured
-snippets). Fall back to `nimble search` + `nimble extract --render` if no suitable
-agent exists or if the agent output lacks AI Overview content.
+For each promising match, validate with `nimble agent get --template-name {name}`
+and confirm the expected input param (`prompt` or `keyword`) and output fields
+(`answer`, `sources`). Cache the discovered template names for this run as
+`{chatgpt_agent}`, `{perplexity_agent}`, `{google_ai_agent}`, `{gemini_agent}`,
+`{grok_agent}`, and `{serp_agent}`. Use those variables everywhere in Step 5
+rather than string literals.
 
-Never hardcode agent names — discover dynamically every run.
+If a platform agent is not discovered or fails validation, drop that platform
+from the run (or fall back to `nimble search --include-answer` where useful)
+and note reduced coverage in the report.
 
 ### Step 5: AI Platform Querying via Dedicated Agents
 
@@ -141,40 +113,43 @@ agent sends a real prompt to the platform and returns structured `answer` text +
 `sources` with URLs. This replaces the previous approach of `--include-answer`
 proxying and flaky Perplexity extraction.
 
-**The 5 platforms:**
+**The 5 platforms** (each row maps to a variable resolved in Step 4):
 
-| Platform | Agent | Input | Key outputs |
-|----------|-------|-------|-------------|
-| ChatGPT | `chatgpt` | `prompt` | `answer`, `markdown`, `sources` [{url, title, source, snippet}], `links` |
-| Perplexity | `perplexity` | `prompt` | `answer`, `markdown`, `sources` [{url, icon, title, snippet, description, startPosition, endPosition}], `links` |
-| Google AI Mode | `google_ai` | `keyword` | `answer`, `sources` [{url, title}] |
-| Gemini | `gemini` | `prompt` | `answer`, `markdown`, `answer_html`, `sources` [{icon, title, snippet, description, startPosition, endPosition, source_domain}], `links` |
-| Grok | `grok` | `prompt` | `answer`, `answer_html`, `sources` [{url, title}], `links`, `images` |
+| Platform | Resolved variable | Input | Key outputs |
+|----------|-------------------|-------|-------------|
+| ChatGPT | `{chatgpt_agent}` | `prompt` | `answer`, `markdown`, `sources` [{url, title, source, snippet}], `links` |
+| Perplexity | `{perplexity_agent}` | `prompt` | `answer`, `markdown`, `sources` [{url, icon, title, snippet, description, startPosition, endPosition}], `links` |
+| Google AI Mode | `{google_ai_agent}` | `keyword` | `answer`, `sources` [{url, title}] |
+| Gemini | `{gemini_agent}` | `prompt` | `answer`, `markdown`, `answer_html`, `sources` [{icon, title, snippet, description, startPosition, endPosition, source_domain}], `links` |
+| Grok | `{grok_agent}` | `prompt` | `answer`, `answer_html`, `sources` [{url, title}], `links`, `images` |
 
 **Query construction:** Phrase queries as natural questions an end-user would ask
 an AI assistant. Example: for keyword "web scraping api", the prompt becomes
 "What is the best web scraping API?" or "Compare the top web scraping APIs."
-For `google_ai`, use the `keyword` param directly (it's a search query, not a
-conversational prompt).
+For the Google AI agent, use the `keyword` param directly (it's a search query,
+not a conversational prompt).
 
 **Execution:** Spawn `nimble-researcher` sub-agents (max 4, `bypassPermissions`).
 Reference `references/ai-visibility-agent-prompt.md` for the prompt template.
-Assign each agent a batch of 5-8 queries for one platform:
+Assign each agent a batch of 5-8 queries for one platform. Substitute the
+discovered template names from Step 4 — do not use the placeholder strings
+literally:
 
 ```bash
-# Per-query, per-platform
-nimble agent run --agent chatgpt --params '{"prompt": "{query}", "skip_sources": false}'
-nimble agent run --agent perplexity --params '{"prompt": "{query}"}'
-nimble agent run --agent google_ai --params '{"keyword": "{query}"}'
-nimble agent run --agent gemini --params '{"prompt": "{query}", "skip_sources": false}'
-nimble agent run --agent grok --params '{"prompt": "{query}"}'
+# Per-query, per-platform — {*_agent} come from Step 4 discovery
+nimble agent run --agent "{chatgpt_agent}" --params '{"prompt": "{query}", "skip_sources": false}'
+nimble agent run --agent "{perplexity_agent}" --params '{"prompt": "{query}"}'
+nimble agent run --agent "{google_ai_agent}" --params '{"keyword": "{query}"}'
+nimble agent run --agent "{gemini_agent}" --params '{"prompt": "{query}", "skip_sources": false}'
+nimble agent run --agent "{grok_agent}" --params '{"prompt": "{query}"}'
 ```
 
-For 6+ queries per platform, use `nimble agent run-batch`:
+For 6+ queries per platform, use `nimble agent run-batch` with the same
+discovered template name:
 
 ```bash
 nimble agent run-batch \
-  --shared-inputs 'agent: chatgpt' \
+  --shared-inputs "agent: {chatgpt_agent}" \
   --input '{"params": {"prompt": "query 1", "skip_sources": false}}' \
   --input '{"params": {"prompt": "query 2", "skip_sources": false}}'
 ```
@@ -457,7 +432,7 @@ Strategic interpretation: what the visibility scores mean for the brand's
 discoverability in AI-first search. Where the brand is strong, where it's
 vulnerable, and what the competitor landscape looks like across AI surfaces.
 
-## Next Steps
+Recommended follow-ups:
 - Run `seo-content-gap` for content opportunities on high-priority gap queries
 - Run `seo-keyword-research` to expand the query set
 - Schedule weekly re-runs to track visibility trends

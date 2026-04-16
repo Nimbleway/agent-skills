@@ -1,49 +1,8 @@
----
-name: seo-keyword-research
-description: |
-  Discovers keyword opportunities by analyzing live SERPs, competitor pages,
-  and search intent — using Nimble's web data APIs instead of third-party SEO
-  tool estimates. Returns evidence-based difficulty scores, intent
-  classifications, and prioritized topic clusters grounded in actual SERP data.
-
-  Use when the user asks about keyword research, SEO keywords, or similar.
-  Triggers: "keyword research", "keyword opportunities", "keyword strategy",
-  "find keywords", "SEO keywords", "keyword gaps", "keyword ideas", "keyword
-  difficulty", "content gaps", "what to rank for", "keyword cluster", "search
-  intent", "long-tail keywords".
-
-  Do NOT use for technical SEO audits — use `seo-site-audit` instead. Do NOT
-  use for tracking rank positions over time — use `seo-rank-tracker` instead.
-  Do NOT use for writing or optimizing content.
-allowed-tools:
-  - Bash(nimble:*)
-  - Bash(date:*)
-  - Bash(cat:*)
-  - Bash(mkdir:*)
-  - Bash(python3:*)
-  - Bash(echo:*)
-  - Bash(jq:*)
-  - Bash(ls:*)
-  - Read
-  - Write
-  - Edit
-  - Glob
-  - Grep
-  - Agent
-  - AskUserQuestion
-metadata:
-  author: Nimbleway
-  version: 0.18.0
----
 
 # SEO Keyword Research
 
 Evidence-based keyword discovery and opportunity scoring powered by live SERP data.
 
-User request: $ARGUMENTS
-
-**Before running any commands**, read `references/nimble-playbook.md` for Claude Code
-constraints (no shell state, no `&`/`wait`, sub-agent permissions, communication style).
 
 ---
 
@@ -89,17 +48,25 @@ Capture answers into the profile under `seo_context` and create the profile per
 
 ### Step 2: WSA Discovery
 
-Discover available WSAs for SEO data. Run three searches simultaneously:
+Never hardcode agent template names — discover dynamically every run and
+validate with `nimble agent get --template-name {name}` before use, per
+`references/nimble-playbook.md`.
+
+Discover available WSAs for SEO data. Run searches simultaneously:
 
 ```bash
 nimble agent list --search "seo" --limit 20
 nimble agent list --search "google" --limit 20
+nimble agent list --search "serp" --limit 20
 nimble agent list --search "trends" --limit 20
 ```
 
 From the results, filter for WSAs related to search results, keyword data, or
 trend analysis. Validate each candidate with `nimble agent get --template-name {name}`
-to confirm input params and output fields. Cache discovered WSA names for this run.
+to confirm input params and output fields. Cache discovered WSA names for this
+run as variables such as `{serp_agent}` (structured SERP entities) and
+`{trends_agent}` (query volume/trend data). Use those variables everywhere
+downstream instead of string literals.
 
 If no useful WSAs found, continue with `nimble search` alone — WSAs are an
 enrichment layer, not a requirement.
@@ -140,14 +107,19 @@ From each SERP, collect:
 **Note:** `--search-depth lite` returns organic result metadata only (title, URL,
 description, position). It does NOT return SERP features.
 
-**SERP feature enrichment** — for 3-5 priority keywords, run the `google_search`
-agent to get typed SERP entities (PAA, Featured Snippets, Shopping, Sitelinks):
+**SERP feature enrichment** — for 3-5 priority keywords, run the discovered
+SERP agent (`{serp_agent}` cached in Step 2) to get typed SERP entities (PAA,
+Featured Snippets, Shopping, Sitelinks):
 
 ```bash
-nimble agent run --agent google_search --params '{"query": "{keyword}", "num_results": 20, "country": "US", "locale": "en"}'
+# {serp_agent} resolved at runtime from Step 2
+nimble agent run --agent "{serp_agent}" --params '{"query": "{keyword}", "num_results": 20, "country": "US", "locale": "en"}'
 ```
 
-The `google_search` agent returns `data.parsing.entities` — a **dict keyed by
+If no SERP agent was discovered, skip this enrichment and continue with
+`nimble search` results only.
+
+The discovered SERP agent returns `data.parsing.entities` — a **dict keyed by
 entity type name**, where each value is an array of records. Entity types are
 dynamic — iterate all keys rather than hardcoding. Commonly observed types:
 
@@ -170,7 +142,7 @@ Parse `data.parsing.entities` to collect:
 - **Related searches** — `entities.RelatedSearch[].query` — free keyword expansion
 - **AI Overview content** — `entities.AIOverview[0].content` — check if brand/competitor is mentioned
 
-Additional `google_search` params available: `time` (hour/day/week/month/year),
+Additional SERP-agent params available: `time` (hour/day/week/month/year),
 `location` (city/state string or UULE), `start` (pagination: 0/10/20...).
 See `references/ai-platform-profiles.md` for the full agent schema.
 
@@ -412,11 +384,11 @@ Suggest next steps based on findings:
 traffic? Where are the gaps competitors haven't filled? What content types work best
 in this space?]
 
-## Next Steps
+Recommended follow-ups:
 
-- Run `seo-site-audit` to verify your site's technical readiness
+- Run `seo-site-audit` to verify the target site's technical readiness
 - Run `seo-rank-tracker` to monitor positions on Quick Win keywords
-- Run `seo-content-gap` to find topics your competitors cover that you don't
+- Run `seo-content-gap` to find topics competitors cover that the site does not
 ```
 
 Every keyword in the report MUST have a source URL from the SERP results.

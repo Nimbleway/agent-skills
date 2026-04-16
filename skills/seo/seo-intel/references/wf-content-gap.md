@@ -1,52 +1,8 @@
----
-name: seo-content-gap
-description: |
-  Maps your site and competitor sites, compares topic and keyword coverage
-  page-by-page, validates gaps against live SERPs, and produces a prioritized
-  content gap report. Unlike checklist or LLM-only content-gap skills, this
-  one actually crawls both sides (`nimble map` + `nimble extract`) and
-  confirms gaps with live SERP data (`nimble search`) so every recommendation
-  reflects real ranking opportunity.
-
-  Use when the user wants to compare their content against competitors or
-  find topics/keywords they're missing. Triggers: "content gap", "content
-  gap analysis", "keyword gap", "topic gap", "what are competitors ranking
-  for", "compare our content", "missing topics", "coverage gap", "SEO gap",
-  "what should I write about", "ranking opportunities".
-
-  Do NOT use for technical SEO audits — use `seo-site-audit`. Do NOT use
-  for keyword research without a competitor comparison angle — use
-  `seo-keyword-research`. Do NOT use for competitor messaging/positioning —
-  use `competitor-positioning`.
-allowed-tools:
-  - Bash(nimble:*)
-  - Bash(date:*)
-  - Bash(cat:*)
-  - Bash(mkdir:*)
-  - Bash(python3:*)
-  - Bash(echo:*)
-  - Bash(jq:*)
-  - Bash(ls:*)
-  - Read
-  - Write
-  - Edit
-  - Glob
-  - Grep
-  - Agent
-  - AskUserQuestion
-metadata:
-  author: Nimbleway
-  version: 0.18.0
----
 
 # Content Gap Analysis
 
 Crawl-based content gap analysis validated against live SERP data.
 
-User request: $ARGUMENTS
-
-**Before running any commands**, read `references/nimble-playbook.md` for Claude Code
-constraints (no shell state, no `&`/`wait`, sub-agent permissions, communication style).
 
 ---
 
@@ -442,7 +398,7 @@ top gaps? Any pattern in what competitors cover that the user doesn't?}
 **60-day priorities:** {top 2 Strategic Bets to plan}
 **90-day priorities:** {remaining Strategic Bets + hub page buildout}
 
-## Next Steps
+Recommended follow-ups:
 
 - Run `seo-keyword-research` to expand keywords for the top gap topics
 - Run `seo-site-audit` to ensure existing content is technically healthy

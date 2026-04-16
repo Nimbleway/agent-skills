@@ -1,48 +1,8 @@
----
-name: seo-rank-tracker
-description: |
-  Tracks live SERP positions for target keywords using Nimble search APIs, stores
-  JSON snapshots, and computes position deltas across runs. Unlike SaaS rank
-  trackers with stale daily caches, every check hits live SERPs — positions
-  reflect what Google shows right now, with SERP feature detection included.
-
-  Use when the user asks to check or track keyword rankings over time. Triggers:
-  "track rankings", "rank tracker", "keyword positions", "SERP position", "ranking
-  report", "did rankings change", "which keywords dropped", "keyword monitoring",
-  "position check", "ranking delta".
-
-  Do NOT use for keyword discovery — use `seo-keyword-research` instead. Do NOT
-  use for on-page SEO audits — use `seo-site-audit` instead. Do NOT use for
-  competitor business signals — use `competitor-intel` instead.
-allowed-tools:
-  - Bash(nimble:*)
-  - Bash(date:*)
-  - Bash(cat:*)
-  - Bash(mkdir:*)
-  - Bash(python3:*)
-  - Bash(echo:*)
-  - Bash(jq:*)
-  - Bash(ls:*)
-  - Read
-  - Write
-  - Edit
-  - Glob
-  - Grep
-  - Agent
-  - AskUserQuestion
-metadata:
-  author: Nimbleway
-  version: 0.18.0
----
 
 # SEO Rank Tracker
 
 Live keyword position tracking with JSON snapshots and delta reporting.
 
-User request: $ARGUMENTS
-
-**Before running any commands**, read `references/nimble-playbook.md` for Claude Code
-constraints (no shell state, no `&`/`wait`, sub-agent permissions, communication style).
 
 ---
 
@@ -198,14 +158,26 @@ SERP features are detected in the enrichment pass below (full report mode only).
 ```
 
 **For full report mode — SERP feature enrichment:** After lite queries complete,
-identify the top 5 keywords by business priority. Run the `google_search` agent
-for those to get typed SERP entities:
+identify the top 5 keywords by business priority. Discover a SERP agent at
+runtime (do not hardcode template names — see `references/nimble-playbook.md`):
 
 ```bash
-nimble agent run --agent google_search --params '{"query": "{keyword}", "num_results": 20, "country": "{cc}", "locale": "{locale}"}'
+nimble agent list --search "google serp" --limit 100
+nimble agent list --search "search engine" --limit 100
 ```
 
-The `google_search` agent returns `data.parsing.entities` — a dict keyed by
+Validate candidates with `nimble agent get --template-name {name}` and cache
+the chosen template as `{serp_agent}`. If no suitable SERP agent is found,
+skip enrichment and leave `serp_features` as `[]`.
+
+Run the discovered SERP agent for those keywords to get typed SERP entities:
+
+```bash
+# {serp_agent} resolved above
+nimble agent run --agent "{serp_agent}" --params '{"query": "{keyword}", "num_results": 20, "country": "{cc}", "locale": "{locale}"}'
+```
+
+The discovered SERP agent returns `data.parsing.entities` — a dict keyed by
 entity type. Entity types are **dynamic** — iterate all keys to detect which
 SERP features are present. Common mappings to `serp_features`:
 `AIOverview` → `"ai_overview"`, `RelatedQuestion` → `"people_also_ask"`,
@@ -435,8 +407,9 @@ they don't yet rank for. Skip in delta mode if the unranked set hasn't changed.
 Which keyword clusters are strongest? Are SERP features creating opportunities
 or squeezing organic clicks? Specific, actionable — not generic SEO advice.]
 
-## Next Steps
-[Bulleted recommendations tied to the data. Link to sibling skills where relevant.]
+Close with bulleted recommendations tied to the data, linking to sibling
+skills where relevant. Keep these as a final paragraph under What This Means,
+not a new top-level section.
 ```
 
 ---

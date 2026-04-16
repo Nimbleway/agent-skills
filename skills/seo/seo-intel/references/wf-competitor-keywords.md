@@ -1,55 +1,9 @@
----
-name: seo-competitor-keywords
-description: |
-  Reverse-engineers competitor on-page SEO strategy. Maps competitor sites,
-  bulk-crawls with JS rendering, then extracts title tags, H1s, meta
-  descriptions, blog topics, anchor text patterns, and heading hierarchy at
-  scale. Clusters findings into keyword themes and produces a comparison
-  matrix across multiple competitors. Unlike prompt-template SEO skills,
-  this one actually crawls the full site with `nimble map` + `nimble crawl`
-  and extracts structured fields across hundreds of pages.
-
-  Use when the user wants to understand what a competitor is targeting across
-  their site, not just one page. Triggers: "competitor keywords",
-  "reverse-engineer SEO", "competitor SEO strategy", "what keywords are they
-  targeting", "competitor title tags", "competitor H1s", "on-page SEO
-  analysis", "site-wide keyword analysis", "competitor blog topics", "anchor
-  text analysis", "SEO teardown".
-
-  Do NOT use for technical SEO audits — use `seo-site-audit`. Do NOT use for
-  competitor business signals — use `competitor-intel`. Do NOT use for
-  competitor messaging/positioning — use `competitor-positioning`. Do NOT
-  use for SERP-based content gap analysis — use `seo-content-gap`.
-allowed-tools:
-  - Bash(nimble:*)
-  - Bash(date:*)
-  - Bash(cat:*)
-  - Bash(mkdir:*)
-  - Bash(python3:*)
-  - Bash(echo:*)
-  - Bash(jq:*)
-  - Bash(ls:*)
-  - Read
-  - Write
-  - Edit
-  - Glob
-  - Grep
-  - Agent
-  - AskUserQuestion
-metadata:
-  author: Nimbleway
-  version: 0.18.0
----
 
 # SEO Competitor Keywords
 
 Reverse-engineer competitor on-page SEO strategy at scale — crawl entire sites, extract
 structured SEO elements, cluster into keyword themes, and compare across domains.
 
-User request: $ARGUMENTS
-
-**Before running any commands**, read `references/nimble-playbook.md` for Claude Code
-constraints (no shell state, no `&`/`wait`, sub-agent permissions, communication style).
 
 ---
 
@@ -465,8 +419,8 @@ Dominant keyword themes, notable patterns, biggest opportunities.
 - Gaps to exploit: themes competitors miss, thin coverage areas
 - Quick wins: specific changes to make based on findings
 
-## Next Steps
-- Run `seo-content-gap` for SERP-level gaps between your content and competitors
+Recommended follow-ups:
+- Run `seo-content-gap` for SERP-level gaps between the user's content and competitors
 - Run `competitor-positioning` for messaging and positioning analysis
 - Run `competitor-intel` for business context (funding, hiring, launches)
 ```

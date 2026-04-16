@@ -1,50 +1,8 @@
----
-name: seo-github
-description: |
-  Audits GitHub repository discoverability and SEO. Analyzes README quality,
-  repository metadata, community health signals, search visibility, and
-  topic/keyword targeting. Produces a scored audit with prioritized
-  recommendations for improving repo discovery in GitHub search, Google,
-  and AI coding assistants.
-
-  Use when the user wants to improve a GitHub repo's discoverability,
-  optimize a README, audit community health signals, or benchmark against
-  competitor repos. Triggers: "github seo", "repo discoverability",
-  "optimize my readme", "github search visibility", "repo audit",
-  "github optimization", "repo seo".
-
-  Do NOT use for website SEO — use `seo-site-audit`. Do NOT use for
-  keyword research for web content — use `seo-keyword-research`.
-allowed-tools:
-  - Bash(nimble:*)
-  - Bash(date:*)
-  - Bash(cat:*)
-  - Bash(mkdir:*)
-  - Bash(python3:*)
-  - Bash(echo:*)
-  - Bash(jq:*)
-  - Bash(ls:*)
-  - Bash(gh:*)
-  - Read
-  - Write
-  - Edit
-  - Glob
-  - Grep
-  - Agent
-  - AskUserQuestion
-metadata:
-  author: Nimbleway
-  version: 0.18.0
----
 
 # GitHub SEO Audit
 
 Audits GitHub repository discoverability across GitHub search, Google, and AI coding assistants.
 
-User request: $ARGUMENTS
-
-**Before running any commands**, read `references/nimble-playbook.md` for Claude Code
-constraints (no shell state, no `&`/`wait`, sub-agent permissions, communication style).
 
 ---
 
@@ -258,13 +216,26 @@ For each search, record:
 ### Step 7: AI Discoverability (full audit only)
 
 Check if AI coding assistants know about the repo using dedicated AI platform
-agents (see `references/ai-platform-profiles.md`). Run 2-3 queries across
-ChatGPT and Perplexity:
+agents (see `references/ai-platform-profiles.md`). Never hardcode template
+names — discover and validate at runtime per `references/nimble-playbook.md`:
 
 ```bash
-nimble agent run --agent chatgpt --params '{"prompt": "What are the best {category} tools for {language}?", "skip_sources": false}'
-nimble agent run --agent perplexity --params '{"prompt": "What is {repo-name} and is it any good?"}'
-nimble agent run --agent chatgpt --params '{"prompt": "{use-case} tool recommendation for {language}", "skip_sources": false}'
+nimble agent list --search "chatgpt" --limit 50
+nimble agent list --search "perplexity" --limit 50
+```
+
+Validate the top candidates with `nimble agent get --template-name {name}`
+and cache the chosen template names as `{chatgpt_agent}` and
+`{perplexity_agent}`. If a platform is not discovered, skip it for this run
+and note reduced coverage.
+
+Run 2-3 queries across the discovered platforms:
+
+```bash
+# {*_agent} come from the discovery step above
+nimble agent run --agent "{chatgpt_agent}" --params '{"prompt": "What are the best {category} tools for {language}?", "skip_sources": false}'
+nimble agent run --agent "{perplexity_agent}" --params '{"prompt": "What is {repo-name} and is it any good?"}'
+nimble agent run --agent "{chatgpt_agent}" --params '{"prompt": "{use-case} tool recommendation for {language}", "skip_sources": false}'
 ```
 
 Parse `data.parsing.answer` for brand/repo mentions and `data.parsing.sources`
@@ -411,7 +382,7 @@ Grade: {A-F}. Top 3 issues. Biggest quick win.
 ## What This Means
 Where the repo stands. Which gaps hurt most. Impact of fixing top issues.
 
-## Next Steps
+Recommended follow-ups:
 - Run `seo-site-audit` to audit the documentation website
 - Run `seo-ai-visibility` to track brand presence in AI assistants
 - Run `seo-keyword-research` to optimize docs site content

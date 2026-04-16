@@ -4,81 +4,106 @@ Reference for querying AI platforms and optimizing content for AI visibility.
 
 ---
 
-## Nimble AI Platform Agents
+## Nimble AI Platform Agent Discovery
 
-Agents enable direct querying of AI platforms and Google Search. Discover them at
-runtime with `nimble agent list --search "ai"` — the table below documents current
-behavior but new agents may appear.
+Never hardcode agent template names. The catalog changes — new agents appear,
+old ones get renamed or deprecated. Discover and validate at runtime using the
+three-layer pattern from `nimble-playbook.md`.
 
-### AI Platform Agents
+### Layer 1: Category Discovery
 
-| Agent | Input Param | Input Type | Key Output Fields | Managed By |
-|---|---|---|---|---|
-| `chatgpt` | `prompt` | string | `answer`, `markdown`, `sources` [{url, title, source, snippet}], `links` | community |
-| `perplexity` | `prompt` | string | `answer`, `markdown`, `answer_html`, `sources` [{url, icon, title, snippet, description, startPosition, endPosition}], `links` | community |
-| `google_ai` | `keyword` | string | `answer`, `sources` [{title, url}] | nimble |
-| `gemini` | `prompt` | string | `answer`, `markdown`, `answer_html`, `sources` [{icon, title, snippet, description, startPosition, endPosition, source_domain}], `links` | nimble |
-| `grok` | `prompt` | string | `answer`, `answer_html`, `sources` [{title, url}], `links`, `images` | nimble |
-| `google_sge_new` | `query` | string | `content` (raw HTML), `entity_type` | nimble |
-
-### Google Search Agent (SERP Enrichment)
-
-The `google_search` agent returns **typed SERP entities** — each result includes
-an `entity_type` field (e.g., `OrganicResult`, `PeopleAlsoAsk`, `FeaturedSnippet`,
-`ShoppingResult`, `SiteLinks`). Use as an enrichment layer on top of
-`nimble search --search-depth lite` when SERP feature detection is needed.
-
-| Param | Required | Type | Description |
-|---|---|---|---|
-| `query` | yes | string | Search term |
-| `country` | no | string | ISO Alpha-2 (default: `US`) |
-| `locale` | no | string | LCID language (e.g., `en`, `de`) |
-| `location` | no | string | City/state string (Nimble resolves to UULE) or raw UULE value |
-| `num_results` | no | number | Results to return (max 100) |
-| `start` | no | number | Pagination offset: 0=page 1, 10=page 2, 20=page 3 |
-| `time` | no | string | Time range: `hour`, `day`, `week`, `month`, `year` |
-
-Response structure: `data.parsing.entities` is a **dict keyed by entity type
-name** (e.g., `AIOverview`, `OrganicResult`, `RelatedQuestion`, `Ad`). Each
-value is an array of records. Entity types are **dynamic** — new types may
-appear for different queries (news, images, shopping, local, knowledge panels,
-featured snippets, etc.). Always iterate all keys to discover present features.
-
-Common fields per `OrganicResult`: `position`, `title`, `url`, `cleaned_domain`,
-`description`, `snippet`. `RelatedQuestion` records have `question`.
-Also check `data.parsing.entities_count` for a quick type→count summary.
+Run broad searches to discover all available AI and SERP agents:
 
 ```bash
-nimble agent run --agent google_search --params '{"query": "best web scraping api", "num_results": 20, "country": "US", "locale": "en"}'
+nimble agent list --search "ai" --limit 250
+nimble agent list --search "chatgpt" --limit 50
+nimble agent list --search "perplexity" --limit 50
+nimble agent list --search "google ai" --limit 50
+nimble agent list --search "gemini" --limit 50
+nimble agent list --search "grok" --limit 50
+nimble agent list --search "google serp" --limit 100
+nimble agent list --search "search engine" --limit 100
 ```
 
-**When to use:** SERP feature enrichment on priority keywords (3-5 per run).
+### Layer 2: Session-Specific Narrowing
+
+From the results, identify agents that match the needed surfaces. For AI
+visibility workflows, look for agents whose description mentions:
+- Direct platform querying (ChatGPT, Perplexity, Gemini, Grok, Google AI)
+- Structured `answer` + `sources` output
+- SERP entity parsing (for Google Search enrichment)
+
+### Layer 3: Validation
+
+Validate each candidate before use:
+
+```bash
+nimble agent get --template-name {discovered-name}
+```
+
+Confirm:
+- **Input param**: typically `prompt` (conversational) or `keyword`/`query` (search)
+- **Output fields**: look for `answer`, `sources`, `links` in the schema
+- **Entity structure**: SERP agents return `data.parsing.entities` as a dict keyed
+  by entity type name (e.g., `AIOverview`, `OrganicResult`, `RelatedQuestion`).
+  Entity types are **dynamic** — iterate all keys to detect present features.
+
+Cache discovered template names as variables (`{chatgpt_agent}`,
+`{perplexity_agent}`, `{serp_agent}`, etc.) for the duration of the run.
+
+### Execution Patterns
+
+After discovery, use the cached template names:
+
+```bash
+# AI platform query — substitute discovered name
+nimble agent run --agent "{chatgpt_agent}" --params '{"prompt": "...", "skip_sources": false}'
+
+# SERP enrichment — substitute discovered name
+nimble agent run --agent "{serp_agent}" --params '{"query": "...", "num_results": 20, "country": "US"}'
+
+# Batch queries (6+ per platform)
+nimble agent run-batch \
+  --shared-inputs "agent: {chatgpt_agent}" \
+  --input '{"params": {"prompt": "query 1", "skip_sources": false}}' \
+  --input '{"params": {"prompt": "query 2", "skip_sources": false}}'
+```
+
+### What to Expect from AI Platform Agents
+
+AI platform agents send a real prompt to the platform and return structured data:
+- `data.parsing.answer` — the AI-generated answer text
+- `data.parsing.sources` — array of cited sources (URL, title, snippet)
+- `data.parsing.links` — extracted links from the response
+
+Source arrays vary by platform: some include position fields (`startPosition`,
+`endPosition`) for citation placement; some include `source_domain` for direct
+domain matching. Check the validated schema from `nimble agent get`.
+
+### What to Expect from SERP Agents
+
+SERP agents return `data.parsing.entities` — a **dict keyed by entity type name**.
+Each value is an array of records. Common entity types: `AIOverview`,
+`OrganicResult`, `RelatedQuestion`, `RelatedSearch`, `Ad`. Other types may appear
+(news, images, shopping, local, knowledge panels, featured snippets). Always
+iterate all keys — do not check only known types.
+
+Common SERP agent params: `query`, `country`, `locale`, `location`, `num_results`,
+`start` (pagination), `time` (time range).
+
+**When to use SERP agents:** Feature enrichment on 3-5 priority keywords per run.
 **When NOT to use:** Bulk position checks — use `nimble search --search-depth lite`
-for all-keyword sweeps (cheaper, faster). The `google_search` agent is the
-enrichment layer, not the replacement.
+for all-keyword sweeps (cheaper, faster).
 
-### Usage Pattern
+### Agent Tips
 
-```bash
-nimble agent run --agent chatgpt --params '{"prompt": "What is the best web scraping API?"}'
-nimble agent run --agent perplexity --params '{"prompt": "What is the best web scraping API?"}'
-nimble agent run --agent google_ai --params '{"keyword": "best web scraping api"}'
-nimble agent run --agent gemini --params '{"prompt": "What is the best web scraping API?"}'
-nimble agent run --agent grok --params '{"prompt": "What is the best web scraping API?"}'
-```
-
-### Agent-Specific Notes
-
-- **chatgpt:** Set `skip_sources: false` to get source citations. Increases load time
-  but required for visibility analysis.
-- **perplexity:** Sources include `startPosition`/`endPosition` — use these for
-  position-in-answer detection (earlier position = stronger citation).
-- **gemini:** Sources include `source_domain` — simplifies domain matching without
-  URL parsing.
-- **google_sge_new:** Returns raw HTML, not a structured answer. Use `google_ai` for
-  structured responses with clean `answer` and `sources` fields.
-- **All agents:** Response fields live under `data.parsing.{field}` in the JSON.
-- **Batch queries:** Use `nimble agent run-batch` when running 6+ queries per platform.
+- Set `skip_sources: false` on agents that support it to get source citations.
+- Sources with `startPosition`/`endPosition` show where in the answer the source
+  was cited — earlier position = stronger visibility signal.
+- Sources with `source_domain` simplify domain matching without URL parsing.
+- All agent response fields live under `data.parsing.{field}` in the JSON.
+- If an agent fails validation or returns empty, drop that platform for the run
+  and note reduced coverage. Do not fabricate data for unreachable platforms.
 
 ---
 
