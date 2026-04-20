@@ -1,5 +1,15 @@
 # Changelog
 
+## [0.19.0] - 2026-04-20
+
+### Added
+- **Human Resources vertical** (`skills/human-resources/`) — new vertical for HR and recruiting workflows; scoped to cover future skills like comp-analysis, interview-prep, and onboarding
+- **talent-sourcing** — distribution step (Step 8) added; skill now offers Notion/Slack report delivery via connector detection pattern from `memory-and-distribution.md`
+
+### Changed
+- Renamed `skills/talent/` → `skills/human-resources/` — "talent" was ambiguous; human-resources is the standard term and the right scope for the vertical
+- Updated `.claude-plugin/plugin.json` and `marketplace.json` to reference `./skills/human-resources/`
+
 ## [0.18.0] - 2026-04-13
 
 ### Added
