@@ -1,6 +1,6 @@
 # Changelog
 
-## [0.18.0] - 2026-04-17
+## [0.19.0] - 2026-04-20
 
 ### Added
 - **Human Resources vertical** (`skills/human-resources/`) — new vertical for HR and recruiting workflows; scoped to cover future skills like comp-analysis, interview-prep, and onboarding
@@ -9,6 +9,14 @@
 ### Changed
 - Renamed `skills/talent/` → `skills/human-resources/` — "talent" was ambiguous; human-resources is the standard term and the right scope for the vertical
 - Updated `.claude-plugin/plugin.json` and `marketplace.json` to reference `./skills/human-resources/`
+
+## [0.18.0] - 2026-04-13
+
+### Added
+- **`seo-intel`** — single-skill SEO intelligence toolkit covering the full lifecycle via 7 router-dispatched workflows: keyword research, rank tracking, technical site audit, content gap analysis, competitor keyword reverse-engineering, AI visibility measurement (ChatGPT, Perplexity, Google AI, Gemini, Grok), and GitHub repository SEO. One install, one entry point — intent detection routes to the right workflow, and workflows chain naturally across a session.
+
+### Changed
+- **`_shared/`** — removed `ai-platform-profiles.md` (only SEO-specific) and `output-quality.md` (marginal value, overlaps playbook) from the shared sync set
 
 ## [0.17.0] - 2026-04-07
 

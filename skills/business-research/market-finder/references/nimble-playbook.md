@@ -125,19 +125,38 @@ nimble search --query "company name" --search-depth deep --max-results 5
 ## Extract
 
 ```bash
-# Extract article content as markdown (recommended)
+# Extract article content as markdown (default for content analysis)
 nimble extract --url "https://example.com/article" --format markdown
+
+# Extract raw HTML (required for <head> metadata: canonical, schema, og, meta tags)
+nimble extract --url "https://example.com" --format html
 
 # Extract with JavaScript rendering (for dynamic/SPA pages)
 nimble extract --url "https://example.com/spa" --render --format markdown
 ```
 
-Response is JSON with `data.markdown` containing clean content.
+Response is JSON. The field returned depends on `--format`:
+- `--format markdown` → `data.markdown` (clean body content)
+- `--format html` → `data.html` (raw HTML including `<head>`)
+- `--format plain_text` → `data.plain_text`
+- `--format simplified_html` → `data.simplified_html`
+
+**Format selection by use case:**
+
+| Need | Format | Why |
+|------|--------|-----|
+| Article body content, word count, headings | `markdown` | Clean text, no nav/footer noise |
+| Meta tags (title, description, canonical, og, twitter) | `html` | Markdown strips `<head>` |
+| Schema markup (JSON-LD) | `html` | Script tags not in markdown |
+| hreflang, `<html lang>` | `html` | Attributes not in markdown |
+| Structured field extraction | `--parse --parser '{...}'` | LLM extracts specific fields |
+| Both body and head | `markdown` + `html` | Two calls or parse html for both |
 
 **Key flags:**
 - `--url` — target URL (required)
-- `--format` — `markdown` (recommended), `simplified_html`, `plain_text`
+- `--format` — `markdown`, `html`, `simplified_html`, `plain_text` (pick based on table above)
 - `--render` — render JavaScript using a browser
+- `--parse --parser '{...}'` — structured extraction via LLM parser schema
 
 **Extraction fallback** (if `data.markdown` is mostly JavaScript/boilerplate):
 1. **Garbage check:** If `data.markdown` has < 100 characters of meaningful content
