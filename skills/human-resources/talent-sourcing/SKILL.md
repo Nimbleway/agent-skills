@@ -34,7 +34,7 @@ allowed-tools:
   - AskUserQuestion
 metadata:
   author: Nimbleway
-  version: 0.17.0
+  version: 0.18.0
 ---
 
 # Talent Sourcing
@@ -260,7 +260,13 @@ Make all Write calls simultaneously:
 Update `~/.nimble/memory/talent-sourcing/index.md` with a row for this search.
 Follow the wiki update pattern from `references/memory-and-distribution.md`.
 
-### Step 8: Follow-ups
+### Step 8: Share & Distribute
+
+**Always offer distribution — do not skip this step.** Follow
+`references/memory-and-distribution.md` for connector detection, sharing flow, and
+source links enforcement.
+
+### Step 9: Follow-ups
 
 Offer next steps using `AskUserQuestion`:
 
