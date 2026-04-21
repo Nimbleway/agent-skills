@@ -110,6 +110,19 @@ Skills maintain a local web knowledge wiki at `~/.nimble/memory/` — live web i
 
 Every finding carries a verified event date and source URL. Stale signals are dropped, not reported — your context is always current.
 
+### Framework Integrations
+
+Native packages for Python agent frameworks — install from PyPI, no CLI required.
+
+| Framework | Package | Install |
+| --------- | ------- | ------- |
+| [CrewAI](integrations/crewai/) | `crewai-nimble` | `pip install crewai-nimble` |
+
+```python
+from crewai_nimble import NimbleSearchTool
+tool = NimbleSearchTool()  # set NIMBLE_API_KEY
+```
+
 ### Platform Compatibility
 
 | Aspect | Claude Code | Cursor | npx skills |
