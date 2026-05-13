@@ -10,8 +10,7 @@ Audits GitHub repository discoverability across GitHub search, Google, and AI co
 
 ### Step 0: Preflight
 
-Run the preflight pattern from `references/nimble-playbook.md` (5 simultaneous Bash
-calls: date calc, today, CLI check, profile load, index.md load).
+Follow the transport selection + standard preflight from `references/nimble-playbook.md` — pick CLI or MCP at session start, then run the standard preflight calls (date calc, today, profile, memory index) in parallel.
 
 Additionally, verify `gh` CLI is installed and authenticated:
 

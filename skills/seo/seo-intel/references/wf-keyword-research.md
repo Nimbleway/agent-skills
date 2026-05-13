@@ -10,8 +10,7 @@ Evidence-based keyword discovery and opportunity scoring powered by live SERP da
 
 ### Step 0: Preflight
 
-Run the preflight pattern from `references/nimble-playbook.md` (5 simultaneous Bash
-calls: date calc, today, CLI check, profile load, index.md load).
+Follow the transport selection + standard preflight from `references/nimble-playbook.md` — pick CLI or MCP at session start, then run the standard preflight calls (date calc, today, profile, memory index) in parallel.
 
 From the results:
 - CLI missing or API key unset → `references/profile-and-onboarding.md`, stop

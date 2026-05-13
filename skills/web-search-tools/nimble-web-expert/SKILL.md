@@ -26,6 +26,20 @@ allowed-tools:
   - Bash(open:*)
   - Bash(export:*)
   - Bash(wait:*)
+  # MCP fallback (used when shell isn't available — Cowork, IDE-only hosts):
+  - mcp__plugin_nimble_nimble__nimble_search
+  - mcp__plugin_nimble_nimble__nimble_extract
+  - mcp__plugin_nimble_nimble__nimble_extract_async
+  - mcp__plugin_nimble_nimble__nimble_map
+  - mcp__plugin_nimble_nimble__nimble_crawl_run
+  - mcp__plugin_nimble_nimble__nimble_crawl_status
+  - mcp__plugin_nimble_nimble__nimble_crawl_list
+  - mcp__plugin_nimble_nimble__nimble_crawl_terminate
+  - mcp__plugin_nimble_nimble__nimble_task_results
+  - mcp__plugin_nimble_nimble__nimble_agents_list
+  - mcp__plugin_nimble_nimble__nimble_agents_get
+  - mcp__plugin_nimble_nimble__nimble_agents_run
+  - mcp__plugin_nimble_nimble__nimble_agent_run_async
   - Read
   - Write
   - Edit
@@ -56,7 +70,7 @@ User request: $ARGUMENTS
 - **Never answer from training data.** Live prices, current news, today's listings → always fetch via Nimble. If unavailable, say so.
 - **AskUserQuestion at every meaningful choice.** Header ≤12 chars, 2–4 options, label 1–5 words, recommended option first. Never present choices as numbered prose.
 - **Save all outputs to `.nimble/`.** Never leave extraction results in memory only.
-- **If bash is denied, stop immediately.** Show the command as text and wait. Never retry with `dangerouslyDisableSandbox`.
+- **If bash is denied AND no plugin MCP fallback is connected, stop immediately.** Show the command as text and wait. Never retry with `dangerouslyDisableSandbox`. If the plugin MCP is connected (`claude mcp list | grep nimble`), use `mcp__plugin_nimble_nimble__*` tools instead — same operations, different surface.
 
 ## Skill ecosystem
 
@@ -79,7 +93,7 @@ User request: $ARGUMENTS
 
 ## Prerequisites
 
-Pick CLI or MCP at session start — same skill, two transports:
+Pick CLI or MCP at session start — same skill, two transports. Once a transport is selected, stick with it for the session and don't re-probe on every command.
 
 ```bash
 nimble --version && echo "${NIMBLE_API_KEY:+API key: set}"        # CLI path

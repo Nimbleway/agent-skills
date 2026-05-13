@@ -41,7 +41,7 @@ User request: $ARGUMENTS
 
 ## Prerequisites
 
-Pick CLI or MCP at session start — same skill, two transports.
+Pick CLI or MCP at session start — same skill, two transports. Once a transport is selected, stick with it for the session and don't re-probe on every command.
 
 **Try CLI first** (exposes the full surface area — every flag, batch ops, file I/O):
 
