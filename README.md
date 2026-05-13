@@ -1,7 +1,7 @@
 # Nimble Web Search Skills & Plugin
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![Version](https://img.shields.io/badge/version-0.19.0-green)](https://github.com/Nimbleway/agent-skills)
+[![Version](https://img.shields.io/badge/version-0.20.0-green)](https://github.com/Nimbleway/agent-skills)
 
 Unlock the web for your AI agents — search, scrape, extract structured data, and run business intelligence workflows, all powered by Nimble's web data infrastructure. One plugin for Claude Code, Cursor, and any platform that supports the [Agent Skills spec](https://agentskills.io/specification.md).
 
@@ -45,7 +45,17 @@ Or add it permanently to `~/.claude/settings.json`:
 
 ### 3. Add the skills
 
-**Claude Code:**
+**Claude Code (plugin install — recommended):**
+
+```
+/plugin install nimble
+```
+
+The plugin auto-registers the MCP server over native HTTP with OAuth — no API key header needed. On first use, run `/mcp` and authenticate `nimble-mcp-server` in your browser.
+
+**Claude Code (manual install):**
+
+If you'd rather not use the plugin, register the server directly with the API key:
 
 ```bash
 claude mcp add --transport http nimble-mcp-server https://mcp.nimbleway.com/mcp \
