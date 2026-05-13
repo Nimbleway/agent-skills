@@ -122,6 +122,26 @@ The plugin install is one command and handles MCP registration + OAuth automatic
 This works in every Claude product (Code, Cowork, claude.ai) — they share the
 plugin + connector mechanism.
 
+#### Plugin installed but connector not activated (Cowork / claude.ai)
+
+A common Cowork state: the plugin is installed (visible under
+`Customize → Personal plugins → Nimble`) but the connector hasn't been
+activated yet — the right-hand panel says "You are not connected to nimble yet".
+
+Detection signal: `mcp__plugin_nimble_nimble__*` tools are listed as available,
+but the first call to one returns an auth / not-connected error (and Bash is
+denied, so the CLI fallback isn't reachable either).
+
+Tell the user verbatim and **stop** — never fall back to WebFetch, WebSearch,
+or any other tool. Wait for activation:
+
+> Your Nimble plugin is installed but the connector isn't activated yet. To enable Nimble here:
+>
+> 1. Open **Customize → Personal plugins → Nimble → Connectors**
+> 2. Find the `nimble` connector and click **Add to your team**
+> 3. Complete the OAuth flow in your browser
+> 4. Once it shows **Connected**, re-run your request
+
 #### Codex CLI or other terminal agents (shell available, no `/plugin install`)
 
 When `/plugin install` isn't available but the user has shell access, install the

@@ -26,10 +26,29 @@ session and stick with it; don't re-probe on every command.
 | Check | If it works | What to use |
 |---|---|---|
 | `nimble --version` (>= 0.8.0) and `NIMBLE_API_KEY` is set | CLI is ready | Bash `nimble ...` commands |
-| `claude mcp list 2>/dev/null \| grep -q "nimble"` | Plugin MCP is connected | `mcp__plugin_nimble_nimble__*` tools |
-| Neither | Stop — guide install (below) | — |
+| `claude mcp list 2>/dev/null \| grep -q "nimble"` (or first `mcp__plugin_nimble_nimble__*` call succeeds) | Plugin MCP is connected | `mcp__plugin_nimble_nimble__*` tools |
+| Bash denied AND `mcp__plugin_nimble_nimble__*` tools are listed but the first call returns an auth / not-connected error | Plugin is installed but the **connector isn't activated** (typical Cowork / claude.ai state) | **Stop — guide connector activation (below)** |
+| None of the above | Stop — guide install (below) | — |
 
-If neither path works, surface this hint verbatim and stop:
+### Plugin installed but connector not activated (Cowork / claude.ai)
+
+If the Nimble plugin is installed (the user can see "Nimble" under
+`Customize → Personal plugins`) but the right-hand panel shows "You are not
+connected to nimble yet", the connector needs one click to activate. Surface
+this hint verbatim and stop — do **not** fall back to WebFetch, WebSearch,
+curl, or any other tool:
+
+> Your Nimble plugin is installed but the connector isn't activated yet. To enable Nimble here:
+>
+> 1. Open **Customize → Personal plugins → Nimble → Connectors**
+> 2. Find the `nimble` connector and click **Add to your team**
+> 3. Complete the OAuth flow in your browser
+> 4. Once it shows **Connected**, re-run your request
+
+### No plugin and no CLI
+
+If neither path works at all (no plugin installed, no CLI installed), surface
+this hint verbatim and stop:
 
 > Nimble isn't installed. Pick the path for your environment:
 >

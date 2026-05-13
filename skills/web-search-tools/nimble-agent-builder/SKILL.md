@@ -28,7 +28,7 @@ allowed-tools:
   - mcp__plugin_nimble_nimble__nimble_agents_update_session
 license: MIT
 metadata:
-  version: "0.21.0"
+  version: "0.21.1"
   author: Nimbleway
   repository: https://github.com/Nimbleway/agent-skills
 ---
@@ -63,6 +63,8 @@ claude mcp list 2>/dev/null | grep -q "nimble" && echo "MCP: connected" || echo 
 - Any Claude product (Code, Cowork, claude.ai) → `/plugin install nimble` (one command, auto-registers MCP as a Connector, OAuth handles auth).
 - Codex CLI or other terminal-only agents → `npm i -g @nimble-way/nimble-cli` + API key.
 - Cursor / VS Code / generic MCP clients → paste the `mcp.json` snippet from `rules/setup.md`.
+
+**Plugin installed but connector not activated** (typical Cowork / claude.ai — `mcp__plugin_nimble_nimble__*` tools are listed but calls fail with an auth/not-connected error): surface the verbatim activation steps from `references/profile-and-onboarding.md` (`Customize → Personal plugins → Nimble → Connectors → Add to your team`) and stop. Never substitute WebFetch, WebSearch, curl, or any other tool.
 
 ---
 
