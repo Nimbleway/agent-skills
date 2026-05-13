@@ -18,7 +18,9 @@ export NIMBLE_API_KEY="your-api-key-here"
 
 If the CLI cannot be installed, the MCP server provides equivalent functionality.
 
-**Add with one command:**
+**Recommended: install the Nimble plugin.** When installed via `/plugin install nimble`, the MCP server is auto-registered over native HTTP with OAuth — run `/mcp` and authenticate in your browser. No API key header required.
+
+**Manual install (no plugin):**
 
 ```bash
 claude mcp add --transport http nimble-mcp-server https://mcp.nimbleway.com/mcp \

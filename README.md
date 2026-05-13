@@ -45,7 +45,17 @@ Or add it permanently to `~/.claude/settings.json`:
 
 ### 3. Add the skills
 
-**Claude Code:**
+**Claude Code (plugin install — recommended):**
+
+```
+/plugin install nimble
+```
+
+The plugin auto-registers the MCP server over native HTTP with OAuth — no API key header needed. On first use, run `/mcp` and authenticate `nimble-mcp-server` in your browser.
+
+**Claude Code (manual install):**
+
+If you'd rather not use the plugin, register the server directly with the API key:
 
 ```bash
 claude mcp add --transport http nimble-mcp-server https://mcp.nimbleway.com/mcp \
