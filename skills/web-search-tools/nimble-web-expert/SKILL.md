@@ -47,7 +47,6 @@ allowed-tools:
   - Grep
   - Task
   - AskUserQuestion
-  - WebFetch
 license: MIT
 metadata:
   version: "0.21.1"
@@ -70,13 +69,8 @@ User request: $ARGUMENTS
 - **Never answer from training data.** Live prices, current news, today's listings → always fetch via Nimble. If unavailable, say so.
 - **AskUserQuestion at every meaningful choice.** Header ≤12 chars, 2–4 options, label 1–5 words, recommended option first. Never present choices as numbered prose.
 - **Save all outputs to `.nimble/`.** Never leave extraction results in memory only.
-- **No CLI and no working MCP → stop. Do not fall back to WebFetch.** If bash is denied (no `nimble --version`) AND `mcp__plugin_nimble_nimble__*` tool calls fail or aren't available, do not retry with `dangerouslyDisableSandbox` and do **not** substitute WebFetch, WebSearch, curl, or any other tool for Nimble operations. Two cases to handle:
-  - **Plugin installed, connector not activated** (typical Cowork / claude.ai — you'll see the `mcp__plugin_nimble_nimble__*` tools listed but calls error out): tell the user verbatim:
-    > Your Nimble plugin is installed but the connector isn't activated yet. To enable Nimble here:
-    > 1. Open **Customize → Personal plugins → Nimble → Connectors**
-    > 2. Find the `nimble` connector and click **Add to your team**
-    > 3. Complete the OAuth flow in your browser
-    > 4. Once it shows **Connected**, re-run your request
+- **No CLI and no working MCP → stop. Do not fall back to WebFetch, WebSearch, curl, or any other tool.** If bash is denied (no `nimble --version`) AND `mcp__plugin_nimble_nimble__*` tool calls fail or aren't available, do not retry with `dangerouslyDisableSandbox`. Distinguish two cases by symptom:
+  - **Plugin installed, connector not activated** (typical Cowork / claude.ai — `mcp__plugin_nimble_nimble__*` tools are listed but calls error out): surface the verbatim activation steps from `references/profile-and-onboarding.md` (`Customize → Personal plugins → Nimble → Connectors → Add to your team`) and stop.
   - **No plugin at all**: load `rules/setup.md` and follow the install flow there.
 
 ## Skill ecosystem
@@ -222,7 +216,7 @@ The skill maintains `~/.claude/skills/nimble-web-expert/learned/examples.json`.
 - **NEVER answer from training data** for live prices, current news, or real-time data. If Nimble is unavailable, say so.
 - **NEVER skip Step 0 silently.** Even if certain there's no agent, announce the check before running extract/search/map.
 - **NEVER retry the same render tier.** If a tier returns empty or blocked, escalate — do not re-run.
-- **NEVER substitute WebFetch for nimble CLI tasks.** WebFetch is a fallback for fetching Nimble docs only.
+- **NEVER substitute WebFetch, WebSearch, curl, or wget for nimble operations.** They're not in `allowed-tools` — if a Nimble transport isn't available, stop and follow the guidance in the no-transport branch of Core principles. Don't try to work around it.
 - **NEVER load reference files speculatively.** Only read a reference when the current task explicitly needs it.
 - **Task agents MUST use `run_in_background=False`.** See [nimble-agent-builder delegation model](../nimble-agent-builder/SKILL.md#delegation-model) for the why.
 - **Hard retry limit.** On error (not empty content): retry at most 2 times with different flags. After 2 errors, report and stop.
