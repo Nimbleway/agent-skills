@@ -26,10 +26,18 @@ See [Installation in the root README](../../README.md#installation) for CLI inst
 
 ### Connect the Nimble MCP server
 
-#### Claude Code
+#### Any Claude product (Claude Code, Claude Cowork, claude.ai) — recommended
+
+```
+/plugin install nimble
+```
+
+The plugin's `.mcp.json` auto-registers as a Connector over native HTTP with OAuth — no API key header to manage. Run `/mcp` once to authenticate.
+
+#### Manual install (Codex CLI, or when you'd rather use an API key)
 
 ```bash
-claude mcp add --transport http nimble-mcp-server https://mcp.nimbleway.com/mcp \
+claude mcp add --transport http nimble https://mcp.nimbleway.com/mcp \
   --header "Authorization: Bearer ${NIMBLE_API_KEY}"
 ```
 
@@ -39,7 +47,7 @@ claude mcp add --transport http nimble-mcp-server https://mcp.nimbleway.com/mcp 
 
 ```json
 {
-  "nimble-mcp-server": {
+  "nimble": {
     "command": "npx",
     "args": [
       "-y",

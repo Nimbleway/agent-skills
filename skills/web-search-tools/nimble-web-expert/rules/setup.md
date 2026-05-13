@@ -1,11 +1,47 @@
 ---
-description: One-time setup instructions for Nimble CLI + API key. Load this only when the quick check in SKILL.md fails.
+description: One-time setup instructions for Nimble — plugin install (Claude products), CLI install (terminal agents), or manual MCP config (Cursor/VS Code). Load this only when the quick check in SKILL.md fails.
 alwaysApply: false
 ---
 
-# Nimble CLI Setup
+# Nimble Setup
 
-## One-time init (run once per machine)
+Pick the path that matches your host:
+
+| Host | Best path |
+|---|---|
+| Any Claude product (Claude Code, Claude Cowork, claude.ai) | **Plugin install** — `/plugin install nimble`. Auto-registers MCP as a Connector. OAuth handles auth. **§1 below.** |
+| Codex CLI / other terminal-only agents | **CLI install** — `npm i -g @nimble-way/nimble-cli` + API key. **§2 below.** |
+| Cursor / VS Code / other MCP clients | **Manual `mcp.json`** snippet. **§3 below.** |
+
+---
+
+## 1. Plugin install (Claude products — recommended)
+
+```
+/plugin install nimble
+```
+
+The Nimble plugin includes a `.mcp.json` that auto-registers as a Connector
+pointing at `https://mcp.nimbleway.com/mcp` over native HTTP with OAuth. After
+install, run `/mcp` once to authenticate in your browser — no API key needed.
+
+In claude.ai / Claude Cowork, the connector appears under
+`Customize → Personal plugins → Nimble → Connectors`.
+
+Verify:
+
+```bash
+claude mcp list | grep nimble
+```
+
+Expect: `plugin:nimble:nimble: https://mcp.nimbleway.com/mcp (HTTP) - ✓ Connected`
+once authenticated (or `! Needs authentication` until you run `/mcp`).
+
+---
+
+## 2. CLI install (Codex / terminal-only environments)
+
+### One-time init (run once per machine)
 
 Saves the API key to `~/.claude/settings.json` so Claude Code auto-injects it every session — no exports needed.
 
@@ -84,6 +120,41 @@ print('✓ Saved to ~/.claude/settings.json')
 ```
 
 ⚠️ **After this point: never prepend `export NIMBLE_API_KEY=...` to any subsequent command.** The key is in the environment. Just run `nimble ...` directly.
+
+---
+
+## 3. Manual `mcp.json` (Cursor / VS Code / other MCP clients)
+
+Paste into the host's MCP settings (e.g., `.cursor/mcp.json`):
+
+```json
+{
+  "mcpServers": {
+    "nimble": {
+      "type": "http",
+      "url": "https://mcp.nimbleway.com/mcp"
+    }
+  }
+}
+```
+
+First tool call triggers OAuth in your browser. If the host doesn't speak
+native HTTP MCP yet, fall back to the stdio shim with an API-key header:
+
+```json
+{
+  "mcpServers": {
+    "nimble": {
+      "command": "npx",
+      "args": [
+        "-y", "mcp-remote@latest",
+        "https://mcp.nimbleway.com/mcp",
+        "--header", "Authorization:Bearer YOUR_API_KEY"
+      ]
+    }
+  }
+}
+```
 
 ---
 

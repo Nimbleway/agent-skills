@@ -362,9 +362,9 @@ export PATH="$HOME/go/bin:$PATH"
 **MCP fallback (only if CLI is not installed):**
 | CLI command | MCP tool |
 |---|---|
-| nimble agent generate | mcp__plugin_nimble_nimble-mcp-server__nimble_agents_generate |
-| nimble agent get-generation | mcp__plugin_nimble_nimble-mcp-server__nimble_agents_status |
-| nimble agent publish | mcp__plugin_nimble_nimble-mcp-server__nimble_agents_publish |
+| nimble agent generate | mcp__plugin_nimble_nimble__nimble_agents_generate |
+| nimble agent get-generation | mcp__plugin_nimble_nimble__nimble_agents_status |
+| nimble agent publish | mcp__plugin_nimble_nimble__nimble_agents_publish |
 
 **CRITICAL: Prefer CLI for all operations. Use MCP only when CLI is unavailable. NEVER use WebSearch, WebFetch, curl, or wget. NEVER construct MCP endpoint URLs manually.**
 

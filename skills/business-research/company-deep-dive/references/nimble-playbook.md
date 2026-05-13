@@ -17,22 +17,61 @@ How to run Nimble CLI commands in Claude Code. Read this before executing any co
 
 ## Preflight Pattern
 
-Every skill starts with these simultaneous Bash calls:
+### Transport selection (run once per session)
+
+Skills work via two transports — CLI (preferred, full surface area) or MCP (fallback,
+curated tool set covering the same operations). Pick one at the start of every
+session and stick with it; don't re-probe on every command.
+
+| Check | If it works | What to use |
+|---|---|---|
+| `nimble --version` (>= 0.8.0) and `NIMBLE_API_KEY` is set | CLI is ready | Bash `nimble ...` commands |
+| `claude mcp list 2>/dev/null \| grep -q "nimble"` | Plugin MCP is connected | `mcp__plugin_nimble_nimble__*` tools |
+| Neither | Stop — guide install (below) | — |
+
+If neither path works, surface this hint verbatim and stop:
+
+> Nimble isn't installed. Pick the path for your environment:
+>
+> **Any Claude product (Claude Code, Claude Cowork, claude.ai) — recommended:**
+> ```
+> /plugin install nimble
+> ```
+> Installs the Nimble plugin. The `.mcp.json` inside the plugin auto-registers as a Connector in `Customize → Connectors`. First tool call triggers the OAuth flow — no API key needed.
+>
+> **Codex CLI or other terminal agents (shell access, no `/plugin`):**
+> ```
+> npm i -g @nimble-way/nimble-cli
+> ```
+> Then `export NIMBLE_API_KEY=<key>` and re-run. See `references/profile-and-onboarding.md` for the full install flow.
+>
+> **Cursor, VS Code, or any other MCP client:**
+> Paste this into your MCP settings (`.cursor/mcp.json` or host equivalent):
+> ```json
+> {
+>   "mcpServers": {
+>     "nimble": { "type": "http", "url": "https://mcp.nimbleway.com/mcp" }
+>   }
+> }
+> ```
+
+The plugin path (`/plugin install nimble`) is the easiest onboarding everywhere it
+works — one command, OAuth handles auth, no API key to manage. Use the CLI path
+only when shell access is available but `/plugin install` isn't (Codex, raw
+terminal agents). Use the manual `mcp.json` path only for MCP clients outside the
+Claude family.
+
+### Standard preflight (run in parallel after transport is selected)
+
+Every skill kicks off with these simultaneous calls:
 
 - `python3 -c "from datetime import datetime, timedelta; print((datetime.now() - timedelta(days=14)).strftime('%Y-%m-%d'))"` (14 days ago)
 - `date +%Y-%m-%d` (today)
-- `nimble --version && echo "NIMBLE_API_KEY=${NIMBLE_API_KEY:+set}"`
-- `cat ~/.nimble/business-profile.json 2>/dev/null`
+- `cat ~/.nimble/business-profile.json 2>/dev/null` (profile — fall back to MCP filesystem tool if shell unavailable)
 - `cat ~/.nimble/memory/index.md 2>/dev/null` (global wiki index — know what directories have data)
 
-From the `nimble --version` output, check:
-- **CLI missing** (command not found) → install it interactively
-- **CLI outdated** (version < 0.8.0) → upgrade it
-- **API key unset** → guide setup
-
-See `references/profile-and-onboarding.md` for the full prerequisite checks with
-install/upgrade flows. Don't skip version validation — outdated CLI versions may be
-missing flags or features that skills depend on.
+Don't skip the transport check — running CLI commands when only MCP is available (or
+vice versa) wastes a turn and confuses the user.
 
 ## Sibling Handoff
 
