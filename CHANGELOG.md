@@ -1,5 +1,10 @@
 # Changelog
 
+## [0.20.0] - 2026-05-13
+
+### Changed
+- **Plugin MCP config** — migrated `.mcp.json` from the `mcp-remote` stdio shim with bearer-token header to native HTTP transport with OAuth (`type: "http"`, `url`, no headers). Matches the canonical pattern in `anthropics/claude-plugins-official` (Linear, Asana). Removes the `npx -y mcp-remote@latest` cold-start and the `${NIMBLE_API_KEY}` header — Claude Code now drives the full OAuth 2.1 + PKCE + Dynamic Client Registration flow against `mcp.nimbleway.com` automatically. Root-level `mcp.json` preserved for Cursor compatibility.
+
 ## [0.19.0] - 2026-04-20
 
 ### Added
