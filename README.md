@@ -1,7 +1,7 @@
 # Nimble Web Search Skills & Plugin
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![Version](https://img.shields.io/badge/version-0.20.0-green)](https://github.com/Nimbleway/agent-skills)
+[![Version](https://img.shields.io/badge/version-0.21.0-green)](https://github.com/Nimbleway/agent-skills)
 
 Unlock the web for your AI agents — search, scrape, extract structured data, and run business intelligence workflows, all powered by Nimble's web data infrastructure. One plugin for Claude Code, Cursor, and any platform that supports the [Agent Skills spec](https://agentskills.io/specification.md).
 
@@ -45,24 +45,15 @@ Or add it permanently to `~/.claude/settings.json`:
 
 ### 3. Add the skills
 
-**Claude Code (plugin install — recommended):**
+**Any Claude product (Claude Code, Claude Cowork, claude.ai) — recommended:**
 
 ```
 /plugin install nimble
 ```
 
-The plugin auto-registers the MCP server over native HTTP with OAuth — no API key header needed. On first use, run `/mcp` and authenticate `nimble-mcp-server` in your browser.
+One command. The plugin's `.mcp.json` auto-registers as a Connector pointing at the Nimble MCP server over native HTTP with OAuth — no API key header to manage. On first use, run `/mcp` and authenticate `nimble` in your browser.
 
-**Claude Code (manual install):**
-
-If you'd rather not use the plugin, register the server directly with the API key:
-
-```bash
-claude mcp add --transport http nimble-mcp-server https://mcp.nimbleway.com/mcp \
-  --header "Authorization: Bearer ${NIMBLE_API_KEY}"
-```
-
-> Restart Claude Code after running this — MCP servers added mid-session aren't available until the next launch.
+In claude.ai / Cowork the connector appears under `Customize → Personal plugins → Nimble → Connectors`.
 
 **Cursor:**
 
@@ -71,6 +62,15 @@ claude mcp add --transport http nimble-mcp-server https://mcp.nimbleway.com/mcp 
 ```
 
 Or clone the repo and open it in Cursor — the plugin system auto-discovers skills from `.cursor-plugin/plugin.json`.
+
+**Manual install (Codex CLI, raw MCP clients, or when you'd rather use an API key):**
+
+```bash
+claude mcp add --transport http nimble https://mcp.nimbleway.com/mcp \
+  --header "Authorization: Bearer ${NIMBLE_API_KEY}"
+```
+
+> Restart Claude Code after running this — MCP servers added mid-session aren't available until the next launch.
 
 **npx skills CLI:**
 

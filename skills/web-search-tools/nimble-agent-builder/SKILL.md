@@ -21,14 +21,14 @@ allowed-tools:
   # MCP tools (fallback when CLI is not installed):
   - Bash
   - Task
-  - mcp__plugin_nimble_nimble-mcp-server__nimble_agents_generate
-  - mcp__plugin_nimble_nimble-mcp-server__nimble_agents_status
-  - mcp__plugin_nimble_nimble-mcp-server__nimble_agents_publish
-  - mcp__plugin_nimble_nimble-mcp-server__nimble_agents_update_from_agent
-  - mcp__plugin_nimble_nimble-mcp-server__nimble_agents_update_session
+  - mcp__plugin_nimble_nimble__nimble_agents_generate
+  - mcp__plugin_nimble_nimble__nimble_agents_status
+  - mcp__plugin_nimble_nimble__nimble_agents_publish
+  - mcp__plugin_nimble_nimble__nimble_agents_update_from_agent
+  - mcp__plugin_nimble_nimble__nimble_agents_update_session
 license: MIT
 metadata:
-  version: "0.20.0"
+  version: "0.21.0"
   author: Nimbleway
   repository: https://github.com/Nimbleway/agent-skills
 ---
@@ -41,28 +41,28 @@ User request: $ARGUMENTS
 
 ## Prerequisites
 
-**Quick check:** `nimble --version && echo "${NIMBLE_API_KEY:+API key: set}"`
+Pick CLI or MCP at session start — same skill, two transports.
 
-If CLI is missing or API key is not set, load `rules/setup.md` for one-time setup (CLI install, API key, MCP server).
-
-## Startup check — run this before anything else
-
-**Verify CLI is available:**
+**Try CLI first** (exposes the full surface area — every flag, batch ops, file I/O):
 
 ```bash
 nimble --version && echo "${NIMBLE_API_KEY:+API key: set}"
 ```
 
-**If CLI and API key are set** → proceed with the user's request normally.
+- CLI version + `API key: set` both print → proceed using `nimble ...` commands.
 
-**If CLI is missing** → check if the MCP server is connected as a fallback:
+**Try MCP fallback** if CLI is missing:
 
 ```bash
-claude mcp list 2>/dev/null | grep -q nimble-mcp-server && echo "MCP: connected" || echo "MCP: not connected"
+claude mcp list 2>/dev/null | grep -q "nimble" && echo "MCP: connected" || echo "MCP: not connected"
 ```
 
-- **MCP connected** → proceed using MCP tools instead of CLI commands.
-- **Neither CLI nor MCP available** → load `rules/setup.md` for one-time setup (CLI install, API key). CLI is the preferred setup path.
+- MCP connected → proceed using `mcp__plugin_nimble_nimble__*` tools instead of CLI.
+
+**Neither available** → load `rules/setup.md`. The install path depends on the host:
+- Any Claude product (Code, Cowork, claude.ai) → `/plugin install nimble` (one command, auto-registers MCP as a Connector, OAuth handles auth).
+- Codex CLI or other terminal-only agents → `npm i -g @nimble-way/nimble-cli` + API key.
+- Cursor / VS Code / generic MCP clients → paste the `mcp.json` snippet from `rules/setup.md`.
 
 ---
 
@@ -204,9 +204,9 @@ All Task agent prompts should include this block so the subagent knows the avail
 **MCP fallback (only if CLI is not installed):**
 | CLI command | MCP tool |
 |---|---|
-| `nimble agent generate` | `mcp__plugin_nimble_nimble-mcp-server__nimble_agents_generate` |
-| `nimble agent get-generation` | `mcp__plugin_nimble_nimble-mcp-server__nimble_agents_status` |
-| `nimble agent publish` | `mcp__plugin_nimble_nimble-mcp-server__nimble_agents_publish` |
+| `nimble agent generate` | `mcp__plugin_nimble_nimble__nimble_agents_generate` |
+| `nimble agent get-generation` | `mcp__plugin_nimble_nimble__nimble_agents_status` |
+| `nimble agent publish` | `mcp__plugin_nimble_nimble__nimble_agents_publish` |
 
 **CRITICAL: Prefer CLI for all operations. Use MCP only when CLI is unavailable. NEVER use WebSearch, WebFetch, curl, or wget. NEVER construct MCP endpoint URLs manually.**
 ```

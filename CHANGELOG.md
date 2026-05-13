@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.21.0] - 2026-05-13
+
+### Changed
+- **MCP server ID renamed to `nimble`** (was `nimble-mcp-server`) across `.mcp.json`, `mcp.json` (Cursor), README, both core-skill SKILL.md `allowed-tools` whitelists, the `claude mcp list` health check, and all CLI→MCP mapping tables in `nimble-agent-builder`. New tool prefix: `mcp__plugin_nimble_nimble__*`. Aligns with the lowercase server-ID convention used by every Anthropic-official plugin (linear, github, asana, etc.).
+- **Onboarding rewritten around the plugin install path.** Every install instruction now leads with `/plugin install nimble` for any Claude product (Claude Code, Claude Cowork, claude.ai) — the plugin's `.mcp.json` auto-registers as a Connector in `Customize → Personal plugins → Nimble → Connectors`, and OAuth handles auth on first tool call. Updated `_shared/nimble-playbook.md` (Transport Selection block), `_shared/profile-and-onboarding.md` (prerequisite-check flow), `README.md`, `nimble-agent-builder/README.md`, both `rules/setup.md` files, and both core skills' Prerequisites sections. Synced into all 11 business-skill `references/` folders via `scripts/sync-shared.sh`.
+- **Transport selection is now explicit.** Skills pick CLI or MCP at session start (`nimble --version` → CLI; `claude mcp list | grep nimble` → plugin MCP) and stick with it for the session.
+- **CLI package name corrected** in onboarding docs: `@nimbleway/cli` → `@nimble-way/nimble-cli` (the actual published package).
+
 ## [0.20.0] - 2026-05-13
 
 ### Changed

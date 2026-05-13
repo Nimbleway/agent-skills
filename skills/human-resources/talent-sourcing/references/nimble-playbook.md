@@ -17,22 +17,61 @@ How to run Nimble CLI commands in Claude Code. Read this before executing any co
 
 ## Preflight Pattern
 
-Every skill starts with these simultaneous Bash calls:
+### Transport selection (run once per session)
+
+Skills work via two transports — CLI (preferred, full surface area) or MCP (fallback,
+curated tool set covering the same operations). Pick one at the start of every
+session and stick with it; don't re-probe on every command.
+
+| Check | If it works | What to use |
+|---|---|---|
+| `nimble --version` (>= 0.8.0) and `NIMBLE_API_KEY` is set | CLI is ready | Bash `nimble ...` commands |
+| `claude mcp list 2>/dev/null \| grep -q "nimble"` | Plugin MCP is connected | `mcp__plugin_nimble_nimble__*` tools |
+| Neither | Stop — guide install (below) | — |
+
+If neither path works, surface this hint verbatim and stop:
+
+> Nimble isn't installed. Pick the path for your environment:
+>
+> **Any Claude product (Claude Code, Claude Cowork, claude.ai) — recommended:**
+> ```
+> /plugin install nimble
+> ```
+> Installs the Nimble plugin. The `.mcp.json` inside the plugin auto-registers as a Connector in `Customize → Connectors`. First tool call triggers the OAuth flow — no API key needed.
+>
+> **Codex CLI or other terminal agents (shell access, no `/plugin`):**
+> ```
+> npm i -g @nimble-way/nimble-cli
+> ```
+> Then `export NIMBLE_API_KEY=<key>` and re-run. See `references/profile-and-onboarding.md` for the full install flow.
+>
+> **Cursor, VS Code, or any other MCP client:**
+> Paste this into your MCP settings (`.cursor/mcp.json` or host equivalent):
+> ```json
+> {
+>   "mcpServers": {
+>     "nimble": { "type": "http", "url": "https://mcp.nimbleway.com/mcp" }
+>   }
+> }
+> ```
+
+The plugin path (`/plugin install nimble`) is the easiest onboarding everywhere it
+works — one command, OAuth handles auth, no API key to manage. Use the CLI path
+only when shell access is available but `/plugin install` isn't (Codex, raw
+terminal agents). Use the manual `mcp.json` path only for MCP clients outside the
+Claude family.
+
+### Standard preflight (run in parallel after transport is selected)
+
+Every skill kicks off with these simultaneous calls:
 
 - `python3 -c "from datetime import datetime, timedelta; print((datetime.now() - timedelta(days=14)).strftime('%Y-%m-%d'))"` (14 days ago)
 - `date +%Y-%m-%d` (today)
-- `nimble --version && echo "NIMBLE_API_KEY=${NIMBLE_API_KEY:+set}"`
-- `cat ~/.nimble/business-profile.json 2>/dev/null`
+- `cat ~/.nimble/business-profile.json 2>/dev/null` (profile — fall back to MCP filesystem tool if shell unavailable)
 - `cat ~/.nimble/memory/index.md 2>/dev/null` (global wiki index — know what directories have data)
 
-From the `nimble --version` output, check:
-- **CLI missing** (command not found) → install it interactively
-- **CLI outdated** (version < 0.8.0) → upgrade it
-- **API key unset** → guide setup
-
-See `references/profile-and-onboarding.md` for the full prerequisite checks with
-install/upgrade flows. Don't skip version validation — outdated CLI versions may be
-missing flags or features that skills depend on.
+Don't skip the transport check — running CLI commands when only MCP is available (or
+vice versa) wastes a turn and confuses the user.
 
 ## Sibling Handoff
 
@@ -125,19 +164,38 @@ nimble search --query "company name" --search-depth deep --max-results 5
 ## Extract
 
 ```bash
-# Extract article content as markdown (recommended)
+# Extract article content as markdown (default for content analysis)
 nimble extract --url "https://example.com/article" --format markdown
+
+# Extract raw HTML (required for <head> metadata: canonical, schema, og, meta tags)
+nimble extract --url "https://example.com" --format html
 
 # Extract with JavaScript rendering (for dynamic/SPA pages)
 nimble extract --url "https://example.com/spa" --render --format markdown
 ```
 
-Response is JSON with `data.markdown` containing clean content.
+Response is JSON. The field returned depends on `--format`:
+- `--format markdown` → `data.markdown` (clean body content)
+- `--format html` → `data.html` (raw HTML including `<head>`)
+- `--format plain_text` → `data.plain_text`
+- `--format simplified_html` → `data.simplified_html`
+
+**Format selection by use case:**
+
+| Need | Format | Why |
+|------|--------|-----|
+| Article body content, word count, headings | `markdown` | Clean text, no nav/footer noise |
+| Meta tags (title, description, canonical, og, twitter) | `html` | Markdown strips `<head>` |
+| Schema markup (JSON-LD) | `html` | Script tags not in markdown |
+| hreflang, `<html lang>` | `html` | Attributes not in markdown |
+| Structured field extraction | `--parse --parser '{...}'` | LLM extracts specific fields |
+| Both body and head | `markdown` + `html` | Two calls or parse html for both |
 
 **Key flags:**
 - `--url` — target URL (required)
-- `--format` — `markdown` (recommended), `simplified_html`, `plain_text`
+- `--format` — `markdown`, `html`, `simplified_html`, `plain_text` (pick based on table above)
 - `--render` — render JavaScript using a browser
+- `--parse --parser '{...}'` — structured extraction via LLM parser schema
 
 **Extraction fallback** (if `data.markdown` is mostly JavaScript/boilerplate):
 1. **Garbage check:** If `data.markdown` has < 100 characters of meaningful content

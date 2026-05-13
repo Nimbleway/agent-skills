@@ -106,37 +106,67 @@ Always confirm: "Got it — removed CompanyX from tracking."
 
 ### Prerequisite Checks
 
-The preflight pattern in `nimble-playbook.md` runs `nimble --version`. Parse its
-output to check three things: installed, minimum version, and API key.
+The transport selection in `nimble-playbook.md` determines whether CLI or MCP is
+active. This section covers the install/upgrade/auth flow when neither is ready.
 
 **Minimum CLI version: 0.8.0**
 
-#### CLI missing (command not found)
+#### Preferred path — any Claude product (Claude Code, Claude Cowork, claude.ai)
 
-Don't just tell the user to install — guide them through it:
+The plugin install is one command and handles MCP registration + OAuth automatically:
+
+> "Run `/plugin install nimble` to install the Nimble plugin. The plugin's MCP
+> server auto-registers as a Connector you can see in `Customize → Connectors`.
+> On first use, the OAuth flow runs in your browser — no API key needed."
+
+This works in every Claude product (Code, Cowork, claude.ai) — they share the
+plugin + connector mechanism.
+
+#### Codex CLI or other terminal agents (shell available, no `/plugin install`)
+
+When `/plugin install` isn't available but the user has shell access, install the
+CLI directly — it exposes the full Nimble surface area:
 
 1. Check if npm is available: `npm --version`
 2. If npm exists:
    > "The Nimble CLI is required. I'll install it now."
    >
-   > Run: `npm install -g @nimbleway/cli`
+   > Run: `npm install -g @nimble-way/nimble-cli`
 3. If npm is not available:
    > "The Nimble CLI requires Node.js/npm. Install Node.js first from
-   > [nodejs.org](https://nodejs.org), then run: `npm install -g @nimbleway/cli`"
+   > [nodejs.org](https://nodejs.org), then run: `npm install -g @nimble-way/nimble-cli`"
 4. After install, verify: `nimble --version`
 5. If verification fails, stop and ask the user to check their PATH.
 
+#### Cursor, VS Code, or other MCP clients outside the Claude family
+
+When neither `/plugin install` nor shell access is workable, have the user paste
+this into their MCP settings (e.g., `.cursor/mcp.json` or the host's equivalent):
+
+```json
+{
+  "mcpServers": {
+    "nimble": {
+      "type": "http",
+      "url": "https://mcp.nimbleway.com/mcp"
+    }
+  }
+}
+```
+
+After install, the first tool call triggers the OAuth flow automatically.
+
 #### CLI outdated (version < 0.8.0)
 
-Parse the version from `nimble --version` output. If below 0.8.0:
+Parse the version from `nimble --version`. If below 0.8.0:
 
 > "Your Nimble CLI is version **[current]** — version **0.8.0+** is required
 > for these skills. Upgrading now..."
 >
-> Run: `npm update -g @nimbleway/cli`
+> Run: `npm update -g @nimble-way/nimble-cli`
 
 Verify after upgrade: `nimble --version`. If still outdated, suggest:
-`npm uninstall -g @nimbleway/cli && npm install -g @nimbleway/cli`
+`npm uninstall -g @nimble-way/nimble-cli && npm install -g @nimble-way/nimble-cli`
 
 #### API key not set
 
