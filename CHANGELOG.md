@@ -1,5 +1,10 @@
 # Changelog
 
+## [0.21.1] - 2026-05-13
+
+### Fixed
+- **Cowork onboarding** — when the plugin is installed but the connector isn't activated yet (typical Cowork / claude.ai first-run state), the skills were silently falling back to WebFetch instead of guiding the user to activate. The fix adds a dedicated "plugin installed but connector not activated" state to the transport-selection table in `_shared/nimble-playbook.md`, a matching sub-section in `_shared/profile-and-onboarding.md`, and an explicit hard-stop rule in both core SKILL.md files. When this state is detected, the skill now surfaces verbatim instructions: `Customize → Personal plugins → Nimble → Connectors → Add to your team`, then stops. WebFetch / WebSearch / curl substitution is explicitly forbidden. Synced into all 11 business-skill `references/` directories via `scripts/sync-shared.sh`.
+
 ## [0.21.0] - 2026-05-13
 
 ### Changed

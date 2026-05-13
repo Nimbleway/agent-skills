@@ -50,7 +50,7 @@ allowed-tools:
   - WebFetch
 license: MIT
 metadata:
-  version: "0.21.0"
+  version: "0.21.1"
   author: Nimbleway
   repository: https://github.com/Nimbleway/agent-skills
 ---
@@ -70,7 +70,14 @@ User request: $ARGUMENTS
 - **Never answer from training data.** Live prices, current news, today's listings → always fetch via Nimble. If unavailable, say so.
 - **AskUserQuestion at every meaningful choice.** Header ≤12 chars, 2–4 options, label 1–5 words, recommended option first. Never present choices as numbered prose.
 - **Save all outputs to `.nimble/`.** Never leave extraction results in memory only.
-- **If bash is denied AND no plugin MCP fallback is connected, stop immediately.** Show the command as text and wait. Never retry with `dangerouslyDisableSandbox`. If the plugin MCP is connected (`claude mcp list | grep nimble`), use `mcp__plugin_nimble_nimble__*` tools instead — same operations, different surface.
+- **No CLI and no working MCP → stop. Do not fall back to WebFetch.** If bash is denied (no `nimble --version`) AND `mcp__plugin_nimble_nimble__*` tool calls fail or aren't available, do not retry with `dangerouslyDisableSandbox` and do **not** substitute WebFetch, WebSearch, curl, or any other tool for Nimble operations. Two cases to handle:
+  - **Plugin installed, connector not activated** (typical Cowork / claude.ai — you'll see the `mcp__plugin_nimble_nimble__*` tools listed but calls error out): tell the user verbatim:
+    > Your Nimble plugin is installed but the connector isn't activated yet. To enable Nimble here:
+    > 1. Open **Customize → Personal plugins → Nimble → Connectors**
+    > 2. Find the `nimble` connector and click **Add to your team**
+    > 3. Complete the OAuth flow in your browser
+    > 4. Once it shows **Connected**, re-run your request
+  - **No plugin at all**: load `rules/setup.md` and follow the install flow there.
 
 ## Skill ecosystem
 
@@ -105,7 +112,7 @@ claude mcp list 2>/dev/null | grep -q "nimble" && echo "MCP: ok"  # plugin MCP
 - **MCP connected** (no CLI, but plugin is installed) → proceed to [Step 0](#analyze--route), use `mcp__plugin_nimble_nimble__*` tools instead.
 - **Neither** → load `rules/setup.md` for the environment-aware install flow. Any Claude product (Code, Cowork, claude.ai) → `/plugin install nimble`. Codex or other terminal-only agents → `npm i -g @nimble-way/nimble-cli`. Cursor / VS Code / generic MCP clients → paste the `mcp.json` snippet.
 
-**If bash is denied:** assume MCP-only environment — use plugin MCP tools, don't substitute WebFetch for Nimble tasks.
+**If bash is denied:** you're in a Cowork-like / MCP-only host. Use `mcp__plugin_nimble_nimble__*` tools. If they're listed but calls fail with an auth/not-connected error, the connector isn't activated — surface the activation steps from [Core principles](#core-principles) and stop. **Never substitute WebFetch, WebSearch, curl, or any other tool for Nimble operations.**
 
 ---
 
