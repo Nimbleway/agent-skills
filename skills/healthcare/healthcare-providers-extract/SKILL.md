@@ -16,7 +16,7 @@ description: |
   Do NOT use for filling data gaps — use healthcare-providers-enrich instead.
   Do NOT use for credential validation — use healthcare-providers-verify instead.
   Do NOT use for discovering practices — use market-finder or local-places instead.
-  Do NOT use for general extraction — use nimble-web-expert instead.
+  Do NOT use for general extraction — use nimble-fetch instead.
 allowed-tools:
   - Bash(nimble:*)
   - Bash(date:*)

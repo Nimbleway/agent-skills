@@ -1,5 +1,5 @@
 ---
-name: nimble-web-expert
+name: nimble-fetch
 description: |
   Get web data now — fast, incremental, immediately responsive to what the user needs.
   The only way Claude can access live websites.
@@ -78,7 +78,7 @@ User request: $ARGUMENTS
 
 | Skill                              | Best for                                                                   | Key commands                                     |
 | ---------------------------------- | -------------------------------------------------------------------------- | ------------------------------------------------ |
-| **nimble-web-expert** (this skill) | Real-time data — fetch any URL, search, map, crawl, run existing agents    | `extract`, `search`, `map`, `crawl`, `agent run` |
+| **nimble-fetch** (this skill) | Real-time data — fetch any URL, search, map, crawl, run existing agents    | `extract`, `search`, `map`, `crawl`, `agent run` |
 | **nimble-agent-builder**           | Build reusable agents — create, refine, publish named extraction templates | CLI: `generate`, `get-generation`, `publish`     |
 
 **Hand off to nimble-agent-builder only when all of these are true:** the user has signalled a recurring/scheduled need, the pattern is repetitive (same site, same fields), and they've seen and approved the results. Don't ask after every extract — only when language clearly signals a recurring workflow ("I want to do this every day", "build me a pipeline", "make this reusable").
@@ -133,7 +133,7 @@ Pre-built agents return clean structured data with zero selector work. Always ch
 
 **Lookup order:**
 
-1. `~/.claude/skills/nimble-web-expert/learned/examples.json` → `agents[]` array
+1. `~/.claude/skills/nimble-fetch/learned/examples.json` → `agents[]` array
 2. `references/nimble-agents/SKILL.md` → baked-in table (50+ sites)
 3. `nimble agent list --limit 100 --search "<domain or vertical>"` → show table, confirm with user
 4. No match → proceed to extract/search
@@ -208,7 +208,7 @@ End every response with: `Source: [URL] — fetched live via Nimble CLI`
 
 ## Self-Improvement
 
-The skill maintains `~/.claude/skills/nimble-web-expert/learned/examples.json`.
+The skill maintains `~/.claude/skills/nimble-fetch/learned/examples.json`.
 
 - **At task start:** read the file, scan `good[]` for `url_pattern` matches → use documented `command`/`tier` as starting point. Scan `bad[]` → avoid documented pitfalls.
 - **After presenting results:** ask "Were these results what you needed?" → on positive feedback, append to `good[]` with `url_pattern`, `task`, `command`, `tier`, `notes`. On negative feedback, ask "What went wrong?" and append to `bad[]` with `url_pattern`, `task`, `issue`, `avoid`, `better`.

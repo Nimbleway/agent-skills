@@ -43,7 +43,7 @@ nimble --version
 ```
 
 For the full setup flow (API-key generation, permanent storage in `~/.claude/settings.json`,
-Docs MCP), see `skills/web-search-tools/nimble-web-expert/rules/setup.md`.
+Docs MCP), see `skills/web-search-tools/nimble-fetch/rules/setup.md`.
 
 ## 3. Manual `mcp.json` — Cursor / VS Code / other MCP clients
 

@@ -15,7 +15,7 @@ description: |
   Do NOT use for competitor business signals — use `competitor-intel`
   instead. Do NOT use for competitor messaging — use
   `competitor-positioning` instead. Do NOT use for general web scraping
-  — use `nimble-web-expert` instead.
+  — use `nimble-fetch` instead.
 allowed-tools:
   - Bash(nimble:*)
   - Bash(date:*)
