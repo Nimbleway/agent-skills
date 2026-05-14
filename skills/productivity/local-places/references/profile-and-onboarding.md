@@ -204,7 +204,7 @@ After the user sets it, verify: `echo "NIMBLE_API_KEY=${NIMBLE_API_KEY:+set}"`
 
 #### All prerequisites met
 
-Only proceed to Company Setup once CLI is installed, version is >= 0.8.0, and API key
+Only proceed to Company Setup once CLI is installed, version is >= 0.12.0, and API key
 is set. Don't silently skip any check.
 
 ### Company Setup (2 prompts max)
