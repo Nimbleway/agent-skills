@@ -118,6 +118,7 @@ claude mcp list 2>/dev/null | grep -q "nimble" && echo "MCP: ok"  # plugin MCP
 | Names a specific site or domain                  | `nimble agent` → `nimble extract` if no agent | Always check for agent first — announce it               |
 | Provides a direct URL                            | `nimble extract`                              | Skip agent check                                         |
 | URL points to an image, video, audio, or doc file | `nimble media`                               | Binary file — use `run` for sync, `run-async` for large/bulk |
+| Google SERP / rank positions / SERP features     | `nimble serp`                                 | 7 engines: google_search, google_aio, google_maps, etc.  |
 | Research, topic, or vertical query               | `nimble search`                               | Use focus modes for news, jobs, shopping, etc.           |
 | "Find URLs / sitemap / all pages"                | `nimble map`                                  | Returns URL list + metadata                              |
 | "Crawl / archive a whole section"                | `nimble crawl`                                | Async bulk extraction                                    |
@@ -148,7 +149,7 @@ Do NOT run without `--transform "data.parsing"` and then parse raw output. The r
 
 For the full agent list (50+ sites), see `references/nimble-agents/SKILL.md`.
 
-⚠️ `google_search` is for SEO/SERP rank analysis only — not general information retrieval. For finding information, use `nimble search`.
+⚠️ For structured SERP data (rank positions, SERP features, Google Maps), use `nimble serp` directly — it's simpler than the `google_search` WSA agent, returns typed entities with positions pre-computed, and needs no agent discovery. The `google_search` WSA agent is a fallback only. For general information retrieval, use `nimble search`.
 
 ---
 
@@ -159,6 +160,7 @@ For the full agent list (50+ sites), see `references/nimble-agents/SKILL.md`.
 | Site/domain → check agent first     | `nimble agent list` → `nimble agent run`     | `references/nimble-agents/SKILL.md`                  |
 | Direct URL                          | `nimble extract`                             | `references/nimble-extract/SKILL.md`                 |
 | Download binary media file          | `nimble media run` / `nimble media run-async` | `references/nimble-media/SKILL.md`                  |
+| Google SERP / rank / Maps / Images  | `nimble serp run` / `nimble serp run-batch`  | `references/nimble-serp/SKILL.md`                    |
 | Search the live web                 | `nimble search`                              | `references/nimble-search/SKILL.md`                  |
 | Discover URLs on a site             | `nimble map`                                 | `references/nimble-map/SKILL.md`                     |
 | Bulk crawl a section                | `nimble crawl run`                           | `references/nimble-crawl/SKILL.md`                   |
@@ -181,6 +183,7 @@ For the full extract waterfall (tiers, flags, browser actions, network capture),
 | `nimble extract`           | HTML, Markdown, or parsed JSON — depends on `--format` and `--parse`        |
 | `nimble media run`         | Raw binary file — pipe to `.nimble/<name>.<ext>` with shell redirect        |
 | `nimble media run-async`   | Task ID — file delivered to cloud storage, poll with `nimble tasks get`     |
+| `nimble serp`              | `data.parsing.entities` — typed entity dict (OrganicResult with position, AnswerBox, RelatedQuestion, Pagination, etc.) |
 | `nimble search`            | Structured results array (title, URL, description)                          |
 | `nimble map`               | URL list + metadata                                                         |
 | `nimble crawl`             | Async job — poll with `nimble crawl status <job_id>`                        |
@@ -239,6 +242,7 @@ Load only when needed:
 | `references/nimble-agents/SKILL.md`                  | Step 0 lookup — full agent table (50+ sites)                                  |
 | `references/nimble-extract/SKILL.md`                 | Extract flags, render tiers, domain-knowledge escalation, browser actions, network capture, parser schemas |
 | `references/nimble-media/SKILL.md`                   | Downloading images, videos, audio, or documents from a URL                    |
+| `references/nimble-serp/SKILL.md`                    | Google SERP API — rank positions, SERP features, Maps, Images, AI Overview    |
 | `references/nimble-search/SKILL.md`                  | Search flags, all 8 focus modes                                               |
 | `references/nimble-map/SKILL.md`                     | Map flags, response structure                                                 |
 | `references/nimble-crawl/SKILL.md`                   | Full async crawl workflow                                                     |

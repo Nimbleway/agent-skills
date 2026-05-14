@@ -49,6 +49,11 @@ User request: $ARGUMENTS
 constraints (no shell state, no `&`/`wait`, sub-agent permissions, communication style).
 Tag all `nimble` CLI calls: `nimble --client-source skill-seo-intel <subcommand>`. MCP path: not yet supported — see `references/nimble-playbook.md` for status.
 
+**SERP data:** Use `nimble serp run --search-engine google_search --parse` for rank
+position lookups and SERP feature detection. Use `--search-engine google_aio` for
+AI Overview detection. Both return typed `data.parsing.entities` with positions
+included — no agent discovery or manual rank parsing needed.
+
 ---
 
 ## Workflow Router
