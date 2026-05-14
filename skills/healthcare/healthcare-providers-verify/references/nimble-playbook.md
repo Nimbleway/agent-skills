@@ -25,7 +25,7 @@ session and stick with it; don't re-probe on every command.
 
 | Check | If it works | What to use |
 |---|---|---|
-| `nimble --version` (>= 0.8.0) and `NIMBLE_API_KEY` is set | CLI is ready | Bash `nimble ...` commands |
+| `nimble --version` (>= 0.12.0) and `NIMBLE_API_KEY` is set | CLI is ready | Bash `nimble ...` commands |
 | `claude mcp list 2>/dev/null \| grep -q "nimble"` (or first `mcp__plugin_nimble_nimble__*` call succeeds) | Plugin MCP is connected | `mcp__plugin_nimble_nimble__*` tools |
 | Bash denied AND `mcp__plugin_nimble_nimble__*` tools are listed but the first call returns an auth / not-connected error | Plugin is installed but the **connector isn't activated** (typical Cowork / claude.ai state) | **Stop — guide connector activation (below)** |
 | None of the above | Stop — guide install (below) | — |
@@ -91,6 +91,28 @@ Every skill kicks off with these simultaneous calls:
 
 Don't skip the transport check — running CLI commands when only MCP is available (or
 vice versa) wastes a turn and confuses the user.
+
+## Request Attribution
+
+All Nimble API calls must carry a `client_source` tag so usage can be tracked per skill.
+The value is always `skill-` followed by the exact SKILL.md `name` field
+(e.g. `skill-competitor-intel`, `skill-seo-intel`, `skill-nimble-web-expert`).
+
+**CLI path** — add `--client-source skill-{name}` as the global flag on every `nimble`
+command. Place it immediately after `nimble`, before the subcommand. No shell state
+persistence means this must be inlined on every individual call:
+
+```bash
+nimble --client-source skill-{name} search --query "..."
+nimble --client-source skill-{name} extract --url "..."
+nimble --client-source skill-{name} agent run --agent <name> --params '{...}'
+nimble --client-source skill-{name} map --url "..."
+nimble --client-source skill-{name} crawl run --url "..."
+```
+
+**MCP path** — per-skill client source tracking is not yet supported by the MCP server
+(it currently sends `X-Client-Source: nimble_mcp_server` for all calls regardless of skill).
+This will be enabled once the MCP server adds `CLIENT_SOURCE` support — no action needed here until then.
 
 ## Sibling Handoff
 

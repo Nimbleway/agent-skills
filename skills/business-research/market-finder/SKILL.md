@@ -61,6 +61,7 @@ Also simultaneously:
 
 From the results:
 - CLI missing or API key unset -> `references/profile-and-onboarding.md`, stop
+- Tag all `nimble` CLI calls: `nimble --client-source skill-market-finder <subcommand>`. MCP path: not yet supported — see `references/nimble-playbook.md` for status.
 - Profile exists -> note industry keywords if any. Apply smart date windowing from
   `references/nimble-playbook.md`. Market-finder tweak: in quick refresh mode,
   skip enrichment and only discover new metros.

@@ -20,6 +20,7 @@ gh auth status
 
 From the results:
 - CLI missing or API key unset -> `references/profile-and-onboarding.md`, stop
+- Tag all `nimble` CLI calls: `nimble --client-source skill-seo-intel <subcommand>`. MCP path: not yet supported — see `references/nimble-playbook.md` for status.
 - `gh` not installed -> warn: "GitHub CLI (`gh`) not found. Install with
   `brew install gh` and run `gh auth login`. Without it, metadata and community
   health checks fall back to web scraping (slower, less data)." Continue with

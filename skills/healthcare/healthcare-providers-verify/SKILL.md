@@ -74,6 +74,7 @@ Classify discovered agents into verification categories and validate with
 
 From the preflight results:
 - CLI missing or API key unset -> `references/profile-and-onboarding.md`, stop
+- Tag all `nimble` CLI calls: `nimble --client-source skill-healthcare-providers-verify <subcommand>`. MCP path: not yet supported — see `references/nimble-playbook.md` for status.
 - Profile exists -> note it for context. Determine mode using smart date windowing
   from `references/nimble-playbook.md`:
   - **Full mode:** first run OR last run > 14 days ago

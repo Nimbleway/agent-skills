@@ -55,6 +55,7 @@ Follow the transport selection + standard preflight from `references/nimble-play
 
 From the results:
 - CLI missing or API key unset → `references/profile-and-onboarding.md`, stop
+- Tag all `nimble` CLI calls: `nimble --client-source skill-company-deep-dive <subcommand>`. MCP path: not yet supported — see `references/nimble-playbook.md` for status.
 - Profile exists → note it for context (company name helps frame the research). Read
   `~/.nimble/memory/companies/index.md` to check if the target company already has
   prior research. Follow `[[path/entity]]` cross-references to load related context.

@@ -59,6 +59,7 @@ Also simultaneously:
 
 From the results:
 - CLI missing or API key unset → read `references/profile-and-onboarding.md`, stop
+- Tag all `nimble` CLI calls: `nimble --client-source skill-talent-sourcing <subcommand>`. MCP path: not yet supported — see `references/nimble-playbook.md` for status.
 - Profile exists → note industry keywords if any; proceed to Step 1
 - No profile → fine, talent-sourcing doesn't require onboarding; proceed to Step 1
 

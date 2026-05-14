@@ -75,6 +75,7 @@ Classify discovered agents into phases and validate with `nimble agent get` per
 
 From the preflight results:
 - CLI missing or API key unset -> `references/profile-and-onboarding.md`, stop
+- Tag all `nimble` CLI calls: `nimble --client-source skill-healthcare-providers-enrich <subcommand>`. MCP path: not yet supported — see `references/nimble-playbook.md` for status.
 - Profile exists -> note it for context. Determine mode using smart date windowing
   from `references/nimble-playbook.md`:
   - **Full mode:** first run OR last run > 14 days ago

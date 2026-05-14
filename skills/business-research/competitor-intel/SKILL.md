@@ -57,6 +57,7 @@ Follow the transport selection + standard preflight from `references/nimble-play
 
 From the results:
 - CLI missing or API key unset → `references/profile-and-onboarding.md`, stop
+- Tag all `nimble` CLI calls: `nimble --client-source skill-competitor-intel <subcommand>`. MCP path: not yet supported — see `references/nimble-playbook.md` for status.
 - Profile exists → read `~/.nimble/memory/competitors/index.md` to identify which
   competitor files exist and their last-updated dates. If the index doesn't exist
   (first run or upgrade), fall back to reading all `~/.nimble/memory/competitors/*.md`

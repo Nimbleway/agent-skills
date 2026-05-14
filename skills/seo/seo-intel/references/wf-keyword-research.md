@@ -14,6 +14,7 @@ Follow the transport selection + standard preflight from `references/nimble-play
 
 From the results:
 - CLI missing or API key unset → `references/profile-and-onboarding.md`, stop
+- Tag all `nimble` CLI calls: `nimble --client-source skill-seo-intel <subcommand>`. MCP path: not yet supported — see `references/nimble-playbook.md` for status.
 - Profile exists → read `~/.nimble/memory/seo/keyword-research/` and
   `~/.nimble/memory/reports/seo-keyword-research-*.md` to check for previous runs.
   Load any existing keyword data for dedup. Determine mode using smart date windowing
