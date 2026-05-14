@@ -11,6 +11,7 @@ description: |
   - Calling public REST/XHR API endpoints
   - Web search and research (8 focus modes)
   - Bulk crawling website sections
+  - Downloading images, videos, audio, and documents from any URL
 
   Must be pre-installed and authenticated. Run `nimble --version` to verify.
   For building reusable extraction workflows to run at scale over time, use nimble-agent-builder instead.
@@ -112,13 +113,14 @@ claude mcp list 2>/dev/null | grep -q "nimble" && echo "MCP: ok"  # plugin MCP
 
 ## Analyze & Route
 
-| User signal                        | Command                                       | Notes                                          |
-| ---------------------------------- | --------------------------------------------- | ---------------------------------------------- |
-| Names a specific site or domain    | `nimble agent` → `nimble extract` if no agent | Always check for agent first — announce it     |
-| Provides a direct URL              | `nimble extract`                              | Skip agent check                               |
-| Research, topic, or vertical query | `nimble search`                               | Use focus modes for news, jobs, shopping, etc. |
-| "Find URLs / sitemap / all pages"  | `nimble map`                                  | Returns URL list + metadata                    |
-| "Crawl / archive a whole section"  | `nimble crawl`                                | Async bulk extraction                          |
+| User signal                                      | Command                                       | Notes                                                    |
+| ------------------------------------------------ | --------------------------------------------- | -------------------------------------------------------- |
+| Names a specific site or domain                  | `nimble agent` → `nimble extract` if no agent | Always check for agent first — announce it               |
+| Provides a direct URL                            | `nimble extract`                              | Skip agent check                                         |
+| URL points to an image, video, audio, or doc file | `nimble media`                               | Binary file — use `run` for sync, `run-async` for large/bulk |
+| Research, topic, or vertical query               | `nimble search`                               | Use focus modes for news, jobs, shopping, etc.           |
+| "Find URLs / sitemap / all pages"                | `nimble map`                                  | Returns URL list + metadata                              |
+| "Crawl / archive a whole section"                | `nimble crawl`                                | Async bulk extraction                                    |
 
 ### Step 0 — Agent check (when a domain is named)
 
@@ -152,19 +154,20 @@ For the full agent list (50+ sites), see `references/nimble-agents/SKILL.md`.
 
 ## Workflow
 
-| Situation                       | Command                                      | Reference                                            |
-| ------------------------------- | -------------------------------------------- | ---------------------------------------------------- |
-| Site/domain → check agent first | `nimble agent list` → `nimble agent run`     | `references/nimble-agents/SKILL.md`                  |
-| Direct URL                      | `nimble extract`                             | `references/nimble-extract/SKILL.md`                 |
-| Search the live web             | `nimble search`                              | `references/nimble-search/SKILL.md`                  |
-| Discover URLs on a site         | `nimble map`                                 | `references/nimble-map/SKILL.md`                     |
-| Bulk crawl a section            | `nimble crawl run`                           | `references/nimble-crawl/SKILL.md`                   |
-| Batch agents (up to 1,000)      | `nimble agent run-batch`                     | `references/nimble-agents/SKILL.md`                  |
-| Batch extract (up to 1,000)     | `nimble extract-batch`                       | `references/nimble-extract/SKILL.md`                 |
-| Poll tasks / batches / results  | `nimble tasks` / `nimble batches`            | `references/nimble-tasks/SKILL.md`                   |
-| Unknown selectors or XHR path   | browser-use or Playwright investigation      | `references/nimble-extract/browser-investigation.md` |
-| Proven site patterns            | copy a recipe                                | `references/recipes.md`                              |
-| 2+ inputs                       | parallel bash `&`+`wait` or generated script | `references/batch-patterns.md`                       |
+| Situation                           | Command                                      | Reference                                            |
+| ----------------------------------- | -------------------------------------------- | ---------------------------------------------------- |
+| Site/domain → check agent first     | `nimble agent list` → `nimble agent run`     | `references/nimble-agents/SKILL.md`                  |
+| Direct URL                          | `nimble extract`                             | `references/nimble-extract/SKILL.md`                 |
+| Download binary media file          | `nimble media run` / `nimble media run-async` | `references/nimble-media/SKILL.md`                  |
+| Search the live web                 | `nimble search`                              | `references/nimble-search/SKILL.md`                  |
+| Discover URLs on a site             | `nimble map`                                 | `references/nimble-map/SKILL.md`                     |
+| Bulk crawl a section                | `nimble crawl run`                           | `references/nimble-crawl/SKILL.md`                   |
+| Batch agents (up to 1,000)          | `nimble agent run-batch`                     | `references/nimble-agents/SKILL.md`                  |
+| Batch extract (up to 1,000)         | `nimble extract-batch`                       | `references/nimble-extract/SKILL.md`                 |
+| Poll tasks / batches / results      | `nimble tasks` / `nimble batches`            | `references/nimble-tasks/SKILL.md`                   |
+| Unknown selectors or XHR path       | browser-use or Playwright investigation      | `references/nimble-extract/browser-investigation.md` |
+| Proven site patterns                | copy a recipe                                | `references/recipes.md`                              |
+| 2+ inputs                           | parallel bash `&`+`wait` or generated script | `references/batch-patterns.md`                       |
 
 For the full extract waterfall (tiers, flags, browser actions, network capture), see `references/nimble-extract/SKILL.md`.
 
@@ -172,13 +175,15 @@ For the full extract waterfall (tiers, flags, browser actions, network capture),
 
 ## Response shapes
 
-| Command          | Output                                                                      |
-| ---------------- | --------------------------------------------------------------------------- |
-| `nimble agent`   | Structured data in `data.parsing` — array (SERP/list) or dict (PDP/product) |
-| `nimble extract` | HTML, Markdown, or parsed JSON — depends on `--format` and `--parse`        |
-| `nimble search`  | Structured results array (title, URL, description)                          |
-| `nimble map`     | URL list + metadata                                                         |
-| `nimble crawl`   | Async job — poll with `nimble crawl status <job_id>`                        |
+| Command                    | Output                                                                      |
+| -------------------------- | --------------------------------------------------------------------------- |
+| `nimble agent`             | Structured data in `data.parsing` — array (SERP/list) or dict (PDP/product) |
+| `nimble extract`           | HTML, Markdown, or parsed JSON — depends on `--format` and `--parse`        |
+| `nimble media run`         | Raw binary file — pipe to `.nimble/<name>.<ext>` with shell redirect        |
+| `nimble media run-async`   | Task ID — file delivered to cloud storage, poll with `nimble tasks get`     |
+| `nimble search`            | Structured results array (title, URL, description)                          |
+| `nimble map`               | URL list + metadata                                                         |
+| `nimble crawl`             | Async job — poll with `nimble crawl status <job_id>`                        |
 
 **Agent runs always need `--transform "data.parsing"`.** If the agent name suggests a list (serp, search, plp), expect an array. If it suggests a single item (pdp, product, profile), expect a dict.
 
@@ -232,7 +237,8 @@ Load only when needed:
 | ---------------------------------------------------- | ----------------------------------------------------------------------------- |
 | `references/recipes.md`                              | Need a proven command for a common site (Amazon, Yelp, LinkedIn…)             |
 | `references/nimble-agents/SKILL.md`                  | Step 0 lookup — full agent table (50+ sites)                                  |
-| `references/nimble-extract/SKILL.md`                 | Extract flags, render tiers, browser actions, network capture, parser schemas |
+| `references/nimble-extract/SKILL.md`                 | Extract flags, render tiers, domain-knowledge escalation, browser actions, network capture, parser schemas |
+| `references/nimble-media/SKILL.md`                   | Downloading images, videos, audio, or documents from a URL                    |
 | `references/nimble-search/SKILL.md`                  | Search flags, all 8 focus modes                                               |
 | `references/nimble-map/SKILL.md`                     | Map flags, response structure                                                 |
 | `references/nimble-crawl/SKILL.md`                   | Full async crawl workflow                                                     |
