@@ -116,6 +116,23 @@ resp = nimble.extract(url="https://example.com", render=True, formats=["markdown
 resp = nimble.extract(url="https://example.com", render=True, driver="vx10-pro", formats=["markdown"])
 ```
 
+### On escalation — use domain knowledge to skip tiers
+
+When a tier fails, call `domain-knowledge get-driver` once before trying the next tier — it tells you the recommended driver so you can skip ones that won't work:
+
+```bash
+nimble domain-knowledge get-driver --url <domain>
+# → { "driver": "vx6", "need_to_render": false, "antibots": ["cloudflare"] }
+```
+
+Pick the next tier from the result:
+- Returned driver is already tried (failed) → skip it, go to vx8-pro
+- Returned driver is new → use it
+- vx8-pro fails → go to vx10-pro
+- vx10-pro fails → proceed to browser investigation (Tier 6)
+
+**Driver conversion for agent lookups:** `wsa-6/wsa-6m` → `vx6`, `wsa-8/wsa-8m` → `vx8`, `wsa-10/wsa-10m` → `vx10`.
+
 ---
 
 ## Browser actions

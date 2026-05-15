@@ -7,7 +7,7 @@ argument-hint: <query>
 
 ## Query: $ARGUMENTS
 
-Use the **nimble-web-expert** skill to search for this query.
+Use the **nimble-fetch** skill to search for this query.
 
 Run: `nimble search --query "$ARGUMENTS" --search-depth fast`
 

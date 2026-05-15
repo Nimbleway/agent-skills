@@ -96,7 +96,7 @@ vice versa) wastes a turn and confuses the user.
 
 All Nimble API calls must carry a `client_source` tag so usage can be tracked per skill.
 The value is always `skill-` followed by the exact SKILL.md `name` field
-(e.g. `skill-competitor-intel`, `skill-seo-intel`, `skill-nimble-web-expert`).
+(e.g. `skill-competitor-intel`, `skill-seo-intel`, `skill-nimble-fetch`).
 
 **CLI path** — add `--client-source skill-{name}` as the global flag on every `nimble`
 command. Place it immediately after `nimble`, before the subcommand. No shell state

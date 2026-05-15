@@ -87,31 +87,7 @@ Inform the user which mode was selected:
 - "First rank check for **[domain]** — establishing baseline positions."
 - "Last check was **[N days ago]**. Running delta comparison."
 
-### Step 4: WSA Discovery
-
-Discover SERP-related agents in parallel:
-
-```bash
-nimble agent list --search "serp" --limit 20
-nimble agent list --search "google search" --limit 20
-```
-
-From the results, look for agents that return structured SERP data (organic results,
-positions, SERP features). Validate any candidate with:
-
-```bash
-nimble agent get --template-name {name}
-```
-
-Check that the agent accepts keyword/query input and returns ranked organic results.
-If a suitable WSA exists, use it for SERP queries in Step 5 alongside or instead of
-`nimble search`. If no suitable WSA is found, use `nimble search` exclusively — do
-not fail.
-
-### Step 5: SERP Query Execution
-
-Read `references/serp-query-patterns.md` for query construction rules, SERP feature
-extraction, and batching patterns.
+### Step 4: SERP Query Execution
 
 **Batch keywords** into groups of ~5 per sub-agent. Spawn up to 4 `nimble-researcher`
 agents (`agents/nimble-researcher.md`) with `mode: "bypassPermissions"`.
@@ -131,13 +107,23 @@ RULES:
 - Run all searches simultaneously (multiple Bash tool calls in one response).
 
 For each keyword, run:
-nimble search --query "{keyword}" --search-depth lite --max-results 20 --country {cc} --locale {locale}
+nimble --client-source skill-seo-intel serp run \
+  --search-engine google_search \
+  --query "{keyword}" \
+  --parse --num-results 20 \
+  --country {cc} --locale {locale}
 
-Parse the JSON results. For each keyword:
-1. Find the first organic result where the root domain matches "{domain}"
+Parse data.parsing.entities from the JSON response. For each keyword:
+1. Look in entities.OrganicResult for entries where the root domain matches "{domain}"
    (strip www., trailing slash, protocol when comparing).
-2. Record position (1-indexed), ranking URL, title, and description.
-3. If the domain does not appear in top 20, record position as null.
+2. Position is already in the entity: OrganicResult[n].position (1-indexed).
+3. Record position, url, title, snippet from the matching OrganicResult entry.
+4. If the domain does not appear in OrganicResult, record position as null.
+5. SERP features: check which entity type keys are present in entities.
+   Map them to serp_features: AnswerBox → "featured_snippet",
+   RelatedQuestion → "people_also_ask", AIOverview → "ai_overview",
+   Ad → "ads", KnowledgeGraph → "knowledge_panel".
+   Add any other entity type key as lowercase_snake_case. Do not skip unknown types.
 
 Return results as a JSON array:
 [
@@ -151,48 +137,12 @@ Return results as a JSON array:
     "checked_at": "2026-04-13T..."
   }
 ]
-
-**Note:** `--search-depth lite` returns organic result metadata only — it does NOT
-include SERP feature indicators. Set `serp_features` to `[]` for lite queries.
-SERP features are detected in the enrichment pass below (full report mode only).
 ```
-
-**For full report mode — SERP feature enrichment:** After lite queries complete,
-identify the top 5 keywords by business priority. Discover a SERP agent at
-runtime (do not hardcode template names — see `references/nimble-playbook.md`):
-
-```bash
-nimble agent list --search "google serp" --limit 100
-nimble agent list --search "search engine" --limit 100
-```
-
-Validate candidates with `nimble agent get --template-name {name}` and cache
-the chosen template as `{serp_agent}`. If no suitable SERP agent is found,
-skip enrichment and leave `serp_features` as `[]`.
-
-Run the discovered SERP agent for those keywords to get typed SERP entities:
-
-```bash
-# {serp_agent} resolved above
-nimble agent run --agent "{serp_agent}" --params '{"query": "{keyword}", "num_results": 20, "country": "{cc}", "locale": "{locale}"}'
-```
-
-The discovered SERP agent returns `data.parsing.entities` — a dict keyed by
-entity type. Entity types are **dynamic** — iterate all keys to detect which
-SERP features are present. Common mappings to `serp_features`:
-`AIOverview` → `"ai_overview"`, `RelatedQuestion` → `"people_also_ask"`,
-`Ad` → `"ads"`. For any other entity type key that appears (news, images,
-shopping, local, knowledge panels, etc.), add it as a lowercase snake_case
-entry in `serp_features`. Do not skip unknown types.
-
-Additional params: `time` (hour/day/week/month/year), `location` (city string
-or UULE for geo-specific rankings), `start` (pagination offset: 10=page 2).
-See `references/ai-platform-profiles.md` for the full schema.
 
 **Fallback on agent failure:** If any sub-agent returns without results, run those
 keyword searches directly from the main context. Do not leave gaps.
 
-### Step 6: Snapshot Storage
+### Step 5: Snapshot Storage
 
 Create the snapshot directory if it does not exist:
 
@@ -246,7 +196,7 @@ and `"ranking_url": null`.
 Merge new keywords into the existing list (union, not replace). This file persists
 the tracked keyword set across runs so future runs can auto-load it.
 
-### Step 7: Delta Computation
+### Step 6: Delta Computation
 
 **Skip in full mode** (no previous snapshot) — all positions are new baselines.
 
@@ -274,7 +224,7 @@ Compute summary stats:
 - Total improved, declined, stable
 - Average position change
 
-### Step 8: Report Generation
+### Step 7: Report Generation
 
 Build the report using the output format below. In delta mode, the TL;DR focuses
 on what changed. In full mode, the TL;DR summarizes the current position landscape.
@@ -282,7 +232,7 @@ on what changed. In full mode, the TL;DR summarizes the current position landsca
 Always include the full keyword rankings table regardless of mode — the TL;DR and
 Biggest Movers sections handle the delta focus; the full table is the reference.
 
-### Step 9: Save & Update Memory
+### Step 8: Save & Update Memory
 
 Write the report and update memory simultaneously:
 
@@ -303,14 +253,14 @@ Write the report and update memory simultaneously:
   - Add cross-references if the tracked domain matches a known competitor in
     `~/.nimble/memory/competitors/`
 
-### Step 10: Share & Distribute
+### Step 9: Share & Distribute
 
 Follow `references/memory-and-distribution.md` for connector detection and sharing.
 
 - **Slack:** TL;DR with biggest movers only — positions and deltas, no full table.
 - **Notion:** Full report as a dated subpage.
 
-### Step 11: Follow-ups
+### Step 10: Follow-ups
 
 Suggest next actions based on findings:
 

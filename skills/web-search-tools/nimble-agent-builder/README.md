@@ -76,14 +76,14 @@ The skill has two tool groups depending on what you need:
 | Poll generation status | `nimble agent get-generation --generation-id <id>` |
 | Publish | `nimble agent publish --agent-name <name> --version-id <id>` |
 
-Once published, the agent is immediately available to `nimble agent run` — and to **nimble-web-expert**'s agent check.
+Once published, the agent is immediately available to `nimble agent run` — and to **nimble-fetch**'s agent check.
 
 **Key rules:**
 
 - Always search for an existing agent before generating — update a close match rather than building from scratch
 - Agent creation (generate → poll → publish) runs in a background Task agent because generation takes 1-3 minutes
 - MCP tools are available as a fallback when CLI is not installed
-- For one-off fetches or web searches, use **nimble-web-expert** instead
+- For one-off fetches or web searches, use **nimble-fetch** instead
 
 ## Reference files
 

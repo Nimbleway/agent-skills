@@ -359,7 +359,7 @@ After a successful run, save to `learned/examples.json` so Step 0 matches faster
 ```bash
 python3 -c "
 import json, pathlib, datetime
-p = pathlib.Path.home() / '.claude/skills/nimble-web-expert/learned/examples.json'
+p = pathlib.Path.home() / '.claude/skills/nimble-fetch/learned/examples.json'
 data = json.loads(p.read_text()) if p.exists() else {'good': [], 'bad': [], 'agents': []}
 data.setdefault('agents', [])
 new_entry = {

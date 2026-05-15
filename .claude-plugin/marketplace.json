@@ -25,7 +25,7 @@
         "business-intelligence"
       ],
       "skills": [
-        "./skills/web-search-tools/nimble-web-expert",
+        "./skills/web-search-tools/nimble-fetch",
         "./skills/web-search-tools/nimble-agent-builder",
         "./skills/productivity/meeting-prep",
         "./skills/productivity/local-places",

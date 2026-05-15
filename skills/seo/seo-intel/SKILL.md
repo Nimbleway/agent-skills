@@ -15,7 +15,7 @@ description: |
   Do NOT use for competitor business signals — use `competitor-intel`
   instead. Do NOT use for competitor messaging — use
   `competitor-positioning` instead. Do NOT use for general web scraping
-  — use `nimble-web-expert` instead.
+  — use `nimble-fetch` instead.
 allowed-tools:
   - Bash(nimble:*)
   - Bash(date:*)
@@ -48,6 +48,11 @@ User request: $ARGUMENTS
 **Before running any commands**, read `references/nimble-playbook.md` for Claude Code
 constraints (no shell state, no `&`/`wait`, sub-agent permissions, communication style).
 Tag all `nimble` CLI calls: `nimble --client-source skill-seo-intel <subcommand>`. MCP path: not yet supported — see `references/nimble-playbook.md` for status.
+
+**SERP data:** Use `nimble serp run --search-engine google_search --parse` for rank
+position lookups and SERP feature detection. Use `--search-engine google_aio` for
+AI Overview detection. Both return typed `data.parsing.entities` with positions
+included — no agent discovery or manual rank parsing needed.
 
 ---
 
