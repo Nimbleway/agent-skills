@@ -109,7 +109,7 @@ Always confirm: "Got it — removed CompanyX from tracking."
 The transport selection in `nimble-playbook.md` determines whether CLI or MCP is
 active. This section covers the install/upgrade/auth flow when neither is ready.
 
-**Minimum CLI version: 0.8.0**
+**Minimum CLI version: 0.12.0**
 
 #### Preferred path — any Claude product (Claude Code, Claude Cowork, claude.ai)
 
@@ -176,11 +176,11 @@ this into their MCP settings (e.g., `.cursor/mcp.json` or the host's equivalent)
 
 After install, the first tool call triggers the OAuth flow automatically.
 
-#### CLI outdated (version < 0.8.0)
+#### CLI outdated (version < 0.12.0)
 
-Parse the version from `nimble --version`. If below 0.8.0:
+Parse the version from `nimble --version`. If below 0.12.0:
 
-> "Your Nimble CLI is version **[current]** — version **0.8.0+** is required
+> "Your Nimble CLI is version **[current]** — version **0.12.0+** is required
 > for these skills. Upgrading now..."
 >
 > Run: `npm update -g @nimble-way/nimble-cli`
@@ -204,7 +204,7 @@ After the user sets it, verify: `echo "NIMBLE_API_KEY=${NIMBLE_API_KEY:+set}"`
 
 #### All prerequisites met
 
-Only proceed to Company Setup once CLI is installed, version is >= 0.8.0, and API key
+Only proceed to Company Setup once CLI is installed, version is >= 0.12.0, and API key
 is set. Don't silently skip any check.
 
 ### Company Setup (2 prompts max)

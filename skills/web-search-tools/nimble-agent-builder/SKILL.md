@@ -28,7 +28,7 @@ allowed-tools:
   - mcp__plugin_nimble_nimble__nimble_agents_update_session
 license: MIT
 metadata:
-  version: "0.21.1"
+  version: "0.21.2"
   author: Nimbleway
   repository: https://github.com/Nimbleway/agent-skills
 ---

@@ -15,6 +15,7 @@ Follow the transport selection + standard preflight from `references/nimble-play
 
 From the results:
 - CLI missing or API key unset → `references/profile-and-onboarding.md`, stop
+- Tag all `nimble` CLI calls: `nimble --client-source skill-seo-intel <subcommand>`. MCP path: not yet supported — see `references/nimble-playbook.md` for status.
 - Profile exists → load prior snapshots from
   `~/.nimble/memory/seo/competitor-keywords/{domain}/` for each known competitor
   domain. If `snapshot-*.json` files exist, load the most recent per domain — these

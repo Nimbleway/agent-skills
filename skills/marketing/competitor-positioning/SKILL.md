@@ -34,7 +34,7 @@ allowed-tools:
   - AskUserQuestion
 metadata:
   author: Nimbleway
-  version: 0.21.1
+  version: 0.21.2
 ---
 
 # Competitor Positioning
@@ -68,6 +68,7 @@ Follow the transport selection + standard preflight from `references/nimble-play
 
 From the results:
 - CLI missing or API key unset → `references/profile-and-onboarding.md`, stop
+- Tag all `nimble` CLI calls: `nimble --client-source skill-competitor-positioning <subcommand>`. MCP path: not yet supported — see `references/nimble-playbook.md` for status.
 - Profile exists → load prior data from two sources:
   - `~/.nimble/memory/positioning/*.md` — prior positioning snapshots (used for
     delta detection in Steps 4 + 5)

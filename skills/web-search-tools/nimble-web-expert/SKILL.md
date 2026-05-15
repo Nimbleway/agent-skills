@@ -49,7 +49,7 @@ allowed-tools:
   - AskUserQuestion
 license: MIT
 metadata:
-  version: "0.21.1"
+  version: "0.21.2"
   author: Nimbleway
   repository: https://github.com/Nimbleway/agent-skills
 ---
