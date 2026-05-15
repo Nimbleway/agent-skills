@@ -5,6 +5,9 @@ description: |
   videos, audio, or documents — from any URL. Contains: sync vs async decision,
   command flags, output handling, batch patterns, MIME filtering, geo-targeting,
   map→media pipeline, cost note, error handling.
+metadata:
+  author: Nimbleway
+  version: "0.21.2"
 ---
 
 # nimble media — reference
@@ -64,21 +67,21 @@ Use **`media run-async`** when:
 
 ```bash
 # Single image
-nimble media run --url "https://example.com/product.jpg" > .nimble/product.jpg
+nimble media run --url "https://example.com/product.jpg" > ~/.nimble/downloads/product.jpg
 
 # With MIME type validation
 nimble media run \
   --url "https://example.com/hero.webp" \
   --expected-mime-type "image/webp" \
   --expected-mime-type "image/jpeg" \
-  > .nimble/hero.webp
+  > ~/.nimble/downloads/hero.webp
 
 # Geo-targeted download
 nimble media run \
   --url "https://example.com/regional.jpg" \
   --country DE --locale de-DE \
   --expected-mime-type "image/*" \
-  > .nimble/regional.jpg
+  > ~/.nimble/downloads/regional.jpg
 ```
 
 `nimble media run-async` returns a task object — poll with `nimble tasks get`:
@@ -107,9 +110,9 @@ See `references/nimble-tasks/SKILL.md` for the full polling flow.
 
 ```bash
 mkdir -p .nimble
-nimble media run --url "https://example.com/img1.jpg" > .nimble/img1.jpg &
-nimble media run --url "https://example.com/img2.jpg" > .nimble/img2.jpg &
-nimble media run --url "https://example.com/img3.jpg" > .nimble/img3.jpg &
+nimble media run --url "https://example.com/img1.jpg" > ~/.nimble/downloads/img1.jpg &
+nimble media run --url "https://example.com/img2.jpg" > ~/.nimble/downloads/img2.jpg &
+nimble media run --url "https://example.com/img3.jpg" > ~/.nimble/downloads/img3.jpg &
 wait
 ```
 
@@ -142,10 +145,10 @@ discover the URLs, then `nimble media run` to download them:
 
 ```bash
 # Step 1 — discover media URLs
-nimble map --url "https://example.com/gallery" --limit 100 > .nimble/gallery-urls.json
+nimble map --url "https://example.com/gallery" --limit 100 > ~/.nimble/downloads/gallery-urls.json
 
 # Step 2 — extract image URLs from map output, then download in parallel
-# (parse .nimble/gallery-urls.json for image URLs, then batch with & + wait)
+# (parse ~/.nimble/downloads/gallery-urls.json for image URLs, then batch with & + wait)
 ```
 
 ---

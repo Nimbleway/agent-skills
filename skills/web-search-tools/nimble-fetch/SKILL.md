@@ -117,8 +117,8 @@ claude mcp list 2>/dev/null | grep -q "nimble" && echo "MCP: ok"  # plugin MCP
 | ------------------------------------------------ | --------------------------------------------- | -------------------------------------------------------- |
 | Names a specific site or domain                  | `nimble agent` → `nimble extract` if no agent | Always check for agent first — announce it               |
 | Provides a direct URL                            | `nimble extract`                              | Skip agent check                                         |
-| URL points to an image, video, audio, or doc file | `nimble media`                               | Binary file — use `run` for sync, `run-async` for large/bulk |
-| Google SERP / rank positions / SERP features     | `nimble serp`                                 | 7 engines: google_search, google_aio, google_maps, etc.  |
+| URL points to an image, video, audio, or doc file | `nimble media run` / `nimble media run-async` | Binary file — use `run` for sync, `run-async` for large/bulk |
+| Google SERP / rank positions / SERP features     | `nimble serp run` / `nimble serp run-batch`   | 7 engines: google_search, google_aio, google_maps, etc.  |
 | Research, topic, or vertical query               | `nimble search`                               | Use focus modes for news, jobs, shopping, etc.           |
 | "Find URLs / sitemap / all pages"                | `nimble map`                                  | Returns URL list + metadata                              |
 | "Crawl / archive a whole section"                | `nimble crawl`                                | Async bulk extraction                                    |

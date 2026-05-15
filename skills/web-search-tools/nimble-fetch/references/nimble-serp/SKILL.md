@@ -5,6 +5,9 @@ description: |
   directly for structured SERP data — organic rankings, SERP features, Maps,
   Images, News, AI Overview. Contains: all 7 search engines, flags, entity type
   guide, rank lookup pattern, batch, pagination, relationship to nimble search.
+metadata:
+  author: Nimbleway
+  version: "0.21.2"
 ---
 
 # nimble serp — reference
