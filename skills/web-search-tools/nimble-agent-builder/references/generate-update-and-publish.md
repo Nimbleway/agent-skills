@@ -1,8 +1,8 @@
-# Generate, Update, and Publish an Agent
+# Generate, and Refine an Agent
 
-Task agent workflow for creating, updating, and publishing agents with automated validation.
+Task agent workflow for creating, updating, and refininf agents with automated validation.
 
-**This entire workflow runs inside a Task agent** because generation takes 1-3 minutes (poll loop). The Task agent uses CLI commands (`nimble agent generate`, `get-generation`, `publish`) via Bash. If CLI is unavailable, it falls back to MCP tools.
+**This entire workflow runs inside a Task agent** because generation takes 1-3 minutes (poll loop). The Task agent uses CLI commands (`nimble agent generate`, `get-generation`) via Bash. If CLI is unavailable, it falls back to MCP tools.
 
 ## Overview — Closed-loop lifecycle
 
@@ -20,8 +20,6 @@ User chooses refine-validate (yes/no) — ONCE, in the foreground
 │                           │   Validate (SDK script, 50 inputs, ≥80% pass)
 │                           │      ↓              ↓
 │                           │   ≥80% pass     <80% pass
-│                           │      ↓              │
-│                           │   Publish           │
 │                           │      ↓              │
 │                           │   Report            │
 │                           │                     │
@@ -43,13 +41,13 @@ User chooses refine-validate (yes/no) — ONCE, in the foreground
 **CRITICAL: AskUserQuestion happens ONCE in the foreground conversation, BEFORE launching the Task agent. The Task agent receives `refine_validate=true|false` and NEVER asks the user anything.**
 
 ```
-question: "Run refinement-validation before publishing?"
+question: "Run refinement-validation before finishing?"
 header: "Validate"
 options:
   - label: "Yes, validate (Recommended)"
-    description: "Discovery → generate → validate 50 inputs (80% pass) → publish. Auto-retries on failure."
+    description: "Discovery → generate → validate 50 inputs (80% pass). Auto-retries on failure."
   - label: "No, generate only"
-    description: "Generate → publish immediately without validation testing"
+    description: "Generate → finish immediately without validation testing"
 ```
 
 This determines `refine_validate=true|false` for the Task agent. Even with `false`, failures still auto-trigger the loop.
@@ -118,15 +116,6 @@ Use explicit update tools:
   }
 }
 ```
-
-**Published agents** (`is_public=True` or owned by another user):
-- Automatically forked to a private copy under the caller's account
-- All sub-resources are cloned; original agent is untouched
-- Returns a new `session_id` for the forked version
-
-**User's unpublished agents** (`is_public=False`, owned by caller):
-- Updated in-place on the existing thread
-- No fork — modifications apply directly
 
 ### Status handling
 
@@ -264,7 +253,7 @@ asyncio.run(main())
 
 | Pass rate | Action |
 |-----------|--------|
-| >= 80% | Validation passed → Phase 5 (publish). |
+| >= 80% | Validation passed → Phase 5 (report). |
 | < 80% | **Auto-trigger update loop**: analyze failures → Phase 1 (discovery with failure context) → Phase 2 (`nimble_agents_update_session` with same session_id) → Phase 3 (poll) → Phase 4 (re-validate with same 50 inputs). Max 2 cycles. |
 
 **Failure analysis for the refine-validate prompt:**
@@ -276,22 +265,7 @@ asyncio.run(main())
    Example failing inputs: {samples}. Refine the extraction to handle these cases."
   ```
 
-## Phase 5: Publish
-
-After validation passes (>= 80%) or immediately after `complete` (if `refine_validate=false` and no failures):
-
-```json
-{
-  "tool": "nimble_agents_publish",
-  "params": {
-    "session_id": "a3b1c2d4-5678-9abc-def0-1234567890ab"
-  }
-}
-```
-
-If 409 (already published), proceed to report.
-
-## Phase 6: Report
+## Phase 5: Report
 
 Return a structured generation/update report **regardless of outcome** (pass or fail):
 
@@ -304,7 +278,7 @@ Return a structured generation/update report **regardless of outcome** (pass or 
 | Operation | Generated / Updated |
 | Domain | {domain} |
 | Session ID | `{session_id}` |
-| Status | Published / Failed |
+| Status | Succeeded / Failed |
 
 ### Validation Results
 
@@ -355,7 +329,6 @@ export PATH="$HOME/go/bin:$PATH"
 - `nimble agent generate --agent-name <name> --prompt "<prompt>" --url "<url>"` — create agent
 - `nimble agent generate --agent-name <name> --from-agent <name> --prompt "<prompt>"` — iterate on existing agent
 - `nimble agent get-generation --generation-id <id>` — poll generation status
-- `nimble agent publish --agent-name <name> --version-id <id>` — publish agent
 - `nimble search --query "<query>" --max-results 5` — web search (deep by default)
 - `nimble map --url <url> --limit 50` — discover URL patterns on a site
 
@@ -364,7 +337,6 @@ export PATH="$HOME/go/bin:$PATH"
 |---|---|
 | nimble agent generate | mcp__plugin_nimble_nimble__nimble_agents_generate |
 | nimble agent get-generation | mcp__plugin_nimble_nimble__nimble_agents_status |
-| nimble agent publish | mcp__plugin_nimble_nimble__nimble_agents_publish |
 
 **CRITICAL: Prefer CLI for all operations. Use MCP only when CLI is unavailable. NEVER use WebSearch, WebFetch, curl, or wget. NEVER construct MCP endpoint URLs manually.**
 
@@ -412,14 +384,11 @@ Execute the closed-loop lifecycle:
    - Max 2 update cycles total. After 2: stop, report best result.
    - OVERALL TIMEOUT: 15 minutes wall-clock for the entire workflow. If exceeded, stop and report.
 
-5. PUBLISH (on validation pass, or immediately if refine_validate=false and no failures):
-   - Call nimble_agents_publish with session_id.
-
-6. REPORT:
+5. REPORT:
    Print structured report:
    AGENT_NAME: {name}
    OPERATION: generate|update
-   STATUS: published|failed
+   STATUS: succeeded|failed
    PASS_RATE: {n}%
    REFINE_CYCLES: {count}
    INPUT_SCHEMA: {json}
@@ -442,7 +411,7 @@ When generating multiple agents (e.g., multi-store comparison), launch Task agen
 - `nimble agent generate` is for initial creation. Use `--from-agent` to iterate on existing agents.
 - **All web search MUST use `nimble search`** (CLI, via Bash). NEVER use built-in `WebSearch`, `WebFetch`, or `curl` for searching. Agent listing is already done in the foreground routing step.
 - **Every Task prompt MUST include the CLI commands block.** See the template above.
-- 80% pass rate is the minimum threshold for publishing with validation.
+- 80% pass rate is the minimum threshold for finishing with validation.
 - Max 2 update cycles before escalating to the user.
 - **Overall timeout: 15 minutes wall-clock.** Stop and report if exceeded. Use `max_turns=50` on Task launch.
 - **Polling: strictly 30s intervals** (`Bash(sleep 30)`), max 10 checks per phase. Never sleep longer.
