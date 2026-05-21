@@ -17,7 +17,7 @@ Find, generate, update, and run structured-data agents on the Nimble platform. D
 ## Requirements
 
 - **Nimble API key** — [online.nimbleway.com/signup](https://online.nimbleway.com/signup)
-- **Nimble CLI** — for all operations (`nimble agent list/get/run/generate/publish`)
+- **Nimble CLI** — for all operations (`nimble agent list/get/run/generate`)
 - **Nimble MCP server** (optional fallback) — used only when CLI is not installed
 
 ## Setup
@@ -74,14 +74,13 @@ The skill has two tool groups depending on what you need:
 | Create a new agent | `nimble agent generate --agent-name <name> --prompt "..." --url "..."` |
 | Refine an existing agent | `nimble agent generate --from-agent <name> --prompt "..."` |
 | Poll generation status | `nimble agent get-generation --generation-id <id>` |
-| Publish | `nimble agent publish --agent-name <name> --version-id <id>` |
 
-Once published, the agent is immediately available to `nimble agent run` — and to **nimble-web-expert**'s agent check.
+Once generation is successful, the agent is immediately available to `nimble agent run` — and to **nimble-web-expert**'s agent check.
 
 **Key rules:**
 
 - Always search for an existing agent before generating — update a close match rather than building from scratch
-- Agent creation (generate → poll → publish) runs in a background Task agent because generation takes 1-3 minutes
+- Agent creation (generate → poll → verify generation marked success) runs in a background Task agent because generation takes 1-3 minutes
 - MCP tools are available as a fallback when CLI is not installed
 - For one-off fetches or web searches, use **nimble-web-expert** instead
 
@@ -93,5 +92,5 @@ Once published, the agent is immediately available to `nimble agent run` — and
 | `references/sdk-patterns.md`                | Python SDK patterns, async endpoint, batch pipelines       |
 | `references/rest-api-patterns.md`           | REST API for TypeScript, Node, curl                        |
 | `references/batch-patterns.md`              | Multi-store comparison, normalization, codegen walkthrough |
-| `references/generate-update-and-publish.md` | Full agent lifecycle: create → poll → validate → publish   |
+| `references/generate-update-and-publish.md` | Full agent lifecycle: create → poll → validate   |
 | `references/error-recovery.md`              | Error handling, quota limits, fallback hierarchy           |
