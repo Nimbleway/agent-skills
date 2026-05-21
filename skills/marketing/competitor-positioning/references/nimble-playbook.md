@@ -25,7 +25,7 @@ session and stick with it; don't re-probe on every command.
 
 | Check | If it works | What to use |
 |---|---|---|
-| `nimble --version` (>= 0.12.0) and `NIMBLE_API_KEY` is set | CLI is ready | Bash `nimble ...` commands |
+| `nimble --version` (>= 0.12.0) and `nimble whoami` exits 0 | CLI is ready | Bash `nimble ...` commands |
 | `claude mcp list 2>/dev/null \| grep -q "nimble"` (or first `mcp__plugin_nimble_nimble__*` call succeeds) | Plugin MCP is connected | `mcp__plugin_nimble_nimble__*` tools |
 | Bash denied AND `mcp__plugin_nimble_nimble__*` tools are listed but the first call returns an auth / not-connected error | Plugin is installed but the **connector isn't activated** (typical Cowork / claude.ai state) | **Stop — guide connector activation (below)** |
 | None of the above | Stop — guide install (below) | — |
@@ -446,7 +446,7 @@ Don't narrate individual tool calls.
 
 | Error | Cause | Fix |
 |-------|-------|-----|
-| `NIMBLE_API_KEY not set` | Missing API key | See `profile-and-onboarding.md` |
+| `Not authenticated` | No stored credentials or env var | Run `nimble login` |
 | `401 Unauthorized` | Expired key | Regenerate at app.nimbleway.com |
 | `429 Too Many Requests` | Rate limit | Fewer simultaneous calls |
 | `timeout` | Slow response | Retry once, then skip |
