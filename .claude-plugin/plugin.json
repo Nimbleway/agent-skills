@@ -26,8 +26,7 @@
     "meeting-prep",
     "company-research",
     "business-intelligence",
-    "retail-intelligence",
-    "storefront",
+    "web-category-extraction",
     "category-extraction"
   ],
   "skills": [
@@ -38,7 +37,7 @@
     "./skills/healthcare/",
     "./skills/seo/",
     "./skills/human-resources/",
-    "./skills/retail-intelligence/"
+    "./skills/web-extraction/"
   ],
   "agents": ["./agents/nimble-researcher.md", "./agents/nimble-analyst.md"]
 }

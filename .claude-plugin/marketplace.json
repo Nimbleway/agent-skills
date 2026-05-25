@@ -23,8 +23,7 @@
         "meeting-prep",
         "company-research",
         "business-intelligence",
-        "retail-intelligence",
-        "storefront",
+        "web-category-extraction",
         "category-extraction"
       ],
       "skills": [
@@ -41,8 +40,8 @@
         "./skills/healthcare/healthcare-providers-verify",
         "./skills/seo/seo-intel",
         "./skills/human-resources/talent-sourcing",
-        "./skills/retail-intelligence/storefront-discover",
-        "./skills/retail-intelligence/storefront-extract"
+        "./skills/web-extraction/category-discover",
+        "./skills/web-extraction/category-extract"
       ]
     }
   ]

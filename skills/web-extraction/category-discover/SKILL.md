@@ -1,16 +1,16 @@
 ---
-name: storefront-discover
+name: category-discover
 description: |
-  Investigates any ecommerce storefront's category structure and produces a
-  reusable extraction rulebook — a step-by-step MD file that storefront-extract
+  Investigates any website's category structure and produces a
+  reusable extraction rulebook — a step-by-step MD file that category-extract
   can follow to extract all category and subcategory URLs. Works for any
-  grocery, retail, or marketplace site.
+  site — retail, news, marketplaces, directories, or any structured web content.
 
-  Triggers: "investigate storefront", "reverse-engineer categories for",
+  Triggers: "investigate categories", "reverse-engineer categories for",
   "how does X organize categories", "create extraction rulebook for",
-  "discover category structure", "map categories on", "analyze storefront".
+  "discover category structure", "map categories on", "analyze site categories".
 
-  Do NOT use for executing an existing rulebook — use storefront-extract.
+  Do NOT use for executing an existing rulebook — use category-extract.
   Do NOT use for product scraping — this skill only maps the category tree.
 allowed-tools:
   - Bash(nimble:*)
@@ -40,9 +40,9 @@ metadata:
   version: 0.21.2
 ---
 
-# Storefront Discover
+# Category Discover
 
-Reverse-engineer any storefront's category structure into a reusable extraction rulebook.
+Reverse-engineer any site's category structure into a reusable extraction rulebook.
 
 User request: $ARGUMENTS
 
@@ -53,7 +53,7 @@ Do NOT read `references/nimble-playbook.md` until Step 3d (validation). This ski
 ## Execution Order
 
 1. **Step 0** — Preflight: lightweight checks only (date, profile, mkdir, ls)
-2. **Step 1** — Parse the storefront URL from user input
+2. **Step 1** — Parse the site URL from user input
 3. **Step 2** — Check existing rulebooks (ls/read only)
 4. **Step 3a** — **Run `nimble map`** + cluster URLs by path structure (THIS IS THE FIRST REAL ACTION)
 5. **Step 3b/3c** — Fallback to browser-use navigation, then static API probes, only if map yields < 5 category URLs
@@ -101,8 +101,8 @@ Run these lightweight checks in parallel — **no API calls, no nimble commands,
 - `date +%Y-%m-%d` (today)
 - `cat ~/.nimble/business-profile.json 2>/dev/null` (profile)
 - `cat ~/.nimble/memory/index.md 2>/dev/null` (wiki index)
-- `mkdir -p ~/.nimble/memory/{reports,retail-intelligence/rulebooks,retail-intelligence/extractions}`
-- `ls ~/.nimble/memory/retail-intelligence/rulebooks/ 2>/dev/null` (existing rulebooks)
+- `mkdir -p ~/.nimble/memory/{reports,category-rulebooks,category-extractions}`
+- `ls ~/.nimble/memory/category-rulebooks/ 2>/dev/null` (existing rulebooks)
 - Verify `$NIMBLE_API_KEY` is set: `echo ${NIMBLE_API_KEY:+OK}` — if empty, see `references/profile-and-onboarding.md`, stop
 
 From the results:
@@ -118,11 +118,11 @@ Extract from `$ARGUMENTS`:
 
 | Field | Required | Source |
 |-------|----------|--------|
-| Storefront URL | Yes | User input (e.g., "costco.com", "https://www.metro.ca") |
+| Site URL | Yes | User input (e.g., "costco.com", "https://www.metro.ca") |
 | Country | Recommended | User input or infer from domain TLD |
-| Storefront name | Auto | Derive slug from domain (e.g., `metro-ca`, `costco`, `bws`) |
+| Site name | Auto | Derive slug from domain (e.g., `metro-ca`, `costco`, `bws`) |
 
-**If URL is missing**, ask: "Which storefront should I investigate? Provide the URL (e.g., https://www.metro.ca)."
+**If URL is missing**, ask: "Which site should I investigate? Provide the URL (e.g., https://www.metro.ca)."
 
 **If URL is clear**, confirm and proceed: "Investigating **metro.ca** category structure..."
 
@@ -133,7 +133,7 @@ Normalize the URL: ensure `https://` prefix, strip trailing slashes.
 **Before probing the site**, check if a sibling domain already has a rulebook:
 
 ```bash
-ls ~/.nimble/memory/retail-intelligence/rulebooks/*.md 2>/dev/null
+ls ~/.nimble/memory/category-rulebooks/*.md 2>/dev/null
 ```
 
 Sibling domains share the same brand but differ by country TLD (e.g., `costco.ca` ↔ `costco.com`, `metro.ca` ↔ `metro.fr`). If a sibling rulebook exists:
@@ -143,7 +143,7 @@ Sibling domains share the same brand but differ by country TLD (e.g., `costco.ca
 3. Test the adapted endpoint immediately — this is the fastest path to a working rulebook
 4. If it works, skip to Step 5 (classify) with the adapted data
 
-Even if no exact sibling exists, scan all rulebooks for the same **platform** (VTEX, Shopify, Salesforce Commerce Cloud, etc.) — storefronts on the same platform share API patterns.
+Even if no exact sibling exists, scan all rulebooks for the same **platform** (VTEX, Shopify, Salesforce Commerce Cloud, etc.) — sites on the same platform share API patterns.
 
 ### Step 3: Discover Category URLs
 
@@ -152,7 +152,7 @@ Discovery runs in two stages. **Start with nimble map** (fast, no browser). Fall
 #### 3a. Nimble map — primary discovery
 
 ```bash
-nimble map --url "{storefront_url}" --limit 5000 --sitemap include --country "{country}" > /tmp/{slug}_map.json
+nimble map --url "{site_url}" --limit 5000 --sitemap include --country "{country}" > /tmp/{slug}_map.json
 ```
 
 Then write a Python script to `/tmp/{slug}_map_cluster.py` that:
@@ -180,7 +180,7 @@ python3 /tmp/{slug}_map_cluster.py
 **Interpret the output:**
 - Pattern groups with depth 1–3 and 5–500 members are likely category pages
 - Groups with 1000+ members at depth ≥2 are likely product pages — skip
-- If multiple depths exist (e.g., `/shop/{slug}` + `/shop/{slug}/{slug}`), the storefront has a nested hierarchy — note both levels
+- If multiple depths exist (e.g., `/shop/{slug}` + `/shop/{slug}/{slug}`), the site has a nested hierarchy — note both levels
 
 **If map yields ≥5 clear category URLs → proceed to Step 3d (validate). Skip 3b and 3c.**
 
@@ -188,7 +188,7 @@ python3 /tmp/{slug}_map_cluster.py
 
 Use `mcp__browser-use__browser_task` with model `claude-sonnet-4-6` and `max_steps: 20`:
 
-> "Go to {storefront_url}. Navigate to the main Shop/Categories/Departments section of the site.
+> "Go to {site_url}. Navigate to the main Shop/Categories/Departments section of the site.
 >
 > 1. Find and interact with the top-level navigation menu (hover or click on 'Shop', 'Categories', 'Departments', or equivalent)
 > 2. Visit at least 2 distinct category pages (e.g., 'Dairy', 'Bakery', or 'Electronics', 'Clothing')
@@ -215,7 +215,7 @@ If neither method found usable category URLs, probe common API patterns via the 
 curl -s -X POST "https://api.webit.live/api/v1/realtime/web" \
   -H "Authorization: Bearer $NIMBLE_API_KEY" \
   -H "Content-Type: application/json" \
-  -d '{"url": "{storefront_url}/api/v1/categories", "render": false}' \
+  -d '{"url": "{site_url}/api/v1/categories", "render": false}' \
   > /tmp/{slug}_probe_api.json
 ```
 
@@ -257,7 +257,7 @@ Read `references/extraction-patterns.md` for the pattern taxonomy.
 
 ### Step 5: Classify the Pattern
 
-Read `references/extraction-patterns.md` and classify this storefront:
+Read `references/extraction-patterns.md` and classify this site:
 
 | Pattern | Description | Example |
 |---------|-------------|---------|
@@ -271,7 +271,7 @@ Read `references/extraction-patterns.md` and classify this storefront:
 
 Read `references/rulebook-template.md` for the exact format.
 
-Write the rulebook to: `~/.nimble/memory/retail-intelligence/rulebooks/{slug}.md`
+Write the rulebook to: `~/.nimble/memory/category-rulebooks/{slug}.md`
 
 The rulebook must contain:
 - **Overview** — 1-2 sentence summary
@@ -280,7 +280,7 @@ The rulebook must contain:
 - **Step-by-Step Instructions** — exact curl commands (to `api.webit.live`), response parsing, URL construction
 - **Response Schema** — example JSON for each level
 - **URL Construction** — base URL, pattern, field mapping table
-- **Known Issues** — storefront-specific quirks only
+- **Known Issues** — site-specific quirks only
 - **Category Pattern** — the classified type
 
 Every step must specify:
@@ -304,7 +304,7 @@ Follow the rulebook steps end-to-end using the file-based pipeline:
    - Prints summary: `Store: {slug}\nTotal category URLs: {count}`
 3. **Run** the script and check output
 
-**PASS** = `/tmp/{slug}_categories_urls.txt` exists with real category URLs from the storefront.
+**PASS** = `/tmp/{slug}_categories_urls.txt` exists with real category URLs from the site.
 **FAIL** = fix the rulebook and/or script, re-test. Repeat until PASS.
 
 ### Default Behaviors for Python Scripts
@@ -321,9 +321,9 @@ Follow the rulebook steps end-to-end using the file-based pipeline:
 Make all Write calls simultaneously:
 
 - Rulebook -> already written in Step 6
-- Report -> `~/.nimble/memory/reports/storefront-discover-{slug}-{date}.md`
+- Report -> `~/.nimble/memory/reports/category-discover-{slug}-{date}.md`
 - Follow the wiki update pattern from `references/memory-and-distribution.md`
-- Append to `~/.nimble/memory/retail-intelligence/rulebooks/index.md`:
+- Append to `~/.nimble/memory/category-rulebooks/index.md`:
   ```
   | {slug} | {domain} | {country} | {pattern} | {category_count} | {date} |
   ```
@@ -334,27 +334,27 @@ Make all Write calls simultaneously:
 `references/memory-and-distribution.md` for connector detection and sharing flow.
 
 Notion: full rulebook as a dated subpage.
-Slack: TL;DR with storefront name, pattern type, category count.
+Slack: TL;DR with site name, pattern type, category count.
 
 ### Step 10: Follow-ups
 
-- **"Extract categories now"** -> run `storefront-extract` with this rulebook
-- **"Investigate another storefront"** -> restart from Step 1
+- **"Extract categories now"** -> run `category-extract` with this rulebook
+- **"Investigate another site"** -> restart from Step 1
 - **"Show the rulebook"** -> display the MD file
 - **"Update the rulebook"** -> re-investigate specific steps
 
 **Sibling skill suggestions:**
 
 > **Next steps:**
-> - Run `storefront-extract` to extract all category URLs using this rulebook
-> - Run `competitor-intel` to monitor this retailer's competitive moves
+> - Run `category-extract` to extract all category URLs using this rulebook
+> - Run `competitor-intel` to monitor this site's competitive moves
 > - Run `company-deep-dive` for a full 360 profile on this retailer
 
 ---
 
 ## Sub-Agent Strategy
 
-For multi-step storefronts (pattern C1/C2), use sub-agents to parallelize endpoint testing:
+For multi-step sites (pattern C1/C2), use sub-agents to parallelize endpoint testing:
 
 Use `nimble-researcher` agents (`agents/nimble-researcher.md`) when:
 - Testing multiple candidate API endpoints simultaneously
@@ -369,7 +369,7 @@ Sub-agent rules: always `mode: "bypassPermissions"`, batch max 4, fallback on fa
 For rate limits and general API errors, see `references/nimble-playbook.md`. Skill-specific errors:
 
 - **Cloudflare/bot protection:** Retry with `--render` flag. If still blocked, note in the rulebook's Known Issues that rendering is required.
-- **Empty navigation:** Try alternate URLs (`/sitemap.xml`, `/categories`, `/departments`). Some storefronts hide nav behind JS — use `--render`.
+- **Empty navigation:** Try alternate URLs (`/sitemap.xml`, `/categories`, `/departments`). Some sites hide nav behind JS — use `--render`.
 - **No discoverable API:** Fall back to rendered HTML parsing. Document the CSS selectors / DOM structure in the rulebook.
 - **Geo-locked content:** If the site returns different content by region, ask the user for a postal code or address and document it as a required input.
 - **Rate limiting (429):** Back off and reduce concurrency. Note rate limits in the rulebook's Known Issues.

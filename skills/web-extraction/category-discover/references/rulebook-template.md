@@ -1,6 +1,6 @@
 # Rulebook Template
 
-This is the exact structure that `storefront-discover` must produce. Every rulebook follows this format so that `storefront-extract` can parse and execute it mechanically.
+This is the exact structure that `category-discover` must produce. Every rulebook follows this format so that `category-extract` can parse and execute it mechanically.
 
 ---
 

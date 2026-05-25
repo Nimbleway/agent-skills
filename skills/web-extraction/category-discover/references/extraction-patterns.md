@@ -1,6 +1,6 @@
 # Category Extraction Patterns
 
-Reference for classifying storefront category structures. Use during Step 5 of `storefront-discover` to identify the pattern type, and when writing the rulebook's extraction steps.
+Reference for classifying site category structures. Use during Step 5 of `category-discover` to identify the pattern type, and when writing the rulebook's extraction steps.
 
 ---
 

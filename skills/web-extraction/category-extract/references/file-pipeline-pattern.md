@@ -1,8 +1,8 @@
 # File-Based Pipeline Pattern
 
-The core execution pattern for `storefront-extract`. Every API response is written to a temp file, processed by a generated Python script, and only the script output (extracted URLs or IDs) enters the conversation.
+The core execution pattern for `category-extract`. Every API response is written to a temp file, processed by a generated Python script, and only the script output (extracted URLs or IDs) enters the conversation.
 
-This keeps the LLM context small regardless of API response size — some storefront responses are 1MB+.
+This keeps the LLM context small regardless of API response size — some site responses are 1MB+.
 
 ---
 
@@ -15,7 +15,7 @@ For every API call in the rulebook, follow these three phases in order.
 Execute the `nimble extract` command from the rulebook and redirect output to a temp file:
 
 ```bash
-nimble --client-source skill-storefront-extract extract \
+nimble --client-source skill-category-extract extract \
   --url "{url_from_rulebook}" \
   --format json \
   > /tmp/{slug}_raw_{step_num}.json
@@ -23,7 +23,7 @@ nimble --client-source skill-storefront-extract extract \
 
 With rendering (when rulebook specifies `--render`):
 ```bash
-nimble --client-source skill-storefront-extract extract \
+nimble --client-source skill-category-extract extract \
   --url "{url_from_rulebook}" \
   --render \
   --format json \
@@ -78,7 +78,7 @@ def fetch_with_retry(url, output_path, max_retries=3):
     """Fetch a URL via nimble extract with retry logic."""
     for attempt in range(max_retries):
         result = subprocess.run(
-            ["nimble", "--client-source", "skill-storefront-extract",
+            ["nimble", "--client-source", "skill-category-extract",
              "extract", "--url", url, "--format", "json"],
             capture_output=True, text=True
         )
@@ -181,7 +181,7 @@ Some endpoints return clean JSON without a wrapper. The `unwrap_response` functi
 
 ## Multi-Request Pipeline
 
-For Pattern C1/C2 storefronts, the script from an earlier step produces a list of IDs/URLs that feed into the next step.
+For Pattern C1/C2 sites, the script from an earlier step produces a list of IDs/URLs that feed into the next step.
 
 **Chaining pattern:**
 
