@@ -31,6 +31,10 @@ allowed-tools:
   - Grep
   - Agent
   - AskUserQuestion
+  - mcp__browser-use__browser_task
+  - mcp__browser-use__monitor_task
+  - mcp__browser-use__list_skills
+  - mcp__browser-use__execute_skill
 metadata:
   author: Nimbleway
   version: 0.21.2
@@ -42,7 +46,49 @@ Reverse-engineer any storefront's category structure into a reusable extraction 
 
 User request: $ARGUMENTS
 
-**Before running any commands**, read `references/nimble-playbook.md` for constraints.
+Do NOT read `references/nimble-playbook.md` until Step 3d (validation). This skill uses `nimble map` as the primary discovery method — browser-use is a fallback only.
+
+---
+
+## Execution Order
+
+1. **Step 0** — Preflight: lightweight checks only (date, profile, mkdir, ls)
+2. **Step 1** — Parse the storefront URL from user input
+3. **Step 2** — Check existing rulebooks (ls/read only)
+4. **Step 3a** — **Run `nimble map`** + cluster URLs by path structure (THIS IS THE FIRST REAL ACTION)
+5. **Step 3b/3c** — Fallback to browser-use navigation, then static API probes, only if map yields < 5 category URLs
+6. **Step 3d** — Validate the best source
+7. **Steps 4–10** — Classify, write rulebook, test, save, distribute
+
+---
+
+## File-Based Pipeline (used from Step 3b onward)
+
+All API validation calls use curl → temp file → Python script. Raw responses are NEVER loaded into the LLM context.
+
+### Nimble Web Extract (via curl)
+```bash
+curl -s -X POST "https://api.webit.live/api/v1/realtime/web" \
+  -H "Authorization: Bearer $NIMBLE_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{"url": "<url>", "country": "<country>", "render": true}' \
+  > /tmp/{slug}_raw_{step}.json
+```
+
+### Response Format
+Nimble API wraps responses in a JSON envelope:
+```json
+{"url": "...", "status": "success", "html_content": "<pre>{ ... actual JSON ... }</pre>"}
+```
+
+Python scripts must:
+1. Read the file and parse the outer JSON
+2. Extract `html_content`
+3. Strip `<pre>` tags: `re.sub(r'</?pre[^>]*>', '', text)`
+4. Unescape HTML entities: `html.unescape(text)`
+5. Parse the inner JSON
+
+The `NIMBLE_API_KEY` is available as the environment variable `$NIMBLE_API_KEY`.
 
 ---
 
@@ -50,17 +96,21 @@ User request: $ARGUMENTS
 
 ### Step 0: Preflight
 
-Follow the transport selection + standard preflight from `references/nimble-playbook.md` — pick CLI or MCP at session start, then run the standard preflight calls (date calc, today, profile, memory index) in parallel.
+Run these lightweight checks in parallel — **no API calls, no nimble commands, no curl**:
 
-Also simultaneously:
+- `date +%Y-%m-%d` (today)
+- `cat ~/.nimble/business-profile.json 2>/dev/null` (profile)
+- `cat ~/.nimble/memory/index.md 2>/dev/null` (wiki index)
 - `mkdir -p ~/.nimble/memory/{reports,retail-intelligence/rulebooks,retail-intelligence/extractions}`
-- Check for existing rulebooks: `ls ~/.nimble/memory/retail-intelligence/rulebooks/ 2>/dev/null`
+- `ls ~/.nimble/memory/retail-intelligence/rulebooks/ 2>/dev/null` (existing rulebooks)
+- Verify `$NIMBLE_API_KEY` is set: `echo ${NIMBLE_API_KEY:+OK}` — if empty, see `references/profile-and-onboarding.md`, stop
 
 From the results:
-- CLI missing or API key unset -> `references/profile-and-onboarding.md`, stop
-- Tag all `nimble` CLI calls: `nimble --client-source skill-storefront-discover <subcommand>`.
 - Profile exists -> note industry context if any
 - No profile -> fine, proceed to Step 1
+- Existing rulebooks -> used in Step 2
+
+**After preflight, proceed directly to Step 1 → Step 2 → Step 3a (nimble map). Do NOT skip ahead to browser-use.**
 
 ### Step 1: Parse Request
 
@@ -78,67 +128,132 @@ Extract from `$ARGUMENTS`:
 
 Normalize the URL: ensure `https://` prefix, strip trailing slashes.
 
-### Step 2: Map the Site
+### Step 2: Cross-Reference Existing Rulebooks
 
-Discover the site's structure to find navigation and category endpoints.
-
-```bash
-nimble --client-source skill-storefront-discover map --url "{storefront_url}" --limit 30
-```
-
-From the sitemap/URL list, identify:
-- Navigation pages (`/categories`, `/departments`, `/aisles`, `/browse`, `/shop`)
-- API endpoints (`/api/`, `/graphql`, `/__NEXT_DATA__`)
-- Patterns in URL structure (path depth, slug conventions)
-
-Save results to `/tmp/storefront_discover_{slug}_map.json`.
-
-### Step 3: Extract Navigation Structure
-
-Fetch the homepage/main navigation with rendering enabled to capture JS-rendered content:
+**Before probing the site**, check if a sibling domain already has a rulebook:
 
 ```bash
-nimble --client-source skill-storefront-discover extract --url "{storefront_url}" --render --format json > /tmp/storefront_discover_{slug}_nav.json
+ls ~/.nimble/memory/retail-intelligence/rulebooks/*.md 2>/dev/null
 ```
 
-Write a Python script (`/tmp/storefront_discover_{slug}_analyze_nav.py`) that reads the response file and searches for:
+Sibling domains share the same brand but differ by country TLD (e.g., `costco.ca` ↔ `costco.com`, `metro.ca` ↔ `metro.fr`). If a sibling rulebook exists:
 
-1. **Embedded JSON** — look for `__NEXT_DATA__`, `window.__data__`, `window.mobifyData`, or similar global JS objects containing category trees
-2. **Navigation HTML** — `<nav>`, `<ul class="menu">`, `data-aisle`, `data-category` attributes
-3. **API references** — URLs in the HTML pointing to category/taxonomy/menu endpoints
-4. **Mega-menu data** — nested `<li>` structures with category links
+1. Read it — note the API endpoint pattern, response structure, and extraction method
+2. **Adapt the URL to the target domain** (e.g., `search.costco.ca/api/...` → `search.costco.com/api/...`)
+3. Test the adapted endpoint immediately — this is the fastest path to a working rulebook
+4. If it works, skip to Step 5 (classify) with the adapted data
 
-Run the script and capture the findings. The goal is to identify which **approach** will work for this storefront.
+Even if no exact sibling exists, scan all rulebooks for the same **platform** (VTEX, Shopify, Salesforce Commerce Cloud, etc.) — storefronts on the same platform share API patterns.
 
-### Step 4: Test Category Endpoints
+### Step 3: Discover Category URLs
 
-Based on Step 3 findings, test the most promising approach. Read `references/extraction-patterns.md` for the pattern taxonomy — identify which pattern this storefront matches.
+Discovery runs in two stages. **Start with nimble map** (fast, no browser). Fall back to browser-use only if map yields no usable category patterns.
 
-**Approach A — Embedded JSON (preferred, fastest):**
-If `__NEXT_DATA__` or similar embedded JSON was found, extract it and walk the category tree directly. No additional HTTP calls needed.
+#### 3a. Nimble map — primary discovery
 
-**Approach B — API endpoint:**
-If an API endpoint was discovered (e.g., `/api/categories`, `/mega-menu.json`), fetch it:
 ```bash
-nimble --client-source skill-storefront-discover extract --url "{api_endpoint}" --format json > /tmp/storefront_discover_{slug}_api.json
+nimble map --url "{storefront_url}" --limit 5000 --sitemap include --country "{country}" > /tmp/{slug}_map.json
 ```
 
-**Approach C — Rendered HTML parsing:**
-If categories are only in rendered HTML, extract with rendering:
+Then write a Python script to `/tmp/{slug}_map_cluster.py` that:
+1. Reads `/tmp/{slug}_map.json` and parses the `links` array (`[{url, title, description}]`)
+2. Filters noise URLs — skip any path starting with: `/cdn-cgi/`, `/wp-content/`, `/wp-admin/`, `/static/`, `/assets/`, `/images/`, `/img/`, `/css/`, `/js/`, `/api/`, `/graphql`, `/_next/`
+3. Skips static pages: `about`, `careers`, `contact`, `faq`, `help`, `login`, `privacy`, `search`, `signin`, `signup`, `support`, `sitemap`
+4. Skips asset extensions: `.css`, `.gif`, `.ico`, `.jpg`, `.js`, `.json`, `.pdf`, `.png`, `.svg`, `.woff`, `.xml`
+5. Groups remaining URLs by path depth (number of `/`-separated segments)
+6. For each depth group, builds a structural mask: a segment position is **fixed** if it has ≤3 unique values or <30% variation across all URLs at that depth; otherwise **variable**
+7. Sub-clusters URLs by their fixed segments (variable positions become `*`)
+8. Prints a summary table — one row per pattern group, sorted by size descending (top 20):
+   ```
+   Pattern                        | Size | Example URLs (first 2)
+   /shop/{slug}                   |  12  | /shop/dairy, /shop/bakery
+   /shop/{slug}/{slug}            |  87  | /shop/dairy/milk, /shop/dairy/cheese
+   /products/{slug}               | 5000 | /products/abc-123
+   ```
+9. Also prints: total URLs collected, total after filtering, recommendation (which pattern(s) look like categories vs products)
+
+Run the script:
 ```bash
-nimble --client-source skill-storefront-discover extract --url "{category_page_url}" --render --format markdown > /tmp/storefront_discover_{slug}_rendered.json
+python3 /tmp/{slug}_map_cluster.py
 ```
 
-**Approach D — Multi-step discovery:**
-If L1 categories are visible but L2/L3 require drilling down, test a single drill-down to understand the pattern, then document the iteration strategy.
+**Interpret the output:**
+- Pattern groups with depth 1–3 and 5–500 members are likely category pages
+- Groups with 1000+ members at depth ≥2 are likely product pages — skip
+- If multiple depths exist (e.g., `/shop/{slug}` + `/shop/{slug}/{slug}`), the storefront has a nested hierarchy — note both levels
 
-For each approach tested, write the raw response to a file and generate a Python analysis script — **never load raw API responses into context**.
+**If map yields ≥5 clear category URLs → proceed to Step 3d (validate). Skip 3b and 3c.**
 
-Document what was found:
-- Response structure (field names, nesting depth)
-- Whether it returns names, URLs, IDs, or all three
-- Whether subcategories are inline or require additional calls
-- Any authentication, cookies, or headers required
+#### 3b. Fallback: browser-use navigation (only if map yields < 5 category URLs)
+
+Use `mcp__browser-use__browser_task` with model `claude-sonnet-4-6` and `max_steps: 20`:
+
+> "Go to {storefront_url}. Navigate to the main Shop/Categories/Departments section of the site.
+>
+> 1. Find and interact with the top-level navigation menu (hover or click on 'Shop', 'Categories', 'Departments', or equivalent)
+> 2. Visit at least 2 distinct category pages (e.g., 'Dairy', 'Bakery', or 'Electronics', 'Clothing')
+> 3. For each category page, also navigate into one subcategory if available
+>
+> Return:
+> - Every category and subcategory URL you visited
+> - Whether the URLs follow a consistent pattern (e.g., `/shop/dairy`, `/shop/dairy/milk`)
+> - Any API endpoints that appeared in the network traffic while navigating (JSON responses containing category/navigation data)
+> - Whether the navigation required JavaScript rendering (hover menus, dynamic loading)"
+
+After `browser_task` returns a `task_id`, call `monitor_task` to get the results.
+
+Extract from the response:
+- Visited category URLs → used for pattern clustering in Step 3d
+- Any API endpoints reported from network traffic → validate in Step 3d
+
+#### 3c. Fallback: static API probes (only if both map and browser-use fail)
+
+If neither method found usable category URLs, probe common API patterns via the file-based pipeline:
+
+```bash
+# Try common category API endpoints
+curl -s -X POST "https://api.webit.live/api/v1/realtime/web" \
+  -H "Authorization: Bearer $NIMBLE_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{"url": "{storefront_url}/api/v1/categories", "render": false}' \
+  > /tmp/{slug}_probe_api.json
+```
+
+Common patterns to try (one at a time until one works):
+```
+{domain}/api/v1/categories
+{domain}/api/navigation
+{domain}/api/megamenu
+{domain}/api/catalog/categories
+{domain}/_next/data/.../categories.json
+search.{domain}/api/apps/www_{slug}/query/www_{slug}_megamenu
+```
+
+For each probe, write a Python script to read the file, extract `html_content` (strip `<pre>` tags, unescape HTML entities), parse the inner JSON, and print: field names, nesting depth, children key name, sample category names (first 5), total count.
+
+#### 3d. Validate the best source
+
+Once you have candidate category URLs or an API endpoint from any method above:
+
+**For URL patterns from map/browser:** fetch 2–3 example URLs using the file-based pipeline to confirm they are real category pages (contain product listings, subcategory links, or breadcrumbs — not 404s or login walls).
+
+**For API endpoints:** fetch the endpoint via curl → file → Python to confirm it returns structured category data outside the browser context. Document whether `"render": false` or `"render": true` is required.
+
+### Step 4: Determine Extraction Method
+
+Based on what Step 3 found, choose the highest-priority source:
+
+| Priority | Source type | Why |
+|----------|-----------|-----|
+| **1st** | JSON API returning nested tree | One call, structured, Pattern B |
+| **2nd** | Embedded JSON (`__NEXT_DATA__` etc.) | No extra calls, Pattern A/B |
+| **3rd** | URL patterns from `nimble map` | Machine-readable, Pattern A — one map call extracts all |
+| **4th** | XML sitemap with category URLs | Machine-readable, Pattern A |
+| **5th** | Rendered mega-menu HTML | Requires JS rendering, Pattern D |
+
+Read `references/extraction-patterns.md` for the pattern taxonomy.
+
+**Never load raw API responses into context.** If a script fails, read the error, fix the script, and re-run.
 
 ### Step 5: Classify the Pattern
 
@@ -162,27 +277,44 @@ The rulebook must contain:
 - **Overview** — 1-2 sentence summary
 - **Input** — required parameters with defaults
 - **Extraction Method** — which tools and how many calls
-- **Step-by-Step Instructions** — exact `nimble extract` commands, response parsing, URL construction
+- **Step-by-Step Instructions** — exact curl commands (to `api.webit.live`), response parsing, URL construction
 - **Response Schema** — example JSON for each level
 - **URL Construction** — base URL, pattern, field mapping table
 - **Known Issues** — storefront-specific quirks only
 - **Category Pattern** — the classified type
 
 Every step must specify:
-- The exact `nimble extract` command with all parameters
-- How to parse the response (field paths, regex if needed)
+- The exact curl command with all parameters (URL, headers, body)
+- How to parse the response (field paths in the JSON envelope, inner data structure)
 - What to collect and pass to the next step
 
 ### Step 7: Test the Rulebook
 
-Run `storefront-extract` (or manually follow the rulebook steps) to verify:
-1. Each API call returns expected data
-2. The parsing instructions produce valid URLs
-3. The URL construction pattern produces working links
-4. The total URL count is reasonable for the storefront
+Follow the rulebook steps end-to-end using the file-based pipeline:
 
-**PASS** = output file exists with real category URLs from the storefront.
-**FAIL** = fix the rulebook, re-test. Repeat until PASS.
+1. **Fetch** — run each curl command from the rulebook, redirect to `/tmp/{slug}_test_{step}.json`
+2. **Parse** — generate a Python script based on the rulebook's parsing instructions that:
+   - Reads each response file
+   - Extracts `html_content`, strips `<pre>` tags, unescapes HTML entities
+   - Walks the data structure as described in the rulebook
+   - Applies skip/filter rules
+   - Builds final URLs using the base URL and pattern
+   - Deduplicates and sorts
+   - Writes results to `/tmp/{slug}_categories_urls.txt`
+   - Prints summary: `Store: {slug}\nTotal category URLs: {count}`
+3. **Run** the script and check output
+
+**PASS** = `/tmp/{slug}_categories_urls.txt` exists with real category URLs from the storefront.
+**FAIL** = fix the rulebook and/or script, re-test. Repeat until PASS.
+
+### Default Behaviors for Python Scripts
+
+- Build retry logic **into the script** (3 retries with 2s/4s/6s backoff)
+- Do NOT retry by making multiple tool calls — let the script handle it
+- Deduplicate all URLs
+- Sort alphabetically
+- Write to `/tmp/{slug}_categories_urls.txt` (one URL per line)
+- Print summary to stdout
 
 ### Step 8: Save to Memory
 
@@ -228,14 +360,13 @@ Use `nimble-researcher` agents (`agents/nimble-researcher.md`) when:
 - Testing multiple candidate API endpoints simultaneously
 - Fetching multiple category pages to verify the pattern
 
-Follow the sub-agent spawning rules from `references/nimble-playbook.md`
-(bypassPermissions, batch max 4, fallback on failure).
+Sub-agent rules: always `mode: "bypassPermissions"`, batch max 4, fallback on failure.
 
 ---
 
 ## Error Handling
 
-See `references/nimble-playbook.md` for the standard error table. Skill-specific errors:
+For rate limits and general API errors, see `references/nimble-playbook.md`. Skill-specific errors:
 
 - **Cloudflare/bot protection:** Retry with `--render` flag. If still blocked, note in the rulebook's Known Issues that rendering is required.
 - **Empty navigation:** Try alternate URLs (`/sitemap.xml`, `/categories`, `/departments`). Some storefronts hide nav behind JS — use `--render`.
