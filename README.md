@@ -53,7 +53,7 @@ Or add it permanently to `~/.claude/settings.json`:
 
 One command. The plugin's `.mcp.json` auto-registers as a Connector pointing at the Nimble MCP server over native HTTP with OAuth — no API key header to manage. On first use, run `/mcp` and authenticate `nimble` in your browser.
 
-In claude.ai / Cowork the connector appears under `Customize → Personal plugins → Nimble → Connectors`.
+In claude.ai / Cowork the connector appears under `Customize → Connectors` as **Nimble** — click **Connect** and complete the browser login to activate it (you can create a Nimble account inline if you don't have one).
 
 **Cursor:**
 

@@ -69,9 +69,11 @@ User request: $ARGUMENTS
 - **Never answer from training data.** Live prices, current news, today's listings → always fetch via Nimble. If unavailable, say so.
 - **AskUserQuestion at every meaningful choice.** Header ≤12 chars, 2–4 options, label 1–5 words, recommended option first. Never present choices as numbered prose.
 - **Save all outputs to `.nimble/`.** Never leave extraction results in memory only.
-- **No CLI and no working MCP → stop. Do not fall back to WebFetch, WebSearch, curl, or any other tool.** If bash is denied (no `nimble --version`) AND `mcp__plugin_nimble_nimble__*` tool calls fail or aren't available, do not retry with `dangerouslyDisableSandbox`. Distinguish two cases by symptom:
-  - **Plugin installed, connector not activated** (typical Cowork / claude.ai — `mcp__plugin_nimble_nimble__*` tools are listed but calls error out): surface the verbatim activation steps from `references/profile-and-onboarding.md` (`Customize → Personal plugins → Nimble → Connectors → Add to your team`) and stop.
+- **Verify the connection BEFORE working — don't fire a data call and react to the error.** In Cowork / claude.ai the plugin is often installed while its connector isn't connected. If bash is available, `nimble --version` + `NIMBLE_API_KEY` confirms the CLI path. Otherwise, if `mcp__plugin_nimble_nimble__*` tools are listed, run one read-only `nimble_agents_list` probe: success = connected, proceed; auth/not-connected error or a response containing an OAuth authorization URL = not connected.
+- **No working CLI and no connected MCP → stop. Do not fall back to WebFetch, WebSearch, curl, or any other tool**, and do not retry with `dangerouslyDisableSandbox`. Distinguish two cases by symptom:
+  - **Plugin installed, connector not connected** (typical Cowork / claude.ai — `mcp__plugin_nimble_nimble__*` tools are listed but the probe fails): tell the user verbatim and stop — _"Your Nimble plugin is installed, but its connector isn't connected yet. Open **Customize → Connectors**, find **Nimble**, click **Connect**, and complete the login in your browser (no Nimble account? create one right there during login). Once it shows **Connected**, re-run your request."_ See `rules/setup.md` for the full flow.
   - **No plugin at all**: load `rules/setup.md` and follow the install flow there.
+- **If a tool hands back an OAuth "Authorize" link instead of data**, present it exactly as given and stop. Never invent a "paste the URL back" / "I'll complete the connection" step (no such step exists), and never claim the tools "will activate" and then call them in the same turn. Wait for the user to authorize, then retry (or re-probe with `nimble_agents_list`).
 
 ## Skill ecosystem
 
@@ -106,7 +108,7 @@ claude mcp list 2>/dev/null | grep -q "nimble" && echo "MCP: ok"  # plugin MCP
 - **MCP connected** (no CLI, but plugin is installed) → proceed to [Step 0](#analyze--route), use `mcp__plugin_nimble_nimble__*` tools instead.
 - **Neither** → load `rules/setup.md` for the environment-aware install flow. Any Claude product (Code, Cowork, claude.ai) → `/plugin install nimble`. Codex or other terminal-only agents → `npm i -g @nimble-way/nimble-cli`. Cursor / VS Code / generic MCP clients → paste the `mcp.json` snippet.
 
-**If bash is denied:** you're in a Cowork-like / MCP-only host. Use `mcp__plugin_nimble_nimble__*` tools. If they're listed but calls fail with an auth/not-connected error, the connector isn't activated — surface the activation steps from [Core principles](#core-principles) and stop. **Never substitute WebFetch, WebSearch, curl, or any other tool for Nimble operations.**
+**If bash is denied:** you're in a Cowork-like / MCP-only host. Use `mcp__plugin_nimble_nimble__*` tools, but verify the connection first with one read-only `nimble_agents_list` probe. If the probe fails with an auth/not-connected error or returns an OAuth authorization URL, the connector isn't connected — surface the connection steps from [Core principles](#core-principles) and stop (and never invent an auth-completion flow). **Never substitute WebFetch, WebSearch, curl, or any other tool for Nimble operations.**
 
 ---
 

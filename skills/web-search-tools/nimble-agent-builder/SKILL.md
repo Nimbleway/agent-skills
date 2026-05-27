@@ -64,7 +64,9 @@ claude mcp list 2>/dev/null | grep -q "nimble" && echo "MCP: connected" || echo 
 - Codex CLI or other terminal-only agents → `npm i -g @nimble-way/nimble-cli` + API key.
 - Cursor / VS Code / generic MCP clients → paste the `mcp.json` snippet from `rules/setup.md`.
 
-**Plugin installed but connector not activated** (typical Cowork / claude.ai — `mcp__plugin_nimble_nimble__*` tools are listed but calls fail with an auth/not-connected error): surface the verbatim activation steps from `references/profile-and-onboarding.md` (`Customize → Personal plugins → Nimble → Connectors → Add to your team`) and stop. Never substitute WebFetch, WebSearch, curl, or any other tool.
+**Plugin installed but connector not connected** (typical Cowork / claude.ai — `mcp__plugin_nimble_nimble__*` tools are listed but a read-only `nimble_agents_list` probe fails with an auth/not-connected error or returns an OAuth authorization URL): tell the user verbatim and stop — _"Your Nimble plugin is installed, but its connector isn't connected yet. Open **Customize → Connectors**, find **Nimble**, click **Connect**, and complete the login in your browser (no Nimble account? create one right there during login). Once it shows **Connected**, re-run your request."_ See `rules/setup.md` for the full flow. Never substitute WebFetch, WebSearch, curl, or any other tool.
+
+**If a tool returns an OAuth "Authorize" link instead of data**, present it exactly as given and stop. Never invent a "paste the URL back" / "I'll complete the connection" step — no such step exists — and never claim the tools "will activate" and then call them in the same turn. Wait for the user to authorize, then retry.
 
 ---
 
