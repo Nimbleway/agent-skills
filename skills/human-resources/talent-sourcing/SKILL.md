@@ -34,7 +34,7 @@ allowed-tools:
   - AskUserQuestion
 metadata:
   author: Nimbleway
-  version: 0.21.2
+  version: 0.22.0
 ---
 
 # Talent Sourcing

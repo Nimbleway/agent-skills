@@ -7,7 +7,7 @@ description: |
   map→media pipeline, cost note, error handling.
 metadata:
   author: Nimbleway
-  version: "0.21.2"
+  version: "0.22.0"
 ---
 
 # nimble media — reference
@@ -109,7 +109,7 @@ See `references/nimble-tasks/SKILL.md` for the full polling flow.
 **2–5 files — parallel bash:**
 
 ```bash
-mkdir -p .nimble
+mkdir -p ~/.nimble/downloads
 nimble media run --url "https://example.com/img1.jpg" > ~/.nimble/downloads/img1.jpg &
 nimble media run --url "https://example.com/img2.jpg" > ~/.nimble/downloads/img2.jpg &
 nimble media run --url "https://example.com/img3.jpg" > ~/.nimble/downloads/img3.jpg &

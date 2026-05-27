@@ -1,9 +1,11 @@
 # Nimble Web Search Skills & Plugin
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![Version](https://img.shields.io/badge/version-0.21.2-green)](https://github.com/Nimbleway/agent-skills)
+[![Version](https://img.shields.io/badge/version-0.22.0-green)](https://github.com/Nimbleway/agent-skills)
 
 Unlock the web for your AI agents — search, scrape, extract structured data, and run business intelligence workflows, all powered by Nimble's web data infrastructure. One plugin for Claude Code, Cursor, and any platform that supports the [Agent Skills spec](https://agentskills.io/specification.md).
+
+**Agent credential protocol:** see [AUTH.md](AUTH.md) — the file agents read to authenticate to the Nimble API. Served live at https://nimbleway.com/auth.md.
 
 ## Skills
 
@@ -53,7 +55,7 @@ Or add it permanently to `~/.claude/settings.json`:
 
 One command. The plugin's `.mcp.json` auto-registers as a Connector pointing at the Nimble MCP server over native HTTP with OAuth — no API key header to manage. On first use, run `/mcp` and authenticate `nimble` in your browser.
 
-In claude.ai / Cowork the connector appears under `Customize → Personal plugins → Nimble → Connectors`.
+In claude.ai / Cowork the connector appears under `Customize → Connectors` as **Nimble** — click **Connect** and complete the browser login to activate it (you can create a Nimble account inline if you don't have one).
 
 **Cursor:**
 

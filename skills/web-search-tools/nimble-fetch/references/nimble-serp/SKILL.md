@@ -7,7 +7,7 @@ description: |
   guide, rank lookup pattern, batch, pagination, relationship to nimble search.
 metadata:
   author: Nimbleway
-  version: "0.21.2"
+  version: "0.22.0"
 ---
 
 # nimble serp — reference

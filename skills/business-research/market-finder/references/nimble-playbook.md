@@ -27,23 +27,46 @@ session and stick with it; don't re-probe on every command.
 |---|---|---|
 | `nimble --version` (>= 0.12.0) and `NIMBLE_API_KEY` is set | CLI is ready | Bash `nimble ...` commands |
 | `claude mcp list 2>/dev/null \| grep -q "nimble"` (or first `mcp__plugin_nimble_nimble__*` call succeeds) | Plugin MCP is connected | `mcp__plugin_nimble_nimble__*` tools |
-| Bash denied AND `mcp__plugin_nimble_nimble__*` tools are listed but the first call returns an auth / not-connected error | Plugin is installed but the **connector isn't activated** (typical Cowork / claude.ai state) | **Stop — guide connector activation (below)** |
+| `mcp__plugin_nimble_nimble__*` tools are listed, but a read-only `nimble_agents_list` probe returns an auth / not-connected error or an OAuth authorization URL | Plugin is installed but the **connector isn't connected** (typical Cowork / claude.ai state) | **Stop — guide connector connection (below). Never invent an auth-completion flow.** |
 | None of the above | Stop — guide install (below) | — |
 
-### Plugin installed but connector not activated (Cowork / claude.ai)
+### Connector not connected (Cowork / claude.ai) — verify BEFORE working
 
-If the Nimble plugin is installed (the user can see "Nimble" under
-`Customize → Personal plugins`) but the right-hand panel shows "You are not
-connected to nimble yet", the connector needs one click to activate. Surface
-this hint verbatim and stop — do **not** fall back to WebFetch, WebSearch,
-curl, or any other tool:
+In Cowork / claude.ai the plugin is often installed while its connector is not
+yet connected, so live data calls fail. **Confirming the connection is a required
+preflight step — not an error to react to mid-task.** When
+`mcp__plugin_nimble_nimble__*` tools are listed but you haven't confirmed the
+connector is live, run one read-only probe before any real work:
 
-> Your Nimble plugin is installed but the connector isn't activated yet. To enable Nimble here:
+- A single `nimble_agents_list` call is the cheapest confirmation. Success →
+  connected, proceed. Auth / not-connected error, **or** a response containing an
+  OAuth authorization URL → not connected.
+
+When not connected, surface this verbatim and **stop** — do **not** fall back to
+WebFetch, WebSearch, curl, or any other tool, and do **not** guess at data:
+
+> Your Nimble plugin is installed, but its connector isn't connected yet — that's
+> why I can't fetch live data. To connect it:
 >
-> 1. Open **Customize → Personal plugins → Nimble → Connectors**
-> 2. Find the `nimble` connector and click **Add to your team**
-> 3. Complete the OAuth flow in your browser
-> 4. Once it shows **Connected**, re-run your request
+> 1. Open **Customize → Connectors**
+> 2. Find **Nimble** and click **Connect**
+> 3. Complete the login in your browser. **No Nimble account?** You can create one
+>    right there during login.
+> 4. Once it shows **Connected**, re-run your request and I'll continue.
+
+#### If a tool hands back an OAuth "Authorize" URL
+
+A not-connected tool call may return an authorization link (e.g. "Authorize
+Nimble MCP →") instead of data. Present that link to the user exactly as given,
+then **stop and wait**. Hard rules:
+
+- **Never invent a completion flow.** There is no "paste the URL from your address
+  bar back to me" step, and you cannot "complete the connection" yourself. Claiming
+  either is a hallucination.
+- **Never say the tools "will activate" and then call them in the same turn.** Wait
+  for the user to confirm they've authorized, then retry.
+- To check whether authorization succeeded, run one read-only `nimble_agents_list`
+  probe — don't assume.
 
 ### No plugin and no CLI
 
