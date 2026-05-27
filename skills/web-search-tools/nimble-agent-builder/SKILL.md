@@ -21,6 +21,7 @@ allowed-tools:
   # MCP tools (fallback when CLI is not installed):
   - Bash
   - Task
+  - mcp__plugin_nimble_nimble__nimble_agents_list
   - mcp__plugin_nimble_nimble__nimble_agents_generate
   - mcp__plugin_nimble_nimble__nimble_agents_status
   - mcp__plugin_nimble_nimble__nimble_agents_publish
@@ -28,7 +29,7 @@ allowed-tools:
   - mcp__plugin_nimble_nimble__nimble_agents_update_session
 license: MIT
 metadata:
-  version: "0.21.2"
+  version: "0.21.3"
   author: Nimbleway
   repository: https://github.com/Nimbleway/agent-skills
 ---
@@ -64,9 +65,9 @@ claude mcp list 2>/dev/null | grep -q "nimble" && echo "MCP: connected" || echo 
 - Codex CLI or other terminal-only agents → `npm i -g @nimble-way/nimble-cli` + API key.
 - Cursor / VS Code / generic MCP clients → paste the `mcp.json` snippet from `rules/setup.md`.
 
-**Plugin installed but connector not connected** (typical Cowork / claude.ai — `mcp__plugin_nimble_nimble__*` tools are listed but a read-only `nimble_agents_list` probe fails with an auth/not-connected error or returns an OAuth authorization URL): tell the user verbatim and stop — _"Your Nimble plugin is installed, but its connector isn't connected yet. Open **Customize → Connectors**, find **Nimble**, click **Connect**, and complete the login in your browser (no Nimble account? create one right there during login). Once it shows **Connected**, re-run your request."_ See `rules/setup.md` for the full flow. Never substitute WebFetch, WebSearch, curl, or any other tool.
+**Plugin installed but connector not connected** (typical Cowork / claude.ai): if `mcp__plugin_nimble_nimble__*` tools are listed, verify with one read-only `mcp__plugin_nimble_nimble__nimble_agents_list` probe before any work. An auth/not-connected error or an OAuth authorization URL means not connected — surface the verbatim connect steps from `rules/setup.md` and stop. Never substitute WebFetch, WebSearch, curl, or any other tool.
 
-**If a tool returns an OAuth "Authorize" link instead of data**, present it exactly as given and stop. Never invent a "paste the URL back" / "I'll complete the connection" step — no such step exists — and never claim the tools "will activate" and then call them in the same turn. Wait for the user to authorize, then retry.
+**If a tool returns an OAuth "Authorize" link instead of data**, present it exactly as given and stop. Never invent a "paste the URL back" / "I'll complete the connection" step — no such step exists — and never claim tools "will activate" then call them in the same turn.
 
 ---
 

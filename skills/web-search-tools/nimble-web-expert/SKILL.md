@@ -49,7 +49,7 @@ allowed-tools:
   - AskUserQuestion
 license: MIT
 metadata:
-  version: "0.21.2"
+  version: "0.21.3"
   author: Nimbleway
   repository: https://github.com/Nimbleway/agent-skills
 ---
@@ -69,11 +69,9 @@ User request: $ARGUMENTS
 - **Never answer from training data.** Live prices, current news, today's listings → always fetch via Nimble. If unavailable, say so.
 - **AskUserQuestion at every meaningful choice.** Header ≤12 chars, 2–4 options, label 1–5 words, recommended option first. Never present choices as numbered prose.
 - **Save all outputs to `.nimble/`.** Never leave extraction results in memory only.
-- **Verify the connection BEFORE working — don't fire a data call and react to the error.** In Cowork / claude.ai the plugin is often installed while its connector isn't connected. If bash is available, `nimble --version` + `NIMBLE_API_KEY` confirms the CLI path. Otherwise, if `mcp__plugin_nimble_nimble__*` tools are listed, run one read-only `nimble_agents_list` probe: success = connected, proceed; auth/not-connected error or a response containing an OAuth authorization URL = not connected.
-- **No working CLI and no connected MCP → stop. Do not fall back to WebFetch, WebSearch, curl, or any other tool**, and do not retry with `dangerouslyDisableSandbox`. Distinguish two cases by symptom:
-  - **Plugin installed, connector not connected** (typical Cowork / claude.ai — `mcp__plugin_nimble_nimble__*` tools are listed but the probe fails): tell the user verbatim and stop — _"Your Nimble plugin is installed, but its connector isn't connected yet. Open **Customize → Connectors**, find **Nimble**, click **Connect**, and complete the login in your browser (no Nimble account? create one right there during login). Once it shows **Connected**, re-run your request."_ See `rules/setup.md` for the full flow.
-  - **No plugin at all**: load `rules/setup.md` and follow the install flow there.
-- **If a tool hands back an OAuth "Authorize" link instead of data**, present it exactly as given and stop. Never invent a "paste the URL back" / "I'll complete the connection" step (no such step exists), and never claim the tools "will activate" and then call them in the same turn. Wait for the user to authorize, then retry (or re-probe with `nimble_agents_list`).
+- **Verify the connection BEFORE working — don't fire a data call and react to the error.** With bash, `nimble --version` + `NIMBLE_API_KEY` confirms the CLI path; otherwise run one read-only `mcp__plugin_nimble_nimble__nimble_agents_list` probe. Success = connected; an auth/not-connected error or a response containing an OAuth authorization URL = not connected.
+- **No working CLI and no connected MCP → stop.** Do not fall back to WebFetch, WebSearch, curl, or `dangerouslyDisableSandbox`. If the plugin is installed but the connector isn't connected (typical Cowork / claude.ai), surface the verbatim connect steps from `rules/setup.md` and stop; if no plugin at all, follow the install flow in `rules/setup.md`.
+- **If a tool hands back an OAuth "Authorize" link instead of data, present it exactly as given and stop.** Never invent a "paste the URL back" / "I'll complete the connection" step — none exists — and never claim tools "will activate" then call them in the same turn. Wait for the user to authorize, then retry or re-probe.
 
 ## Skill ecosystem
 

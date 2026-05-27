@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.21.3] - 2026-05-27
+
+### Fixed
+- **Cowork / claude.ai connector detection & hallucinated auth flows** — in those hosts the plugin is often installed while its MCP connector isn't connected. The previous guidance was reactive ("if the first call errors, then guide"), so agents fired a data call, got back an OAuth authorization URL, and improvised a fabricated recovery flow ("paste the full URL from your address bar back here and I'll complete the connection"). The fix makes connection verification a **proactive preflight** (one read-only `nimble_agents_list` probe before any work), **corrects the connect path** everywhere to `Customize → Connectors → Nimble → Connect → browser login` (superseding the 0.21.1 `Personal plugins → … → Add to your team` wording), adds an **inline sign-up** note for users without a Nimble account, and adds a **hard anti-hallucination rule** (present any "Authorize" link verbatim and stop; never invent a completion step; never claim tools "will activate" then call them in the same turn). Touches `_shared/` canonical sources, all 11 synced business-skill `references/` directories, both core skills' `SKILL.md` + `rules/setup.md`, and `README.md`.
+- **Missing probe-tool permission** — added `mcp__plugin_nimble_nimble__nimble_agents_list` to `nimble-agent-builder`'s `allowed-tools` so it can actually run the mandated preflight probe in MCP-only hosts.
+- **Dangling reference** — both core `SKILL.md` files pointed connector guidance at a `references/profile-and-onboarding.md` that doesn't exist in those skills; guidance is now self-contained and points to `rules/setup.md`.
+
 ## [0.21.1] - 2026-05-13
 
 ### Fixed
