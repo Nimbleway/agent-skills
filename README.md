@@ -5,6 +5,8 @@
 
 Unlock the web for your AI agents — search, scrape, extract structured data, and run business intelligence workflows, all powered by Nimble's web data infrastructure. One plugin for Claude Code, Cursor, and any platform that supports the [Agent Skills spec](https://agentskills.io/specification.md).
 
+**Agent credential protocol:** see [AUTH.md](AUTH.md) — the file agents read to authenticate to the Nimble API. Served live at https://nimbleway.com/auth.md.
+
 ## Skills
 
 | Category | What you get |
