@@ -16,7 +16,7 @@ description: |
   for live web data via WSAs and fallback search.
   Do NOT use for competitor analysis or monitoring (use competitor-intel),
   company research or deep dives (use company-deep-dive), general web search
-  or extraction (use nimble-web-expert).
+  or extraction (use nimble-fetch).
 allowed-tools:
   - Bash(nimble:*)
   - Bash(date:*)
@@ -36,7 +36,7 @@ allowed-tools:
   - AskUserQuestion
 metadata:
   author: Nimbleway
-  version: 0.21.3
+  version: 0.22.0
 ---
 
 # Local Places

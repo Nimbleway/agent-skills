@@ -76,15 +76,11 @@ the list for user confirmation. Target 20-40 queries.
 Never hardcode agent template names — discover them dynamically every run
 and validate before use, per `references/nimble-playbook.md`.
 
-Search for relevant agents in parallel. Run separate searches per surface so
-the AI platform agents and the SERP agents can be discovered independently:
+Search for AI platform agents in parallel. Google AI Overview detection uses
+`nimble serp --search-engine google_aio` directly — no agent discovery needed
+for that surface.
 
 ```bash
-# SERP surfaces
-nimble agent list --search "google serp" --limit 100
-nimble agent list --search "search engine" --limit 100
-
-# AI platform surfaces
 nimble agent list --search "chatgpt" --limit 50
 nimble agent list --search "perplexity" --limit 50
 nimble agent list --search "google ai" --limit 50
@@ -96,8 +92,7 @@ For each promising match, validate with `nimble agent get --template-name {name}
 and confirm the expected input param (`prompt` or `keyword`) and output fields
 (`answer`, `sources`). Cache the discovered template names for this run as
 `{chatgpt_agent}`, `{perplexity_agent}`, `{google_ai_agent}`, `{gemini_agent}`,
-`{grok_agent}`, and `{serp_agent}`. Use those variables everywhere in Step 5
-rather than string literals.
+and `{grok_agent}`. Use those variables everywhere in Step 5 rather than string literals.
 
 If a platform agent is not discovered or fails validation, drop that platform
 from the run (or fall back to `nimble search --include-answer` where useful)
@@ -154,14 +149,19 @@ nimble agent run-batch \
   --input '{"params": {"prompt": "query 2", "skip_sources": false}}'
 ```
 
-**Also run traditional SERP** for Google AI Overview detection:
+**Also run Google AI Overview detection** using the dedicated engine:
 
 ```bash
-nimble search --query "{query}" --search-depth deep --country US --max-results 10
+nimble --client-source skill-seo-intel serp run \
+  --search-engine google_aio \
+  --query "{query}" \
+  --parse --country US
 ```
 
 This captures whether the query triggers an AI Overview in standard Google Search
-(distinct from Google AI Mode). Check the response for AI Overview indicators.
+(distinct from Google AI Mode). Check `data.parsing.entities` for an `AIOverview`
+key — its presence means an AI Overview was triggered. Extract the snippet for
+brand/competitor mention analysis.
 
 **Agent coordination:**
 - 5 platform agents + 1 SERP track = 6 data sources per query

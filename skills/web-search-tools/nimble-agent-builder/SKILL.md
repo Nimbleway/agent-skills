@@ -7,7 +7,7 @@ description: >
   Trigger phrases: "set up extraction for X site", "I need to extract from this site regularly",
   "build an agent for", "create a reusable scraper", "generate a Nimble agent",
   "refine my agent", "add a field to my agent", or when the user wants to run extraction at scale.
-  For getting data immediately, use nimble-web-expert instead.
+  For getting data immediately, use nimble-fetch instead.
 allowed-tools:
   # All operations available via CLI (Bash):
   #   nimble agent list --limit 100
@@ -29,7 +29,7 @@ allowed-tools:
   - mcp__plugin_nimble_nimble__nimble_agents_update_session
 license: MIT
 metadata:
-  version: "0.21.3"
+  version: "0.22.0"
   author: Nimbleway
   repository: https://github.com/Nimbleway/agent-skills
 ---
@@ -73,12 +73,12 @@ claude mcp list 2>/dev/null | grep -q "nimble" && echo "MCP: connected" || echo 
 
 ## Skill ecosystem
 
-nimble-agent-builder and nimble-web-expert work as a pair in the Nimble toolkit:
+nimble-agent-builder and nimble-fetch work as a pair in the Nimble toolkit:
 
 | Skill                                 | Best for                                                                                          | Key commands                                     |
 | ------------------------------------- | ------------------------------------------------------------------------------------------------- | ------------------------------------------------ |
 | **nimble-agent-builder** (this skill) | Build reusable agents — create, refine, and publish named extraction templates with fixed schemas | CLI: `generate`, `get-generation`, `publish`     |
-| **nimble-web-expert**                 | Real-time data access — fetch any URL, search, map, crawl, run published agents                   | `extract`, `search`, `map`, `crawl`, `agent run` |
+| **nimble-fetch**                 | Real-time data access — fetch any URL, search, map, crawl, run published agents                   | `extract`, `search`, `map`, `crawl`, `agent run` |
 
 ### Stay in nimble-agent-builder for
 
@@ -89,17 +89,17 @@ nimble-agent-builder and nimble-web-expert work as a pair in the Nimble toolkit:
 - Validating agent output quality
 - Any task phrased as "build", "refine", "update", "add a field to", "publish"
 
-### When to route to nimble-web-expert
+### When to route to nimble-fetch
 
-**After publishing an agent** — run it directly here via `nimble agent run` (CLI). Route to nimble-web-expert only when the workflow needs tools this skill doesn't have:
+**After publishing an agent** — run it directly here via `nimble agent run` (CLI). Route to nimble-fetch only when the workflow needs tools this skill doesn't have:
 
-- Need a list of input URLs to feed into the agent? → Switch to nimble-web-expert, run `nimble map --url <site>` to crawl and generate the input list, then return here to run at scale.
-- Need to search for input params? → Switch to nimble-web-expert, run `nimble search`, then return here with the results.
+- Need a list of input URLs to feed into the agent? → Switch to nimble-fetch, run `nimble map --url <site>` to crawl and generate the input list, then return here to run at scale.
+- Need to search for input params? → Switch to nimble-fetch, run `nimble search`, then return here with the results.
 
 **When the task is not about building an agent:**
 
-- One-off URL fetch, web search, site mapping, bulk crawl → nimble-web-expert
-- Tell the user: _"This is a direct data access task, not an agent-building task. Use nimble-web-expert for this."_
+- One-off URL fetch, web search, site mapping, bulk crawl → nimble-fetch
+- Tell the user: _"This is a direct data access task, not an agent-building task. Use nimble-fetch for this."_
 
 ### When agent generation needs site investigation
 
@@ -145,7 +145,7 @@ Do NOT use AskUserQuestion.
 
 **Step 3 — Use the report** to retry agent generation: pass the selector/XHR context and suggested extract command in the `nimble_agents_update_session` call.
 
-**Step 4 — If investigation also fails:** Tell the user: _"This site requires complex browser automation that can't be captured in an agent at this stage. Use nimble-web-expert's Tier 4/5 commands with `--browser-action` or `--network-capture` to access the data directly."_
+**Step 4 — If investigation also fails:** Tell the user: _"This site requires complex browser automation that can't be captured in an agent at this stage. Use nimble-fetch's Tier 4/5 commands with `--browser-action` or `--network-capture` to access the data directly."_
 
 ---
 

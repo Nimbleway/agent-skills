@@ -1,5 +1,17 @@
 # Changelog
 
+## [0.22.0] - 2026-05-27
+
+### Changed
+- **Renamed `nimble-web-expert` → `nimble-fetch`** — clearer, action-oriented name for the real-time web data skill. The directory, `SKILL.md` `name`, plugin manifests, and all cross-references in `nimble-agent-builder` and the business skills are updated. Includes the connector-detection and anti-hallucination fixes from 0.21.3 (merged from `main`), now carried into `nimble-fetch`.
+
+### Added
+- **`nimble serp` API** — structured Google SERP retrieval (organic rankings, SERP features, Maps, Images, News, AI Overview) across 7 search engines, with typed entities and pre-computed positions. New `references/nimble-serp/SKILL.md`; wired into `nimble-fetch` routing and the `seo-intel` workflows. Simpler than the `google_search` WSA for rank/SERP data.
+- **`nimble media` API** — download binary files (images, video, audio, documents) from any URL through Nimble's infrastructure, with MIME validation, geo-targeting, sync/async modes, and a `nimble map → nimble media` pipeline. New `references/nimble-media/SKILL.md`; routed from `nimble-fetch`.
+
+### Fixed
+- **Qodo review** — route table now specifies runnable `nimble media run*` / `nimble serp run*` subcommands; added `metadata` frontmatter to the new reference docs; media output paths use absolute `~/.nimble/downloads/` instead of a relative `.nimble/`.
+
 ## [0.21.3] - 2026-05-27
 
 ### Fixed

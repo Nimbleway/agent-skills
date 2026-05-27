@@ -1,4 +1,4 @@
-# nimble-web-expert
+# nimble-fetch
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
@@ -75,7 +75,7 @@ Each command supports multiple output formats — see [docs.nimbleway.com](https
 
 | Skill                        | Best for                                                    |
 | ---------------------------- | ----------------------------------------------------------- |
-| **nimble-web-expert** (this) | Get data now — one-off fetches, real-time lookups           |
+| **nimble-fetch** (this) | Get data now — one-off fetches, real-time lookups           |
 | **nimble-agent-builder**     | Build reusable agents — scheduled, at-scale, API-accessible |
 
 Agents built by nimble-agent-builder appear in `nimble agent list` and are immediately usable here via `nimble agent run`.

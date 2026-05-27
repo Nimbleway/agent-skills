@@ -25,7 +25,7 @@ for refs_dir in "$REPO_ROOT"/skills/*/*/references; do
 
   # Skip non-business skills (they manage their own references)
   case "$skill_name" in
-    nimble-web-expert|nimble-agent-builder) continue ;;
+    nimble-fetch|nimble-agent-builder) continue ;;
   esac
 
   # Only sync skills that have a SKILL.md (i.e., actually implemented)

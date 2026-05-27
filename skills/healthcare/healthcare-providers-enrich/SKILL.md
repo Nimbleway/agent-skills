@@ -15,7 +15,7 @@ description: |
   Do NOT use for extracting providers from practice URLs — use healthcare-providers-extract instead.
   Do NOT use for validating credentials — use healthcare-providers-verify instead.
   Do NOT use for discovering practices — use market-finder or local-places instead.
-  Do NOT use for general extraction — use nimble-web-expert instead.
+  Do NOT use for general extraction — use nimble-fetch instead.
 allowed-tools:
   - Bash(nimble:*)
   - Bash(date:*)
@@ -35,7 +35,7 @@ allowed-tools:
   - AskUserQuestion
 metadata:
   author: Nimbleway
-  version: 0.21.3
+  version: 0.22.0
 ---
 
 # Healthcare Providers Enrich
