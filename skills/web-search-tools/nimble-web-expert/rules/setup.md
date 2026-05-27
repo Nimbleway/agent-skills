@@ -26,7 +26,8 @@ pointing at `https://mcp.nimbleway.com/mcp` over native HTTP with OAuth. After
 install, run `/mcp` once to authenticate in your browser — no API key needed.
 
 In claude.ai / Claude Cowork, the connector appears under
-`Customize → Personal plugins → Nimble → Connectors`.
+`Customize → Connectors` as **Nimble** — click **Connect** and complete the
+browser login to activate it (see the not-connected section below).
 
 Verify:
 
@@ -36,6 +37,32 @@ claude mcp list | grep nimble
 
 Expect: `plugin:nimble:nimble: https://mcp.nimbleway.com/mcp (HTTP) - ✓ Connected`
 once authenticated (or `! Needs authentication` until you run `/mcp`).
+
+### Plugin installed but connector not connected (Cowork / claude.ai)
+
+The most common Cowork / claude.ai state: the plugin is installed
+(`mcp__plugin_nimble_nimble__*` tools are listed) but its connector isn't
+connected, so live data calls fail. **Verify before doing any work** — run one
+read-only `nimble_agents_list` probe: success = connected; an auth/not-connected
+error or a response containing an OAuth authorization URL = not connected.
+
+When not connected, tell the user verbatim and **stop** — never fall back to
+WebFetch, WebSearch, curl, or any other tool:
+
+> Your Nimble plugin is installed, but its connector isn't connected yet — that's
+> why I can't fetch live data. To connect it:
+>
+> 1. Open **Customize → Connectors**
+> 2. Find **Nimble** and click **Connect**
+> 3. Complete the login in your browser. **No Nimble account?** You can create one
+>    right there during login.
+> 4. Once it shows **Connected**, re-run your request.
+
+**If a tool returns an OAuth "Authorize" link instead of data**, present the link
+exactly as given and stop. Do **not** invent a completion step ("paste the URL
+back", "I'll complete the connection") — no such step exists — and do **not**
+claim the tools will activate and then call them in the same turn. Wait for the
+user to authorize, then retry (or run one `nimble_agents_list` probe to confirm).
 
 ---
 

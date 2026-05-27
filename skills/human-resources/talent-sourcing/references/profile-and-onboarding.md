@@ -122,25 +122,32 @@ The plugin install is one command and handles MCP registration + OAuth automatic
 This works in every Claude product (Code, Cowork, claude.ai) — they share the
 plugin + connector mechanism.
 
-#### Plugin installed but connector not activated (Cowork / claude.ai)
+#### Plugin installed but connector not connected (Cowork / claude.ai)
 
-A common Cowork state: the plugin is installed (visible under
-`Customize → Personal plugins → Nimble`) but the connector hasn't been
-activated yet — the right-hand panel says "You are not connected to nimble yet".
+The most common Cowork / claude.ai failure: the plugin is installed
+(`mcp__plugin_nimble_nimble__*` tools are listed) but its connector isn't
+connected, so live data calls fail. **Check this before doing any work** — don't
+fire a data call and react to the error. A single read-only `nimble_agents_list`
+probe confirms it: success = connected, proceed; auth/not-connected error or a
+response containing an OAuth authorization URL = not connected.
 
-Detection signal: `mcp__plugin_nimble_nimble__*` tools are listed as available,
-but the first call to one returns an auth / not-connected error (and Bash is
-denied, so the CLI fallback isn't reachable either).
+When not connected, tell the user verbatim and **stop** — never fall back to
+WebFetch, WebSearch, or any other tool, and never guess at data:
 
-Tell the user verbatim and **stop** — never fall back to WebFetch, WebSearch,
-or any other tool. Wait for activation:
-
-> Your Nimble plugin is installed but the connector isn't activated yet. To enable Nimble here:
+> Your Nimble plugin is installed, but its connector isn't connected yet — that's
+> why live data isn't working. To connect it:
 >
-> 1. Open **Customize → Personal plugins → Nimble → Connectors**
-> 2. Find the `nimble` connector and click **Add to your team**
-> 3. Complete the OAuth flow in your browser
-> 4. Once it shows **Connected**, re-run your request
+> 1. Open **Customize → Connectors**
+> 2. Find **Nimble** and click **Connect**
+> 3. Complete the login in your browser. **No Nimble account?** You can create one
+>    right there during login.
+> 4. Once it shows **Connected**, re-run your request.
+
+**If a tool returns an OAuth "Authorize" link instead of data**, present the link
+as-is and stop. Do **not** invent a completion step ("paste the URL back",
+"I'll complete the connection") — no such step exists. Do **not** claim the tools
+will activate and then call them in the same turn. Wait for the user to authorize,
+then retry (or run one `nimble_agents_list` probe to confirm).
 
 #### Codex CLI or other terminal agents (shell available, no `/plugin install`)
 
