@@ -22,7 +22,8 @@
         "competitor-intelligence",
         "meeting-prep",
         "company-research",
-        "business-intelligence"
+        "business-intelligence",
+        "category-extraction"
       ],
       "skills": [
         "./skills/web-search-tools/nimble-web-expert",
@@ -37,7 +38,9 @@
         "./skills/healthcare/healthcare-providers-enrich",
         "./skills/healthcare/healthcare-providers-verify",
         "./skills/seo/seo-intel",
-        "./skills/human-resources/talent-sourcing"
+        "./skills/human-resources/talent-sourcing",
+        "./skills/web-extraction/category-discover",
+        "./skills/web-extraction/category-extract"
       ]
     }
   ]

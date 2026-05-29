@@ -25,7 +25,8 @@
     "competitor-intelligence",
     "meeting-prep",
     "company-research",
-    "business-intelligence"
+    "business-intelligence",
+    "category-extraction"
   ],
   "skills": [
     "./skills/web-search-tools/",
@@ -34,7 +35,8 @@
     "./skills/marketing/",
     "./skills/healthcare/",
     "./skills/seo/",
-    "./skills/human-resources/"
+    "./skills/human-resources/",
+    "./skills/web-extraction/"
   ],
   "agents": ["./agents/nimble-researcher.md", "./agents/nimble-analyst.md"]
 }
