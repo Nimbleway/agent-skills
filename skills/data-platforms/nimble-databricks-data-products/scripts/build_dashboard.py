@@ -50,14 +50,24 @@ Field/measure shorthand:
   ROUND()/CAST() — that makes AI/BI treat it as a dimension and the tile shows "No data".
   Use "format":"currency"|"number" + "decimals":N for display formatting instead.
 """
-import argparse, json, re, subprocess, sys
+import argparse, json, os, re, subprocess, sys, tempfile
 
 
 def db_api(method, path, body=None):
     cmd = ["databricks", "api", method.lower(), path]
+    tmp = None
     if body is not None:
-        cmd += ["--json", json.dumps(body)]
-    out = subprocess.run(cmd, capture_output=True, text=True)
+        # Pass the JSON body via a temp file (`--json @file`) instead of an argv string. A serialized
+        # dashboard can be large, and a big inline argument risks exceeding the OS argv size limit.
+        fd, tmp = tempfile.mkstemp(suffix=".json")
+        with os.fdopen(fd, "w") as fh:
+            json.dump(body, fh)
+        cmd += ["--json", f"@{tmp}"]
+    try:
+        out = subprocess.run(cmd, capture_output=True, text=True)
+    finally:
+        if tmp:
+            os.unlink(tmp)
     if out.returncode != 0:
         sys.exit(f"databricks api {method} {path} failed:\n{out.stderr}\n{out.stdout}")
     return json.loads(out.stdout) if out.stdout.strip() else {}
