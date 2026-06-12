@@ -1,7 +1,7 @@
 # Nimble Web Search Skills & Plugin
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![Version](https://img.shields.io/badge/version-0.21.3-green)](https://github.com/Nimbleway/agent-skills)
+[![Version](https://img.shields.io/badge/version-0.22.0-green)](https://github.com/Nimbleway/agent-skills)
 
 Unlock the web for your AI agents — search, scrape, extract structured data, and run business intelligence workflows, all powered by Nimble's web data infrastructure. One plugin for Claude Code, Cursor, and any platform that supports the [Agent Skills spec](https://agentskills.io/specification.md).
 
@@ -16,6 +16,7 @@ Unlock the web for your AI agents — search, scrape, extract structured data, a
 | **[SEO](skills/seo/)** | All-in-one SEO intelligence (`seo-intel`) — keyword research, rank tracking, technical site audits with JS rendering, content gap analysis, competitor on-page teardowns, AI visibility across 5 platforms, and GitHub repo SEO. Single entry point with intent-based routing |
 | **[Productivity](skills/productivity/)** | Walk into any meeting fully briefed — attendee backgrounds, company context, talking points, relationship mapping. Discover and score local businesses in any neighborhood with interactive maps |
 | **[Web Data Toolkit](skills/web-search-tools/)** | Search, scrape, extract, map, and crawl any website — plus build reusable extraction agents that run at scale |
+| **[Data Platforms](skills/data-platforms/)** | Turn live web data into Databricks data products — discover Nimble agents, scrape into Delta tables, and build an AI/BI dashboard and/or a deployed Databricks App (`nimble-databricks-data-products`) |
 
 **Business Research**, **Marketing**, and **Productivity** skills are one-command workflows. They spawn parallel sub-agents, gather live web data via Nimble APIs, synthesize findings, and deliver structured reports with dates and source URLs. They learn from previous runs and only surface what's new.
 
