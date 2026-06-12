@@ -1,5 +1,10 @@
 # Changelog
 
+## [0.22.0] - 2026-06-12
+
+### Added
+- **`nimble-databricks-data-products` skill** in a new **`data-platforms/`** vertical — turns a one-line brief (e.g. "pricing comparison on dog products from Amazon and Walmart in Databricks") into working Databricks data products (Delta tables, an AI/BI dashboard, and/or a deployed app), end to end — equally for production data products or quick demos. It runs Phase 0 preflight (auth, warehouse, integration gate, writable-schema confirm), discovers the right Nimble agents at runtime via the `nimble_integration` Unity Catalog functions (never hardcoded), ingests live web data into Delta tables using a **control-table + correlated `LATERAL nimble_agent_run`** pattern (one set-based, expandable INSERT — not per-keyword files), and produces an **AI/BI dashboard** and/or a **deployed Databricks App**, branded "Powered by Nimble". Bundles reference cookbooks (preflight, agent discovery/ingest, Lakeview dashboard, AppKit app, branding, official-`databricks-*`-skill delegation map, integration-install fallback), helper scripts (`build_dashboard.py` for one-shot dashboard creation, `ingest.sh` for async statement fan-out), and the Nimble logo asset. Encodes hard-won gotchas: defensive numeric casts for currency-string prices, per-agent localization, probe-before-fan-out, reconcile-against-control-table verification, Lakeview JSON pitfalls, and AppKit numeric-string / light-mode fixes. Registered in `.claude-plugin/plugin.json`, `.cursor-plugin/plugin.json`, and `.claude-plugin/marketplace.json`.
+
 ## [0.21.3] - 2026-05-27
 
 ### Fixed

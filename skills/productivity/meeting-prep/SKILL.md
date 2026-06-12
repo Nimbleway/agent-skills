@@ -33,7 +33,7 @@ allowed-tools:
   - AskUserQuestion
 metadata:
   author: Nimbleway
-  version: 0.21.3
+  version: 0.22.0
 ---
 
 # Meeting Prep
