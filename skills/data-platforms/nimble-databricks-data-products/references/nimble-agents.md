@@ -121,7 +121,7 @@ Two rules make this robust across retailers (learned the hard way — see the go
 
 ```sql
 INSERT INTO <schema>.<table>
-SELECT /*+ REPARTITION(64) */
+SELECT /*+ REPARTITION(8) */   -- ≈ number of enabled rows; keep modest (see note below)
   q.source,
   q.keyword AS search_keyword,
   try_cast(v.value:position AS INT),
@@ -146,9 +146,11 @@ Adjust the coalesced field names to whatever §2.5 actually showed for your sour
 examples, not a fixed list.
 
 Key points:
-- **`/*+ REPARTITION(N) */`** with N ≥ the number of enabled rows spreads the agent calls across N
-  Spark tasks so they run **in parallel**. Without it, a tiny control table sits in one partition and
-  the calls run serially (N × ~40s). With it, wall-clock ≈ the slowest single call.
+- **`/*+ REPARTITION(N) */`** spreads the agent calls across N Spark tasks so they run **in
+  parallel**. Without it, a tiny control table sits in one partition and the calls run serially
+  (N × ~40s). Set **N ≈ the number of enabled rows, and keep it modest** — each task is a live agent
+  call, so very high parallelism can trip API rate limits (HTTP 429). A couple dozen is plenty; if
+  you have hundreds of terms, batch them across runs rather than firing all at once.
 - It's still **one long-running statement**, so submit it **async and poll** — don't use a 50s
   `wait_timeout`. Use the helper: `bash scripts/ingest.sh <WH> ingest.sql`.
 - A bare `CAST(v.value:price AS DOUBLE)` throws `INVALID_VARIANT_CAST` the moment a retailer returns

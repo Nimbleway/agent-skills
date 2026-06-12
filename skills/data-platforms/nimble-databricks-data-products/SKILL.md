@@ -5,13 +5,13 @@ description: |
   web-data agents, scrapes into Delta tables, and produces an AI/BI dashboard and/or a deployed
   Databricks App — a table → dashboard → app workflow, for production data products or quick demos.
   Use whenever a request pairs live or scraped web data WITH a Databricks destination — e.g. "scrape
-  Amazon/Walmart prices into a Delta table and build a dashboard", "pricing comparison from Amazon
-  and Walmart in Databricks", "load Zillow/Instagram/Maps/search results into Databricks and build a
-  dashboard or app", "showcase Nimble + Databricks to a prospect". Prefer it over nimble-web-expert
-  or competitor-intel when the data lands in Databricks. Do NOT use for one-off web fetches or CSV
-  exports with no Databricks destination (use nimble-web-expert), competitor/company research
-  briefings (use competitor-intel / company-deep-dive), or generic Databricks work with no
-  Nimble/web-data angle (use the official databricks-* skills).
+  Amazon/Walmart prices into a Delta table and build a dashboard", "load Zillow/Instagram/Maps/search
+  results into Databricks and build a dashboard or app", "showcase Nimble + Databricks to a prospect".
+  Prefer it over nimble-web-expert or competitor-intel when the data lands in Databricks. Do NOT use
+  for one-off web fetches or CSV exports with no Databricks destination — use nimble-web-expert
+  instead. Do NOT use for competitor or company research briefings — use competitor-intel or
+  company-deep-dive instead. Do NOT use for generic Databricks work with no Nimble/web-data angle —
+  use the official databricks-* skills instead.
 allowed-tools:
   - Bash(databricks:*)
   - Bash(nimble:*)
@@ -42,16 +42,15 @@ skills (see `references/databricks-skills.md`); this skill owns the **Nimble glu
 
 ## Golden rules
 
-- **Discover, don't assume — then probe.** Agent names, input params, and output fields are read at
-  runtime via `nimble_agent_list()` and `nimble agent get`; never hardcode from memory (Amazon search
-  takes `keyword`, not `query`). And before fanning out, run **one** call per source to learn its
-  localization flag, real field names, and value formats — retailers differ (Amazon `price` numeric;
-  Walmart `product_price` as `"$125.99"`, localization `false`).
-- **One statement per Statements API call**, and **each Bash call is a fresh shell** (vars/`cd` don't
-  persist) — set them inline. See `references/preflight.md`.
-- **Fail fast, then confirm.** Run Phase 0 preflight before anything. Recommend a warehouse + a
-  writable schema, then **confirm with the user** before writing.
-- **Always ask the deliverable.** Table / table+dashboard / table+dashboard+app is a per-run choice.
+- **Discover, don't assume.** Read agent names, input params, and output fields at runtime via
+  `nimble_agent_list()` and `nimble agent get` — never hardcode from memory (Amazon search takes
+  `keyword`, not `query`).
+- **Probe before fanning out.** Run one call per source first to learn its localization flag, field
+  names, and value formats — sources differ (some return numeric prices, others currency strings).
+- **One statement per Statements API call.** Multiple `;`-separated statements in one call are a parse error.
+- **Each Bash call is a fresh shell.** Env vars and `cd` don't persist — set them inline. See `references/preflight.md`.
+- **Fail fast, then confirm.** Run Phase 0 preflight first; recommend a warehouse + writable schema, then confirm before writing.
+- **Always ask the deliverable.** Table / +dashboard / +app is a per-run choice.
 - **Branding is always on, neutral.** "Powered by Nimble" + light theme + yellow accent. See `references/branding.md`.
 - **Leave artifacts in place.** No teardown.
 - **Show your work and the headline.** End with URLs and the one-sentence insight (e.g. the price gap).
@@ -107,9 +106,9 @@ per-keyword files — it's reproducible and expandable (add a row, re-run).
    `amazon_serp` true, `walmart_serp` false).
 2. Create the **unified results table** (`source` column + normalized core + `raw VARIANT`).
 3. Run **one INSERT** that calls `nimble_agent_run(q.agent, q.params_json, q.localization)` via a
-   correlated `LATERAL` join over the control table, with a `/*+ REPARTITION(N) */` hint (N ≥ enabled
-   rows) so the agent calls run in parallel. It's one long statement → run it async with
-   `bash scripts/ingest.sh <WH> ingest.sql`.
+   correlated `LATERAL` join over the control table, with a `/*+ REPARTITION(N) */` hint (N ≈ enabled
+   rows, kept modest — high parallelism can trip API rate limits) so the agent calls run in parallel.
+   It's one long statement → run it async with `bash scripts/ingest.sh <WH> ingest.sql`.
 4. **Reconcile against the control table** (LEFT JOIN): a term that lands no items returns an empty
    result, and a correlated LATERAL drops empty rows — so reconcile to confirm every source is
    covered. If a source shows 0, re-check its localization flag (per-agent) and casts before
