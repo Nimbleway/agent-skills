@@ -8,7 +8,7 @@ them live. (Example trap: Amazon search wants `keyword`, not `query`.)
 
 > **Agent names in this file (`amazon_serp`, `walmart_serp`, `zillow_*`, …) are illustrative only.**
 > The catalog evolves — always discover the actual names at runtime with `nimble_agent_list()` and
-> validate with `nimble agent get`. Never depend on a hardcoded name.
+> introspect with `nimble_agent_describe`. Never depend on a hardcoded name.
 
 `nimble_agent_list()` returns one row per agent: `name, display_name, description, vertical,
 entity_type, domain, managed_by, is_public`. Query it via SQL:
@@ -29,25 +29,27 @@ Match the brief's **sources** (amazon, walmart, zillow, instagram, google_maps, 
 For most "analysis on X from <retailers>" briefs, **`*_serp`** is the right call (keyword in →
 many product rows out).
 
-## 2. Introspect the chosen agents
+## 2. Introspect the chosen agents — read the INPUTS
 
-Use the `nimble` CLI to read the template (input params + output schema):
-```bash
-nimble agent get amazon_serp | jq '{
-  inputs: [.input_properties[] | {name, required, type, is_pagination_param, is_localization_param}],
-  outputs: (.output_schema | keys)
-}'
+Read each chosen agent's input parameters at runtime with `nimble_agent_describe` (one row per
+param) — never hardcode them:
+```sql
+SELECT param_name, required, type, is_localization_param, is_pagination_param, default_value
+FROM nimble_integration.tools.nimble_agent_describe('amazon_serp')
+ORDER BY required DESC;
 ```
-- **`input_properties`** → the exact param names. The required one is your search term
-  (e.g. `keyword`). Note pagination (`page`) and localization (`zip_code`) params.
-- **`output_schema`** → the typed fields the agent emits (e.g. for `amazon_serp`:
-  `product_name, price, asin, currency, rating, review_count, product_url, image_url,
-  prime_eligible, amazons_choice, sponsored, recent_sales, position`).
+- **The required param is your search term** — e.g. `keyword`, not `query`. Use its exact
+  `param_name` when you build `params_json` in §3/§4.
+- **`is_localization_param`** flags the localization input (e.g. `zip_code`) and **`is_pagination_param`**
+  the pagination input (e.g. `page`). `default_value` / `examples_json` give sane starting values.
 
-Do this for **every** chosen source so the unified schema only includes fields that exist. Field
-names differ across retailers even within a vertical — e.g. **Amazon emits `price`/`rating`, Walmart
-emits `product_price`/`product_rating`**. Note each source's real field names; §4 coalesces the
-variants into one normalized column.
+Do this for **every** chosen source — param names differ across agents.
+
+> **Output fields come from a probe, not from `describe`.** `nimble_agent_describe` returns inputs
+> only (by design — output schemas are large and best seen from a real call). Learn the emitted
+> fields by running the agent once and inspecting the payload — see §2.5 (`to_json(parsing[0])`).
+> Field names differ across retailers even within a vertical (Amazon emits `price`/`rating`, Walmart
+> emits `product_price`/`product_rating`); §4 coalesces the variants into one normalized column.
 
 ## 2.5 Probe ONE call per source before fanning out (fail fast)
 
