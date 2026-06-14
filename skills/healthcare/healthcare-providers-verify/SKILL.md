@@ -34,7 +34,7 @@ allowed-tools:
   - AskUserQuestion
 metadata:
   author: Nimbleway
-  version: 0.22.0
+  version: 0.23.0
 ---
 
 # Healthcare Providers Verify

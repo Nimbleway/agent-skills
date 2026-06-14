@@ -1,5 +1,10 @@
 # Changelog
 
+## [0.23.0] - 2026-06-14
+
+### Changed
+- **`nimble-databricks-data-products` — SQL-native agent discovery.** Replaced the `nimble agent get` CLI introspection with the new `nimble_agent_describe()` Unity Catalog SQL function, so the full discovery path runs through SQL (`nimble_agent_list()` → `nimble_agent_describe()` → `nimble_agent_run()`) with no `nimble` CLI dependency. `references/nimble-agents.md` §2 now reads inputs via `nimble_agent_describe('<agent>')` and splits input discovery (from `describe`) from output-field discovery (the §2.5 run-probe). `SKILL.md` updates the "discover, don't assume" golden rule and Phase 2, and drops `Bash(nimble:*)` from `allowed-tools` (it existed only for `nimble agent get`). This removes the skill's only hard `nimble`-CLI dependency for discovery — the Phase 0 unblock for packaging it into Databricks Genie Code (SQL/notebook-native, no shell). Requires the `nimble_agent_describe` UDTF from the Nimble cookbook.
+
 ## [0.22.0] - 2026-06-12
 
 ### Added
