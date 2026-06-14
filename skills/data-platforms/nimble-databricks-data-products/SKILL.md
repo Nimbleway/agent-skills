@@ -63,7 +63,7 @@ Lean on the **`databricks-core`** skill for the generic checks.
 1. `databricks current-user me` → confirm auth; capture the username (for the default schema).
 2. Find a **RUNNING** SQL warehouse: `databricks warehouses list`. Prefer one already RUNNING; if none, offer to start one.
 3. **Integration gate** — confirm these exist:
-   `nimble_integration.tools.{nimble_search, nimble_extract, nimble_agent_run, nimble_agent_list}`.
+   `nimble_integration.tools.{nimble_search, nimble_extract, nimble_agent_run, nimble_agent_list, nimble_agent_describe}`.
    Quick check: `databricks functions list nimble_integration tools`.
    **If missing → STOP** and walk the user through `references/install-nimble-integration.md`
    (Nimble cookbook). Do not try to auto-install.

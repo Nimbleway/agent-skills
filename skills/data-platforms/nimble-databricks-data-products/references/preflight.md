@@ -20,9 +20,9 @@ Prefer a warehouse already `RUNNING` (no cold-start wait). If none is running, o
 ## 3. Integration gate
 ```bash
 databricks functions list nimble_integration tools -o json \
-  | jq -r '.[].name' | grep -E '^(nimble_search|nimble_extract|nimble_agent_run|nimble_agent_list)$'
+  | jq -r '.[].name' | grep -E '^(nimble_search|nimble_extract|nimble_agent_run|nimble_agent_list|nimble_agent_describe)$'
 ```
-You want all four public wrappers present. If the catalog/schema or functions are missing → **STOP**
+You want all five public wrappers present. If the catalog/schema or functions are missing → **STOP**
 and go to `install-nimble-integration.md`. Don't try to install it yourself.
 
 Sanity-ping the live path (optional, ~few s):
