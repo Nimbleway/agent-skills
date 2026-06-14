@@ -14,7 +14,6 @@ description: |
   use the official databricks-* skills instead.
 allowed-tools:
   - Bash(databricks:*)
-  - Bash(nimble:*)
   - Bash(python3:*)
   - Bash(bash:*)
   - Bash(jq:*)
@@ -26,7 +25,7 @@ allowed-tools:
   - Skill
 metadata:
   author: Nimbleway
-  version: 0.22.0
+  version: 0.23.0
 ---
 
 # Nimble on Databricks — data products builder
@@ -42,9 +41,9 @@ skills (see `references/databricks-skills.md`); this skill owns the **Nimble glu
 
 ## Golden rules
 
-- **Discover, don't assume.** Read agent names, input params, and output fields at runtime via
-  `nimble_agent_list()` and `nimble agent get` — never hardcode from memory (Amazon search takes
-  `keyword`, not `query`).
+- **Discover, don't assume.** Read agent names via `nimble_agent_list()`, input params via
+  `nimble_agent_describe('<agent>')`, and output fields by probing one call (`to_json(parsing[0])`) —
+  never hardcode from memory (Amazon search takes `keyword`, not `query`).
 - **Probe before fanning out.** Run one call per source first to learn its localization flag, field
   names, and value formats — sources differ (some return numeric prices, others currency strings).
 - **One statement per Statements API call.** Multiple `;`-separated statements in one call are a parse error.
@@ -64,7 +63,7 @@ Lean on the **`databricks-core`** skill for the generic checks.
 1. `databricks current-user me` → confirm auth; capture the username (for the default schema).
 2. Find a **RUNNING** SQL warehouse: `databricks warehouses list`. Prefer one already RUNNING; if none, offer to start one.
 3. **Integration gate** — confirm these exist:
-   `nimble_integration.tools.{nimble_search, nimble_extract, nimble_agent_run, nimble_agent_list}`.
+   `nimble_integration.tools.{nimble_search, nimble_extract, nimble_agent_run, nimble_agent_list, nimble_agent_describe}`.
    Quick check: `databricks functions list nimble_integration tools`.
    **If missing → STOP** and walk the user through `references/install-nimble-integration.md`
    (Nimble cookbook). Do not try to auto-install.
@@ -85,9 +84,9 @@ Keep the brief's intent (the "analysis goal") — it picks the Phase 4 template 
 
 ### Phase 2 — Discover agents + map a unified schema
 See `references/nimble-agents.md`.
-1. `nimble_agent_list()` (run via SQL or the `nimble` CLI), filter by the source/domain keywords.
-2. For each chosen agent: `nimble agent get <name>` → read `input_properties` (required params,
-   exact names) and `output_schema` (typed fields).
+1. `nimble_agent_list()` via SQL, filter by the source/domain keywords.
+2. For each chosen agent: `nimble_agent_describe('<name>')` → read its input params (required ones,
+   exact names, localization/pagination flags). Output fields come from the §2.5 probe, not here.
 3. Design **one unified table** with a `source` column + a normalized core
    (`product_name, price, currency, rating, review_count, brand, url, …`), keeping only fields the
    chosen agents actually emit. Multi-source comparison hinges on the shared columns.

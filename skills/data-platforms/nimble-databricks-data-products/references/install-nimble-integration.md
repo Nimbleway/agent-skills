@@ -1,7 +1,7 @@
 # Installing the Nimble × Databricks integration
 
 Use this **only when the Phase 0 integration gate fails** — i.e.
-`nimble_integration.tools.{nimble_search, nimble_extract, nimble_agent_run, nimble_agent_list}`
+`nimble_integration.tools.{nimble_search, nimble_extract, nimble_agent_run, nimble_agent_list, nimble_agent_describe}`
 don't exist. Do not auto-install; walk the user through it (or point them at the cookbook) and stop
 until it's done.
 
@@ -11,8 +11,8 @@ Authoritative source: **Nimble cookbook for Databricks** —
 ## What it sets up
 Querying live web data directly from SQL via Nimble APIs/agents, with results landing as governed
 Delta tables in Unity Catalog. It creates the `nimble_integration` catalog with a `tools` schema
-holding four table functions: `nimble_search`, `nimble_extract`, `nimble_agent_list`,
-`nimble_agent_run`.
+holding five table functions: `nimble_search`, `nimble_extract`, `nimble_agent_list`,
+`nimble_agent_describe`, `nimble_agent_run`.
 
 ## Prerequisites (call these out — they matter)
 - A **serverless SQL warehouse** with **outbound networking enabled**: turn on the preview
@@ -52,5 +52,5 @@ SELECT length(content) FROM nimble_integration.tools.nimble_extract('https://www
 Both should return non-zero. Once verified, return to Phase 0 and continue.
 
 ## Optional — register with Genie
-The cookbook includes `databricks/helpers/create_genie_space.py` to expose the four functions to a
+The cookbook includes `databricks/helpers/create_genie_space.py` to expose the five functions to a
 Genie space. Not required for this skill's dashboard/app demos.
