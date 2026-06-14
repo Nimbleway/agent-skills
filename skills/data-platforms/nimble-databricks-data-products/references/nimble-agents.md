@@ -34,7 +34,7 @@ many product rows out).
 Read each chosen agent's input parameters at runtime with `nimble_agent_describe` (one row per
 param) — never hardcode them:
 ```sql
-SELECT param_name, required, type, is_localization_param, is_pagination_param, default_value
+SELECT param_name, required, type, is_localization_param, is_pagination_param, default_value, examples_json
 FROM nimble_integration.tools.nimble_agent_describe('amazon_serp')
 ORDER BY required DESC;
 ```
