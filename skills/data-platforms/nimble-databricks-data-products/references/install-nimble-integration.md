@@ -9,7 +9,7 @@ Authoritative source: **Nimble cookbook for Databricks** —
 <https://github.com/Nimbleway/cookbook/tree/main/databricks>
 
 ## What it sets up
-Querying live web data directly from SQL via Nimble APIs/agents, with results landing as governed
+Querying live web search data directly from SQL via Nimble APIs/agents, with results landing as governed
 Delta tables in Unity Catalog. It creates the `nimble_integration` catalog with a `tools` schema
 holding five table functions: `nimble_search`, `nimble_extract`, `nimble_agent_list`,
 `nimble_agent_describe`, `nimble_agent_run`.

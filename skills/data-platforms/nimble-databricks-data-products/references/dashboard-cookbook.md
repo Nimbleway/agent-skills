@@ -28,7 +28,7 @@ objects, link columns, filter associativity, create/patch/publish, and URL build
 
 **Title + branding text** (always include — branding is on):
 ```json
-{"type":"text","md":"# 🐶 Dog Products: Amazon vs Walmart\n_Live web data · **Powered by Nimble**_","pos":[0,0,6,1]}
+{"type":"text","md":"# 🐶 Dog Products: Amazon vs Walmart\n_Live web search · **Powered by Nimble**_","pos":[0,0,6,1]}
 ```
 
 **Global filters** (put a couple near the top; they slice every widget on the SAME dataset):

@@ -32,7 +32,7 @@ yellow used only as an accent — never as the page background.
 ## In an AI/BI dashboard
 - Prefix the dashboard `display_name` and the top text widget with the mark + "Powered by Nimble"
   (e.g. `"🐶 Dog Products: Amazon vs Walmart  ·  Powered by Nimble"`).
-- Add a markdown text widget at the top: `_Live web data · **Powered by Nimble**_`.
+- Add a markdown text widget at the top: `_Live web search · **Powered by Nimble**_`.
 - To accent charts yellow, set series color 1 to `#F2F23B` (the compact spec uses the default palette;
   add colors per-chart only if asked — neutral default is fine).
 - On AI/BI dashboards, render the brand as the title/text wordmark (the dependable option there);

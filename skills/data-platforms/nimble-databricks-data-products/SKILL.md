@@ -32,7 +32,7 @@ metadata:
 
 Turn a natural-language brief like
 `pricing analysis on dog products from walmart and amazon` into working Databricks data products:
-**discover agents → ingest live web data into Delta → build dashboard and/or app → deliver links.**
+**discover agents → ingest live web search data into Delta → build dashboard and/or app → deliver links.**
 Equally at home for a quick demo or a real, reusable data product.
 
 You are the orchestrator. Databricks mechanics are delegated to the official `databricks-*`
