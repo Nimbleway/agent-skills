@@ -1,0 +1,46 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "crewai-nimble"
+version = "0.1.0"
+description = "Nimble web search tools for CrewAI agents"
+readme = "README.md"
+requires-python = ">=3.10"
+license = { text = "MIT" }
+authors = [{ name = "Nimbleway", email = "support@nimbleway.com" }]
+keywords = ["crewai", "nimble", "web-search", "ai-agents", "tools"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Internet :: WWW/HTTP :: Indexing/Search",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+]
+dependencies = [
+    "crewai>=0.80.0",
+    "nimble-python>=0.1.0",
+]
+
+[project.urls]
+Homepage = "https://github.com/Nimbleway/agent-skills"
+Documentation = "https://docs.nimbleway.com/nimble-sdk/web-tools/search"
+"Bug Tracker" = "https://github.com/Nimbleway/agent-skills/issues"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/crewai_nimble"]
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+testpaths = ["tests"]
+
+[dependency-groups]
+dev = [
+    "pytest>=8.0.0",
+    "pytest-asyncio>=0.24.0",
+]
