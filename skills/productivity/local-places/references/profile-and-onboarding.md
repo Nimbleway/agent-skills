@@ -195,24 +195,34 @@ Parse the version from `nimble --version`. If below 0.12.0:
 Verify after upgrade: `nimble --version`. If still outdated, suggest:
 `npm uninstall -g @nimble-way/nimble-cli && npm install -g @nimble-way/nimble-cli`
 
-#### API key not set
+#### Not authenticated
 
-> You need a Nimble API key.
-> 1. Go to [app.nimbleway.com](https://app.nimbleway.com) → API Keys
-> 2. Generate a new key
-> 3. Run: `export NIMBLE_API_KEY=your_key_here`
-> 4. Add to `~/.zshrc` or `~/.bashrc` to make permanent.
+Run `nimble login` to authenticate. Two options:
 
-After the user sets it, verify: `echo "NIMBLE_API_KEY=${NIMBLE_API_KEY:+set}"`
+1. **Browser (recommended)** — opens `online.nimbleway.com` for OAuth. No API key to copy or manage.
+2. **Paste an API key** — enter your key from [online.nimbleway.com](https://online.nimbleway.com) → Overview → API Token.
 
-#### API key expired (401)
+After login, verify:
 
-> Your key may have expired (72h TTL). Regenerate at app.nimbleway.com > API Keys.
+```bash
+nimble whoami
+```
+
+Credentials are stored at `~/.nimble/credentials.json` and used automatically on every `nimble` command. If `NIMBLE_API_KEY` is also set as an env var, stored credentials take priority. To sign out:
+
+```bash
+nimble logout
+```
+
+If you see `Note: NIMBLE_API_KEY environment variable is still set` after logout, unset it with `unset NIMBLE_API_KEY` if you want to use only stored credentials.
+
+#### API key expired or credentials invalid (401)
+
+Run `nimble logout && nimble login` to re-authenticate.
 
 #### All prerequisites met
 
-Only proceed to Company Setup once CLI is installed, version is >= 0.12.0, and API key
-is set. Don't silently skip any check.
+Only proceed to Company Setup once CLI is installed, version is >= 0.12.0, and `nimble whoami` succeeds. Don't silently skip any check.
 
 ### Company Setup (2 prompts max)
 

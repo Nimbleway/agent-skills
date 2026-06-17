@@ -63,12 +63,11 @@ When `/plugin install` isn't available but the user has shell access:
 
 ```bash
 npm i -g @nimble-way/nimble-cli
-export NIMBLE_API_KEY="your-api-key-here"
 nimble --version
+nimble login
 ```
 
-For the full setup flow (API-key generation, permanent storage in `~/.claude/settings.json`,
-Docs MCP), see `skills/web-search-tools/nimble-web-expert/rules/setup.md`.
+`nimble login` opens your browser for OAuth (recommended) or accepts a pasted API key. Verify with `nimble whoami`. For the full setup flow (Docs MCP), see `skills/web-search-tools/nimble-web-expert/rules/setup.md`.
 
 ## 3. Manual `mcp.json` — Cursor / VS Code / other MCP clients
 
