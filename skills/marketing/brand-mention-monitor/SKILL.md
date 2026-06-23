@@ -13,7 +13,7 @@ description: |
   saying about [brand]", "brand monitoring", "social listening", "run a brand sweep",
   "find high-risk mentions", or any variation of brand monitoring across web and social.
 
-  Do NOT use for one-time company research — use company-deep-dive instead.
+  Do NOT use for one-time company research or due diligence on a specific company.
 allowed-tools:
   - Bash(nimble:*)
   - Bash(date:*)
