@@ -13,7 +13,7 @@ description: |
   saying about [brand]", "brand monitoring", "social listening", "run a brand sweep",
   "find high-risk mentions", or any variation of brand monitoring across web and social.
 
-  Do NOT use for one-time company research — use company-due-diligence instead.
+  Do NOT use for one-time company research — use company-deep-dive instead.
 allowed-tools:
   - Bash(nimble:*)
   - Bash(date:*)
@@ -21,7 +21,7 @@ allowed-tools:
   - Write
 metadata:
   author: Nimbleway
-  version: 1.0.0
+  version: 0.23.0
 ---
 
 # Brand Mention Monitor
@@ -257,8 +257,8 @@ Claude MUST follow `references/template.html` exactly. Load the template, substi
 
 The triage console is an **interactive widget that must be rendered inline in the chat**. A downloadable file is a *secondary* artifact, never the primary deliverable. Follow this sequence exactly, every run:
 
-1. **Render the triage console inline FIRST.** Take the fully-populated `brand_mentions.html` and render it directly into the conversation as an interactive widget using the visualizer / canvas rendering tool. This inline render is the main deliverable and must happen before anything else is offered.
-2. **Then, and only then, offer downloads.** After the inline widget is on screen, additionally save `brand_mentions.html` and `brand_mentions.md` and offer them as downloadable files for the user to keep or share.
+1. **Render the triage console inline FIRST.** Take the fully-populated `brand-mention-monitor-{YYYY-MM-DD}.html` and render it directly into the conversation as an interactive widget using the visualizer / canvas rendering tool. This inline render is the main deliverable and must happen before anything else is offered.
+2. **Then, and only then, offer downloads.** After the inline widget is on screen, additionally save `~/.nimble/brand-mention-monitor-{YYYY-MM-DD}.html` and `~/.nimble/brand-mention-monitor-{YYYY-MM-DD}.md` and offer them as downloadable files for the user to keep or share.
 
 **Hard rules:**
 - **Never** respond with only a download link or only a file. If the user sees a file but no inline triage console, the run has failed its primary job.
@@ -267,12 +267,12 @@ The triage console is an **interactive widget that must be rendered inline in th
 
 **If the inline render genuinely cannot be produced** (e.g. the rendering/visualizer tool is unavailable or returns an error in this environment):
 1. Say so explicitly in one short line — e.g. "I couldn't render the interactive triage console inline this time (the rendering tool didn't respond), so here's the file instead."
-2. Then provide the downloadable `brand_mentions.html` as the fallback.
+2. Then provide the downloadable `~/.nimble/brand-mention-monitor-{YYYY-MM-DD}.html` as the fallback.
 3. Briefly note that re-running once the rendering tool is available will show it inline.
 
 Never silently fall back to a download — if inline fails, name the failure so the user knows it was the environment, not the intended behavior.
 
-### Output template spec (`brand_mentions.html`)
+### Output template spec (`brand-mention-monitor-{YYYY-MM-DD}.html`)
 
 **Visual identity — distinct from all other skills:**
 - Triage console aesthetic — dense, action-oriented, not a report
@@ -326,7 +326,7 @@ Every mention must include `<a href="[EXACT_NIMBLE_URL]" class="src-link">↗ so
 
 ---
 
-### Markdown output spec (`brand_mentions.md`)
+### Markdown output spec (`brand-mention-monitor-{YYYY-MM-DD}.md`)
 
 ```markdown
 # Brand Mention Monitor — [Brand Name]
