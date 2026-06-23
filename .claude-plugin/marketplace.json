@@ -36,6 +36,7 @@
         "./skills/business-research/company-deep-dive",
         "./skills/business-research/market-finder",
         "./skills/marketing/competitor-positioning",
+        "./skills/marketing/brand-mention-monitor",
         "./skills/healthcare/healthcare-providers-extract",
         "./skills/healthcare/healthcare-providers-enrich",
         "./skills/healthcare/healthcare-providers-verify",
