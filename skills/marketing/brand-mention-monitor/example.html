@@ -1,0 +1,641 @@
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-size:13px;color:var(--color-text-primary);background:transparent;padding:0 0 1.5rem;font-family:system-ui,-apple-system,sans-serif}
+.brand-bar{background:var(--color-background-secondary);border:0.5px solid var(--color-border-tertiary);border-radius:10px;padding:10px 16px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-bottom:1rem}
+.brand-name{font-size:15px;font-weight:500}
+.bmeta{display:flex;gap:14px;flex-wrap:wrap}
+.bmi{font-size:11px;color:var(--color-text-secondary);font-family:'SF Mono','Fira Code',monospace}
+.bmi span{color:var(--color-text-primary);font-weight:500}
+.sources-wrap{border:0.5px solid var(--color-border-tertiary);border-radius:8px;overflow:hidden;margin-bottom:1.25rem}
+.sources-hdr{display:flex;align-items:center;justify-content:space-between;padding:8px 12px;cursor:pointer;background:var(--color-background-secondary);user-select:none}
+.sources-hdr:hover{opacity:.85}
+.sources-hdr-label{font-size:11px;font-weight:500;color:var(--color-text-secondary);text-transform:uppercase;letter-spacing:.07em;display:flex;align-items:center;gap:6px}
+.sources-chev{font-size:12px;color:var(--color-text-secondary);transition:transform .18s}
+.sources-chev.open{transform:rotate(180deg)}
+.sources-body{display:none;padding:8px;grid-template-columns:repeat(3,minmax(0,1fr));gap:3px}
+.sources-body.open{display:grid}
+.src-item{font-size:11px;color:var(--color-text-secondary);display:flex;align-items:center;gap:5px;padding:4px 6px;border-radius:6px;cursor:pointer;transition:background .12s;user-select:none}
+.src-item:hover{background:var(--color-background-primary)}
+.src-item.active{background:var(--color-text-primary);color:var(--color-background-primary)}
+.src-item.active .src-check{color:var(--color-background-primary)}
+.src-item.active .src-pri{color:var(--color-background-primary)}
+.src-badge{margin-left:auto;font-size:10px;background:var(--color-background-primary);color:var(--color-text-secondary);border-radius:10px;padding:0 5px;min-width:16px;text-align:center;font-family:"SF Mono","Fira Code",monospace}
+.src-item.active .src-badge{background:rgba(255,255,255,.2);color:var(--color-background-primary)}
+.src-check{color:#3B6D11;font-size:12px}
+.src-pri{font-weight:500;color:var(--color-text-primary)}
+.sec{font-size:10px;font-weight:500;letter-spacing:.08em;text-transform:uppercase;color:var(--color-text-secondary);margin:1.25rem 0 8px;padding-bottom:6px;border-bottom:0.5px solid var(--color-border-tertiary)}
+.score-bars{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;margin-bottom:1.25rem}
+.sbc{background:var(--color-background-secondary);border:0.5px solid var(--color-border-tertiary);border-radius:8px;padding:11px 13px}
+.sbc-label{font-size:10px;font-weight:500;text-transform:uppercase;letter-spacing:.07em;margin-bottom:5px}
+.sbc-label.reach{color:#185FA5}
+.sbc-label.vel{color:#854F0B}
+.sbc-label.sent{color:#A32D2D}
+.sbc-label.opp{color:#3B6D11}
+.sbc-value{font-size:20px;font-weight:500;margin-bottom:5px}
+.sbc-value.reach{color:#185FA5}
+.sbc-value.vel{color:#854F0B}
+.sbc-value.sent{color:#A32D2D}
+.sbc-value.opp{color:#3B6D11}
+.sbc-track{height:5px;background:var(--color-border-tertiary);border-radius:3px;overflow:hidden;margin-bottom:4px}
+.sbc-fill{height:5px;border-radius:3px}
+.sbc-fill.reach{background:#185FA5}
+.sbc-fill.vel{background:#854F0B}
+.sbc-fill.sent{background:#A32D2D}
+.sbc-fill.opp{background:#3B6D11}
+.sbc-sub{font-size:10px;color:var(--color-text-secondary);line-height:1.4}
+.crisis-section{margin-bottom:1.25rem}
+.crisis-card{background:var(--color-background-primary);border-top:0.5px solid var(--color-border-tertiary);border-right:0.5px solid var(--color-border-tertiary);border-bottom:0.5px solid var(--color-border-tertiary);border-left:3px solid #A32D2D;border-radius:8px;padding:13px 14px;margin-bottom:8px}
+.crisis-header{display:flex;align-items:center;gap:8px;margin-bottom:8px;flex-wrap:wrap}
+.tier-badge{font-size:10px;font-weight:600;padding:2px 7px;border-radius:3px;letter-spacing:.04em}
+.tier-badge.crisis{background:var(--color-background-danger);color:var(--color-text-danger)}
+.tier-badge.watch{background:var(--color-background-warning);color:var(--color-text-warning)}
+.tier-badge.engage{background:var(--color-background-success);color:var(--color-text-success)}
+.tier-badge.log{background:var(--color-background-secondary);color:var(--color-text-secondary)}
+.crisis-score{font-size:12px;font-weight:500;color:#A32D2D}
+.crisis-handle{font-size:12px;font-weight:500}
+.crisis-platform{font-size:10px;color:var(--color-text-secondary);font-family:'SF Mono','Fira Code',monospace;padding:1px 5px;background:var(--color-background-secondary);border-radius:3px}
+.crisis-excerpt{font-size:12px;font-style:italic;color:var(--color-text-secondary);margin-bottom:8px;line-height:1.5;border-left:2px solid var(--color-border-tertiary);padding-left:8px}
+.crisis-meta{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px}
+.crisis-meta-item{font-size:11px;color:var(--color-text-secondary);line-height:1.5}
+.crisis-meta-item strong{color:var(--color-text-primary);font-weight:500}
+.crisis-reason{font-size:11px;color:var(--color-text-danger);background:var(--color-background-danger);border-radius:6px;padding:6px 9px;margin-bottom:8px;line-height:1.5}
+.crisis-action{font-size:12px;color:#854F0B;background:var(--color-background-warning);border-radius:0;padding:7px 10px;border-left:2px solid #854F0B;line-height:1.5;margin-bottom:8px}
+.crisis-btns{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
+.cbtn{font-size:11px;padding:4px 10px;border-radius:6px;border:0.5px solid var(--color-border-secondary);background:var(--color-background-secondary);cursor:pointer;color:var(--color-text-secondary);font-family:inherit;transition:all .12s;line-height:1.4;vertical-align:middle;box-sizing:border-box;text-decoration:none;display:inline-flex;align-items:center}
+.cbtn:hover{background:var(--color-background-primary);border-color:var(--color-border-primary)}
+.cbtn.handled{color:#3B6D11;border-color:#a8d5b5}
+.platform-bars{display:flex;flex-direction:column;gap:5px;margin-bottom:1.25rem}
+.pb-row{display:flex;align-items:center;gap:8px;cursor:pointer}
+.pb-name{font-size:11px;color:var(--color-text-secondary);width:72px;flex-shrink:0;font-family:'SF Mono','Fira Code',monospace;transition:color .12s}
+.pb-row:hover .pb-name,.pb-row.active .pb-name{color:var(--color-text-primary);font-weight:500}
+.pb-track{flex:1;background:var(--color-background-secondary);border-radius:2px;height:10px;overflow:hidden}
+.pb-fill{height:10px;border-radius:2px;background:#185FA5;opacity:.6;transition:opacity .12s}
+.pb-row.active .pb-fill{opacity:1}
+.pb-count{font-size:11px;color:var(--color-text-secondary);width:24px;text-align:right;flex-shrink:0}
+.filter-zone{margin-bottom:10px}
+.filter-row{display:flex;gap:4px;margin-bottom:6px;flex-wrap:wrap;align-items:center}
+.filter-lbl{font-size:10px;color:var(--color-text-secondary);width:52px;flex-shrink:0;text-transform:uppercase;letter-spacing:.05em}
+.fbtn{font-size:11px;padding:3px 8px;border-radius:20px;border:0.5px solid var(--color-border-secondary);background:var(--color-background-primary);cursor:pointer;color:var(--color-text-secondary);transition:all .12s;font-family:inherit}
+.fbtn:hover{background:var(--color-background-secondary)}
+.fbtn.on{background:var(--color-text-primary);color:var(--color-background-primary);border-color:var(--color-text-primary);font-weight:500}
+.chips-row{display:flex;gap:5px;flex-wrap:wrap;margin-bottom:8px}
+.chip{font-size:11px;padding:2px 8px;border-radius:20px;background:var(--color-background-secondary);border:0.5px solid var(--color-border-secondary);color:var(--color-text-secondary);display:inline-flex;align-items:center;gap:4px}
+.chip-x{cursor:pointer;opacity:.6;font-size:13px;line-height:1}
+.chip-x:hover{opacity:1}
+.clear-btn{font-size:11px;color:var(--color-text-secondary);cursor:pointer;background:none;border:none;font-family:inherit;text-decoration:underline;text-underline-offset:2px;padding:0}
+.clear-btn:hover{color:var(--color-text-primary)}
+.rcount{font-size:11px;color:var(--color-text-secondary);margin-bottom:8px}
+.rcount span{font-weight:500;color:var(--color-text-primary)}
+.feed{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin-bottom:1.25rem}
+.mc{background:var(--color-background-primary);border-top:0.5px solid var(--color-border-tertiary);border-right:0.5px solid var(--color-border-tertiary);border-bottom:0.5px solid var(--color-border-tertiary);border-left:3px solid var(--color-border-secondary);border-radius:8px;cursor:pointer;transition:border-color .12s;display:flex;flex-direction:column}
+.mc:hover{border-top-color:var(--color-border-secondary);border-right-color:var(--color-border-secondary);border-bottom-color:var(--color-border-secondary)}
+.mc.hidden{display:none}
+.mc.crisis{border-left-color:#A32D2D}
+.mc.watch{border-left-color:#854F0B}
+.mc.engage{border-left-color:#3B6D11}
+.mc.log{border-left-color:var(--color-border-secondary)}
+.mc-top{padding:10px 11px;flex:1;display:flex;flex-direction:column;gap:5px}
+.mc-header{display:flex;align-items:flex-start;justify-content:space-between;gap:4px}
+.mc-left{display:flex;gap:4px;align-items:center;flex-wrap:wrap;flex:1}
+.sp{font-size:10px;font-weight:500;padding:1px 5px;border-radius:3px}
+.sp.r{background:var(--color-background-info);color:var(--color-text-info)}
+.sp.v{background:#FEF3E2;color:#854F0B}
+.sp.s{background:var(--color-background-danger);color:var(--color-text-danger)}
+.sp.o{background:var(--color-background-success);color:var(--color-text-success)}
+.vel-arrow{font-size:11px;font-weight:500;margin-left:1px}
+.vel-arrow.up{color:#A32D2D}
+.vel-arrow.flat{color:#854F0B}
+.vel-arrow.down{color:#3B6D11}
+.mc-right{display:flex;gap:4px;align-items:center;flex-shrink:0}
+.ptag{font-size:10px;color:var(--color-text-secondary);padding:1px 5px;border-radius:3px;background:var(--color-background-secondary);font-family:'SF Mono','Fira Code',monospace}
+.chev{font-size:11px;color:var(--color-text-secondary);transition:transform .18s}
+.mc.exp .chev{transform:rotate(180deg)}
+.mc-head{font-size:12px;font-weight:500;line-height:1.4}
+.mc-quote{font-size:11px;color:var(--color-text-secondary);line-height:1.45;font-style:italic}
+.mc-meta-row{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:auto;padding-top:6px;border-top:0.5px solid var(--color-border-tertiary)}
+.mc-author{font-size:10px;color:var(--color-text-secondary);font-family:'SF Mono','Fira Code',monospace;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;opacity:.75}
+.src-link{font-size:11px;color:#185FA5;text-decoration:none;transition:opacity .12s;flex-shrink:0}
+.src-link:hover{opacity:.75;text-decoration:underline}
+.mc-expand{display:none;padding:8px 11px 10px;border-top:0.5px solid var(--color-border-tertiary)}
+.mc.exp .mc-expand{display:block}
+.bd-title{font-size:10px;text-transform:uppercase;letter-spacing:.07em;color:var(--color-text-secondary);margin-bottom:4px;font-weight:500}
+.bd{font-size:11px;background:var(--color-background-secondary);border-radius:6px;padding:8px 10px;margin-bottom:7px;line-height:1.6}
+.act-lbl{font-size:10px;text-transform:uppercase;letter-spacing:.08em;color:#854F0B;margin-bottom:3px;font-weight:500}
+.act-text{font-size:11px;background:var(--color-background-secondary);border-radius:0;padding:7px 9px;line-height:1.55;border-left:2px solid #854F0B}
+.no-results{padding:20px;text-align:center;font-size:12px;color:var(--color-text-secondary);border:0.5px dashed var(--color-border-tertiary);border-radius:8px;display:none;grid-column:1/-1}
+.footer{font-size:11px;color:var(--color-text-secondary);border-top:0.5px solid var(--color-border-tertiary);padding-top:8px;margin-top:4px;font-family:'SF Mono','Fira Code',monospace}
+.mv-grid{display:grid;grid-template-columns:180px 1fr;gap:20px;align-items:start;margin-bottom:1.25rem}
+.donut-wrap{position:relative;width:180px;height:180px;flex-shrink:0}
+#donut{width:180px;height:180px;cursor:pointer}
+.donut-center{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);text-align:center;pointer-events:none;width:88px}
+.donut-pct{font-size:26px;font-weight:500;color:var(--color-text-primary);line-height:1}
+.donut-lbl{font-size:11px;color:var(--color-text-secondary);margin-top:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.mv-right{min-width:0}
+.mv-legend{display:flex;flex-direction:column;gap:4px}
+.mv-row{display:flex;align-items:center;gap:8px;padding:5px 7px;border-radius:6px;cursor:pointer;transition:background .12s;border:0.5px solid transparent}
+.mv-row:hover{background:var(--color-background-secondary)}
+.mv-row.active{background:var(--color-background-secondary);border-color:var(--color-border-secondary)}
+.mv-dot{width:11px;height:11px;border-radius:3px;flex-shrink:0}
+.mv-name{font-size:12px;flex:1}
+.mv-bar-wrap{width:64px;background:var(--color-border-tertiary);border-radius:2px;height:5px;flex-shrink:0;overflow:hidden}
+.mv-bar-fill{height:5px;border-radius:2px}
+.mv-pct{font-size:11px;color:var(--color-text-secondary);width:28px;text-align:right;font-family:'SF Mono','Fira Code',monospace}
+.mv-note{font-size:11px;color:var(--color-text-secondary);margin-top:10px;line-height:1.5}
+.mv-detail{margin-top:10px;border:0.5px solid var(--color-border-tertiary);border-radius:8px;overflow:hidden;display:none}
+.mv-detail.open{display:block}
+.mvd-head{display:flex;align-items:center;gap:8px;padding:9px 11px;background:var(--color-background-secondary);border-bottom:0.5px solid var(--color-border-tertiary)}
+.mvd-dot{width:10px;height:10px;border-radius:3px;flex-shrink:0}
+.mvd-name{font-size:13px;font-weight:500;flex:1}
+.mvd-share{font-size:11px;color:var(--color-text-secondary);font-family:'SF Mono','Fira Code',monospace}
+.mvd-body{padding:10px 11px;display:flex;flex-direction:column;gap:9px}
+.mvd-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.mvd-stat{background:var(--color-background-secondary);border-radius:6px;padding:7px 9px}
+.mvd-stat-v{font-size:15px;font-weight:500;line-height:1.1}
+.mvd-stat-l{font-size:10px;color:var(--color-text-secondary);margin-top:2px}
+.mvd-sent{display:flex;height:7px;border-radius:4px;overflow:hidden;background:var(--color-border-tertiary)}
+.mvd-sent-pos{background:#3B6D11}.mvd-sent-neu{background:#B4B2A9}.mvd-sent-neg{background:#A32D2D}
+.mvd-sent-row{display:flex;justify-content:space-between;font-size:10px;color:var(--color-text-secondary);margin-top:4px}
+.mvd-signal{font-size:11px;line-height:1.5;background:var(--color-background-secondary);border-left:2px solid var(--color-text-secondary);border-radius:0;padding:7px 9px}
+.mvd-signal strong{color:var(--color-text-primary);font-weight:500}
+.mvd-trend-up{color:var(--color-text-danger);font-weight:500}
+.mvd-trend-down{color:var(--color-text-success);font-weight:500}
+.mvd-trend-flat{color:var(--color-text-secondary);font-weight:500}
+.geo-card{border:0.5px solid var(--color-border-tertiary);border-radius:8px;overflow:hidden;margin-bottom:1.25rem}
+.geo-hdr{display:flex;align-items:center;justify-content:space-between;padding:8px 12px;background:var(--color-background-secondary);border-bottom:0.5px solid var(--color-border-tertiary);flex-wrap:wrap;gap:8px}
+.geo-leg{display:flex;gap:12px;font-size:11px;color:var(--color-text-secondary)}
+.geo-leg-item{display:flex;align-items:center;gap:4px}
+.geo-leg-dot{width:8px;height:8px;border-radius:50%}
+.map-outer{position:relative;background:var(--color-background-primary)}
+#mapsvg{width:100%;display:block}
+.geo-tt{position:absolute;pointer-events:none;background:var(--color-background-primary);border:0.5px solid var(--color-border-secondary);border-radius:8px;padding:9px 11px;font-size:12px;opacity:0;transition:opacity .12s;z-index:10;min-width:150px;max-width:210px}
+.geo-tt-name{font-weight:500;margin-bottom:5px;font-size:13px}
+.geo-tt-row{display:flex;justify-content:space-between;gap:12px;font-size:11px;color:var(--color-text-secondary);margin-bottom:3px}
+.geo-tt-val{color:var(--color-text-primary);font-weight:500}
+.geo-tt-hint{font-size:10px;color:var(--color-text-secondary);margin-top:5px;font-style:italic}
+.geo-detail{border-top:0.5px solid var(--color-border-tertiary);background:var(--color-background-secondary);max-height:0;overflow:hidden;transition:max-height .25s ease}
+.geo-detail.open{max-height:520px;overflow:auto}
+.geo-detail-inner{padding:12px 14px}
+.gd-head{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:10px;flex-wrap:wrap}
+.gd-title{font-size:13px;font-weight:500;display:flex;align-items:center;gap:8px}
+.gd-dot{width:9px;height:9px;border-radius:50%;flex-shrink:0}
+.gd-count{font-size:11px;color:var(--color-text-secondary);font-family:'SF Mono','Fira Code',monospace}
+.gd-close{font-size:11px;color:var(--color-text-secondary);cursor:pointer;background:none;border:0.5px solid var(--color-border-secondary);border-radius:6px;padding:3px 9px;font-family:inherit}
+.gd-close:hover{background:var(--color-background-primary)}
+.gd-srclist{display:flex;flex-direction:column;gap:6px}
+.gd-src{display:flex;align-items:flex-start;gap:8px;padding:8px 10px;background:var(--color-background-primary);border:0.5px solid var(--color-border-tertiary);border-radius:6px}
+.gd-src-main{flex:1;min-width:0}
+.gd-src-top{display:flex;align-items:center;gap:6px;margin-bottom:2px;flex-wrap:wrap}
+.gd-plat{font-size:10px;color:var(--color-text-secondary);padding:1px 5px;border-radius:3px;background:var(--color-background-secondary);font-family:'SF Mono','Fira Code',monospace}
+.gd-tier{font-size:10px;font-weight:500;padding:1px 6px;border-radius:3px}
+.gd-tier.high{background:var(--color-background-danger);color:var(--color-text-danger)}
+.gd-tier.med{background:var(--color-background-warning);color:var(--color-text-warning)}
+.gd-tier.low{background:var(--color-background-info);color:var(--color-text-info)}
+.gd-src-head{font-size:12px;font-weight:500;line-height:1.4;margin-bottom:2px}
+.gd-src-meta{font-size:10px;color:var(--color-text-secondary);font-family:'SF Mono','Fira Code',monospace;opacity:.8}
+.gd-src-link{font-size:11px;color:#185FA5;text-decoration:none;flex-shrink:0;white-space:nowrap;padding-top:1px}
+.gd-src-link:hover{opacity:.75;text-decoration:underline}
+</style>
+
+<div class="brand-bar">
+  <div class="brand-name">Anthropic</div>
+  <div class="bmeta">
+    <div class="bmi">Window <span>Jun 15–22, 2026</span></div>
+    <div class="bmi">Mentions <span>14</span></div>
+  </div>
+</div>
+
+<div class="sources-wrap">
+  <div class="sources-hdr" onclick="toggleSources()">
+    <span class="sources-hdr-label">
+      Sources searched this run
+      <span style="font-size:10px;opacity:.6;font-weight:400;text-transform:none;letter-spacing:0">9 sources · B2B SaaS / Dev tool profile</span>
+    </span>
+    <span class="sources-chev" id="src-chev">&#8964;</span>
+  </div>
+  <div class="sources-body" id="sources-body">
+    <div class="src-item" data-platform="news"><span class="src-check">✓</span><span class="src-pri">News / trade press</span><span class="src-badge">6</span></div>
+    <div class="src-item" data-platform="reddit"><span class="src-check">✓</span><span class="src-pri">Reddit (r/ClaudeAI, r/Anthropic, r/singularity)</span><span class="src-badge">3</span></div>
+    <div class="src-item" data-platform="x"><span class="src-check">✓</span><span class="src-pri">X / Twitter</span><span class="src-badge">3</span></div>
+    <div class="src-item" data-platform="hackernews"><span class="src-check">✓</span><span>Hacker News</span><span class="src-badge">1</span></div>
+    <div class="src-item" data-platform="linkedin"><span class="src-check">✓</span><span>LinkedIn</span><span class="src-badge">1</span></div>
+    <div class="src-item" data-platform="blogs"><span class="src-check">✓</span><span>Blogs / Substack (InfoQ, Spyglass)</span><span class="src-badge">0</span></div>
+    <div class="src-item" data-platform="g2"><span class="src-check">✓</span><span>G2 / Capterra</span><span class="src-badge">0</span></div>
+    <div class="src-item" data-platform="facebook"><span class="src-check">✓</span><span>Facebook (Engadget repost)</span><span class="src-badge">0</span></div>
+    <div class="src-item" data-platform="youtube"><span class="src-check">✓</span><span>YouTube</span><span class="src-badge">0</span></div>
+  </div>
+</div>
+
+<div class="sec">Score summary</div>
+<div class="score-bars">
+  <div class="sbc">
+    <div class="sbc-label reach">Reach</div>
+    <div class="sbc-value reach" id="sv-reach">0</div>
+    <div class="sbc-track"><div class="sbc-fill reach" id="sf-reach" style="width:0%"></div></div>
+    <div class="sbc-sub">0 high-reach (70+)</div>
+  </div>
+  <div class="sbc">
+    <div class="sbc-label vel">Velocity ↑</div>
+    <div class="sbc-value vel" id="sv-vel">0</div>
+    <div class="sbc-track"><div class="sbc-fill vel" id="sf-vel" style="width:0%"></div></div>
+    <div class="sbc-sub">0 accelerating mentions</div>
+  </div>
+  <div class="sbc">
+    <div class="sbc-label sent">Sentiment risk</div>
+    <div class="sbc-value sent" id="sv-sent">0</div>
+    <div class="sbc-track"><div class="sbc-fill sent" id="sf-sent" style="width:0%"></div></div>
+    <div class="sbc-sub">0 high-risk (score 70+)</div>
+  </div>
+  <div class="sbc">
+    <div class="sbc-label opp">Opportunity</div>
+    <div class="sbc-value opp" id="sv-opp">0</div>
+    <div class="sbc-track"><div class="sbc-fill opp" id="sf-opp" style="width:0%"></div></div>
+    <div class="sbc-sub">0 to amplify</div>
+  </div>
+</div>
+
+<div class="sec">Market visibility</div>
+<div class="mv-grid">
+  <div class="donut-wrap">
+    <canvas id="donut"></canvas>
+    <div class="donut-center"><div class="donut-pct" id="dv">38%</div><div class="donut-lbl" id="dl">Anthropic</div></div>
+  </div>
+  <div class="mv-right">
+    <div class="mv-legend" id="mvl"></div>
+    <div class="mv-note" id="mvnote">Share of AI-lab conversations in this window that mentioned each brand. Click a segment for detail.</div>
+    <div class="mv-detail" id="mvd">
+      <div class="mvd-head"><span class="mvd-dot" id="mvd-dot"></span><span class="mvd-name" id="mvd-name"></span><span class="mvd-share" id="mvd-share"></span></div>
+      <div class="mvd-body">
+        <div class="mvd-stats">
+          <div class="mvd-stat"><div class="mvd-stat-v" id="mvd-mentions"></div><div class="mvd-stat-l">mentions</div></div>
+          <div class="mvd-stat"><div class="mvd-stat-v" id="mvd-trend"></div><div class="mvd-stat-l">vs last window</div></div>
+          <div class="mvd-stat"><div class="mvd-stat-v" id="mvd-reach"></div><div class="mvd-stat-l">est. reach</div></div>
+        </div>
+        <div>
+          <div class="mvd-sent" id="mvd-sent"></div>
+          <div class="mvd-sent-row"><span id="mvd-pos"></span><span id="mvd-neu"></span><span id="mvd-neg"></span></div>
+        </div>
+        <div class="mvd-signal" id="mvd-signal"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="sec">🔴 Crisis alerts — respond within 2 hours</div>
+<div class="crisis-section" id="crisis-section"></div>
+
+<div class="sec">Mentions by platform — click to filter</div>
+<div class="platform-bars" id="pbars"></div>
+
+<div class="sec">Geographic breakdown</div>
+<div class="geo-card">
+  <div class="geo-hdr">
+    <div class="geo-leg">
+      <div class="geo-leg-item"><div class="geo-leg-dot" style="background:#E24B4A"></div>High</div>
+      <div class="geo-leg-item"><div class="geo-leg-dot" style="background:#EF9F27"></div>Medium</div>
+      <div class="geo-leg-item"><div class="geo-leg-dot" style="background:#378ADD"></div>Low</div>
+    </div>
+    <span style="font-size:11px;color:var(--color-text-secondary);font-style:italic">Hover for summary · click a point for exact sources</span>
+  </div>
+  <div class="map-outer" id="mapouter">
+    <svg id="mapsvg" viewBox="0 0 720 360"></svg>
+    <div class="geo-tt" id="geo-tt"></div>
+  </div>
+  <div class="geo-detail" id="geo-detail"><div class="geo-detail-inner" id="geo-detail-inner"></div></div>
+</div>
+
+<div class="sec">Mention feed</div>
+<div class="filter-zone">
+  <div class="filter-row">
+    <span class="filter-lbl">Tier</span>
+    <button class="fbtn on" data-f="tier" data-v="all">All</button>
+    <button class="fbtn" data-f="tier" data-v="crisis">🔴 Crisis</button>
+    <button class="fbtn" data-f="tier" data-v="watch">🟠 Watch</button>
+    <button class="fbtn" data-f="tier" data-v="engage">🟢 Engage</button>
+    <button class="fbtn" data-f="tier" data-v="log">⚪ Log</button>
+  </div>
+  <div class="filter-row">
+    <span class="filter-lbl">Score</span>
+    <button class="fbtn on" data-f="score" data-v="all">All</button>
+    <button class="fbtn" data-f="score" data-v="high">High (70+)</button>
+    <button class="fbtn" data-f="score" data-v="mid">Mid (40–69)</button>
+    <button class="fbtn" data-f="score" data-v="low">Low (&lt;40)</button>
+  </div>
+  <div class="chips-row" id="chips"></div>
+</div>
+<div class="rcount" id="rcount"><span>0</span> mentions shown</div>
+<div class="feed" id="feed"></div>
+<div class="no-results" id="no-results">No mentions match. <button class="clear-btn" onclick="clearAll()">Clear filters</button></div>
+
+<div class="footer">Generated Jun 22, 2026 · Powered by Nimble + Claude · B2B SaaS / Dev tool source profile</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.8.5/d3.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/topojson/3.0.2/topojson.min.js"></script>
+<script>
+const mentions = [
+  {reach:95,velocity:88,sentiment:68,riskTopic:90,opp:8,tier:'crisis',velDir:'up',platform:'news',head:'CNN: "AI regulation is a mess, and Anthropic is caught in the crosshairs"',quote:'"Within days of its release, Anthropic\u2019s most sophisticated public AI model was abruptly yanked from customers... the Trump administration says some of those guardrails have failed."',author:'CNN Business · Hadas Gold · Jun 21',date:'2026-06-21',pubDate:'Jun 21, 2026',url:'https://www.cnn.com/2026/06/21/tech/anthropic-ai-regulation',reason:'Top-tier outlet · national-security + regulatory risk topic · export ban on Mythos/Fable models · cross-platform pickup (CNN, PBS, BBC, Reuters, Politico, Fortune) · accelerating, only 24h old',owner:'PR + Legal + Leadership',window:'<2h',breakdown:'Reach 95: CNN front-of-tech, syndicated across PBS/BBC/Reuters/Politico/Fortune. Velocity 88: story broke ~24h ago and is being picked up by every major outlet — fastest-moving item this run, accelerating. Sentiment 68: framing is sympathetic-to-Anthropic but the underlying event (model pulled, guardrails "failed") reads negative. Risk topic 90: national security + regulatory + export control — the single highest risk category.',actionText:'This is a live policy crisis, not a social flare-up. Leadership + Legal own the narrative; PR coordinates a single consistent statement reaffirming the "minor vulnerability, also present in other models" position already on record. Do NOT improvise on social. Track the freefable.org open letter as a third-party validator and amplify supportive expert voices (e.g. Alex Stamos) rather than arguing with David Sacks directly.'},
+  {reach:90,velocity:80,sentiment:62,riskTopic:88,opp:6,tier:'crisis',velDir:'up',platform:'news',head:'PBS NewsHour: Anthropic disables new AI model after White House security directive',quote:'"The Trump administration forced Anthropic, one of the country\u2019s leading artificial intelligence companies, to disable its new and powerful AI model."',author:'PBS NewsHour · Jun 17',date:'2026-06-17',pubDate:'Jun 17, 2026',url:'https://www.pbs.org/newshour/show/anthropic-disables-new-ai-model-after-white-house-security-directive',reason:'Broadcast-tier reach · national security / export control risk topic · core of the cross-platform story cluster',owner:'PR + Legal + Leadership',window:'<2h',breakdown:'Reach 90: PBS national broadcast + web. Velocity 80: part of the accelerating Mythos/Fable cluster spanning 6+ outlets. Sentiment 62: factual but the headline verb "disables/forced" lands negative. Risk topic 88: national-security export directive — same top-tier risk category as the CNN piece.',actionText:'Fold into the single coordinated response above. Ensure the on-record line ("90 minutes to comply", "vulnerability is minor and present in other models") is consistent across every outlet. Brief the comms team to expect follow-up requests; route all to one spokesperson.'},
+  {reach:88,velocity:72,sentiment:78,riskTopic:82,opp:5,tier:'crisis',velDir:'up',platform:'news',head:'WSJ: "Anthropic Sued Over Limits on Its $200-a-Month AI Plans"',quote:'"Federal lawsuit alleges the company oversold usage allowances on its priciest Claude chatbot tiers."',author:'The Wall Street Journal · Jun 15',date:'2026-06-15',pubDate:'Jun 15, 2026',url:'https://www.wsj.com/tech/ai/anthropic-sued-over-limits-on-its-200-a-month-ai-plans-e2a109e4',reason:'Tier-1 financial press · active federal litigation (false advertising) · directly tied to paying-customer trust · echoed by CNET, Yahoo Finance, Engadget, Reddit',owner:'PR + Legal',window:'<2h',breakdown:'Reach 88: WSJ tech desk, amplified by CNET / Yahoo Finance / Engadget / r/ClaudeAI. Velocity 72: a week old but still generating secondary coverage and community debate. Sentiment 78: directly accusatory — "oversold", "false advertising". Risk topic 82: legal / class-action category, plus pricing/billing — hits two flagged themes at once.',actionText:'Legal leads; comms stays minimal and non-admissive. Do not litigate specifics publicly. Prepare a short holding statement ("we don\u2019t comment on pending litigation but stand behind how we describe our plans"). Separately, flag to product/marketing: the Claude Max usage-limit messaging is now a legal liability — audit the plan-description copy this week.'},
+  {reach:72,velocity:58,sentiment:70,riskTopic:45,opp:12,tier:'watch',velDir:'up',platform:'x',head:'Widely-shared essay: "Anthropic is losing the mandate of heaven"',quote:'"When Anthropic banned the ability to use Claude Code inside other harnesses (OpenCode, OpenClaw, Hermes), it turned off many enthusiasts."',author:'@haridigresses (via spyglass.org) · Jun 20',date:'2026-06-20',pubDate:'Jun 20, 2026',url:'https://x.com/haridigresses/article/2065574450183963134?ref=spyglass.org',reason:'Influential developer-community essay · negative framing on developer goodwill · third-party-harness ban is a recurring complaint',owner:'Marketing / DevRel',window:'<24h',breakdown:'Reach 72: long-form X essay picked up by Spyglass newsletter, developer-influencer audience. Velocity 58: spreading in dev circles, climbing. Sentiment 70: critical of strategic direction and developer treatment. Risk topic 45: no legal/safety hit, but "turning off enthusiasts" is a reputational/competitive theme worth watching.',actionText:'DevRel should engage substantively, not defensively. The harness-ban grievance is real and recurring — consider a public clarification of the policy rationale, or a roadmap signal. Loop in product on whether the third-party-harness restriction is worth the goodwill cost with power users.'},
+  {reach:65,velocity:50,sentiment:62,riskTopic:35,opp:10,tier:'watch',velDir:'flat',platform:'reddit',head:'r/ClaudeAI: backlash to Anthropic rolling out identity verification',quote:'"I do like Anthropic\u2019s offerings but DS, MiMo, GLM are all catching up. I could ditch my Claude subscription tomorrow and won\u2019t feel like I\u2019d be driving off a cliff."',author:'r/ClaudeAI · Jun 18',date:'2026-06-18',pubDate:'Jun 18, 2026',url:'https://www.reddit.com/r/ClaudeAI/comments/1uboasr/anthropic_is_rolling_out_identity_verification/',reason:'Core user community · churn-risk language · competitor substitution named (DeepSeek, MiMo, GLM)',owner:'Marketing / Product',window:'<24h',breakdown:'Reach 65: r/ClaudeAI is the primary user community, high relevance. Velocity 50: steady discussion, not yet viral. Sentiment 62: frustrated but not hostile; the "I could ditch it tomorrow" line is a churn signal. Risk topic 35: privacy/verification friction, mild.',actionText:'Product + marketing should monitor for escalation. If identity-verification rollout generates a wave of cancellation threats, prepare a help-center explainer on why it\u2019s required and what data is/isn\u2019t collected. The competitive-substitution mentions are a retention flag worth tracking week-over-week.'},
+  {reach:55,velocity:40,sentiment:65,riskTopic:30,opp:8,tier:'watch',velDir:'flat',platform:'reddit',head:'r/Anthropic: "Claude to Require Face ID" — account wrongly flagged as a child\u2019s',quote:'"My Account randomly got flagged as used by a Child. My Claude Subscription was refunded and my projects are completely broken now."',author:'r/Anthropic · Jun 18',date:'2026-06-18',pubDate:'Jun 18, 2026',url:'https://www.reddit.com/r/Anthropic/comments/1uawzci/claude_to_require_face_id/',reason:'Specific user-harm anecdote (lost projects, forced refund) · ties to the broader verification backlash',owner:'Marketing / Support',window:'<24h',breakdown:'Reach 55: smaller subreddit but a concrete, sympathetic harm story that tends to travel. Velocity 40: moderate. Sentiment 65: clearly negative, names a real broken-experience. Risk topic 30: trust/safety-process friction, no legal hit yet.',actionText:'Support should reach out to resolve the specific broken-projects case (good-faith recovery wins goodwill). Tag this with the identity-verification cluster — if false-positive child-account flags are widespread, that\u2019s a product-quality issue to escalate, not just a comms one.'},
+  {reach:78,velocity:55,sentiment:25,riskTopic:20,opp:35,tier:'watch',velDir:'flat',platform:'news',head:'InfoQ: Claude Fable 5 on Bedrock requires sharing inference data with Anthropic',quote:'"Using Claude Fable 5 or Mythos 5 on Amazon Bedrock requires opting into provider_data_share, sending prompts and outputs to Anthropic for 30-day retention."',author:'InfoQ · Jun 20',date:'2026-06-20',pubDate:'Jun 20, 2026',url:'https://www.infoq.com/news/2026/06/bedrock-fable-5-data-sharing/',reason:'Developer/enterprise trade press · data-privacy topic · relevant to enterprise buyers evaluating Bedrock deployment',owner:'Marketing / DevRel',window:'<24h',breakdown:'Reach 78: InfoQ is high-authority with enterprise architects. Velocity 55: steady developer interest. Sentiment 25: largely neutral/informational, not an attack. Risk topic 20: data-retention is a sensitivity but framed factually. Opp 35: a chance to clarify the data-handling story proactively.',actionText:'DevRel: get ahead of this with a clear explainer on what provider_data_share does and does not retain. Enterprise buyers read InfoQ — a transparent, technical response builds trust rather than letting the 30-day-retention line define the narrative.'},
+  {reach:82,velocity:45,sentiment:5,riskTopic:0,opp:80,tier:'engage',velDir:'flat',platform:'news',head:'Forbes: Anthropic invests $150M to launch 1,000 "Claude Corps" fellowships',quote:'"Anthropic has unveiled Claude Corps, a $150 million initiative to train and deploy 1,000 young workers into 400 U.S. nonprofits."',author:'Forbes · Michael T. Nietzel · Jun 18',date:'2026-06-18',pubDate:'Jun 18, 2026',url:'https://www.forbes.com/sites/michaeltnietzel/2026/06/18/anthropic-invests-150-million-to-launch-1000-claude-corps-fellowships/',reason:'High-authority positive press · social-impact narrative · strong counter-programming to the regulatory crisis cluster',owner:'Marketing / Comms',window:'48h',breakdown:'Reach 82: Forbes, broad business audience. Velocity 45: positive stories build steadily. Sentiment 5: fully positive. Opp 80: this is the best owned-narrative asset of the window — a $150M social-impact program that directly offsets the "national security threat" framing.',actionText:'Amplify hard across owned channels and exec LinkedIn. This is the counter-story to the regulatory cycle — lead comms with it where appropriate. Pitch follow-up features (fellow profiles, nonprofit outcomes) to sustain positive coverage into next week.'},
+  {reach:60,velocity:42,sentiment:8,riskTopic:0,opp:72,tier:'engage',velDir:'flat',platform:'news',head:'Anthropic opens Seoul office, signs MOU with Korea\u2019s Ministry of Science and ICT',quote:'"Anthropic has signed an MOU with Korea\u2019s Ministry of Science and ICT to support the safe and responsible adoption of AI across the public sector."',author:'anthropic.com / press · Jun 17',date:'2026-06-17',pubDate:'Jun 17, 2026',url:'https://www.anthropic.com/news/seoul-office-partnerships-korean-ai-ecosystem',reason:'International expansion · government-partnership credibility · positive APAC-market signal',owner:'Marketing / Comms',window:'48h',breakdown:'Reach 60: company announcement + regional pickup. Velocity 42: steady. Sentiment 8: positive. Opp 72: a "responsible public-sector AI" partnership that reinforces the safety-first brand — useful proof point given the US regulatory friction.',actionText:'Localize and amplify for APAC audiences. Pair with the Claude Corps story as evidence of constructive government engagement abroad, contrasting the adversarial US dynamic. Brief the Korea team for local-language press.'},
+  {reach:70,velocity:48,sentiment:10,riskTopic:0,opp:68,tier:'engage',velDir:'flat',platform:'hackernews',head:'Show HN: open-source job-search plugin + skills for Claude Code',quote:'"I wanted to share an open source plugin + skills I put together that turn Claude Code into a job search assistant."',author:'news.ycombinator.com · Jun 17',date:'2026-06-17',pubDate:'Jun 17, 2026',url:'https://news.ycombinator.com/item?id=48579279',reason:'Organic developer enthusiasm · ecosystem/extensibility proof · HN front-page audience',owner:'DevRel / Social',window:'48h',breakdown:'Reach 70: HN developer audience, high-value for a dev tool. Velocity 48: typical Show HN curve. Sentiment 10: positive, builder-led. Opp 68: third-party developers building on Claude Code is exactly the ecosystem signal to amplify.',actionText:'DevRel: engage in-thread, offer to feature in community showcase or docs. This is grassroots advocacy — a small amount of recognition compounds goodwill with the builder community that the "mandate of heaven" essay says is wavering.'},
+  {reach:48,velocity:35,sentiment:5,riskTopic:0,opp:55,tier:'engage',velDir:'flat',platform:'x',head:'X: practitioner endorses Claude as a parallel workhorse alongside GPT',quote:'"Claude is still a workhorse at summarizing, writing, creating artifacts, etc. and feels fun to use. Both of them in parallel is the way."',author:'@ShanuMathew93 · Jun 17',date:'2026-06-17',pubDate:'Jun 17, 2026',url:'https://x.com/ShanuMathew93/status/2068472924646912242',reason:'Organic positive practitioner sentiment · "fun to use" brand-affinity language',owner:'Social',window:'48h',breakdown:'Reach 48: mid-size practitioner account. Velocity 35: modest. Sentiment 5: positive. Opp 55: genuine, unprompted endorsement — light-touch amplification candidate.',actionText:'Optional like/light engagement from brand or DevRel accounts. Not worth a heavy push, but a good organic quote to keep in the social bank.'},
+  {reach:42,velocity:30,sentiment:3,riskTopic:0,opp:50,tier:'engage',velDir:'flat',platform:'x',head:'X: user expresses delight using Claude for community-event tasks',quote:'"Claude really seems to love helping me w vibecamp tasks. I can\u2019t wait until we can have an embodied Claude attend."',author:'@gptbrooke · Jun 16',date:'2026-06-16',pubDate:'Jun 16, 2026',url:'https://x.com/gptbrooke/status/2068584810193244632',reason:'Warm organic affinity · low reach but high positivity',owner:'Social',window:'48h',breakdown:'Reach 42: smaller account. Velocity 30: low. Sentiment 3: very positive. Opp 50: charming organic affinity content; brand-safe and shareable.',actionText:'Log as positive sentiment. Optional light engagement. Good candidate for an internal "users love Claude" reel.'},
+  {reach:58,velocity:38,sentiment:45,riskTopic:15,opp:30,tier:'log',velDir:'flat',platform:'reddit',head:'r/singularity: "Personality clashes sent Anthropic\u2019s models offline"',quote:'"Anthropic is killing Opus models for the Pro plan."',author:'r/singularity · Jun 16',date:'2026-06-16',pubDate:'Jun 16, 2026',url:'https://www.reddit.com/r/singularity/comments/1u6i9pu/they_screwed_us_personality_clashes_sent/',reason:'Speculative community thread · mixed/uncertain sourcing · plan-change grievance',owner:'None',window:'Log only',breakdown:'Reach 58: r/singularity is large but the thread is speculative. Velocity 38: moderate, not escalating. Sentiment 45: mixed — grievance about Opus/Pro-plan changes. Risk topic 15: minor. Composite below crisis/watch threshold.',actionText:'Log only. Monitor if the Opus/Pro-plan grievance recurs across communities — repeated plan-change complaints can compound into a churn narrative.'},
+  {reach:50,velocity:25,sentiment:12,riskTopic:0,opp:30,tier:'log',velDir:'down',platform:'x',head:'X: open question on whether Claude performs better in OpenCode/Cursor than Claude Code',quote:'"I often see tweets saying \u2018Claude performs better in OpenCode/Cursor than in Claude Code.\u2019 Is this actually true?"',author:'@Yuchenj_UW · Jun 18',date:'2026-06-18',pubDate:'Jun 18, 2026',url:'https://x.com/Yuchenj_UW/status/2068900253810806801',reason:'Neutral product-comparison question · low risk · informational',owner:'None',window:'Log only',breakdown:'Reach 50: decent dev account. Velocity 25: low and declining. Sentiment 12: neutral-curious, not negative. No risk topic. Composite below threshold.',actionText:'Log only. If a perception forms that Claude underperforms in its own harness vs third-party tools, DevRel may want to address with benchmarks — but no action needed now.'},
+];
+
+const platformCounts = {news:6,reddit:3,x:3,hackernews:1,linkedin:0,blogs:0,g2:0,facebook:0,youtube:0};
+
+function composite(m){return Math.round(m.reach*0.30 + m.velocity*0.30 + Math.max(m.sentiment,m.riskTopic)*0.25 + m.opp*0.15);}
+function scoreBand(m){const c=composite(m); return c>=70?'high':c>=40?'mid':'low';}
+
+const avgReach = Math.round(mentions.reduce((a,b)=>a+b.reach,0)/Math.max(mentions.length,1));
+const topVel = Math.max(...mentions.map(m=>m.velocity),0);
+const topSent = Math.max(...mentions.map(m=>Math.max(m.sentiment,m.riskTopic)),0);
+const topOpp = Math.max(...mentions.map(m=>m.opp),0);
+document.getElementById('sv-reach').textContent = avgReach;
+document.getElementById('sv-vel').textContent = topVel;
+document.getElementById('sv-sent').textContent = topSent;
+document.getElementById('sv-opp').textContent = topOpp;
+document.getElementById('sf-reach').style.width = avgReach+'%';
+document.getElementById('sf-vel').style.width = topVel+'%';
+document.getElementById('sf-sent').style.width = topSent+'%';
+document.getElementById('sf-opp').style.width = topOpp+'%';
+document.querySelectorAll('.sbc-sub')[0].textContent = mentions.filter(m=>m.reach>=70).length+' high-reach (70+)';
+document.querySelectorAll('.sbc-sub')[1].textContent = mentions.filter(m=>m.velocity>=60).length+' accelerating mentions';
+document.querySelectorAll('.sbc-sub')[2].textContent = mentions.filter(m=>Math.max(m.sentiment,m.riskTopic)>=70).length+' high-risk (70+)';
+document.querySelectorAll('.sbc-sub')[3].textContent = mentions.filter(m=>m.opp>=60).length+' to amplify';
+
+function toggleSources(){
+  const body=document.getElementById('sources-body');
+  const chev=document.getElementById('src-chev');
+  const open=body.classList.contains('open');
+  body.classList.toggle('open',!open);
+  chev.classList.toggle('open',!open);
+}
+document.querySelectorAll('.src-item[data-platform]').forEach(item=>{
+  item.addEventListener('click',()=>{
+    const plat=item.dataset.platform;
+    const isActive=item.classList.contains('active');
+    document.querySelectorAll('.src-item').forEach(i=>i.classList.remove('active'));
+    document.querySelectorAll('.pb-row').forEach(r=>r.classList.remove('active'));
+    if(isActive){activePlatform='all';}
+    else{item.classList.add('active');document.querySelectorAll('.pb-row').forEach(r=>{if(r.querySelector('.pb-name')&&r.querySelector('.pb-name').textContent===plat)r.classList.add('active');});activePlatform=plat;}
+    renderChips();filter();
+  });
+});
+
+const crisisSection = document.getElementById('crisis-section');
+const crisisMentions = mentions.filter(m=>m.tier==='crisis');
+if(crisisMentions.length === 0){crisisSection.previousElementSibling.style.display='none';crisisSection.style.display='none';}
+else{
+  crisisMentions.sort((a,b)=>composite(b)-composite(a)).forEach(m=>{
+    const card=document.createElement('div'); card.className='crisis-card';
+    card.innerHTML=`<div class="crisis-header"><span class="tier-badge crisis">🔴 CRISIS</span><span class="crisis-score">Score ${composite(m)}</span><span class="crisis-handle">${m.author.split('·')[0].trim()}</span><span class="crisis-platform">${m.platform}</span></div><div class="crisis-excerpt">${m.quote}</div><div class="crisis-meta"><div class="crisis-meta-item"><strong>Reach</strong> ${m.reach}/100</div><div class="crisis-meta-item"><strong>Velocity</strong> ${m.velocity}/100 ${m.velDir==='up'?'↑ accelerating':m.velDir==='flat'?'→ stable':'↓ declining'}</div><div class="crisis-meta-item"><strong>Published</strong> ${m.pubDate||'—'}</div><div class="crisis-meta-item"><strong>Suggested owner</strong> ${m.owner}</div><div class="crisis-meta-item"><strong>Response window</strong> ${m.window}</div></div><div class="crisis-reason">⚠ Why flagged: ${m.reason}</div><div class="crisis-action">→ ${m.actionText}</div><div class="crisis-btns"><a href="${m.url}" class="cbtn" target="_blank" rel="noopener">View source ↗</a><button class="cbtn" onclick="this.textContent='Marked ✓';this.classList.add('handled')">Mark handled</button></div>`;
+    crisisSection.appendChild(card);
+  });
+}
+
+let activePlatform='all';
+const maxC=Math.max(...Object.values(platformCounts),1);
+const pbarsEl=document.getElementById('pbars');
+Object.entries(platformCounts).forEach(([plat,count])=>{
+  const row=document.createElement('div'); row.className='pb-row';
+  row.innerHTML=`<div class="pb-name">${plat}</div><div class="pb-track"><div class="pb-fill" style="width:${Math.max(count/maxC*100,count>0?4:0)}%"></div></div><div class="pb-count">${count}</div>`;
+  row.addEventListener('click',()=>{
+    activePlatform=activePlatform===plat?'all':plat;
+    document.querySelectorAll('.pb-row').forEach(r=>r.classList.remove('active'));
+    document.querySelectorAll('.src-item').forEach(i=>i.classList.remove('active'));
+    if(activePlatform!=='all')row.classList.add('active');
+    renderChips();filter();
+  });
+  pbarsEl.appendChild(row);
+});
+
+let tierF='all', scoreF='all';
+document.querySelectorAll('.fbtn').forEach(b=>{
+  b.addEventListener('click',()=>{
+    const f=b.dataset.f,v=b.dataset.v;
+    document.querySelectorAll(`.fbtn[data-f="${f}"]`).forEach(x=>x.classList.remove('on'));
+    b.classList.add('on');
+    if(f==='tier')tierF=v; else scoreF=v;
+    renderChips();filter();
+  });
+});
+
+function renderChips(){
+  const c=document.getElementById('chips'); c.innerHTML='';
+  const active=[];
+  if(tierF!=='all')active.push({f:'tier',label:'Tier: '+tierF});
+  if(scoreF!=='all')active.push({f:'score',label:'Score: '+scoreF});
+  if(activePlatform!=='all')active.push({f:'plat',label:'Platform: '+activePlatform});
+  active.forEach(a=>{
+    const ch=document.createElement('span'); ch.className='chip';
+    ch.innerHTML=`${a.label} <span class="chip-x">×</span>`;
+    ch.querySelector('.chip-x').addEventListener('click',()=>{
+      if(a.f==='tier'){tierF='all';document.querySelectorAll('.fbtn[data-f="tier"]').forEach(x=>x.classList.remove('on'));document.querySelector('.fbtn[data-f="tier"][data-v="all"]').classList.add('on');}
+      else if(a.f==='score'){scoreF='all';document.querySelectorAll('.fbtn[data-f="score"]').forEach(x=>x.classList.remove('on'));document.querySelector('.fbtn[data-f="score"][data-v="all"]').classList.add('on');}
+      else{activePlatform='all';document.querySelectorAll('.pb-row').forEach(r=>r.classList.remove('active'));document.querySelectorAll('.src-item').forEach(i=>i.classList.remove('active'));}
+      renderChips();filter();
+    });
+    c.appendChild(ch);
+  });
+}
+
+function clearAll(){
+  tierF='all';scoreF='all';activePlatform='all';
+  document.querySelectorAll('.fbtn').forEach(b=>b.classList.toggle('on',b.dataset.v==='all'));
+  document.querySelectorAll('.pb-row').forEach(r=>r.classList.remove('active'));
+  document.querySelectorAll('.src-item').forEach(i=>i.classList.remove('active'));
+  renderChips();filter();
+}
+
+function filter(){
+  let n=0;
+  document.querySelectorAll('.mc').forEach(c=>{
+    const tOk=tierF==='all'||c.dataset.tier===tierF;
+    const sOk=scoreF==='all'||c.dataset.score===scoreF;
+    const pOk=activePlatform==='all'||c.dataset.platform===activePlatform;
+    c.classList.toggle('hidden',!(tOk&&sOk&&pOk));
+    if(tOk&&sOk&&pOk)n++;
+  });
+  document.getElementById('rcount').querySelector('span').textContent=n;
+  document.getElementById('no-results').style.display=n===0?'grid':'none';
+}
+
+const sorted=[...mentions].sort((a,b)=>composite(b)-composite(a));
+const feed=document.getElementById('feed');
+sorted.forEach(m=>{
+  const b=scoreBand(m);
+  const velArrow=m.velDir==='up'?'<span class="vel-arrow up">↑</span>':m.velDir==='flat'?'<span class="vel-arrow flat">→</span>':'<span class="vel-arrow down">↓</span>';
+  const c=document.createElement('div');
+  c.className=`mc ${m.tier}`;
+  c.dataset.tier=m.tier;c.dataset.score=b;c.dataset.platform=m.platform;c.dataset.date=m.date;
+  const top=document.createElement('div');top.className='mc-top';
+  top.innerHTML=`<div class="mc-header"><div class="mc-left"><span class="sp r">R:${m.reach}</span><span class="sp v">V:${m.velocity}${velArrow}</span><span class="sp s">S:${m.sentiment}</span><span class="sp o">Opp:${m.opp}</span></div><div class="mc-right"><span class="tier-badge ${m.tier}">${m.tier==='crisis'?'🔴':m.tier==='watch'?'🟠':m.tier==='engage'?'🟢':'⚪'} ${m.tier}</span><span class="ptag">${m.platform}</span><span class="chev">&#8964;</span></div></div><div class="mc-head">${m.head}</div><div class="mc-quote">${m.quote}</div><div class="mc-meta-row"><span class="mc-author">${m.author}${m.pubDate ? ' · <span style="opacity:.9">'+m.pubDate+'</span>' : ''}</span><a href="${m.url}" class="src-link" target="_blank" rel="noopener">↗ source</a></div>`;
+  const exp=document.createElement('div');exp.className='mc-expand';
+  exp.innerHTML=`<div class="bd-title">Score breakdown</div><div class="bd">${m.breakdown}</div><div class="act-lbl">Suggested action (${m.owner} · ${m.window})</div><div class="act-text">${m.actionText}</div>`;
+  c.appendChild(top);c.appendChild(exp);
+  top.addEventListener('click',(e)=>{if(e.target.closest('.src-link'))return;c.classList.toggle('exp');});
+  feed.appendChild(c);
+});
+document.getElementById('rcount').querySelector('span').textContent=sorted.length;
+
+const mvBrands=[
+  {name:'Anthropic / Claude', pct:38, fill:'#378ADD', stroke:'#185FA5', mentions:14, trend:46, reach:'18M+', pos:36, neu:34, neg:30, signal:'Share spiked this window almost entirely on the Mythos/Fable export-control crisis and the Claude Max lawsuit — high volume, but the surge is risk-driven, not love-driven.'},
+  {name:'OpenAI', pct:27, fill:'#EF9F27', stroke:'#854F0B', mentions:10, trend:-8, reach:'14M', pos:30, neu:40, neg:30, signal:'Carrying its own regulatory weight (Florida lawsuit over ChatGPT), so its share dipped slightly as attention rotated toward Anthropic\u2019s government dispute.'},
+  {name:'Google / Gemini', pct:18, fill:'#1D9E75', stroke:'#0F6E56', mentions:7, trend:5, reach:'9M', pos:48, neu:42, neg:10, signal:'Steady, quiet window — gaining relative share by staying out of the regulatory headlines that dominated competitors.'},
+  {name:'DeepSeek / GLM / open models', pct:11, fill:'#7F77DD', stroke:'#534AB7', mentions:4, trend:14, reach:'4M', pos:55, neu:35, neg:10, signal:'Named directly in Claude churn threads as the "catching up" substitutes — small share but rising in the exact communities Anthropic is trying to retain.'},
+  {name:'Other', pct:6, fill:'#B4B2A9', stroke:'#5F5E5A', mentions:3, trend:2, reach:'2M', pos:42, neu:46, neg:12, signal:'Long tail of Mistral, Meta Llama, and Cohere mentions; no single mover this window.'},
+];
+(function(){
+  const cv=document.getElementById('donut'); if(!cv)return;
+  const dpr=window.devicePixelRatio||1;
+  cv.width=180*dpr; cv.height=180*dpr; cv.style.width='180px'; cv.style.height='180px';
+  const dc=cv.getContext('2d'); dc.scale(dpr,dpr);
+  const cx=90,cy=90,ro=72,ri=48;
+  function draw(hi){
+    dc.clearRect(0,0,180,180);
+    let a=-Math.PI/2;
+    mvBrands.forEach((b,i)=>{
+      const da=(b.pct/100)*2*Math.PI;
+      dc.beginPath(); dc.moveTo(cx,cy); dc.arc(cx,cy,ro,a,a+da); dc.closePath();
+      dc.fillStyle=(hi==null||hi===i)?b.fill:(b.fill+'55'); dc.fill();
+      if(hi===i){dc.strokeStyle=b.stroke;dc.lineWidth=2.5;dc.stroke();}
+      a+=da;
+    });
+    dc.beginPath(); dc.arc(cx,cy,ri,0,Math.PI*2); dc.fillStyle='#ffffff'; dc.fill();
+  }
+  draw(null);
+  const dv=document.getElementById('dv'), dl=document.getElementById('dl');
+  let active=null;
+  function showDetail(i){
+    const b=mvBrands[i];
+    document.getElementById('mvd').classList.add('open');
+    document.getElementById('mvnote').style.display='none';
+    document.getElementById('mvd-dot').style.background=b.fill;
+    document.getElementById('mvd-name').textContent=b.name;
+    document.getElementById('mvd-share').textContent=b.pct+'% share of voice';
+    document.getElementById('mvd-mentions').textContent=b.mentions;
+    const tEl=document.getElementById('mvd-trend');
+    tEl.textContent=(b.trend>0?'+':'')+b.trend+'%';
+    tEl.className='mvd-stat-v '+(b.trend>0?'mvd-trend-up':b.trend<0?'mvd-trend-down':'mvd-trend-flat');
+    document.getElementById('mvd-reach').textContent=b.reach;
+    document.getElementById('mvd-sent').innerHTML='<div class="mvd-sent-pos" style="width:'+b.pos+'%"></div><div class="mvd-sent-neu" style="width:'+b.neu+'%"></div><div class="mvd-sent-neg" style="width:'+b.neg+'%"></div>';
+    document.getElementById('mvd-pos').textContent='+ '+b.pos+'%';
+    document.getElementById('mvd-neu').textContent='\u2022 '+b.neu+'%';
+    document.getElementById('mvd-neg').textContent='\u2212 '+b.neg+'%';
+    document.getElementById('mvd-signal').innerHTML='<strong>Signal:</strong> '+b.signal;
+  }
+  function hideDetail(){document.getElementById('mvd').classList.remove('open');document.getElementById('mvnote').style.display='block';}
+  function setHover(i){
+    const idx=(i==null?active:i);
+    if(idx==null){dv.textContent=mvBrands[0].pct+'%';dl.textContent=mvBrands[0].name;}
+    else{dv.textContent=mvBrands[idx].pct+'%';dl.textContent=mvBrands[idx].name;}
+    draw(idx);
+    document.querySelectorAll('.mv-row').forEach((r,j)=>r.classList.toggle('active',j===idx));
+  }
+  function setActive(i){active=(active===i?null:i);if(active==null){hideDetail();}else{showDetail(active);}setHover(null);}
+  function hit(e){
+    const rect=cv.getBoundingClientRect();
+    const mx=(e.clientX-rect.left)*(180/rect.width)-cx;
+    const my=(e.clientY-rect.top)*(180/rect.height)-cy;
+    const dist=Math.sqrt(mx*mx+my*my);
+    if(dist<ri||dist>ro)return null;
+    let ang=Math.atan2(my,mx)+Math.PI/2; if(ang<0)ang+=2*Math.PI;
+    let a=0;
+    for(let i=0;i<mvBrands.length;i++){const da=(mvBrands[i].pct/100)*2*Math.PI; if(ang>=a&&ang<a+da)return i; a+=da;}
+    return null;
+  }
+  cv.addEventListener('mousemove',e=>setHover(hit(e)));
+  cv.addEventListener('mouseleave',()=>setHover(null));
+  cv.addEventListener('click',e=>{const i=hit(e); if(i!=null)setActive(i);});
+  const mvl=document.getElementById('mvl');
+  mvBrands.forEach((b,i)=>{
+    const row=document.createElement('div'); row.className='mv-row';
+    row.innerHTML=`<div class="mv-dot" style="background:${b.fill}"></div><div class="mv-name">${b.name}</div><div class="mv-bar-wrap"><div class="mv-bar-fill" style="width:${b.pct}%;background:${b.fill}"></div></div><div class="mv-pct">${b.pct}%</div>`;
+    row.addEventListener('mouseenter',()=>setHover(i));
+    row.addEventListener('mouseleave',()=>setHover(null));
+    row.addEventListener('click',()=>setActive(i));
+    mvl.appendChild(row);
+  });
+})();
+
+const geoPoints=[
+  {name:'United States', lat:39, lng:-98, tier:'high', sources:[
+    {head:'CNN: "AI regulation is a mess, and Anthropic is caught in the crosshairs"', plat:'news', meta:'CNN Business · Jun 21', url:'https://www.cnn.com/2026/06/21/tech/anthropic-ai-regulation', tier:'high'},
+    {head:'PBS: Anthropic disables new AI model after White House directive', plat:'news', meta:'PBS NewsHour · Jun 17', url:'https://www.pbs.org/newshour/show/anthropic-disables-new-ai-model-after-white-house-security-directive', tier:'high'},
+    {head:'WSJ: Anthropic sued over limits on its $200-a-month AI plans', plat:'news', meta:'Wall Street Journal · Jun 15', url:'https://www.wsj.com/tech/ai/anthropic-sued-over-limits-on-its-200-a-month-ai-plans-e2a109e4', tier:'high'},
+    {head:'Forbes: Anthropic invests $150M to launch 1,000 Claude Corps fellowships', plat:'news', meta:'Forbes · Jun 18', url:'https://www.forbes.com/sites/michaeltnietzel/2026/06/18/anthropic-invests-150-million-to-launch-1000-claude-corps-fellowships/', tier:'low'},
+    {head:'"Anthropic is losing the mandate of heaven" essay', plat:'x', meta:'@haridigresses · Jun 20', url:'https://x.com/haridigresses/article/2065574450183963134?ref=spyglass.org', tier:'med'},
+    {head:'r/ClaudeAI: identity-verification backlash', plat:'reddit', meta:'r/ClaudeAI · Jun 18', url:'https://www.reddit.com/r/ClaudeAI/comments/1uboasr/anthropic_is_rolling_out_identity_verification/', tier:'med'},
+    {head:'Reuters: Trump no longer views Anthropic as national security threat', plat:'news', meta:'Reuters · Jun 19', url:'https://www.reuters.com/world/us/trump-tells-axios-he-no-longer-views-anthropic-national-security-threat-2026-06-19/', tier:'med'},
+  ]},
+  {name:'South Korea', lat:36, lng:128, tier:'med', sources:[
+    {head:'Anthropic opens Seoul office, signs MOU with Korea\u2019s Ministry of Science and ICT', plat:'news', meta:'Press · Jun 17', url:'https://www.anthropic.com/news/seoul-office-partnerships-korean-ai-ecosystem', tier:'low'},
+  ]},
+  {name:'United Kingdom', lat:54, lng:-2, tier:'low', sources:[
+    {head:'BBC: Anthropic to meet White House over AI tool suspension', plat:'news', meta:'BBC News · Jun 16', url:'https://www.bbc.com/news/articles/c9w2p7ykp8yo', tier:'med'},
+  ]},
+];
+(function(){
+  const svgEl=document.getElementById('mapsvg'); if(!svgEl||typeof d3==='undefined')return;
+  const W=720,H=360;
+  const svg=d3.select('#mapsvg');
+  const tt=document.getElementById('geo-tt');
+  const mo=document.getElementById('mapouter');
+  const detail=document.getElementById('geo-detail');
+  const detailInner=document.getElementById('geo-detail-inner');
+  const tierCol={high:'#E24B4A', med:'#EF9F27', low:'#378ADD'};
+  const tierR={high:9, med:7, low:5};
+  let pinned=null;
+  window.closeGeoDetail=function(){pinned=null;detail.classList.remove('open');};
+  function openDetail(p){
+    pinned=p.name;
+    const rows=p.sources.map(s=>`<div class="gd-src"><div class="gd-src-main"><div class="gd-src-top"><span class="gd-plat">${s.plat}</span><span class="gd-tier ${s.tier}">${s.tier}</span></div><div class="gd-src-head">${s.head}</div><div class="gd-src-meta">${s.meta}</div></div><a href="${s.url}" target="_blank" rel="noopener" class="gd-src-link">↗ open</a></div>`).join('');
+    detailInner.innerHTML=`<div class="gd-head"><div class="gd-title"><span class="gd-dot" style="background:${tierCol[p.tier]}"></span>${p.name}<span class="gd-count">${p.sources.length} mention${p.sources.length>1?'s':''}</span></div><button class="gd-close" onclick="closeGeoDetail()">Close</button></div><div class="gd-srclist">${rows}</div>`;
+    detail.classList.add('open');
+  }
+  function plot(proj){
+    geoPoints.forEach(p=>{
+      const xy=proj([p.lng,p.lat]); if(!xy)return;
+      const [x,y]=xy;
+      const g=svg.append('g').attr('transform',`translate(${x},${y})`).style('cursor','pointer');
+      if(p.tier==='high'){g.append('circle').attr('r',tierR[p.tier]+5).attr('fill',tierCol[p.tier]).attr('opacity',0.15);}
+      const c=g.append('circle').attr('r',tierR[p.tier]).attr('fill',tierCol[p.tier]).attr('opacity',0.9).attr('stroke','#fff').attr('stroke-width',1);
+      g.on('mouseenter',()=>{
+        c.attr('r',tierR[p.tier]+2).attr('opacity',1);
+        const sr=svgEl.getBoundingClientRect(), mr=mo.getBoundingClientRect();
+        const rx=sr.left-mr.left+(x/W)*sr.width, ry=sr.top-mr.top+(y/H)*sr.height;
+        tt.innerHTML=`<div class="geo-tt-name">${p.name}</div><div class="geo-tt-row"><span>Mentions</span><span class="geo-tt-val">${p.sources.length}</span></div><div class="geo-tt-row"><span>Activity</span><span class="geo-tt-val">${p.tier}</span></div><div class="geo-tt-hint">Click to see exact sources</div>`;
+        tt.style.left=Math.min(rx+12, mr.width-220)+'px';
+        tt.style.top=Math.max(ry-10,4)+'px';
+        tt.style.opacity=1;
+      }).on('mouseleave',()=>{c.attr('r',tierR[p.tier]).attr('opacity',0.9); tt.style.opacity=0;})
+        .on('click',()=>{ pinned===p.name?closeGeoDetail():openDetail(p); });
+    });
+  }
+  const srcs=[
+    'https://cdn.jsdelivr.net/npm/world-atlas@2.0.2/countries-110m.json',
+    'https://unpkg.com/world-atlas@2.0.2/countries-110m.json',
+    'https://cdnjs.cloudflare.com/ajax/libs/world-atlas/2.0.2/countries-110m.json'
+  ];
+  function tryLoad(i){
+    if(i>=srcs.length){svg.append('text').attr('x',W/2).attr('y',H/2).attr('text-anchor','middle').attr('fill','var(--color-text-secondary)').attr('font-size',13).text('Map unavailable');return;}
+    fetch(srcs[i]).then(r=>{if(!r.ok)throw 0;return r.json();}).then(world=>{
+      const feat=topojson.feature(world,world.objects.countries);
+      const proj=d3.geoNaturalEarth1().fitSize([W,H],feat);
+      const path=d3.geoPath(proj);
+      svg.append('g').selectAll('path').data(feat.features).join('path').attr('d',path).attr('fill','var(--color-background-secondary)').attr('stroke','var(--color-border-secondary)').attr('stroke-width',0.5);
+      plot(proj);
+    }).catch(()=>tryLoad(i+1));
+  }
+  tryLoad(0);
+})();
+
+filter();
+</script>
