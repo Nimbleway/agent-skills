@@ -14,14 +14,24 @@ description: |
   "find high-risk mentions", or any variation of brand monitoring across web and social.
 
   Do NOT use for one-time company research or due diligence — use company-deep-dive instead.
+  Do NOT use for competitor messaging/positioning analysis — use competitor-positioning instead.
+  Do NOT use for funding/hiring/business signals on a competitor — use competitor-intel instead.
 allowed-tools:
   - Bash(nimble:*)
   - Bash(date:*)
+  - Bash(cat:*)
+  - Bash(mkdir:*)
+  - Bash(python3:*)
+  - Bash(echo:*)
+  - Bash(jq:*)
+  - Bash(ls:*)
   - Read
   - Write
+  - Agent
+  - AskUserQuestion
 metadata:
   author: Nimbleway
-  version: 0.23.0
+  version: 0.24.0
 ---
 
 # Brand Mention Monitor
@@ -51,22 +61,11 @@ When this skill is triggered for the first time in a session, send this message:
 
 ---
 
-## Nimble setup
+## Preflight
 
-This skill uses Nimble for all web research — review platform searches, social sweeps, news extraction, and competitor monitoring. Nimble is a built-in connector in Claude — no account or API key needed.
+Follow the transport selection and standard preflight from `references/nimble-playbook.md`: pick CLI vs MCP at session start, then run the parallel preflight calls (date, profile, memory index) simultaneously. Tag every Nimble CLI call: `nimble --client-source skill-brand-mention-monitor <subcommand>`.
 
-**Check for Nimble before starting:**
-When the skill is first triggered, verify Nimble is available by attempting a simple `nimble_search` call. If it fails or is unavailable, pause and guide the user to enable it before doing anything else:
-
-> "This skill uses Nimble to search and extract brand mentions from Reddit, X, LinkedIn, Instagram, TikTok, YouTube, review sites, blogs, and news. It looks like Nimble isn't enabled yet — here's how to turn it on: Nimble is a built-in Claude connector that gives this skill accurate, real-time search and extraction across sites that standard AI agents cannot access — including paywalled news, review platforms, social media, and JavaScript-heavy pages."
-
-**How to enable Nimble:**
-1. In Claude, open **Settings → Connectors** (or the connected apps/tools panel)
-2. Find **Nimble** in the list and toggle it on
-3. That's it — no account or API key required
-4. Once enabled, confirm by saying "Nimble is on" and Claude will proceed
-
-Do not attempt the mention sweep until Nimble responds normally. If Nimble is already enabled (the MCP tool responds normally), skip this section entirely — do not mention it.
+From the profile (`~/.nimble/business-profile.json`): load brand name, competitors, routing preferences, and `last_runs.brand-mention-monitor` for date windowing. Pre-populate setup questions so the user confirms rather than re-enters. If no profile exists, follow the first-run onboarding flow in `references/profile-and-onboarding.md` and create a stub after the first run. Check `~/.nimble/memory/index.md` to understand what mention data already exists before sweeping.
 
 ---
 
@@ -144,9 +143,9 @@ Search to establish the brand's industry, business model (B2B/B2C), geography, l
 
 ## Step 1 — Mention sweep
 
-Run sources matching the brand's profile (Step 0). Use `search_depth: "lite"` with `include_answer: true` for discovery. Use `search_depth: "deep"` for full content on high-score candidates.
+For deep sweeps, fan out across source tiers using parallel sub-agents (max 4 concurrent) via the `Agent` tool — one agent per source group (e.g., social, review platforms, news, community). Follow the parallel-gathering pattern in `references/nimble-playbook.md`. Always include a fallback: if a sub-agent fails, continue with remaining agents and note the gap in the output.
 
-Apply `start_date` and `end_date` parameters from the user's specified date range to every Nimble search query.
+Run sources matching the brand's profile (Step 0). Use `--search-depth lite` for discovery; use `--search-depth deep` for full content on high-score candidates. Apply `--start-date` / `--end-date` from the user's date range on every search call. Tag every call: `nimble --client-source skill-brand-mention-monitor search ...`
 
 ### Core queries (run for every brand type)
 - `"[brand name]" site:reddit.com`
@@ -165,11 +164,8 @@ Build from the risk topic dictionary for this brand type plus any user-specified
 - `"[brand name]" recall OR safety OR "side effects"` (for consumer/pharma)
 - `"[brand name]" scam OR fraud OR fake`
 
-### Velocity check (critical — run on high-score candidates)
-For any mention that scores above 50 on initial pass, check engagement velocity:
-- Fetch the current engagement count
-- Compare to a re-fetch 30–60 minutes later if re-running, or estimate from post age vs. current engagement
-- Flag as "accelerating" if engagement rate exceeds category baseline
+### Velocity check (run on high-score candidates — re-runs only)
+For any mention that scored above 50 on a previous run, re-fetch the post to compare engagement counts. If this is a first-pass sweep with no prior baseline, skip hourly-rate velocity scoring — proxy signals only (see Step 2 velocity gating rules).
 
 ---
 
@@ -193,15 +189,20 @@ How many people can see this?
 
 ### Velocity (0–100) — the differentiator
 How fast is this gaining ground? This is what separates "viral forming" from "stale."
-| Signal | Points |
-|---|---|
-| Engagement climbing 50%+/hour vs. baseline | +40 |
-| Engagement climbing 20–50%/hour | +25 |
-| Engagement climbing 5–20%/hour | +10 |
-| Flat engagement | +0 |
-| Cross-platform pickup (mention appearing on 2+ platforms) | +20 |
-| Press picking up a social post | +25 |
-| 2.3K+ reposts in 40 minutes (crisis velocity) | +40 |
+
+**Baseline requirement:** Hourly-rate rows (+40/+25/+10) require two data points — a prior engagement count and the current count — to compute a real rate. On a first-pass single sweep you do not have a baseline. Apply the following rules:
+- **Re-run with prior data (baseline available):** use the full table below.
+- **First-pass single sweep (no baseline):** skip hourly-rate rows; score only observable proxy signals (cross-platform pickup, press pickup, absolute engagement thresholds). Set velocity label to `~estimated` on the card so the user knows it is inferred, not measured.
+
+| Signal | Points | Requires baseline? |
+|---|---|---|
+| Engagement climbing 50%+/hour vs. baseline | +40 | Yes |
+| Engagement climbing 20–50%/hour | +25 | Yes |
+| Engagement climbing 5–20%/hour | +10 | Yes |
+| Flat engagement | +0 | Yes |
+| Cross-platform pickup (mention appearing on 2+ platforms) | +20 | No |
+| Press picking up a social post | +25 | No |
+| 2.3K+ reposts in 40 minutes (crisis velocity) | +40 | No — observable in single sweep |
 
 ### Sentiment (0–100 risk score; 0–100 opportunity score)
 | Negative signals (risk) | Points |
@@ -231,6 +232,19 @@ Does this hit a flagged risk category?
 
 ### Composite score
 `composite = (reach × 0.30) + (velocity × 0.30) + (max(risk_sentiment, risk_topic) × 0.25) + (opportunity × 0.15)`
+
+---
+
+## Step 2.5 — Memory dedup (filter already-known mentions)
+
+Before assigning tiers, run the dedup lifecycle from `references/memory-and-distribution.md` against prior brand-mention-monitor reports in `~/.nimble/memory/reports/`.
+
+Skill-specific rules:
+- **Fingerprint:** `{url, platform, published_date}` — normalize URLs (strip query params, trailing slashes).
+- **Returning with score shift ≥10:** keep in feed, mark with `↩ returning · score changed` badge.
+- **Already known, score unchanged:** move to Log tier; suppress from Crisis/Watch/Engage unless user requested full history.
+- **Summary line:** show at top of triage console: `X net-new · Y returning (score changed) · Z suppressed (already logged)`.
+- **Persist:** after the run, save mention fingerprints to `~/.nimble/memory/reports/brand-mention-monitor-{BRAND}-{YYYY-MM-DD}.md` and append a `log.md` entry per `references/memory-and-distribution.md`.
 
 ---
 
@@ -361,6 +375,14 @@ Every mention must include the exact Nimble result URL.
 
 ---
 
+## Distribution
+
+After output is rendered inline and files are saved, offer sharing following `references/memory-and-distribution.md` (connector detection, `AskUserQuestion` flow, Notion/Slack options).
+
+Skill-specific routing: push `brand-mention-monitor-{YYYY-MM-DD}.md` to Notion (full report); post Crisis + Watch tiers only to Slack (not the full feed). Use destination from `integrations` in `~/.nimble/business-profile.json` if set; otherwise ask and save for next time.
+
+---
+
 ## Saved preferences
 
 After first run, ask:
@@ -371,6 +393,8 @@ Say **"change settings"** to update anytime.
 ---
 
 ## Re-run behavior
+
+For date window calculation, follow the Smart Date Windowing pattern in `references/nimble-playbook.md` — use `last_runs.brand-mention-monitor` from the profile.
 
 > "Sweeping for new mentions since [last run]. Anything to add to the watch list?"
 
@@ -384,3 +408,16 @@ If re-running within 2 hours of a previous run:
 - For every mention that scored Watch or higher on the previous run, re-fetch the post to check current engagement
 - If engagement has grown 20%+ since last check, upgrade tier and flag as "accelerating ↑"
 - If engagement is flat or declining, note "stable →" or "declining ↓"
+
+---
+
+## End-of-run next steps
+
+After delivering the triage console and confirming distribution, suggest the most relevant follow-on action based on what the sweep surfaced:
+
+- **If any Watch or Crisis mentions came from competitors framing your brand negatively:** → "Want to go deeper on what competitors are saying about you? Try the `competitor-positioning` skill — it maps competitor messaging, positioning gaps, and attack vectors in detail."
+- **If the brand appeared in funding, hiring, or M&A context:** → "There are signals here that go beyond brand sentiment — the `competitor-intel` skill tracks business moves, hiring signals, and strategic shifts that could affect your market position."
+- **If the sweep found mostly positive mentions worth amplifying:** → "Some of these are worth turning into content or outreach — the `competitor-positioning` skill can help you identify the messaging angles your audience is already responding to."
+- **If this is the first run (no prior memory):** → "Run this again in 7 days to get velocity data and start seeing trends. I'll have a baseline for comparison on the next pass."
+
+Present only the suggestions relevant to this run — do not list all four if only one applies.
