@@ -1,5 +1,10 @@
 # Changelog
 
+## [0.24.0] - 2026-06-24
+
+### Added
+- **`brand-mention-monitor` skill** in `marketing/` — scans Reddit, X, LinkedIn, Instagram, TikTok, YouTube, blogs, news, and review platforms for brand mentions, scores each on reach/velocity/sentiment/risk-topic match, and buckets into Crisis / Watch / Engage / Log with routing and response windows. Ships with `references/template.html` (interactive triage console) and `references/sources.md` (per-platform query templates).
+
 ## [0.23.0] - 2026-06-14
 
 ### Changed

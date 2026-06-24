@@ -1,0 +1,907 @@
+<!--
+BRAND MENTION MONITOR — REQUIRED HTML OUTPUT TEMPLATE
+======================================================
+Claude MUST use this exact template for brand_mentions.html.
+Replace every [PLACEHOLDER] with real researched data.
+Keep all CSS, JS, class names, and interaction patterns identical.
+Light mode via CSS variables — no hardcoded dark colors.
+
+SCORING SYSTEM (4 dimensions, not 3):
+  reach:    0-100 — follower count + domain authority + amplification
+  velocity: 0-100 — rate of engagement growth (THE differentiator)
+  sentiment: 0-100 risk from sentiment (0=positive, 100=extremely negative)
+  riskTopic: 0-100 — hits on flagged risk themes (legal, safety, outage, exec)
+  composite: (reach×0.30) + (velocity×0.30) + (max(sentiment,riskTopic)×0.25) + (opp×0.15)
+  tier: 'crisis' (80-100) | 'watch' (50-79) | 'engage' (positive high-reach) | 'log' (<50)
+
+TIER ROUTING:
+  Crisis → PR + Legal, respond <2h
+  Watch  → Marketing/Comms, respond <24h
+  Engage → Social team, act within 48h
+  Log    → No action, searchable archive
+
+SOURCE URL RULE — CRITICAL:
+Every mention url must be the EXACT Nimble result URL — never a homepage.
+  CORRECT: 'https://reddit.com/r/SaaS/comments/abc123/title'
+  CORRECT: 'https://x.com/username/status/1234567890'
+  WRONG:   'https://reddit.com'   WRONG: 'https://x.com'
+
+MARKET-SPECIFIC SOURCE PROFILES (from Step 0):
+Show only the sources that were actually queried for this brand type in the sources panel.
+B2B SaaS → LinkedIn, G2, HN, trade press, r/devops, r/sysadmin primary
+Consumer → TikTok, Instagram, X, YouTube, Reddit, review platforms primary
+Regulated → News press, regulatory sites, journalist accounts primary
+Dev tool → HN, GitHub, Reddit dev subs, X dev influencers, ProductHunt primary
+-->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Brand Mention Monitor — [BRAND NAME]</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-size:13px;color:var(--color-text-primary);background:transparent;padding:0 0 1.5rem;font-family:system-ui,-apple-system,sans-serif}
+
+/* BRAND HEADER */
+.brand-bar{background:var(--color-background-secondary);border:0.5px solid var(--color-border-tertiary);border-radius:10px;padding:10px 16px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-bottom:1rem}
+.brand-name{font-size:15px;font-weight:500}
+
+/* DATE PICKER — single borderless row, inputs sit flush inside one outline */
+.bmeta{display:flex;gap:14px;flex-wrap:wrap}
+.bmi{font-size:11px;color:var(--color-text-secondary);font-family:'SF Mono','Fira Code',monospace}
+.bmi span{color:var(--color-text-primary);font-weight:500}
+
+/* SOURCES PANEL */
+.sources-wrap{border:0.5px solid var(--color-border-tertiary);border-radius:8px;overflow:hidden;margin-bottom:1.25rem}
+.sources-hdr{display:flex;align-items:center;justify-content:space-between;padding:8px 12px;cursor:pointer;background:var(--color-background-secondary);user-select:none}
+.sources-hdr:hover{opacity:.85}
+.sources-hdr-label{font-size:11px;font-weight:500;color:var(--color-text-secondary);text-transform:uppercase;letter-spacing:.07em;display:flex;align-items:center;gap:6px}
+.sources-chev{font-size:12px;color:var(--color-text-secondary);transition:transform .18s}
+.sources-chev.open{transform:rotate(180deg)}
+.sources-body{display:none;padding:8px;grid-template-columns:repeat(3,minmax(0,1fr));gap:3px}
+.sources-body.open{display:grid}
+.src-item{font-size:11px;color:var(--color-text-secondary);display:flex;align-items:center;gap:5px;padding:4px 6px;border-radius:6px;cursor:pointer;transition:background .12s;user-select:none}
+.src-item:hover{background:var(--color-background-primary)}
+.src-item.active{background:var(--color-text-primary);color:var(--color-background-primary)}
+.src-item.active .src-check{color:var(--color-background-primary)}
+.src-item.active .src-pri{color:var(--color-background-primary)}
+.src-badge{margin-left:auto;font-size:10px;background:var(--color-background-primary);color:var(--color-text-secondary);border-radius:10px;padding:0 5px;min-width:16px;text-align:center;font-family:"SF Mono","Fira Code",monospace}
+.src-item.active .src-badge{background:rgba(255,255,255,.2);color:var(--color-background-primary)}
+.src-check{color:#3B6D11;font-size:12px}
+.src-pri{font-weight:500;color:var(--color-text-primary)}
+
+/* SECTION HEADER */
+.sec{font-size:10px;font-weight:500;letter-spacing:.08em;text-transform:uppercase;color:var(--color-text-secondary);margin:1.25rem 0 8px;padding-bottom:6px;border-bottom:0.5px solid var(--color-border-tertiary)}
+
+/* SCORE SUMMARY — 4 meters */
+.score-bars{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;margin-bottom:1.25rem}
+.sbc{background:var(--color-background-secondary);border:0.5px solid var(--color-border-tertiary);border-radius:8px;padding:11px 13px}
+.sbc-label{font-size:10px;font-weight:500;text-transform:uppercase;letter-spacing:.07em;margin-bottom:5px}
+.sbc-label.reach{color:#185FA5}
+.sbc-label.vel{color:#854F0B}
+.sbc-label.sent{color:#A32D2D}
+.sbc-label.opp{color:#3B6D11}
+.sbc-value{font-size:20px;font-weight:500;margin-bottom:5px}
+.sbc-value.reach{color:#185FA5}
+.sbc-value.vel{color:#854F0B}
+.sbc-value.sent{color:#A32D2D}
+.sbc-value.opp{color:#3B6D11}
+.sbc-track{height:5px;background:var(--color-border-tertiary);border-radius:3px;overflow:hidden;margin-bottom:4px}
+.sbc-fill{height:5px;border-radius:3px}
+.sbc-fill.reach{background:#185FA5}
+.sbc-fill.vel{background:#854F0B}
+.sbc-fill.sent{background:#A32D2D}
+.sbc-fill.opp{background:#3B6D11}
+.sbc-sub{font-size:10px;color:var(--color-text-secondary);line-height:1.4}
+
+/* CRISIS ALERT CARDS */
+.crisis-section{margin-bottom:1.25rem}
+.crisis-card{background:var(--color-background-primary);border-top:0.5px solid var(--color-border-tertiary);border-right:0.5px solid var(--color-border-tertiary);border-bottom:0.5px solid var(--color-border-tertiary);border-left:3px solid #A32D2D;border-radius:8px;padding:13px 14px;margin-bottom:8px}
+.crisis-header{display:flex;align-items:center;gap:8px;margin-bottom:8px;flex-wrap:wrap}
+.tier-badge{font-size:10px;font-weight:600;padding:2px 7px;border-radius:3px;letter-spacing:.04em}
+.tier-badge.crisis{background:var(--color-background-danger);color:var(--color-text-danger)}
+.tier-badge.watch{background:var(--color-background-warning);color:var(--color-text-warning)}
+.tier-badge.engage{background:var(--color-background-success);color:var(--color-text-success)}
+.tier-badge.log{background:var(--color-background-secondary);color:var(--color-text-secondary)}
+.crisis-score{font-size:12px;font-weight:500;color:#A32D2D}
+.crisis-handle{font-size:12px;font-weight:500}
+.crisis-platform{font-size:10px;color:var(--color-text-secondary);font-family:'SF Mono','Fira Code',monospace;padding:1px 5px;background:var(--color-background-secondary);border-radius:3px}
+.crisis-excerpt{font-size:12px;font-style:italic;color:var(--color-text-secondary);margin-bottom:8px;line-height:1.5;border-left:2px solid var(--color-border-tertiary);padding-left:8px}
+.crisis-meta{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px}
+.crisis-meta-item{font-size:11px;color:var(--color-text-secondary);line-height:1.5}
+.crisis-meta-item strong{color:var(--color-text-primary);font-weight:500}
+.crisis-reason{font-size:11px;color:var(--color-text-danger);background:var(--color-background-danger);border-radius:6px;padding:6px 9px;margin-bottom:8px;line-height:1.5}
+.crisis-action{font-size:12px;color:#854F0B;background:var(--color-background-warning);border-radius:0;padding:7px 10px;border-left:2px solid #854F0B;line-height:1.5;margin-bottom:8px}
+.crisis-btns{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
+.cbtn{font-size:11px;padding:4px 10px;border-radius:6px;border:0.5px solid var(--color-border-secondary);background:var(--color-background-secondary);cursor:pointer;color:var(--color-text-secondary);font-family:inherit;transition:all .12s;line-height:1.4;vertical-align:middle;box-sizing:border-box;text-decoration:none;display:inline-flex;align-items:center}
+.cbtn:hover{background:var(--color-background-primary);border-color:var(--color-border-primary)}
+.cbtn.handled{color:#3B6D11;border-color:#a8d5b5}
+
+/* PLATFORM BARS */
+.platform-bars{display:flex;flex-direction:column;gap:5px;margin-bottom:1.25rem}
+.pb-row{display:flex;align-items:center;gap:8px;cursor:pointer}
+.pb-name{font-size:11px;color:var(--color-text-secondary);width:72px;flex-shrink:0;font-family:'SF Mono','Fira Code',monospace;transition:color .12s}
+.pb-row:hover .pb-name,.pb-row.active .pb-name{color:var(--color-text-primary);font-weight:500}
+.pb-track{flex:1;background:var(--color-background-secondary);border-radius:2px;height:10px;overflow:hidden}
+.pb-fill{height:10px;border-radius:2px;background:#185FA5;opacity:.6;transition:opacity .12s}
+.pb-row.active .pb-fill{opacity:1}
+.pb-count{font-size:11px;color:var(--color-text-secondary);width:24px;text-align:right;flex-shrink:0}
+
+/* FILTERS */
+.filter-zone{margin-bottom:10px}
+.filter-row{display:flex;gap:4px;margin-bottom:6px;flex-wrap:wrap;align-items:center}
+.filter-lbl{font-size:10px;color:var(--color-text-secondary);width:52px;flex-shrink:0;text-transform:uppercase;letter-spacing:.05em}
+.fbtn{font-size:11px;padding:3px 8px;border-radius:20px;border:0.5px solid var(--color-border-secondary);background:var(--color-background-primary);cursor:pointer;color:var(--color-text-secondary);transition:all .12s;font-family:inherit}
+.fbtn:hover{background:var(--color-background-secondary)}
+.fbtn.on{background:var(--color-text-primary);color:var(--color-background-primary);border-color:var(--color-text-primary);font-weight:500}
+.date-in{font-size:11px;padding:2px 6px;border-radius:6px;border:0.5px solid var(--color-border-secondary);background:var(--color-background-primary);color:var(--color-text-primary);font-family:inherit}
+.date-sep{font-size:11px;color:var(--color-text-secondary)}
+.chips-row{display:flex;gap:5px;flex-wrap:wrap;margin-bottom:8px}
+.chip{font-size:11px;padding:2px 8px;border-radius:20px;background:var(--color-background-secondary);border:0.5px solid var(--color-border-secondary);color:var(--color-text-secondary);display:inline-flex;align-items:center;gap:4px}
+.chip-x{cursor:pointer;opacity:.6;font-size:13px;line-height:1}
+.chip-x:hover{opacity:1}
+.clear-btn{font-size:11px;color:var(--color-text-secondary);cursor:pointer;background:none;border:none;font-family:inherit;text-decoration:underline;text-underline-offset:2px;padding:0}
+.clear-btn:hover{color:var(--color-text-primary)}
+.rcount{font-size:11px;color:var(--color-text-secondary);margin-bottom:8px}
+.rcount span{font-weight:500;color:var(--color-text-primary)}
+
+/* MENTION GRID */
+.feed{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin-bottom:1.25rem}
+.mc{background:var(--color-background-primary);border-top:0.5px solid var(--color-border-tertiary);border-right:0.5px solid var(--color-border-tertiary);border-bottom:0.5px solid var(--color-border-tertiary);border-left:3px solid var(--color-border-secondary);border-radius:8px;cursor:pointer;transition:border-color .12s;display:flex;flex-direction:column}
+.mc:hover{border-top-color:var(--color-border-secondary);border-right-color:var(--color-border-secondary);border-bottom-color:var(--color-border-secondary)}
+.mc.hidden{display:none}
+.mc.crisis{border-left-color:#A32D2D}
+.mc.watch{border-left-color:#854F0B}
+.mc.engage{border-left-color:#3B6D11}
+.mc.log{border-left-color:var(--color-border-secondary)}
+.mc-top{padding:10px 11px;flex:1;display:flex;flex-direction:column;gap:5px}
+.mc-header{display:flex;align-items:flex-start;justify-content:space-between;gap:4px}
+.mc-left{display:flex;gap:4px;align-items:center;flex-wrap:wrap;flex:1}
+
+/* 4 SCORE PIPS */
+.sp{font-size:10px;font-weight:500;padding:1px 5px;border-radius:3px}
+.sp.r{background:var(--color-background-info);color:var(--color-text-info)}
+.sp.v{background:#FEF3E2;color:#854F0B}
+.sp.s{background:var(--color-background-danger);color:var(--color-text-danger)}
+.sp.o{background:var(--color-background-success);color:var(--color-text-success)}
+.sp.rt{background:var(--color-background-danger);color:var(--color-text-danger)}
+.vel-arrow{font-size:11px;font-weight:500;margin-left:1px}
+.vel-arrow.up{color:#A32D2D}
+.vel-arrow.flat{color:#854F0B}
+.vel-arrow.down{color:#3B6D11}
+
+.mc-right{display:flex;gap:4px;align-items:center;flex-shrink:0}
+.ptag{font-size:10px;color:var(--color-text-secondary);padding:1px 5px;border-radius:3px;background:var(--color-background-secondary);font-family:'SF Mono','Fira Code',monospace}
+.chev{font-size:11px;color:var(--color-text-secondary);transition:transform .18s}
+.mc.exp .chev{transform:rotate(180deg)}
+.mc-head{font-size:12px;font-weight:500;line-height:1.4}
+.mc-quote{font-size:11px;color:var(--color-text-secondary);line-height:1.45;font-style:italic}
+.mc-meta-row{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:auto;padding-top:6px;border-top:0.5px solid var(--color-border-tertiary)}
+.mc-author{font-size:10px;color:var(--color-text-secondary);font-family:'SF Mono','Fira Code',monospace;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;opacity:.75}
+.src-link{font-size:11px;color:#185FA5;text-decoration:none;transition:opacity .12s;flex-shrink:0}
+.src-link:hover{opacity:.75;text-decoration:underline}
+.mc-expand{display:none;padding:8px 11px 10px;border-top:0.5px solid var(--color-border-tertiary)}
+.mc.exp .mc-expand{display:block}
+.bd-title{font-size:10px;text-transform:uppercase;letter-spacing:.07em;color:var(--color-text-secondary);margin-bottom:4px;font-weight:500}
+.bd{font-size:11px;background:var(--color-background-secondary);border-radius:6px;padding:8px 10px;margin-bottom:7px;line-height:1.6}
+.act-lbl{font-size:10px;text-transform:uppercase;letter-spacing:.08em;color:#854F0B;margin-bottom:3px;font-weight:500}
+.act-text{font-size:11px;background:var(--color-background-secondary);border-radius:0;padding:7px 9px;line-height:1.55;border-left:2px solid #854F0B}
+.no-results{padding:20px;text-align:center;font-size:12px;color:var(--color-text-secondary);border:0.5px dashed var(--color-border-tertiary);border-radius:8px;display:none;grid-column:1/-1}
+.footer{font-size:11px;color:var(--color-text-secondary);border-top:0.5px solid var(--color-border-tertiary);padding-top:8px;margin-top:4px;font-family:'SF Mono','Fira Code',monospace}
+
+/* MARKET VISIBILITY */
+.mv-grid{display:grid;grid-template-columns:180px 1fr;gap:20px;align-items:start;margin-bottom:1.25rem}
+.donut-wrap{position:relative;width:180px;height:180px;flex-shrink:0}
+#donut{width:180px;height:180px;cursor:pointer}
+.donut-center{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);text-align:center;pointer-events:none;width:88px}
+.donut-pct{font-size:26px;font-weight:500;color:var(--color-text-primary);line-height:1}
+.donut-lbl{font-size:11px;color:var(--color-text-secondary);margin-top:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.mv-right{min-width:0}
+.mv-legend{display:flex;flex-direction:column;gap:4px}
+.mv-row{display:flex;align-items:center;gap:8px;padding:5px 7px;border-radius:6px;cursor:pointer;transition:background .12s;border:0.5px solid transparent}
+.mv-row:hover{background:var(--color-background-secondary)}
+.mv-row.active{background:var(--color-background-secondary);border-color:var(--color-border-secondary)}
+.mv-dot{width:11px;height:11px;border-radius:3px;flex-shrink:0}
+.mv-name{font-size:12px;flex:1}
+.mv-bar-wrap{width:64px;background:var(--color-border-tertiary);border-radius:2px;height:5px;flex-shrink:0;overflow:hidden}
+.mv-bar-fill{height:5px;border-radius:2px}
+.mv-pct{font-size:11px;color:var(--color-text-secondary);width:28px;text-align:right;font-family:'SF Mono','Fira Code',monospace}
+.mv-note{font-size:11px;color:var(--color-text-secondary);margin-top:10px;line-height:1.5}
+.mv-detail{margin-top:10px;border:0.5px solid var(--color-border-tertiary);border-radius:8px;overflow:hidden;display:none}
+.mv-detail.open{display:block}
+.mvd-head{display:flex;align-items:center;gap:8px;padding:9px 11px;background:var(--color-background-secondary);border-bottom:0.5px solid var(--color-border-tertiary)}
+.mvd-dot{width:10px;height:10px;border-radius:3px;flex-shrink:0}
+.mvd-name{font-size:13px;font-weight:500;flex:1}
+.mvd-share{font-size:11px;color:var(--color-text-secondary);font-family:'SF Mono','Fira Code',monospace}
+.mvd-body{padding:10px 11px;display:flex;flex-direction:column;gap:9px}
+.mvd-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.mvd-stat{background:var(--color-background-secondary);border-radius:6px;padding:7px 9px}
+.mvd-stat-v{font-size:15px;font-weight:500;line-height:1.1}
+.mvd-stat-l{font-size:10px;color:var(--color-text-secondary);margin-top:2px}
+.mvd-sent{display:flex;height:7px;border-radius:4px;overflow:hidden;background:var(--color-border-tertiary)}
+.mvd-sent-pos{background:#3B6D11}.mvd-sent-neu{background:#B4B2A9}.mvd-sent-neg{background:#A32D2D}
+.mvd-sent-row{display:flex;justify-content:space-between;font-size:10px;color:var(--color-text-secondary);margin-top:4px}
+.mvd-signal{font-size:11px;line-height:1.5;background:var(--color-background-secondary);border-left:2px solid var(--color-text-secondary);border-radius:0;padding:7px 9px}
+.mvd-signal strong{color:var(--color-text-primary);font-weight:500}
+.mvd-trend-up{color:var(--color-text-danger);font-weight:500}
+.mvd-trend-down{color:var(--color-text-success);font-weight:500}
+.mvd-trend-flat{color:var(--color-text-secondary);font-weight:500}
+/* GEOGRAPHIC BREAKDOWN */
+.geo-card{border:0.5px solid var(--color-border-tertiary);border-radius:8px;overflow:hidden;margin-bottom:1.25rem}
+.geo-hdr{display:flex;align-items:center;justify-content:space-between;padding:8px 12px;background:var(--color-background-secondary);border-bottom:0.5px solid var(--color-border-tertiary);flex-wrap:wrap;gap:8px}
+.geo-leg{display:flex;gap:12px;font-size:11px;color:var(--color-text-secondary)}
+.geo-leg-item{display:flex;align-items:center;gap:4px}
+.geo-leg-dot{width:8px;height:8px;border-radius:50%}
+.map-outer{position:relative;background:var(--color-background-primary)}
+#mapsvg{width:100%;display:block}
+.geo-tt{position:absolute;pointer-events:none;background:var(--color-background-primary);border:0.5px solid var(--color-border-secondary);border-radius:8px;padding:9px 11px;font-size:12px;opacity:0;transition:opacity .12s;z-index:10;min-width:150px;max-width:210px}
+.geo-tt-name{font-weight:500;margin-bottom:5px;font-size:13px}
+.geo-tt-row{display:flex;justify-content:space-between;gap:12px;font-size:11px;color:var(--color-text-secondary);margin-bottom:3px}
+.geo-tt-val{color:var(--color-text-primary);font-weight:500}
+.geo-tt-hint{font-size:10px;color:var(--color-text-secondary);margin-top:5px;font-style:italic}
+.geo-detail{border-top:0.5px solid var(--color-border-tertiary);background:var(--color-background-secondary);max-height:0;overflow:hidden;transition:max-height .25s ease}
+.geo-detail.open{max-height:520px;overflow:auto}
+.geo-detail-inner{padding:12px 14px}
+.gd-head{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:10px;flex-wrap:wrap}
+.gd-title{font-size:13px;font-weight:500;display:flex;align-items:center;gap:8px}
+.gd-dot{width:9px;height:9px;border-radius:50%;flex-shrink:0}
+.gd-count{font-size:11px;color:var(--color-text-secondary);font-family:'SF Mono','Fira Code',monospace}
+.gd-close{font-size:11px;color:var(--color-text-secondary);cursor:pointer;background:none;border:0.5px solid var(--color-border-secondary);border-radius:6px;padding:3px 9px;font-family:inherit}
+.gd-close:hover{background:var(--color-background-primary)}
+.gd-srclist{display:flex;flex-direction:column;gap:6px}
+.gd-src{display:flex;align-items:flex-start;gap:8px;padding:8px 10px;background:var(--color-background-primary);border:0.5px solid var(--color-border-tertiary);border-radius:6px}
+.gd-src-main{flex:1;min-width:0}
+.gd-src-top{display:flex;align-items:center;gap:6px;margin-bottom:2px;flex-wrap:wrap}
+.gd-plat{font-size:10px;color:var(--color-text-secondary);padding:1px 5px;border-radius:3px;background:var(--color-background-secondary);font-family:'SF Mono','Fira Code',monospace}
+.gd-tier{font-size:10px;font-weight:500;padding:1px 6px;border-radius:3px}
+.gd-tier.high{background:var(--color-background-danger);color:var(--color-text-danger)}
+.gd-tier.med{background:var(--color-background-warning);color:var(--color-text-warning)}
+.gd-tier.low{background:var(--color-background-info);color:var(--color-text-info)}
+.gd-src-head{font-size:12px;font-weight:500;line-height:1.4;margin-bottom:2px}
+.gd-src-meta{font-size:10px;color:var(--color-text-secondary);font-family:'SF Mono','Fira Code',monospace;opacity:.8}
+.gd-src-link{font-size:11px;color:#185FA5;text-decoration:none;flex-shrink:0;white-space:nowrap;padding-top:1px}
+.gd-src-link:hover{opacity:.75;text-decoration:underline}
+</style>
+</head>
+<body>
+
+<!-- BRAND HEADER BAR — read-only date range label (editable From/To picker lives in the filter bar) -->
+<div class="brand-bar">
+  <div class="brand-name">[BRAND NAME]</div>
+  <div class="bmeta">
+    <div class="bmi">Window <span>[DATE RANGE e.g. Jun 11–18, 2026]</span></div>
+    <div class="bmi">Mentions <span>[TOTAL N]</span></div>
+  </div>
+</div>
+
+<!-- SOURCES SEARCHED PANEL — collapsible, shows market-specific sources actually queried -->
+<div class="sources-wrap">
+  <div class="sources-hdr" onclick="toggleSources()">
+    <span class="sources-hdr-label">
+      Sources searched this run
+      <span style="font-size:10px;opacity:.6;font-weight:400;text-transform:none;letter-spacing:0">[N] sources · [MARKET PROFILE: B2B SaaS / Consumer / Regulated / Dev tool]</span>
+    </span>
+    <span class="sources-chev" id="src-chev">&#8964;</span>
+  </div>
+  <div class="sources-body" id="sources-body">
+    <!-- data-platform must match platform field in mention data. badge = mention count. Click to filter feed. -->
+    <div class="src-item" data-platform="[platform-key]"><span class="src-check">✓</span><span class="src-pri">[Primary source 1]</span><span class="src-badge">[N]</span></div>
+    <div class="src-item" data-platform="[platform-key]"><span class="src-check">✓</span><span class="src-pri">[Primary source 2]</span><span class="src-badge">[N]</span></div>
+    <div class="src-item" data-platform="[platform-key]"><span class="src-check">✓</span><span class="src-pri">[Primary source 3]</span><span class="src-badge">[N]</span></div>
+    <div class="src-item" data-platform="[platform-key]"><span class="src-check">✓</span><span>[Secondary source 1]</span><span class="src-badge">[N]</span></div>
+    <div class="src-item" data-platform="[platform-key]"><span class="src-check">✓</span><span>[Secondary source 2]</span><span class="src-badge">[N]</span></div>
+    <div class="src-item" data-platform="[platform-key]"><span class="src-check">✓</span><span>[Secondary source 3]</span><span class="src-badge">[N]</span></div>
+  </div>
+</div>
+
+<!-- SCORE SUMMARY — 4 meters: Reach, Velocity, Sentiment Risk, Opportunity -->
+<div class="sec">Score summary</div>
+<div class="score-bars">
+  <div class="sbc">
+    <div class="sbc-label reach">Reach</div>
+    <div class="sbc-value reach" id="sv-reach">[N]</div>
+    <div class="sbc-track"><div class="sbc-fill reach" id="sf-reach" style="width:0%"></div></div>
+    <div class="sbc-sub">[N] high-reach (70+)</div>
+  </div>
+  <div class="sbc">
+    <div class="sbc-label vel">Velocity ↑</div>
+    <div class="sbc-value vel" id="sv-vel">[N]</div>
+    <div class="sbc-track"><div class="sbc-fill vel" id="sf-vel" style="width:0%"></div></div>
+    <div class="sbc-sub">[N] accelerating mentions</div>
+  </div>
+  <div class="sbc">
+    <div class="sbc-label sent">Sentiment risk</div>
+    <div class="sbc-value sent" id="sv-sent">[N]</div>
+    <div class="sbc-track"><div class="sbc-fill sent" id="sf-sent" style="width:0%"></div></div>
+    <div class="sbc-sub">[N] high-risk (score 70+)</div>
+  </div>
+  <div class="sbc">
+    <div class="sbc-label opp">Opportunity</div>
+    <div class="sbc-value opp" id="sv-opp">[N]</div>
+    <div class="sbc-track"><div class="sbc-fill opp" id="sf-opp" style="width:0%"></div></div>
+    <div class="sbc-sub">[N] to amplify</div>
+  </div>
+</div>
+
+<!-- MARKET VISIBILITY (share of voice) — how present the brand is vs competitors -->
+<!-- Donut (white center) + legend. mvBrands[] = {name,pct,fill,stroke,mentions,trend,reach,pos,neu,neg,signal}.
+     First entry is the user's brand (shown in donut center by default).
+     Hover a segment/row to highlight; CLICK to open the detail panel with critical intelligence. -->
+<div class="sec">Market visibility</div>
+<div class="mv-grid">
+  <div class="donut-wrap">
+    <canvas id="donut"></canvas>
+    <div class="donut-center"><div class="donut-pct" id="dv">[LEAD PCT]%</div><div class="donut-lbl" id="dl">[BRAND NAME]</div></div>
+  </div>
+  <div class="mv-right">
+    <div class="mv-legend" id="mvl"></div>
+    <div class="mv-note" id="mvnote">Share of conversations in this window that mentioned each brand. Click a segment for detail.</div>
+    <div class="mv-detail" id="mvd">
+      <div class="mvd-head"><span class="mvd-dot" id="mvd-dot"></span><span class="mvd-name" id="mvd-name"></span><span class="mvd-share" id="mvd-share"></span></div>
+      <div class="mvd-body">
+        <div class="mvd-stats">
+          <div class="mvd-stat"><div class="mvd-stat-v" id="mvd-mentions"></div><div class="mvd-stat-l">mentions</div></div>
+          <div class="mvd-stat"><div class="mvd-stat-v" id="mvd-trend"></div><div class="mvd-stat-l">vs last window</div></div>
+          <div class="mvd-stat"><div class="mvd-stat-v" id="mvd-reach"></div><div class="mvd-stat-l">est. reach</div></div>
+        </div>
+        <div>
+          <div class="mvd-sent" id="mvd-sent"></div>
+          <div class="mvd-sent-row"><span id="mvd-pos"></span><span id="mvd-neu"></span><span id="mvd-neg"></span></div>
+        </div>
+        <div class="mvd-signal" id="mvd-signal"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- CRISIS ALERT CARDS — full-width, only render if crisis-tier mentions exist -->
+<!-- Remove this section entirely if no crisis-tier mentions found -->
+<div class="sec">🔴 Crisis alerts — respond within 2 hours</div>
+<div class="crisis-section" id="crisis-section"></div>
+
+<!-- PLATFORM MENTION COUNTS — clickable to filter -->
+<div class="sec">Mentions by platform — click to filter</div>
+<div class="platform-bars" id="pbars"></div>
+
+<!-- GEOGRAPHIC BREAKDOWN — interactive world map. Hover for summary, CLICK a point to pin the exact sources. -->
+<!-- geoPoints[] = {name, lat, lng, tier:'high'|'med'|'low', sources:[{head, plat, meta, url, tier}]}.
+     n (mention count) is derived from sources.length. Map geometry loads from world-atlas CDN with fallbacks.
+     Each source.url MUST be the EXACT Nimble result URL (article/post), never a homepage. -->
+<div class="sec">Geographic breakdown</div>
+<div class="geo-card">
+  <div class="geo-hdr">
+    <div class="geo-leg">
+      <div class="geo-leg-item"><div class="geo-leg-dot" style="background:#E24B4A"></div>High</div>
+      <div class="geo-leg-item"><div class="geo-leg-dot" style="background:#EF9F27"></div>Medium</div>
+      <div class="geo-leg-item"><div class="geo-leg-dot" style="background:#378ADD"></div>Low</div>
+    </div>
+    <span style="font-size:11px;color:var(--color-text-secondary);font-style:italic">Hover for summary · click a point for exact sources</span>
+  </div>
+  <div class="map-outer" id="mapouter">
+    <svg id="mapsvg" viewBox="0 0 720 360"></svg>
+    <div class="geo-tt" id="geo-tt"></div>
+  </div>
+  <div class="geo-detail" id="geo-detail"><div class="geo-detail-inner" id="geo-detail-inner"></div></div>
+</div>
+
+<!-- FILTER BAR -->
+<div class="sec">Mention feed</div>
+<div class="filter-zone">
+  <div class="filter-row">
+    <span class="filter-lbl">Tier</span>
+    <button class="fbtn on" data-f="tier" data-v="all">All</button>
+    <button class="fbtn" data-f="tier" data-v="crisis">🔴 Crisis</button>
+    <button class="fbtn" data-f="tier" data-v="watch">🟠 Watch</button>
+    <button class="fbtn" data-f="tier" data-v="engage">🟢 Engage</button>
+    <button class="fbtn" data-f="tier" data-v="log">⚪ Log</button>
+  </div>
+  <div class="filter-row">
+    <span class="filter-lbl">Score</span>
+    <button class="fbtn on" data-f="score" data-v="all">All</button>
+    <button class="fbtn" data-f="score" data-v="high">High (70+)</button>
+    <button class="fbtn" data-f="score" data-v="mid">Mid (40–69)</button>
+    <button class="fbtn" data-f="score" data-v="low">Low (&lt;40)</button>
+  </div>
+  <div class="filter-row">
+    <span class="filter-lbl">Date</span>
+    <input type="date" class="date-in" id="dfrom" aria-label="From date">
+    <span class="date-sep">→</span>
+    <input type="date" class="date-in" id="dto" aria-label="To date">
+  </div>
+  <div class="chips-row" id="chips"></div>
+</div>
+<div class="rcount" id="rcount"><span>0</span> mentions shown</div>
+<div class="feed" id="feed"></div>
+<div class="no-results" id="no-results">No mentions match. <button class="clear-btn" onclick="clearAll()">Clear filters</button></div>
+
+<div class="footer">Generated [DATE] · Powered by Nimble + Claude · [MARKET PROFILE] source profile · brand_mentions.html · brand_mentions.md</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.8.5/d3.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/topojson/3.0.2/topojson.min.js"></script>
+<script>
+// ── MENTION DATA ──────────────────────────────────────────────────────────
+// SCORING:
+//   reach:     0-100 (follower count + domain authority + amplification)
+//   velocity:  0-100 (rate of engagement growth — THE differentiator)
+//   sentiment: 0-100 (0=positive, 100=extremely negative sentiment risk)
+//   riskTopic: 0-100 (hits on flagged risk themes: legal/safety/outage/exec)
+//   opp:       0-100 (opportunity to amplify or engage)
+//   composite: computed inline as (reach×0.30)+(velocity×0.30)+(max(sentiment,riskTopic)×0.25)+(opp×0.15)
+//   tier: 'crisis' (composite 80+) | 'watch' (50-79) | 'engage' (positive high-reach) | 'log' (<50)
+//   velDir: 'up' | 'flat' | 'down' — acceleration direction for velocity arrow
+//   date: 'YYYY-MM-DD' — used for date range filtering (mention date)
+//   pubDate: 'Jun 12, 2026' — human-readable publish date shown on card (e.g. 'Jun 12, 2026' or 'Jun 12, 2026 · 3:42 PM')
+//
+// URL RULE — every url must be the EXACT Nimble result URL, never a homepage:
+//   CORRECT: 'https://reddit.com/r/SaaS/comments/abc123/title'
+//   CORRECT: 'https://x.com/username/status/1234567890'
+//   WRONG:   'https://reddit.com'   WRONG: 'https://x.com'
+const mentions = [
+  // REPLACE ALL WITH REAL MENTIONS FROM RESEARCH
+  {
+    reach:88, velocity:82, sentiment:75, riskTopic:65, opp:10,
+    tier:'crisis', velDir:'up',
+    platform:'x',
+    head:'@[verified journalist] ([N]K followers) posts critical thread about [brand]',
+    quote:'"[2-line verbatim excerpt]"',
+    author:'@[handle] · [N]K followers · [X]h ago',
+    date:'[YYYY-MM-DD]',
+    pubDate:'[Jun DD, YYYY]',
+    url:'[EXACT_NIMBLE_URL]',
+    reason:'High-authority account · negative sentiment · 2.3K reposts in 40min · accelerating',
+    owner:'PR + Legal',
+    window:'<2h',
+    breakdown:'Reach 88: verified account, [N]K followers. Velocity 82: 2.3K reposts in 40min, accelerating ↑ — fastest-moving mention this run. Sentiment 75: explicitly negative, product failure language. Risk topic 65: [risk theme hit].',
+    actionText:'Reply publicly within 2h. Keep it brief and non-defensive: "Hey [name], we\'re looking into this right now — can you DM us details? We want to make this right." Assign to PR lead. Do not make promises you can\'t keep.'
+  },
+  {
+    reach:65, velocity:30, sentiment:55, riskTopic:20, opp:15,
+    tier:'watch', velDir:'flat',
+    platform:'reddit',
+    head:'r/[subreddit]: "[Brand] vs [competitor] — which do you actually recommend?"',
+    quote:'"[Brand] has better X but [competitor] is half the price. Hard to justify the premium."',
+    author:'r/[subreddit] · [N] upvotes · [X]h ago',
+    date:'[YYYY-MM-DD]',
+    pubDate:'[Jun DD, YYYY]',
+    url:'[EXACT_NIMBLE_URL]',
+    reason:'Competitor comparison framing brand as overpriced · moderate reach · velocity stable',
+    owner:'Marketing',
+    window:'<24h',
+    breakdown:'Reach 65: r/[subreddit], [N] upvotes, relevant audience. Velocity 30: stable engagement → not escalating. Sentiment 55: mixed, price objection present. Risk topic 20: no specific risk theme hits.',
+    actionText:'Monitor for escalation. If top comments shift to factual claims about price/value, consider a measured reply from a real team member (not brand account) clarifying the value prop.'
+  },
+  {
+    reach:70, velocity:45, sentiment:5, riskTopic:0, opp:82,
+    tier:'engage', velDir:'up',
+    platform:'linkedin',
+    head:'VP Engineering at [company] shares positive take on [brand] integration',
+    quote:'"[Brand] has become essential to our AI stack. 20 mins to set up, structured output out of the box."',
+    author:'[Name], VP Engineering · [N]K followers · [X]h ago',
+    date:'[YYYY-MM-DD]',
+    pubDate:'[Jun DD, YYYY]',
+    url:'[EXACT_NIMBLE_URL]',
+    reason:'High-authority B2B voice · organic enthusiasm · enterprise credibility signal',
+    owner:'Marketing / Social',
+    window:'48h',
+    breakdown:'Reach 70: VP title, [N]K LinkedIn followers, enterprise audience. Velocity 45: growing engagement. Sentiment 5: fully positive. Opp 82: B2B social proof, enterprise use case validation.',
+    actionText:'Like and comment as brand page. Consider reposting with permission. Ask if they\'d be open to a case study or quote for the website.'
+  },
+  {
+    reach:40, velocity:15, sentiment:60, riskTopic:30, opp:5,
+    tier:'log', velDir:'down',
+    platform:'reddit',
+    head:'r/[subreddit]: minor complaint about [feature] in [brand]',
+    quote:'"[Brand]\'s [feature] is a bit clunky compared to what I expected."',
+    author:'r/[subreddit] · [N] upvotes · [X]h ago',
+    date:'[YYYY-MM-DD]',
+    pubDate:'[Jun DD, YYYY]',
+    url:'[EXACT_NIMBLE_URL]',
+    reason:'Low reach · velocity declining · no escalation signal',
+    owner:'None',
+    window:'Log only',
+    breakdown:'Reach 40: small subreddit, low upvotes. Velocity 15: declining — not picking up. Sentiment 60: mildly negative. No risk topic hits. Composite below 50.',
+    actionText:'Log only. No action needed. Monitor if engagement picks up.'
+  },
+];
+
+// ── PLATFORM COUNTS — replace with real data ─────────────────────────────
+const platformCounts = {
+  reddit: 0,
+  x: 0,
+  linkedin: 0,
+  news: 0,
+  blogs: 0,
+  instagram: 0,
+  tiktok: 0,
+  youtube: 0,
+};
+
+// ── SCORING ───────────────────────────────────────────────────────────────
+function composite(m){
+  return Math.round(m.reach*0.30 + m.velocity*0.30 + Math.max(m.sentiment,m.riskTopic)*0.25 + m.opp*0.15);
+}
+function scoreBand(m){const c=composite(m); return c>=70?'high':c>=40?'mid':'low';}
+
+// ── SANITIZE — mention fields are sourced from the public web; never trust them ─
+// All untrusted strings are escaped before being concatenated into innerHTML, and
+// every URL is validated to http(s) so a `javascript:` href can't be injected.
+function esc(s){return String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
+function safeUrl(u){const s=String(u==null?'':u).trim();return /^https?:\/\//i.test(s)?s:'#';}
+
+// ── SCORE SUMMARY BARS ────────────────────────────────────────────────────
+const avgReach = Math.round(mentions.reduce((a,b)=>a+b.reach,0)/Math.max(mentions.length,1));
+const topVel = Math.max(...mentions.map(m=>m.velocity),0);
+const topSent = Math.max(...mentions.map(m=>Math.max(m.sentiment,m.riskTopic)),0);
+const topOpp = Math.max(...mentions.map(m=>m.opp),0);
+document.getElementById('sv-reach').textContent = avgReach;
+document.getElementById('sv-vel').textContent = topVel;
+document.getElementById('sv-sent').textContent = topSent;
+document.getElementById('sv-opp').textContent = topOpp;
+document.getElementById('sf-reach').style.width = avgReach+'%';
+document.getElementById('sf-vel').style.width = topVel+'%';
+document.getElementById('sf-sent').style.width = topSent+'%';
+document.getElementById('sf-opp').style.width = topOpp+'%';
+document.querySelectorAll('.sbc-sub')[0].textContent = mentions.filter(m=>m.reach>=70).length+' high-reach (70+)';
+document.querySelectorAll('.sbc-sub')[1].textContent = mentions.filter(m=>m.velocity>=60).length+' accelerating mentions';
+document.querySelectorAll('.sbc-sub')[2].textContent = mentions.filter(m=>Math.max(m.sentiment,m.riskTopic)>=70).length+' high-risk (70+)';
+document.querySelectorAll('.sbc-sub')[3].textContent = mentions.filter(m=>m.opp>=60).length+' to amplify';
+
+// ── SOURCES PANEL ─────────────────────────────────────────────────────────
+function toggleSources(){
+  const body=document.getElementById('sources-body');
+  const chev=document.getElementById('src-chev');
+  const open=body.classList.contains('open');
+  body.classList.toggle('open',!open);
+  chev.classList.toggle('open',!open);
+}
+// Wire source item click → filter feed by platform
+document.querySelectorAll('.src-item[data-platform]').forEach(item=>{
+  item.addEventListener('click',()=>{
+    const plat=item.dataset.platform;
+    if(!plat||plat==='[platform-key]')return;
+    const isActive=item.classList.contains('active');
+    // Clear all active source items
+    document.querySelectorAll('.src-item').forEach(i=>i.classList.remove('active'));
+    document.querySelectorAll('.pb-row').forEach(r=>r.classList.remove('active'));
+    if(isActive){
+      activePlatform='all';
+    } else {
+      item.classList.add('active');
+      // Sync platform bar
+      document.querySelectorAll('.pb-row').forEach(r=>{if(r.querySelector('.pb-name')&&r.querySelector('.pb-name').textContent===plat)r.classList.add('active');});
+      activePlatform=plat;
+    }
+    renderChips();filter();
+  });
+});
+
+// ── CRISIS CARDS ──────────────────────────────────────────────────────────
+const crisisSection = document.getElementById('crisis-section');
+const crisisMentions = mentions.filter(m=>m.tier==='crisis');
+if(crisisMentions.length === 0){
+  crisisSection.previousElementSibling.style.display='none';
+  crisisSection.style.display='none';
+} else {
+  crisisMentions.forEach(m=>{
+    const card=document.createElement('div'); card.className='crisis-card';
+    card.innerHTML=`
+      <div class="crisis-header">
+        <span class="tier-badge crisis">🔴 CRISIS</span>
+        <span class="crisis-score">Score ${composite(m)}</span>
+        <span class="crisis-handle">${esc(m.author.split('·')[0].trim())}</span>
+        <span class="crisis-platform">${esc(m.platform)}</span>
+      </div>
+      <div class="crisis-excerpt">${esc(m.quote)}</div>
+      <div class="crisis-meta">
+        <div class="crisis-meta-item"><strong>Reach</strong> ${m.reach}/100</div>
+        <div class="crisis-meta-item"><strong>Velocity</strong> ${m.velocity}/100 ${m.velDir==='up'?'↑ accelerating':m.velDir==='flat'?'→ stable':'↓ declining'}</div>
+        <div class="crisis-meta-item"><strong>Sentiment</strong> ${m.sentiment}/100</div>
+        <div class="crisis-meta-item"><strong>Risk topic</strong> ${m.riskTopic}/100</div>
+        <div class="crisis-meta-item"><strong>Published</strong> ${esc(m.pubDate||'—')}</div>
+        <div class="crisis-meta-item"><strong>Suggested owner</strong> ${esc(m.owner)}</div>
+        <div class="crisis-meta-item"><strong>Response window</strong> ${esc(m.window)}</div>
+      </div>
+      <div class="crisis-reason">⚠ Why flagged: ${esc(m.reason)}</div>
+      <div class="crisis-action">→ ${esc(m.actionText)}</div>
+      <div class="crisis-btns">
+        <a href="${safeUrl(m.url)}" class="cbtn" target="_blank" rel="noopener">View thread ↗</a>
+        <button class="cbtn" onclick="this.textContent='Marked ✓';this.classList.add('handled')">Mark handled</button>
+      </div>`;
+    crisisSection.appendChild(card);
+  });
+}
+
+// ── PLATFORM BARS ─────────────────────────────────────────────────────────
+let activePlatform='all';
+const maxC=Math.max(...Object.values(platformCounts),1);
+const pbarsEl=document.getElementById('pbars');
+Object.entries(platformCounts).forEach(([plat,count])=>{
+  const row=document.createElement('div'); row.className='pb-row';
+  row.innerHTML=`<div class="pb-name">${esc(plat)}</div><div class="pb-track"><div class="pb-fill" style="width:${Math.max(count/maxC*100,count>0?4:0)}%"></div></div><div class="pb-count">${count}</div>`;
+  row.addEventListener('click',()=>{
+    activePlatform=activePlatform===plat?'all':plat;
+    document.querySelectorAll('.pb-row').forEach(r=>r.classList.remove('active'));
+    if(activePlatform!=='all')row.classList.add('active');
+    renderChips();filter();
+  });
+  pbarsEl.appendChild(row);
+});
+
+// ── FILTER STATE ──────────────────────────────────────────────────────────
+let tierF='all', scoreF='all', dateFrom='', dateTo='';
+document.querySelectorAll('.fbtn').forEach(b=>{
+  b.addEventListener('click',()=>{
+    const f=b.dataset.f,v=b.dataset.v;
+    document.querySelectorAll(`.fbtn[data-f="${f}"]`).forEach(x=>x.classList.remove('on'));
+    b.classList.add('on');
+    if(f==='tier')tierF=v; else scoreF=v;
+    renderChips();filter();
+  });
+});
+// Date range picker — re-filters the feed client-side by mention date (YYYY-MM-DD compares lexically)
+['dfrom','dto'].forEach(id=>{
+  const el=document.getElementById(id);
+  if(el)el.addEventListener('change',()=>{
+    dateFrom=(document.getElementById('dfrom')||{}).value||'';
+    dateTo=(document.getElementById('dto')||{}).value||'';
+    renderChips();filter();
+  });
+});
+
+function renderChips(){
+  const c=document.getElementById('chips'); c.innerHTML='';
+  const active=[];
+  if(tierF!=='all')active.push({f:'tier',label:'Tier: '+tierF});
+  if(scoreF!=='all')active.push({f:'score',label:'Score: '+scoreF});
+  if(activePlatform!=='all')active.push({f:'plat',label:'Platform: '+activePlatform});
+  if(dateFrom||dateTo)active.push({f:'date',label:'Date: '+(dateFrom||'…')+' → '+(dateTo||'…')});
+  active.forEach(a=>{
+    const ch=document.createElement('span'); ch.className='chip';
+    ch.innerHTML=`${esc(a.label)} <span class="chip-x">×</span>`;
+    ch.querySelector('.chip-x').addEventListener('click',()=>{
+      if(a.f==='tier'){tierF='all';document.querySelectorAll('.fbtn[data-f="tier"]').forEach(x=>x.classList.remove('on'));document.querySelector('.fbtn[data-f="tier"][data-v="all"]').classList.add('on');}
+      else if(a.f==='score'){scoreF='all';document.querySelectorAll('.fbtn[data-f="score"]').forEach(x=>x.classList.remove('on'));document.querySelector('.fbtn[data-f="score"][data-v="all"]').classList.add('on');}
+      else if(a.f==='date'){dateFrom='';dateTo='';const df=document.getElementById('dfrom'),dt=document.getElementById('dto');if(df)df.value='';if(dt)dt.value='';}
+      else{activePlatform='all';document.querySelectorAll('.pb-row').forEach(r=>r.classList.remove('active'));}
+      renderChips();filter();
+    });
+    c.appendChild(ch);
+  });
+}
+
+function clearAll(){
+  tierF='all';scoreF='all';activePlatform='all';dateFrom='';dateTo='';
+  const df=document.getElementById('dfrom'),dt=document.getElementById('dto');if(df)df.value='';if(dt)dt.value='';
+  document.querySelectorAll('.fbtn').forEach(b=>b.classList.toggle('on',b.dataset.v==='all'));
+  document.querySelectorAll('.pb-row').forEach(r=>r.classList.remove('active'));
+  renderChips();filter();
+}
+
+function filter(){
+  let n=0;
+  document.querySelectorAll('.mc').forEach(c=>{
+    const tOk=tierF==='all'||c.dataset.tier===tierF;
+    const sOk=scoreF==='all'||c.dataset.score===scoreF;
+    const pOk=activePlatform==='all'||c.dataset.platform===activePlatform;
+    const dOk=(!dateFrom||c.dataset.date>=dateFrom)&&(!dateTo||c.dataset.date<=dateTo);
+    c.classList.toggle('hidden',!(tOk&&sOk&&pOk&&dOk));
+    if(tOk&&sOk&&pOk&&dOk)n++;
+  });
+  document.getElementById('rcount').querySelector('span').textContent=n;
+  document.getElementById('no-results').style.display=n===0?'grid':'none';
+}
+
+// ── RENDER MENTION CARDS ──────────────────────────────────────────────────
+const sorted=[...mentions].sort((a,b)=>composite(b)-composite(a));
+const feed=document.getElementById('feed');
+sorted.forEach(m=>{
+  const b=scoreBand(m);
+  const velArrow=m.velDir==='up'?'<span class="vel-arrow up">↑</span>':m.velDir==='flat'?'<span class="vel-arrow flat">→</span>':'<span class="vel-arrow down">↓</span>';
+  const c=document.createElement('div');
+  c.className=`mc ${m.tier}`;
+  c.dataset.tier=m.tier;c.dataset.score=b;c.dataset.platform=m.platform;c.dataset.date=m.date;
+  const top=document.createElement('div');top.className='mc-top';
+  top.innerHTML=`
+    <div class="mc-header">
+      <div class="mc-left">
+        <span class="sp r">R:${m.reach}</span>
+        <span class="sp v">V:${m.velocity}${velArrow}</span>
+        <span class="sp s">S:${m.sentiment}</span>
+        <span class="sp rt">RT:${m.riskTopic}</span>
+      </div>
+      <div class="mc-right">
+        <span class="tier-badge ${m.tier}">${m.tier==='crisis'?'🔴':m.tier==='watch'?'🟠':m.tier==='engage'?'🟢':'⚪'} ${m.tier}</span>
+        <span class="ptag">${esc(m.platform)}</span>
+        <span class="chev">&#8964;</span>
+      </div>
+    </div>
+    <div class="mc-head">${esc(m.head)}</div>
+    <div class="mc-quote">${esc(m.quote)}</div>
+    <div class="mc-meta-row">
+      <span class="mc-author">${esc(m.author)}${m.pubDate ? ' · <span style="opacity:.9">'+esc(m.pubDate)+'</span>' : ''}</span>
+      <a href="${safeUrl(m.url)}" class="src-link">↗ source</a>
+    </div>`;
+  const exp=document.createElement('div');exp.className='mc-expand';
+  exp.innerHTML=`<div class="bd-title">Score breakdown</div><div class="bd">${esc(m.breakdown)}</div><div class="act-lbl">Suggested action (${esc(m.owner)} · ${esc(m.window)})</div><div class="act-text">${esc(m.actionText)}</div>`;
+  c.appendChild(top);c.appendChild(exp);
+  top.addEventListener('click',()=>c.classList.toggle('exp'));
+  feed.appendChild(c);
+});
+
+document.getElementById('rcount').querySelector('span').textContent=sorted.length;
+// ── MARKET VISIBILITY (share of voice) ────────────────────────────────────
+// REPLACE mvBrands[] with real data. pct = % of brand-mention conversations (sum ~100, include 'Other').
+// First entry is the user's brand (shown in donut center by default). fill = light category color, stroke = darker shade.
+// Each brand also carries the click-detail intelligence:
+//   mentions = raw count · trend = % change vs last window (+rising/-falling) · reach = est. audience string
+//   pos/neu/neg = sentiment split (sum 100) · signal = one-line "why this matters" takeaway
+const mvBrands=[
+  {name:'[BRAND NAME]', pct:34, fill:'#378ADD', stroke:'#185FA5', mentions:142, trend:18, reach:'2.4M', pos:58, neu:30, neg:12, signal:'[Standout signal — what is driving this brand\'s share and where it is heading]'},
+  {name:'[Competitor 1]', pct:28, fill:'#EF9F27', stroke:'#854F0B', mentions:117, trend:-6, reach:'1.9M', pos:44, neu:38, neg:18, signal:'[Standout signal for this competitor]'},
+  {name:'[Competitor 2]', pct:18, fill:'#1D9E75', stroke:'#0F6E56', mentions:75, trend:4, reach:'880K', pos:51, neu:40, neg:9, signal:'[Standout signal]'},
+  {name:'[Competitor 3]', pct:12, fill:'#7F77DD', stroke:'#534AB7', mentions:50, trend:-2, reach:'610K', pos:39, neu:46, neg:15, signal:'[Standout signal]'},
+  {name:'Other', pct:8, fill:'#B4B2A9', stroke:'#5F5E5A', mentions:33, trend:1, reach:'320K', pos:40, neu:48, neg:12, signal:'[Long tail of smaller competitors]'},
+];
+(function(){
+  const cv=document.getElementById('donut'); if(!cv)return;
+  const dpr=window.devicePixelRatio||1;
+  cv.width=180*dpr; cv.height=180*dpr; cv.style.width='180px'; cv.style.height='180px';
+  const dc=cv.getContext('2d'); dc.scale(dpr,dpr);
+  const cx=90,cy=90,ro=72,ri=48;
+  function draw(hi){
+    dc.clearRect(0,0,180,180);
+    let a=-Math.PI/2;
+    mvBrands.forEach((b,i)=>{
+      const da=(b.pct/100)*2*Math.PI;
+      dc.beginPath(); dc.moveTo(cx,cy); dc.arc(cx,cy,ro,a,a+da); dc.closePath();
+      dc.fillStyle=(hi==null||hi===i)?b.fill:(b.fill+'55'); dc.fill();
+      if(hi===i){dc.strokeStyle=b.stroke;dc.lineWidth=2.5;dc.stroke();}
+      a+=da;
+    });
+    // White inner circle — clean ring, no false contrast against the gray "Other" segment
+    dc.beginPath(); dc.arc(cx,cy,ri,0,Math.PI*2); dc.fillStyle='#ffffff'; dc.fill();
+  }
+  draw(null);
+  const dv=document.getElementById('dv'), dl=document.getElementById('dl');
+  let active=null;
+  function showDetail(i){
+    const b=mvBrands[i];
+    document.getElementById('mvd').classList.add('open');
+    document.getElementById('mvnote').style.display='none';
+    document.getElementById('mvd-dot').style.background=b.fill;
+    document.getElementById('mvd-name').textContent=b.name;
+    document.getElementById('mvd-share').textContent=b.pct+'% share of voice';
+    document.getElementById('mvd-mentions').textContent=b.mentions;
+    const tEl=document.getElementById('mvd-trend');
+    tEl.textContent=(b.trend>0?'+':'')+b.trend+'%';
+    tEl.className='mvd-stat-v '+(b.trend>0?'mvd-trend-up':b.trend<0?'mvd-trend-down':'mvd-trend-flat');
+    document.getElementById('mvd-reach').textContent=b.reach;
+    document.getElementById('mvd-sent').innerHTML='<div class="mvd-sent-pos" style="width:'+b.pos+'%"></div><div class="mvd-sent-neu" style="width:'+b.neu+'%"></div><div class="mvd-sent-neg" style="width:'+b.neg+'%"></div>';
+    document.getElementById('mvd-pos').textContent='+ '+b.pos+'%';
+    document.getElementById('mvd-neu').textContent='\u2022 '+b.neu+'%';
+    document.getElementById('mvd-neg').textContent='\u2212 '+b.neg+'%';
+    document.getElementById('mvd-signal').innerHTML='<strong>Signal:</strong> '+b.signal;
+  }
+  function hideDetail(){
+    document.getElementById('mvd').classList.remove('open');
+    document.getElementById('mvnote').style.display='block';
+  }
+  function setHover(i){
+    const idx=(i==null?active:i);
+    if(idx==null){dv.textContent=mvBrands[0].pct+'%';dl.textContent=mvBrands[0].name;}
+    else{dv.textContent=mvBrands[idx].pct+'%';dl.textContent=mvBrands[idx].name;}
+    draw(idx);
+    document.querySelectorAll('.mv-row').forEach((r,j)=>r.classList.toggle('active',j===idx));
+  }
+  function setActive(i){
+    active=(active===i?null:i);
+    if(active==null){hideDetail();} else {showDetail(active);}
+    setHover(null);
+  }
+  function hit(e){
+    const rect=cv.getBoundingClientRect();
+    const mx=(e.clientX-rect.left)*(180/rect.width)-cx;
+    const my=(e.clientY-rect.top)*(180/rect.height)-cy;
+    const dist=Math.sqrt(mx*mx+my*my);
+    if(dist<ri||dist>ro)return null;
+    let ang=Math.atan2(my,mx)+Math.PI/2; if(ang<0)ang+=2*Math.PI;
+    let a=0;
+    for(let i=0;i<mvBrands.length;i++){const da=(mvBrands[i].pct/100)*2*Math.PI; if(ang>=a&&ang<a+da)return i; a+=da;}
+    return null;
+  }
+  cv.addEventListener('mousemove',e=>setHover(hit(e)));
+  cv.addEventListener('mouseleave',()=>setHover(null));
+  cv.addEventListener('click',e=>{const i=hit(e); if(i!=null)setActive(i);});
+  const mvl=document.getElementById('mvl');
+  mvBrands.forEach((b,i)=>{
+    const row=document.createElement('div'); row.className='mv-row';
+    row.innerHTML=`<div class="mv-dot" style="background:${b.fill}"></div><div class="mv-name">${b.name}</div><div class="mv-bar-wrap"><div class="mv-bar-fill" style="width:${b.pct}%;background:${b.fill}"></div></div><div class="mv-pct">${b.pct}%</div>`;
+    row.addEventListener('mouseenter',()=>setHover(i));
+    row.addEventListener('mouseleave',()=>setHover(null));
+    row.addEventListener('click',()=>setActive(i));
+    mvl.appendChild(row);
+  });
+})();
+
+// ── GEOGRAPHIC BREAKDOWN (interactive world map) ──────────────────────────
+// REPLACE geoPoints[] with real data. lat/lng = country centroid; tier = 'high'|'med'|'low'
+// (drives dot color/size + pulse ring on high). Mention count is derived from sources.length.
+// sources[] = the EXACT mentions from that location, each {head, plat, meta, url, tier}.
+//   head = headline · plat = platform key · meta = "followers/upvotes · date" · tier = mention's own tier
+//   url MUST be the EXACT Nimble result URL (article/post/thread), NEVER a homepage.
+// Hover a point for the summary tooltip; CLICK to pin the detail panel listing every source with an open link.
+const geoPoints=[
+  {name:'[Country 1]', lat:39, lng:-98, tier:'high', sources:[
+    {head:'[Headline of mention 1]', plat:'x', meta:'[92K followers · Jun 17]', url:'[EXACT_NIMBLE_URL]', tier:'high'},
+    {head:'[Headline of mention 2]', plat:'reddit', meta:'[340 upvotes · Jun 16]', url:'[EXACT_NIMBLE_URL]', tier:'low'},
+  ]},
+  {name:'[Country 2]', lat:54, lng:-2, tier:'med', sources:[
+    {head:'[Headline]', plat:'news', meta:'[Jun 15]', url:'[EXACT_NIMBLE_URL]', tier:'med'},
+  ]},
+  {name:'[Country 3]', lat:22, lng:79, tier:'low', sources:[
+    {head:'[Headline]', plat:'linkedin', meta:'[3K followers · Jun 15]', url:'[EXACT_NIMBLE_URL]', tier:'low'},
+  ]},
+];
+(function(){
+  const svgEl=document.getElementById('mapsvg'); if(!svgEl||typeof d3==='undefined')return;
+  const W=720,H=360;
+  const svg=d3.select('#mapsvg');
+  const tt=document.getElementById('geo-tt');
+  const mo=document.getElementById('mapouter');
+  const detail=document.getElementById('geo-detail');
+  const detailInner=document.getElementById('geo-detail-inner');
+  const tierCol={high:'#E24B4A', med:'#EF9F27', low:'#378ADD'};
+  const tierR={high:9, med:7, low:5};
+  let pinned=null;
+  window.closeGeoDetail=function(){pinned=null;detail.classList.remove('open');};
+  function openDetail(p){
+    pinned=p.name;
+    const rows=p.sources.map(s=>`<div class="gd-src"><div class="gd-src-main"><div class="gd-src-top"><span class="gd-plat">${s.plat}</span><span class="gd-tier ${s.tier}">${s.tier}</span></div><div class="gd-src-head">${s.head}</div><div class="gd-src-meta">${s.meta}</div></div><a href="${s.url}" target="_blank" rel="noopener" class="gd-src-link">↗ open</a></div>`).join('');
+    detailInner.innerHTML=`<div class="gd-head"><div class="gd-title"><span class="gd-dot" style="background:${tierCol[p.tier]}"></span>${p.name}<span class="gd-count">${p.sources.length} mention${p.sources.length>1?'s':''}</span></div><button class="gd-close" onclick="closeGeoDetail()">Close</button></div><div class="gd-srclist">${rows}</div>`;
+    detail.classList.add('open');
+  }
+  function plot(proj){
+    geoPoints.forEach(p=>{
+      const xy=proj([p.lng,p.lat]); if(!xy)return;
+      const [x,y]=xy;
+      const g=svg.append('g').attr('transform',`translate(${x},${y})`).style('cursor','pointer');
+      if(p.tier==='high'){g.append('circle').attr('r',tierR[p.tier]+5).attr('fill',tierCol[p.tier]).attr('opacity',0.15);}
+      const c=g.append('circle').attr('r',tierR[p.tier]).attr('fill',tierCol[p.tier]).attr('opacity',0.9).attr('stroke','#fff').attr('stroke-width',1);
+      g.on('mouseenter',()=>{
+        c.attr('r',tierR[p.tier]+2).attr('opacity',1);
+        const sr=svgEl.getBoundingClientRect(), mr=mo.getBoundingClientRect();
+        const rx=sr.left-mr.left+(x/W)*sr.width, ry=sr.top-mr.top+(y/H)*sr.height;
+        tt.innerHTML=`<div class="geo-tt-name">${p.name}</div><div class="geo-tt-row"><span>Mentions</span><span class="geo-tt-val">${p.sources.length}</span></div><div class="geo-tt-row"><span>Activity</span><span class="geo-tt-val">${p.tier}</span></div><div class="geo-tt-hint">Click to see exact sources</div>`;
+        tt.style.left=Math.min(rx+12, mr.width-220)+'px';
+        tt.style.top=Math.max(ry-10,4)+'px';
+        tt.style.opacity=1;
+      }).on('mouseleave',()=>{c.attr('r',tierR[p.tier]).attr('opacity',0.9); tt.style.opacity=0;})
+        .on('click',()=>{ pinned===p.name?closeGeoDetail():openDetail(p); });
+    });
+  }
+  const sources=[
+    'https://cdn.jsdelivr.net/npm/world-atlas@2.0.2/countries-110m.json',
+    'https://unpkg.com/world-atlas@2.0.2/countries-110m.json',
+    'https://cdnjs.cloudflare.com/ajax/libs/world-atlas/2.0.2/countries-110m.json'
+  ];
+  function tryLoad(i){
+    if(i>=sources.length){
+      svg.append('text').attr('x',W/2).attr('y',H/2).attr('text-anchor','middle').attr('fill','var(--color-text-secondary)').attr('font-size',13).text('Map unavailable');
+      return;
+    }
+    fetch(sources[i]).then(r=>{if(!r.ok)throw 0;return r.json();}).then(world=>{
+      const feat=topojson.feature(world,world.objects.countries);
+      const proj=d3.geoNaturalEarth1().fitSize([W,H],feat);
+      const path=d3.geoPath(proj);
+      svg.append('g').selectAll('path').data(feat.features).join('path').attr('d',path)
+        .attr('fill','var(--color-background-secondary)').attr('stroke','var(--color-border-secondary)').attr('stroke-width',0.5);
+      plot(proj);
+    }).catch(()=>tryLoad(i+1));
+  }
+  tryLoad(0);
+})();
+
+filter();
+</script>
+</body>
+</html>
