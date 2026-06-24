@@ -269,6 +269,14 @@ Assign every mention to exactly one tier. Teams act on tiers, not numbers.
 
 Claude MUST follow `references/template.html` exactly. Load the template, substitute real data, keep all CSS, JS, and interaction patterns identical.
 
+### Response structure (wrap the widget)
+
+The chat response must follow the standard contract: open with a **TL;DR** and close with a **What This Means** section, with the triage console in between.
+
+1. **TL;DR** (first, 2–4 lines): total mentions, the tier breakdown (`X Crisis · Y Watch · Z Engage`), and the single most urgent item with its response window.
+2. **The triage console** — the interactive widget, rendered inline per the rules below.
+3. **What This Means** (final top-level section): what the sweep signals for the brand right now and the top 1–3 recommended actions, each tied to a tier and owner.
+
 ### Rendering — INLINE FIRST, ALWAYS (read this before producing output)
 
 The triage console is an **interactive widget that must be rendered inline in the chat**. A downloadable file is a *secondary* artifact, never the primary deliverable. Follow this sequence exactly, every run:
@@ -350,6 +358,9 @@ Every mention must include `<a href="[EXACT_NIMBLE_URL]" class="src-link">↗ so
 **Total mentions:** [N]
 **Sources searched:** [list]
 
+## TL;DR
+[2–4 lines: total mentions · tier breakdown (X Crisis · Y Watch · Z Engage) · the single most urgent item + its response window]
+
 ## Crisis tier (80–100) — respond <2h
 - **[Tier] Score:[N]** | [Platform] | [Author] | R:[N] V:[N] S:[N] RT:[N]
   "[Excerpt]"
@@ -365,6 +376,9 @@ Every mention must include `<a href="[EXACT_NIMBLE_URL]" class="src-link">↗ so
 
 ## Log (no action required)
 ...
+
+## What This Means
+[What the sweep signals for the brand right now + the top 1–3 recommended actions, each tied to a tier and owner]
 ```
 
 ---

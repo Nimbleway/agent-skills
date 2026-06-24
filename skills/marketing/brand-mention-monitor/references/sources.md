@@ -2,6 +2,8 @@
 
 Brand monitoring requires broad coverage across all platforms where your audience talks. Run sources in this order: social first (fastest to surface new mentions), then news, then review platforms.
 
+**Transport-agnostic.** Queries below are shown in CLI form (`nimble search …`). In MCP-only environments (e.g. Cowork) call the equivalent `nimble_search` tool instead — each CLI flag maps to a tool argument (drop the `--` and snake_case it: `--search-depth` → `search_depth`, `--focus` → `focus`). Pick the transport once at preflight per `references/nimble-playbook.md`; the query strings and parameters are identical either way. See the "Nimble social search configuration" section below for the CLI/MCP date-window flags.
+
 Use `--search-depth lite` for the discovery pass. Use `--search-depth deep` to extract full content for scoring high-impact mentions.
 
 ---

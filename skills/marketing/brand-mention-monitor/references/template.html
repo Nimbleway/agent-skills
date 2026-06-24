@@ -134,6 +134,8 @@ body{font-size:13px;color:var(--color-text-primary);background:transparent;paddi
 .fbtn{font-size:11px;padding:3px 8px;border-radius:20px;border:0.5px solid var(--color-border-secondary);background:var(--color-background-primary);cursor:pointer;color:var(--color-text-secondary);transition:all .12s;font-family:inherit}
 .fbtn:hover{background:var(--color-background-secondary)}
 .fbtn.on{background:var(--color-text-primary);color:var(--color-background-primary);border-color:var(--color-text-primary);font-weight:500}
+.date-in{font-size:11px;padding:2px 6px;border-radius:6px;border:0.5px solid var(--color-border-secondary);background:var(--color-background-primary);color:var(--color-text-primary);font-family:inherit}
+.date-sep{font-size:11px;color:var(--color-text-secondary)}
 .chips-row{display:flex;gap:5px;flex-wrap:wrap;margin-bottom:8px}
 .chip{font-size:11px;padding:2px 8px;border-radius:20px;background:var(--color-background-secondary);border:0.5px solid var(--color-border-secondary);color:var(--color-text-secondary);display:inline-flex;align-items:center;gap:4px}
 .chip-x{cursor:pointer;opacity:.6;font-size:13px;line-height:1}
@@ -162,6 +164,7 @@ body{font-size:13px;color:var(--color-text-primary);background:transparent;paddi
 .sp.v{background:#FEF3E2;color:#854F0B}
 .sp.s{background:var(--color-background-danger);color:var(--color-text-danger)}
 .sp.o{background:var(--color-background-success);color:var(--color-text-success)}
+.sp.rt{background:var(--color-background-danger);color:var(--color-text-danger)}
 .vel-arrow{font-size:11px;font-weight:500;margin-left:1px}
 .vel-arrow.up{color:#A32D2D}
 .vel-arrow.flat{color:#854F0B}
@@ -262,7 +265,7 @@ body{font-size:13px;color:var(--color-text-primary);background:transparent;paddi
 </head>
 <body>
 
-<!-- BRAND HEADER BAR — includes editable date range -->
+<!-- BRAND HEADER BAR — read-only date range label (editable From/To picker lives in the filter bar) -->
 <div class="brand-bar">
   <div class="brand-name">[BRAND NAME]</div>
   <div class="bmeta">
@@ -399,6 +402,12 @@ body{font-size:13px;color:var(--color-text-primary);background:transparent;paddi
     <button class="fbtn" data-f="score" data-v="mid">Mid (40–69)</button>
     <button class="fbtn" data-f="score" data-v="low">Low (&lt;40)</button>
   </div>
+  <div class="filter-row">
+    <span class="filter-lbl">Date</span>
+    <input type="date" class="date-in" id="dfrom" aria-label="From date">
+    <span class="date-sep">→</span>
+    <input type="date" class="date-in" id="dto" aria-label="To date">
+  </div>
   <div class="chips-row" id="chips"></div>
 </div>
 <div class="rcount" id="rcount"><span>0</span> mentions shown</div>
@@ -513,6 +522,12 @@ function composite(m){
 }
 function scoreBand(m){const c=composite(m); return c>=70?'high':c>=40?'mid':'low';}
 
+// ── SANITIZE — mention fields are sourced from the public web; never trust them ─
+// All untrusted strings are escaped before being concatenated into innerHTML, and
+// every URL is validated to http(s) so a `javascript:` href can't be injected.
+function esc(s){return String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
+function safeUrl(u){const s=String(u==null?'':u).trim();return /^https?:\/\//i.test(s)?s:'#';}
+
 // ── SCORE SUMMARY BARS ────────────────────────────────────────────────────
 const avgReach = Math.round(mentions.reduce((a,b)=>a+b.reach,0)/Math.max(mentions.length,1));
 const topVel = Math.max(...mentions.map(m=>m.velocity),0);
@@ -573,21 +588,23 @@ if(crisisMentions.length === 0){
       <div class="crisis-header">
         <span class="tier-badge crisis">🔴 CRISIS</span>
         <span class="crisis-score">Score ${composite(m)}</span>
-        <span class="crisis-handle">${m.author.split('·')[0].trim()}</span>
-        <span class="crisis-platform">${m.platform}</span>
+        <span class="crisis-handle">${esc(m.author.split('·')[0].trim())}</span>
+        <span class="crisis-platform">${esc(m.platform)}</span>
       </div>
-      <div class="crisis-excerpt">${m.quote}</div>
+      <div class="crisis-excerpt">${esc(m.quote)}</div>
       <div class="crisis-meta">
         <div class="crisis-meta-item"><strong>Reach</strong> ${m.reach}/100</div>
         <div class="crisis-meta-item"><strong>Velocity</strong> ${m.velocity}/100 ${m.velDir==='up'?'↑ accelerating':m.velDir==='flat'?'→ stable':'↓ declining'}</div>
-        <div class="crisis-meta-item"><strong>Published</strong> ${m.pubDate||'—'}</div>
-        <div class="crisis-meta-item"><strong>Suggested owner</strong> ${m.owner}</div>
-        <div class="crisis-meta-item"><strong>Response window</strong> ${m.window}</div>
+        <div class="crisis-meta-item"><strong>Sentiment</strong> ${m.sentiment}/100</div>
+        <div class="crisis-meta-item"><strong>Risk topic</strong> ${m.riskTopic}/100</div>
+        <div class="crisis-meta-item"><strong>Published</strong> ${esc(m.pubDate||'—')}</div>
+        <div class="crisis-meta-item"><strong>Suggested owner</strong> ${esc(m.owner)}</div>
+        <div class="crisis-meta-item"><strong>Response window</strong> ${esc(m.window)}</div>
       </div>
-      <div class="crisis-reason">⚠ Why flagged: ${m.reason}</div>
-      <div class="crisis-action">→ ${m.actionText}</div>
+      <div class="crisis-reason">⚠ Why flagged: ${esc(m.reason)}</div>
+      <div class="crisis-action">→ ${esc(m.actionText)}</div>
       <div class="crisis-btns">
-        <a href="${m.url}" class="cbtn" target="_blank" rel="noopener">View thread ↗</a>
+        <a href="${safeUrl(m.url)}" class="cbtn" target="_blank" rel="noopener">View thread ↗</a>
         <button class="cbtn" onclick="this.textContent='Marked ✓';this.classList.add('handled')">Mark handled</button>
       </div>`;
     crisisSection.appendChild(card);
@@ -600,7 +617,7 @@ const maxC=Math.max(...Object.values(platformCounts),1);
 const pbarsEl=document.getElementById('pbars');
 Object.entries(platformCounts).forEach(([plat,count])=>{
   const row=document.createElement('div'); row.className='pb-row';
-  row.innerHTML=`<div class="pb-name">${plat}</div><div class="pb-track"><div class="pb-fill" style="width:${Math.max(count/maxC*100,count>0?4:0)}%"></div></div><div class="pb-count">${count}</div>`;
+  row.innerHTML=`<div class="pb-name">${esc(plat)}</div><div class="pb-track"><div class="pb-fill" style="width:${Math.max(count/maxC*100,count>0?4:0)}%"></div></div><div class="pb-count">${count}</div>`;
   row.addEventListener('click',()=>{
     activePlatform=activePlatform===plat?'all':plat;
     document.querySelectorAll('.pb-row').forEach(r=>r.classList.remove('active'));
@@ -611,13 +628,22 @@ Object.entries(platformCounts).forEach(([plat,count])=>{
 });
 
 // ── FILTER STATE ──────────────────────────────────────────────────────────
-let tierF='all', scoreF='all';
+let tierF='all', scoreF='all', dateFrom='', dateTo='';
 document.querySelectorAll('.fbtn').forEach(b=>{
   b.addEventListener('click',()=>{
     const f=b.dataset.f,v=b.dataset.v;
     document.querySelectorAll(`.fbtn[data-f="${f}"]`).forEach(x=>x.classList.remove('on'));
     b.classList.add('on');
     if(f==='tier')tierF=v; else scoreF=v;
+    renderChips();filter();
+  });
+});
+// Date range picker — re-filters the feed client-side by mention date (YYYY-MM-DD compares lexically)
+['dfrom','dto'].forEach(id=>{
+  const el=document.getElementById(id);
+  if(el)el.addEventListener('change',()=>{
+    dateFrom=(document.getElementById('dfrom')||{}).value||'';
+    dateTo=(document.getElementById('dto')||{}).value||'';
     renderChips();filter();
   });
 });
@@ -628,12 +654,14 @@ function renderChips(){
   if(tierF!=='all')active.push({f:'tier',label:'Tier: '+tierF});
   if(scoreF!=='all')active.push({f:'score',label:'Score: '+scoreF});
   if(activePlatform!=='all')active.push({f:'plat',label:'Platform: '+activePlatform});
+  if(dateFrom||dateTo)active.push({f:'date',label:'Date: '+(dateFrom||'…')+' → '+(dateTo||'…')});
   active.forEach(a=>{
     const ch=document.createElement('span'); ch.className='chip';
-    ch.innerHTML=`${a.label} <span class="chip-x">×</span>`;
+    ch.innerHTML=`${esc(a.label)} <span class="chip-x">×</span>`;
     ch.querySelector('.chip-x').addEventListener('click',()=>{
       if(a.f==='tier'){tierF='all';document.querySelectorAll('.fbtn[data-f="tier"]').forEach(x=>x.classList.remove('on'));document.querySelector('.fbtn[data-f="tier"][data-v="all"]').classList.add('on');}
       else if(a.f==='score'){scoreF='all';document.querySelectorAll('.fbtn[data-f="score"]').forEach(x=>x.classList.remove('on'));document.querySelector('.fbtn[data-f="score"][data-v="all"]').classList.add('on');}
+      else if(a.f==='date'){dateFrom='';dateTo='';const df=document.getElementById('dfrom'),dt=document.getElementById('dto');if(df)df.value='';if(dt)dt.value='';}
       else{activePlatform='all';document.querySelectorAll('.pb-row').forEach(r=>r.classList.remove('active'));}
       renderChips();filter();
     });
@@ -642,7 +670,8 @@ function renderChips(){
 }
 
 function clearAll(){
-  tierF='all';scoreF='all';activePlatform='all';
+  tierF='all';scoreF='all';activePlatform='all';dateFrom='';dateTo='';
+  const df=document.getElementById('dfrom'),dt=document.getElementById('dto');if(df)df.value='';if(dt)dt.value='';
   document.querySelectorAll('.fbtn').forEach(b=>b.classList.toggle('on',b.dataset.v==='all'));
   document.querySelectorAll('.pb-row').forEach(r=>r.classList.remove('active'));
   renderChips();filter();
@@ -654,8 +683,9 @@ function filter(){
     const tOk=tierF==='all'||c.dataset.tier===tierF;
     const sOk=scoreF==='all'||c.dataset.score===scoreF;
     const pOk=activePlatform==='all'||c.dataset.platform===activePlatform;
-    c.classList.toggle('hidden',!(tOk&&sOk&&pOk));
-    if(tOk&&sOk&&pOk)n++;
+    const dOk=(!dateFrom||c.dataset.date>=dateFrom)&&(!dateTo||c.dataset.date<=dateTo);
+    c.classList.toggle('hidden',!(tOk&&sOk&&pOk&&dOk));
+    if(tOk&&sOk&&pOk&&dOk)n++;
   });
   document.getElementById('rcount').querySelector('span').textContent=n;
   document.getElementById('no-results').style.display=n===0?'grid':'none';
@@ -677,22 +707,22 @@ sorted.forEach(m=>{
         <span class="sp r">R:${m.reach}</span>
         <span class="sp v">V:${m.velocity}${velArrow}</span>
         <span class="sp s">S:${m.sentiment}</span>
-        <span class="sp o">Opp:${m.opp}</span>
+        <span class="sp rt">RT:${m.riskTopic}</span>
       </div>
       <div class="mc-right">
         <span class="tier-badge ${m.tier}">${m.tier==='crisis'?'🔴':m.tier==='watch'?'🟠':m.tier==='engage'?'🟢':'⚪'} ${m.tier}</span>
-        <span class="ptag">${m.platform}</span>
+        <span class="ptag">${esc(m.platform)}</span>
         <span class="chev">&#8964;</span>
       </div>
     </div>
-    <div class="mc-head">${m.head}</div>
-    <div class="mc-quote">${m.quote}</div>
+    <div class="mc-head">${esc(m.head)}</div>
+    <div class="mc-quote">${esc(m.quote)}</div>
     <div class="mc-meta-row">
-      <span class="mc-author">${m.author}${m.pubDate ? ' · <span style="opacity:.9">'+m.pubDate+'</span>' : ''}</span>
-      <a href="${m.url}" class="src-link">↗ source</a>
+      <span class="mc-author">${esc(m.author)}${m.pubDate ? ' · <span style="opacity:.9">'+esc(m.pubDate)+'</span>' : ''}</span>
+      <a href="${safeUrl(m.url)}" class="src-link">↗ source</a>
     </div>`;
   const exp=document.createElement('div');exp.className='mc-expand';
-  exp.innerHTML=`<div class="bd-title">Score breakdown</div><div class="bd">${m.breakdown}</div><div class="act-lbl">Suggested action (${m.owner} · ${m.window})</div><div class="act-text">${m.actionText}</div>`;
+  exp.innerHTML=`<div class="bd-title">Score breakdown</div><div class="bd">${esc(m.breakdown)}</div><div class="act-lbl">Suggested action (${esc(m.owner)} · ${esc(m.window)})</div><div class="act-text">${esc(m.actionText)}</div>`;
   c.appendChild(top);c.appendChild(exp);
   top.addEventListener('click',()=>c.classList.toggle('exp'));
   feed.appendChild(c);
