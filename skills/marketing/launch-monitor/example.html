@@ -1,0 +1,568 @@
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-size:13px;color:var(--color-text-primary);background:transparent;padding:0 0 1.5rem;font-family:system-ui,-apple-system,sans-serif}
+.launch-bar{background:var(--color-background-secondary);border:0.5px solid var(--color-border-tertiary);border-radius:var(--border-radius-lg,10px);padding:10px 16px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-bottom:1rem}
+.launch-product{font-size:15px;font-weight:500;display:flex;align-items:center;gap:7px}
+.live-dot{width:7px;height:7px;border-radius:50%;background:#3B6D11;flex-shrink:0;animation:pulse 2s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.35}}
+.lmeta{display:flex;gap:16px;flex-wrap:wrap}
+.lmi{font-size:11px;color:var(--color-text-secondary);font-family:'SF Mono','Fira Code',monospace}
+.lmi span{color:var(--color-text-primary);font-weight:500}
+.stats{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:8px;margin-bottom:1rem}
+.stat{background:var(--color-background-secondary);border:0.5px solid var(--color-border-tertiary);border-radius:8px;padding:10px 12px;cursor:pointer;transition:border-color .12s}
+.stat:hover{border-color:var(--color-border-secondary)}
+.stat.active{border:1.5px solid var(--color-text-primary)}
+.stat-lbl{font-size:10px;color:var(--color-text-secondary);margin-bottom:4px;text-transform:uppercase;letter-spacing:.06em}
+.stat-val{font-size:20px;font-weight:500}
+.sv-r{color:#A32D2D}.sv-a{color:#854F0B}.sv-g{color:#3B6D11}
+.attn{border:0.5px solid var(--color-border-danger,#f0b8bc);background:var(--color-background-danger,#fff5f5);border-radius:8px;padding:10px 14px;margin-bottom:1rem;font-size:12px;line-height:1.6}
+.attn strong{color:var(--color-text-danger,#A32D2D)}
+.sec{font-size:10px;font-weight:500;letter-spacing:.08em;text-transform:uppercase;color:var(--color-text-secondary);margin:1.25rem 0 8px;padding-bottom:6px;border-bottom:0.5px solid var(--color-border-tertiary)}
+.chart-wrap{background:var(--color-background-secondary);border:0.5px solid var(--color-border-tertiary);border-radius:var(--border-radius-lg,10px);padding:12px 14px;margin-bottom:1.25rem}
+.chart-hint{font-size:11px;color:var(--color-text-secondary);margin-bottom:7px}
+.chart-leg{display:flex;gap:12px;margin-bottom:8px;font-size:11px;color:var(--color-text-secondary)}
+.ld{width:8px;height:8px;border-radius:50%;display:inline-block;margin-right:4px;vertical-align:middle}
+.hs-wrap{background:var(--color-background-secondary);border:0.5px solid var(--color-border-tertiary);border-radius:var(--border-radius-lg,10px);overflow:hidden;margin-bottom:1.25rem}
+.hs-inner{padding:12px 14px}
+.hs-hint{font-size:11px;color:var(--color-text-secondary);font-style:italic;margin-bottom:10px}
+.hs-row{display:flex;align-items:center;gap:8px;margin-bottom:4px}
+.hs-rlbl{font-size:11px;color:var(--color-text-secondary);width:78px;flex-shrink:0;font-family:'SF Mono','Fira Code',monospace}
+.hs-cells{display:grid;gap:3px;flex:1}
+.hs-cell{aspect-ratio:1;border-radius:3px;cursor:pointer;position:relative;transition:transform .1s,outline .1s;outline:0 solid transparent}
+.hs-cell:hover{transform:scale(1.12);z-index:3}
+.hs-cell.sel{outline:2px solid var(--color-text-primary);outline-offset:1px;z-index:2}
+.hs-cell.empty{cursor:default}.hs-cell.empty:hover{transform:none}
+.hs-axis{display:grid;gap:3px;margin-left:86px;margin-top:5px}
+.hs-ax{font-size:9px;color:var(--color-text-secondary);text-align:center;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.hs-leg{display:flex;gap:14px;font-size:11px;color:var(--color-text-secondary);margin-top:12px;flex-wrap:wrap;align-items:center}
+.hs-lg{display:flex;align-items:center;gap:5px}.hs-lgd{width:9px;height:9px;border-radius:3px}
+.hs-tt{position:absolute;pointer-events:none;background:var(--color-background-primary);border:0.5px solid var(--color-border-secondary);border-radius:8px;padding:9px 11px;font-size:12px;opacity:0;transition:opacity .12s;z-index:20;min-width:160px;max-width:230px}
+.hs-tt-h{font-weight:500;margin-bottom:5px;font-size:12px;display:flex;align-items:center;gap:6px}
+.hs-tt-dot{width:8px;height:8px;border-radius:2px;flex-shrink:0}
+.hs-tt-row{display:flex;justify-content:space-between;gap:12px;font-size:11px;color:var(--color-text-secondary);margin-bottom:2px}
+.hs-tt-v{color:var(--color-text-primary);font-weight:500}
+.hs-tt-sig{font-size:11px;color:var(--color-text-secondary);margin-top:5px;padding-top:5px;border-top:0.5px solid var(--color-border-tertiary);line-height:1.4;font-style:italic}
+.hs-tt-hint{font-size:10px;color:var(--color-text-secondary);margin-top:5px;font-style:italic;opacity:.8}
+.hs-detail{border-top:0.5px solid var(--color-border-tertiary);background:var(--color-background-primary);max-height:0;overflow:hidden;transition:max-height .25s ease}
+.hs-detail.open{max-height:460px;overflow:auto}
+.hs-detail-in{padding:12px 14px}
+.hsd-head{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:10px;flex-wrap:wrap}
+.hsd-title{font-size:13px;font-weight:500;display:flex;align-items:center;gap:8px}
+.hsd-dot{width:9px;height:9px;border-radius:3px;flex-shrink:0}
+.hsd-sub{font-size:11px;color:var(--color-text-secondary);font-family:'SF Mono','Fira Code',monospace}
+.hsd-close{font-size:11px;color:var(--color-text-secondary);cursor:pointer;background:none;border:0.5px solid var(--color-border-secondary);border-radius:6px;padding:3px 9px;font-family:inherit}
+.hsd-close:hover{background:var(--color-background-secondary)}
+.hsd-list{display:flex;flex-direction:column;gap:6px}
+.hsd-sig{display:flex;align-items:flex-start;gap:8px;padding:8px 10px;background:var(--color-background-secondary);border-radius:6px;border-left:3px solid var(--color-border-secondary)}
+.hsd-sig.r{border-left-color:#A32D2D}.hsd-sig.a{border-left-color:#854F0B}.hsd-sig.g{border-left-color:#3B6D11}
+.hsd-sig-main{flex:1;min-width:0}
+.hsd-sig-head{font-size:12px;font-weight:500;line-height:1.4;margin-bottom:2px}
+.hsd-sig-meta{font-size:10px;color:var(--color-text-secondary);font-family:'SF Mono','Fira Code',monospace;opacity:.8}
+.hsd-sig-link{font-size:11px;color:#185FA5;text-decoration:none;flex-shrink:0;white-space:nowrap;padding-top:1px}
+.hsd-sig-link:hover{opacity:.75;text-decoration:underline}
+.hsd-empty{font-size:12px;color:var(--color-text-secondary);font-style:italic;padding:4px 0}
+.filter-zone{margin-bottom:10px}
+.view-tabs{display:flex;gap:4px;margin-bottom:8px;flex-wrap:wrap}
+.vtab{font-size:12px;padding:5px 12px;border-radius:8px;border:0.5px solid var(--color-border-secondary);background:var(--color-background-primary);cursor:pointer;color:var(--color-text-secondary);transition:all .12s;font-family:inherit;display:flex;align-items:center;gap:5px}
+.vtab:hover{background:var(--color-background-secondary)}
+.vtab.on{background:var(--color-text-primary);color:var(--color-background-primary);border-color:var(--color-text-primary);font-weight:500}
+.vcnt{font-size:10px;opacity:.7;background:rgba(128,128,128,.15);border-radius:3px;padding:0 4px}
+.vtab.on .vcnt{background:rgba(255,255,255,.2);opacity:1}
+.adv-row{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:2px}
+.adv-btn{font-size:11px;padding:3px 9px;border-radius:20px;border:0.5px solid var(--color-border-secondary);background:var(--color-background-primary);cursor:pointer;color:var(--color-text-secondary);transition:all .12s;font-family:inherit}
+.adv-btn:hover{background:var(--color-background-secondary)}
+.adv-panel{display:none;border:0.5px solid var(--color-border-tertiary);border-radius:8px;padding:10px 12px;margin-top:6px;background:var(--color-background-secondary)}
+.adv-panel.open{display:block}
+.adv-group{margin-bottom:8px}
+.adv-group:last-child{margin-bottom:0}
+.adv-lbl{font-size:10px;text-transform:uppercase;letter-spacing:.06em;color:var(--color-text-secondary);margin-bottom:5px}
+.adv-pills{display:flex;gap:4px;flex-wrap:wrap}
+.apill{font-size:11px;padding:2px 8px;border-radius:20px;border:0.5px solid var(--color-border-secondary);background:var(--color-background-primary);cursor:pointer;color:var(--color-text-secondary);transition:all .12s;font-family:inherit}
+.apill:hover{border-color:var(--color-border-primary)}
+.apill.on{background:var(--color-text-primary);color:var(--color-background-primary);border-color:var(--color-text-primary)}
+.chips{display:flex;gap:5px;flex-wrap:wrap}
+.chip{font-size:11px;padding:2px 8px;border-radius:20px;background:var(--color-background-secondary);border:0.5px solid var(--color-border-secondary);color:var(--color-text-secondary);display:inline-flex;align-items:center;gap:4px}
+.chip-x{cursor:pointer;opacity:.6;font-size:13px;line-height:1}
+.chip-x:hover{opacity:1}
+.clear-btn{font-size:11px;color:var(--color-text-secondary);cursor:pointer;background:none;border:none;font-family:inherit;text-decoration:underline;text-underline-offset:2px;padding:0}
+.clear-btn:hover{color:var(--color-text-primary)}
+.rcount{font-size:11px;color:var(--color-text-secondary);margin-bottom:8px}
+.rcount span{font-weight:500;color:var(--color-text-primary)}
+.feed{display:grid;grid-template-columns:repeat(auto-fill,minmax(215px,1fr));gap:8px;margin-bottom:1.25rem}
+.sc{background:var(--color-background-primary);border:0.5px solid var(--color-border-tertiary);border-radius:8px;cursor:pointer;transition:border-color .12s;display:flex;flex-direction:column}
+.sc:hover{border-color:var(--color-border-secondary)}
+.sc.hidden{display:none}
+.sc-top{padding:10px 11px;flex:1;display:flex;flex-direction:column;gap:5px}
+.ud{width:7px;height:7px;border-radius:50%;flex-shrink:0;margin-top:2px}
+.ud.r{background:#A32D2D}.ud.a{background:#854F0B}.ud.g{background:#3B6D11}
+.sc-header{display:flex;align-items:flex-start;justify-content:space-between;gap:6px}
+.sc-badges{display:flex;gap:4px;align-items:center;flex-wrap:wrap}
+.ab{font-size:10px;font-weight:500;padding:1px 6px;border-radius:3px}
+.ab.RESPOND{background:#f8d7da;color:#A32D2D}
+.ab.CORRECT{background:#fef3cd;color:#854F0B}
+.ab.AMPLIFY{background:#d4edda;color:#3B6D11}
+.ab.ESCALATE{background:#f8d7da;color:#A32D2D}
+.ab.WATCH{background:var(--color-background-secondary);color:var(--color-text-secondary)}
+.tt{font-size:10px;color:var(--color-text-secondary);padding:1px 5px;border-radius:3px;background:var(--color-background-secondary)}
+.sh{font-size:12px;font-weight:500;line-height:1.4}
+.sctx{font-size:11px;color:var(--color-text-secondary);line-height:1.4}
+.smeta-row{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:auto;padding-top:6px;border-top:0.5px solid var(--color-border-tertiary)}
+.smeta{font-size:10px;color:var(--color-text-secondary);font-family:'SF Mono','Fira Code',monospace;opacity:.7;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.src-link{font-size:11px;color:#185FA5;text-decoration:none;transition:opacity .12s}
+.src-link:hover{opacity:.75;text-decoration:underline}
+.chev{font-size:11px;color:var(--color-text-secondary);flex-shrink:0;transition:transform .18s}
+.sc.exp .chev{transform:rotate(180deg)}
+.sc-expand{display:none;padding:0 11px 10px 28px;border-top:0.5px solid var(--color-border-tertiary);margin-top:4px}
+.sc.exp .sc-expand{display:block}
+.act-lbl{font-size:10px;text-transform:uppercase;letter-spacing:.08em;color:#854F0B;margin-bottom:3px;font-weight:500;margin-top:8px}
+.act-text{font-size:12px;background:var(--color-background-secondary);border-radius:8px;padding:7px 10px;line-height:1.55;border-left:2px solid #854F0B}
+.no-sigs{padding:20px;text-align:center;font-size:12px;color:var(--color-text-secondary);border:0.5px dashed var(--color-border-tertiary);border-radius:8px;display:none;grid-column:1/-1}
+.mc-row{display:grid;grid-template-columns:1fr 1fr;background:var(--color-background-primary);border:0.5px solid var(--color-border-tertiary);border-radius:8px;overflow:hidden;margin-bottom:8px}
+.mc-l{padding:11px 13px;border-right:0.5px solid var(--color-border-tertiary)}
+.mc-r{padding:11px 13px}
+.mc-lbl{font-size:10px;font-weight:500;letter-spacing:.06em;text-transform:uppercase;margin-bottom:5px}
+.mc-lbl.claim{color:#A32D2D}.mc-lbl.fix{color:#3B6D11}
+.mc-text{font-size:12px;line-height:1.5;margin-bottom:5px}
+.mc-meta{font-size:11px;color:var(--color-text-secondary);font-family:'SF Mono','Fira Code',monospace;margin-bottom:7px;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.sbdg{font-size:10px;font-weight:500;padding:2px 6px;border-radius:3px;display:inline-block}
+.sbdg.SPREADING{background:#f8d7da;color:#A32D2D}
+.sbdg.CONTAINED{background:var(--color-background-secondary);color:var(--color-text-secondary)}
+.cpybtn{font-size:11px;padding:4px 10px;border-radius:8px;border:0.5px solid var(--color-border-secondary);background:var(--color-background-secondary);cursor:pointer;color:var(--color-text-secondary);font-family:inherit;margin-top:6px;display:inline-block;transition:all .12s}
+.cpybtn:hover{background:var(--color-background-primary);border-color:var(--color-border-primary)}
+.cpybtn.copied{color:#3B6D11;border-color:#a8d5b5}
+.comp-card{background:var(--color-background-primary);border:0.5px solid var(--color-border-tertiary);border-radius:8px;padding:11px 13px;margin-bottom:8px;display:flex;gap:10px}
+.comp-name{font-size:13px;font-weight:500;margin-bottom:3px}
+.comp-act{font-size:12px;color:var(--color-text-secondary);margin-bottom:6px;line-height:1.45;display:flex;align-items:baseline;gap:8px;flex-wrap:wrap}
+.comp-ctr{font-size:12px;color:#854F0B;background:var(--color-background-warning,#fffbeb);border-radius:8px;padding:6px 9px;border-left:2px solid #854F0B;line-height:1.45}
+.ctr-lbl{font-size:10px;text-transform:uppercase;letter-spacing:.06em;color:#854F0B;margin-bottom:2px;font-weight:500}
+.footer{font-size:11px;color:var(--color-text-secondary);border-top:0.5px solid var(--color-border-tertiary);padding-top:8px;margin-top:4px;font-family:'SF Mono','Fira Code',monospace}
+</style>
+<div class="launch-bar">
+  <div class="launch-product"><div class="live-dot"></div>Apple Intelligence &amp; Siri AI</div>
+  <div class="lmeta">
+    <div class="lmi">Launch <span>Jun 9, 2026 (WWDC)</span></div>
+    <div class="lmi">Since launch <span>13 days</span></div>
+    <div class="lmi">Updated <span>Jun 22, 2026</span></div>
+  </div>
+</div>
+<div class="attn">
+  <strong>3 things need your attention right now —</strong> (1) The dominant narrative across HN, Reddit and CNET is that Siri is now just a "Gemini reskin" — a $1B/year Google deal framing that buries Apple's on-device/privacy-orchestration story. (2) The EU exclusion has flipped into a PR fight: the European Commission publicly stated nothing in the DMA blocks the launch, contradicting Apple's framing (MacRumors, PCMag, TechTimes). (3) The "delayed three years / finally" framing is everywhere and risks defining the launch as a recovery story rather than a product story.
+</div>
+<div class="stats">
+  <div class="stat active" data-v="all"><div class="stat-lbl">All signals</div><div class="stat-val">14</div></div>
+  <div class="stat" data-v="r"><div class="stat-lbl">Act now</div><div class="stat-val sv-r">5</div></div>
+  <div class="stat" data-v="a"><div class="stat-lbl">Monitor</div><div class="stat-val sv-a">4</div></div>
+  <div class="stat" data-v="g"><div class="stat-lbl">Good signals</div><div class="stat-val sv-g">5</div></div>
+  <div class="stat" data-v="mischar"><div class="stat-lbl">Mischaracterizations</div><div class="stat-val sv-r">3</div></div>
+</div>
+<div class="sec">Sentiment velocity — since launch</div>
+<div class="chart-wrap">
+  <div class="chart-hint">Click any point to filter the feed to that time window · click again to clear</div>
+  <div class="chart-leg">
+    <span><span class="ld" style="background:#3B6D11"></span>Positive</span>
+    <span><span class="ld" style="background:#A32D2D"></span>Negative</span>
+    <span><span class="ld" style="background:#854F0B"></span>Neutral</span>
+  </div>
+  <canvas id="vc" style="width:100%;height:110px"></canvas>
+</div>
+<div class="sec">Reaction heat-strip — by channel</div>
+<div class="hs-wrap">
+  <div class="hs-inner">
+    <div class="hs-hint">Same signals, broken out by channel · color = sentiment · darker = more volume · hover for a summary · click a cell to see its signals</div>
+    <div id="hs-grid"></div>
+    <div class="hs-axis" id="hs-axis"></div>
+    <div class="hs-leg">
+      <span class="hs-lg"><span class="hs-lgd" style="background:rgba(226,75,74,.9)"></span>Negative</span>
+      <span class="hs-lg"><span class="hs-lgd" style="background:rgba(59,109,17,.9)"></span>Positive</span>
+      <span class="hs-lg"><span class="hs-lgd" style="background:rgba(136,135,128,.7)"></span>Neutral</span>
+      <span class="hs-lg" style="opacity:.7">darker = higher volume</span>
+    </div>
+    <div class="hs-tt" id="hs-tt"></div>
+  </div>
+  <div class="hs-detail" id="hs-detail"><div class="hs-detail-in" id="hs-detail-in"></div></div>
+</div>
+<div class="sec">Signal feed</div>
+<div class="filter-zone">
+  <div class="view-tabs" id="vtabs">
+    <button class="vtab on" data-v="all">All <span class="vcnt">14</span></button>
+    <button class="vtab" data-v="r">🔴 Act now <span class="vcnt">5</span></button>
+    <button class="vtab" data-v="a">🟡 Monitor <span class="vcnt">4</span></button>
+    <button class="vtab" data-v="g">🟢 Good <span class="vcnt">5</span></button>
+    <button class="vtab" data-v="mischar">Mischar. <span class="vcnt">3</span></button>
+  </div>
+  <div class="adv-row">
+    <button class="adv-btn" onclick="toggleAdv()">Refine &#8964;</button>
+    <div class="chips" id="chips"></div>
+    <button class="clear-btn" id="clear-btn" style="display:none" onclick="clearAll()">Clear all</button>
+  </div>
+  <div class="adv-panel" id="adv-panel">
+    <div class="adv-group">
+      <div class="adv-lbl">Action type</div>
+      <div class="adv-pills">
+        <button class="apill" data-f="act" data-v="RESPOND">RESPOND</button>
+        <button class="apill" data-f="act" data-v="CORRECT">CORRECT</button>
+        <button class="apill" data-f="act" data-v="AMPLIFY">AMPLIFY</button>
+        <button class="apill" data-f="act" data-v="ESCALATE">ESCALATE</button>
+        <button class="apill" data-f="act" data-v="WATCH">WATCH</button>
+      </div>
+    </div>
+    <div class="adv-group">
+      <div class="adv-lbl">Signal type</div>
+      <div class="adv-pills">
+        <button class="apill" data-f="tp" data-v="press">Press</button>
+        <button class="apill" data-f="tp" data-v="community">Community</button>
+        <button class="apill" data-f="tp" data-v="social">Social</button>
+        <button class="apill" data-f="tp" data-v="competitor">Competitor</button>
+        <button class="apill" data-f="tp" data-v="mischar">Mischar.</button>
+      </div>
+    </div>
+  </div>
+</div>
+<div class="rcount" id="rcount"><span>14</span> signals shown</div>
+<div class="feed" id="feed"></div>
+<div class="no-sigs" id="nosig">No signals match. <button class="clear-btn" onclick="clearAll()">Clear filters</button></div>
+<div class="sec">Mischaracterization tracker</div>
+<div id="mcp"></div>
+<div class="sec">Competitor responses</div>
+<div id="ccp"></div>
+<div class="footer">Generated Jun 22, 2026 · Powered by Nimble + Claude · launch_monitor.html · launch_monitor.md</div>
+<script>
+const sigs=[
+  {u:'r',act:'CORRECT',tp:'mischar',ti:0,
+   h:'"Apple handed Siri to Google" — Gemini-reskin framing dominates',
+   ctx:'A reported ~$1B/yr Gemini deal is being framed as Apple giving up on its own AI. Buries the on-device foundation-models + privacy-orchestration story Apple actually told.',
+   meta:'tech-insider.org · syndicated widely · launch day',
+   url:'https://tech-insider.org/wwdc-2026-siri-ai-gemini-deal/',
+   action:'Push a tight, repeatable line: Gemini is one routed model behind Apple\u2019s private orchestration layer; sensitive requests stay on-device via 3rd-gen Apple Foundation Models. Seed it with the reporters who already covered the keynote accurately (The Verge, MacRumors) rather than arguing in HN threads.'},
+  {u:'r',act:'ESCALATE',tp:'mischar',ti:1,
+   h:'EU publicly contradicts Apple: "nothing in our rules blocks Siri AI"',
+   ctx:'Apple framed the EU exclusion as forced by regulation; the European Commission\u2019s most senior tech official rebutted it on the record, saying the choice was Apple\u2019s alone.',
+   meta:'MacRumors · high reach · launch day',
+   url:'https://www.macrumors.com/2026/06/09/eu-says-decision-not-to-launch-siri-ai-in-europe-is-apples/',
+   action:'This is a comms + policy issue, not a product one \u2014 route to comms/legal today. Decide whether to hold the "regulatory requirements" line or pivot to a neutral "working through EU interoperability" message before more outlets pick up the Commission\u2019s rebuttal.'},
+  {u:'r',act:'ESCALATE',tp:'press',ti:1,
+   h:'PCMag: "Apple refused to follow rules meant to keep Siri AI in check"',
+   ctx:'A more hostile second-wave framing of the EU standoff \u2014 positions Apple as evading oversight rather than facing red tape. Higher-reach outlet than the initial reports.',
+   meta:'PCMag · ~10M monthly · +1d',
+   url:'https://www.pcmag.com/news/eu-apple-refused-to-follow-rules-meant-to-keep-siri-ai-in-check-wwdc-2026',
+   action:'Same workstream as the EU signal above. Prepare a one-paragraph statement clarifying which DMA interoperability requirement is unresolved and why; vague "regulatory" language is fueling the "refused" narrative.'},
+  {u:'r',act:'RESPOND',tp:'community',ti:2,
+   h:'HN: "wrap an external tool in privacy architecture and productize it"',
+   ctx:'Top HN thread frames the whole architecture as a thin wrapper over Gemini. Influential with the developer audience and feeds the reskin narrative upstream of press.',
+   meta:'news.ycombinator.com · front page · +4h',
+   url:'https://news.ycombinator.com/item?id=48450142',
+   action:'Have a credible Apple engineer or DevRel voice engage in-thread with specifics on the orchestration/routing boundary and on-device model handling. HN rewards technical candor, not marketing lines.'},
+  {u:'r',act:'CORRECT',tp:'mischar',ti:1,
+   h:'CNET post: Siri AI "now expected to launch in late 2026"',
+   ctx:'Conflates the WWDC beta availability (live now for iPhone 15 Pro+) with the staggered GA rollout, implying nothing ships until year-end. Spreads the "still vaporware" read.',
+   meta:'Facebook/CNET · social reach · launch day',
+   url:'https://www.facebook.com/cnet/posts/at-wwdc-2026-apple-relaunched-its-ai-efforts-with-ios-27-featuring-siri-ai-that-/1384856533504202/',
+   action:'Clarify the timeline publicly: developer beta is available now; consumer features roll out incrementally through 2026. Provide a simple "what\u2019s available when" table to press to stop the beta-vs-GA conflation.'},
+  {u:'a',act:'WATCH',tp:'press',ti:2,
+   h:'AppleInsider: "WWDC hangover and Siri AI blindspots"',
+   ctx:'Measured but skeptical follow-up flagging gaps a week out. Accurate, not hostile \u2014 but shapes the analyst read if it gains traction.',
+   meta:'appleinsider.com · ~5M monthly · +5d',
+   url:'https://appleinsider.com/articles/26/06/14/sunday-reboot-the-wwdc-hangover-and-siri-ai-blindspots',
+   action:'No response needed yet. Track whether the "blindspots" framing gets cited by other outlets; if it does, address the specific gaps directly rather than the vibe.'},
+  {u:'a',act:'WATCH',tp:'community',ti:1,
+   h:'r/mac: "the most boring WWDC I have ever seen"',
+   ctx:'Enthusiast disappointment that Siri AI is a window that pops up rather than deep, subtle integration. Reflects an expectations-gap among the most engaged users.',
+   meta:'reddit.com/r/mac · rising · launch day',
+   url:'https://www.reddit.com/r/mac/comments/1u0u56c/the_most_boring_wwdc_i_have_ever_seen/',
+   action:'Watch for this hardening into "Siri AI is shallow." If it spreads, counter with concrete examples of cross-app actions and on-device personalization that aren\u2019t obvious in the keynote demo.'},
+  {u:'a',act:'WATCH',tp:'press',ti:2,
+   h:'SCMP: "Apple gives Siri an AI makeover, but China must wait"',
+   ctx:'Regional exclusion (China) framed as a competitive disadvantage in a key market. Pairs with the EU story into a broader "Siri AI is geofenced" narrative.',
+   meta:'scmp.com · large APAC reach · launch day',
+   url:'https://www.scmp.com/tech/article/3356438/wwdc-2026-apple-gives-siri-ai-makeover-china-must-wait',
+   action:'Track APAC pickup. If the EU + China exclusions merge into one "limited availability" storyline, get ahead of it with a clear market-availability roadmap.'},
+  {u:'a',act:'WATCH',tp:'community',ti:3,
+   h:'r/ios: "Apple is losing the AI race because of language"',
+   ctx:'Confusion in-thread about whether Gemini is even still involved \u2014 shows the architecture messaging hasn\u2019t landed cleanly with everyday users.',
+   meta:'reddit.com/r/ios · mid traction · +2d',
+   url:'https://www.reddit.com/r/ios/comments/1u0m6zf/apple_is_losing_the_ai_race_simply_because_of/',
+   action:'Signal that the public explanation is too complex. Feeds into a simpler consumer-facing explainer of what Siri AI does and where data goes.'},
+  {u:'g',act:'AMPLIFY',tp:'press',ti:0,
+   h:'The Verge: "I tried Siri AI, and so far it actually works"',
+   ctx:'Hands-on from a high-authority outlet \u2014 the single most credible counter to the "still broken" narrative. Notes it\u2019s realer than any prior Siri demo.',
+   meta:'theverge.com · ~25M monthly · launch day',
+   url:'https://www.theverge.com/tech/947432/siri-ai-apple-intelligence-ios-27-wwdc',
+   action:'Amplify this as the anchor positive. Use the "actually works" hands-on framing in outreach to balance the reskin/delay stories \u2014 it carries more weight than any first-party claim.'},
+  {u:'g',act:'AMPLIFY',tp:'community',ti:1,
+   h:'r/apple: "Guys, Siri AI is actually pretty good"',
+   ctx:'Organic positive from the core brand subreddit, with users reporting tasks performing well. Strong authenticity signal among enthusiasts.',
+   meta:'reddit.com/r/apple · high upvotes · launch day',
+   url:'https://www.reddit.com/r/apple/comments/1u0tbtt/guys_siri_ai_is_actually_pretty_good/',
+   action:'Don\u2019t astroturf \u2014 just monitor and let it run. Worth surfacing internally as proof the product experience is landing where it ships.'},
+  {u:'g',act:'AMPLIFY',tp:'press',ti:1,
+   h:'WIRED: "Siri is finally ready to get personal" (hands-on)',
+   ctx:'Positive hands-on tour; notes the Google partnership is a driver behind a genuinely improved assistant. Reframes Gemini as a strength, not a surrender.',
+   meta:'wired.com · ~20M monthly · +1d',
+   url:'https://www.wired.com/story/siri-ai-hands-on-iphone/',
+   action:'This is the best available "Gemini as advantage" framing from a neutral outlet. Pair it with The Verge piece when correcting the reskin narrative.'},
+  {u:'g',act:'WATCH',tp:'community',ti:4,
+   h:'r/apple: "Apple\u2019s new Siri is a dark horse in the AI race"',
+   ctx:'Forward-looking optimism citing Apple\u2019s distribution + hardware advantage. Sentiment recovering a week-plus out as hands-on takes spread.',
+   meta:'reddit.com/r/apple · steady traction · +7d',
+   url:'https://www.reddit.com/r/apple/comments/1u9e8of/apples_new_siri_is_a_dark_horse_in_the_ai_race/',
+   action:'Evidence the narrative is cooling toward neutral/positive. No action \u2014 track as a sentiment-recovery marker.'},
+  {u:'g',act:'AMPLIFY',tp:'press',ti:1,
+   h:'MacRumors hands-on: Siri AI live in beta on iPhone 15 Pro+',
+   ctx:'Concrete, accurate availability reporting \u2014 directly refutes the "nothing ships until late 2026" claim. Clear on device requirements.',
+   meta:'macrumors.com · large Apple audience · +1d',
+   url:'https://www.macrumors.com/2026/06/10/ios-27-siri-ai-hands-on/',
+   action:'Use as the citation when correcting timeline mischaracterizations \u2014 a neutral outlet confirming beta is available now.'},
+];
+const velData={
+  labels:['Launch','+1d','+2d','+5d','+7d'],
+  pos:[2,3,1,1,2],
+  neg:[3,2,1,1,0],
+  neu:[1,1,2,1,1],
+};
+const heatCols=['Launch','+1d','+2d','+5d','+7d'];
+const heatRows=['Press','Social','Community'];
+const heatData={
+  Press:[
+    {s:'pos',i:.7,n:2,sigs:[{u:'g',head:'The Verge: "Siri AI actually works"',meta:'~25M · launch day',url:'https://www.theverge.com/tech/947432/siri-ai-apple-intelligence-ios-27-wwdc'},{u:'r',head:'EU rebuts Apple\u2019s regulatory framing',meta:'launch day',url:'https://www.macrumors.com/2026/06/09/eu-says-decision-not-to-launch-siri-ai-in-europe-is-apples/'}]},
+    {s:'neg',i:.8,n:3,sigs:[{u:'r',head:'PCMag: "Apple refused to follow rules"',meta:'~10M · +1d',url:'https://www.pcmag.com/news/eu-apple-refused-to-follow-rules-meant-to-keep-siri-ai-in-check-wwdc-2026'},{u:'g',head:'WIRED hands-on: "ready to get personal"',meta:'~20M · +1d',url:'https://www.wired.com/story/siri-ai-hands-on-iphone/'},{u:'g',head:'MacRumors: Siri AI live in beta',meta:'+1d',url:'https://www.macrumors.com/2026/06/10/ios-27-siri-ai-hands-on/'}]},
+    {s:'neu',i:.4,n:1,sigs:[{u:'a',head:'SCMP: "China must wait"',meta:'APAC reach · +1d',url:'https://www.scmp.com/tech/article/3356438/wwdc-2026-apple-gives-siri-ai-makeover-china-must-wait'}]},
+    {s:'neu',i:.4,n:1,sigs:[{u:'a',head:'AppleInsider: "Siri AI blindspots"',meta:'~5M · +5d',url:'https://appleinsider.com/articles/26/06/14/sunday-reboot-the-wwdc-hangover-and-siri-ai-blindspots'}]},
+    {s:'neu',i:0,n:0,sigs:[]},
+  ],
+  Social:[
+    {s:'neg',i:.9,n:2,sigs:[{u:'r',head:'"Apple handed Siri to Google" / Gemini reskin',meta:'syndicated · launch day',url:'https://tech-insider.org/wwdc-2026-siri-ai-gemini-deal/'},{u:'r',head:'CNET: "expected to launch late 2026"',meta:'social reach · launch day',url:'https://www.facebook.com/cnet/posts/at-wwdc-2026-apple-relaunched-its-ai-efforts-with-ios-27-featuring-siri-ai-that-/1384856533504202/'}]},
+    {s:'neu',i:.4,n:1,sigs:[{u:'a',head:'IG: "long-delayed Siri finally moving forward"',meta:'+1d',url:'https://www.instagram.com/reel/DZXOaQPCRaj/'}]},
+    {s:'neu',i:0,n:0,sigs:[]},
+    {s:'pos',i:.4,n:1,sigs:[{u:'g',head:'Investing.com: monetization is the real story',meta:'+2d',url:'https://www.investing.com/analysis/apple-intelligence-monetization-is-the-real-wwdc-story-200681775'}]},
+    {s:'neu',i:0,n:0,sigs:[]},
+  ],
+  Community:[
+    {s:'neg',i:.6,n:2,sigs:[{u:'r',head:'HN: "wrap an external tool in privacy architecture"',meta:'front page · +4h',url:'https://news.ycombinator.com/item?id=48450142'},{u:'a',head:'r/mac: "most boring WWDC ever"',meta:'launch day',url:'https://www.reddit.com/r/mac/comments/1u0u56c/the_most_boring_wwdc_i_have_ever_seen/'}]},
+    {s:'pos',i:.6,n:1,sigs:[{u:'g',head:'r/apple: "Siri AI is actually pretty good"',meta:'high upvotes · launch day',url:'https://www.reddit.com/r/apple/comments/1u0tbtt/guys_siri_ai_is_actually_pretty_good/'}]},
+    {s:'neu',i:.4,n:1,sigs:[{u:'a',head:'r/ios: confusion over Gemini involvement',meta:'+2d',url:'https://www.reddit.com/r/ios/comments/1u0m6zf/apple_is_losing_the_ai_race_simply_because_of/'}]},
+    {s:'neu',i:0,n:0,sigs:[]},
+    {s:'pos',i:.7,n:1,sigs:[{u:'g',head:'r/apple: "Siri is a dark horse in the AI race"',meta:'steady · +7d',url:'https://www.reddit.com/r/apple/comments/1u9e8of/apples_new_siri_is_a_dark_horse_in_the_ai_race/'}]},
+  ],
+};
+const mcData=[
+  {claim:'Apple "handed Siri to Google" / Siri AI is just a Gemini reskin running on a $1B/yr deal',
+   src:'tech-insider.org + HN front page · launch day · syndicated widely',
+   url:'https://tech-insider.org/wwdc-2026-siri-ai-gemini-deal/',
+   correct:'Gemini is one model routed behind Apple\u2019s own private orchestration layer; sensitive and on-device requests run on 3rd-gen Apple Foundation Models. The assistant, personalization, and privacy boundary are Apple\u2019s.',
+   suggestion:'Siri AI runs on Apple\u2019s own orchestration and on-device foundation models, with Google\u2019s Gemini used as one routed model for select requests \u2014 not a rebrand of Gemini.',
+   status:'SPREADING'},
+  {claim:'Apple was forced by EU regulation not to launch Siri AI in Europe',
+   src:'Apple keynote framing · rebutted by European Commission, Jun 9\u201310',
+   url:'https://www.techtimes.com/articles/318136/20260610/eu-rejects-apple-siri-ai-exemption-commission-says-dma-never-blocked-launch.htm',
+   correct:'The European Commission stated on the record that nothing in the DMA blocks the launch and that the decision to withhold Siri AI was Apple\u2019s own.',
+   suggestion:'We\u2019re continuing to work through EU interoperability requirements before bringing Siri AI to the region \u2014 we want to clarify the specific items still being resolved rather than imply a blanket regulatory block.',
+   status:'SPREADING'},
+  {claim:'Siri AI won\u2019t ship until late 2026 / nothing is available yet',
+   src:'Facebook/CNET post · launch day · social reach',
+   url:'https://www.facebook.com/cnet/posts/at-wwdc-2026-apple-relaunched-its-ai-efforts-with-ios-27-featuring-siri-ai-that-/1384856533504202/',
+   correct:'Siri AI is available in developer beta now (iPhone 15 Pro and later); consumer features roll out incrementally through 2026. Beta availability was confirmed by MacRumors\u2019 hands-on.',
+   suggestion:'Siri AI is live in developer beta today on iPhone 15 Pro and later, with consumer features rolling out through 2026 \u2014 it isn\u2019t a year-end-only release.',
+   status:'CONTAINED'},
+];
+const compData=[
+  {name:'Google (Gemini)',u:'g',
+   act:'Effectively wins either way \u2014 coverage frames Siri AI as Gemini-powered, so Google gets credibility-by-association as the model behind Apple\u2019s assistant. No combative response needed from them; the narrative does the work.',
+   url:'https://www.investing.com/analysis/apple-intelligence-monetization-is-the-real-wwdc-story-200681775',
+   counter:'Reclaim the orchestration story: emphasize that the user-facing intelligence, personalization, and privacy layer are Apple\u2019s. Don\u2019t let "powered by Gemini" become "it\u2019s just Gemini."'},
+  {name:'Samsung (Galaxy AI)',u:'a',
+   act:'Positioned by analysts as one of the few players who can meet Apple "on the battlefield" given its own handset distribution. No counter-announcement surfaced yet, but it\u2019s the most likely to push a "we shipped on-device AI first" contrast.',
+   url:'https://news.ycombinator.com/item?id=48449084',
+   counter:'Pre-empt a head-to-head "who did on-device AI first" comparison with a clear, demoable list of Siri AI cross-app actions that are live now on shipping hardware.'},
+  {name:'OpenAI / Anthropic',u:'a',
+   act:'Named as the assistants Siri has lagged (ChatGPT, Claude). Notably, reporting indicates iOS 27\u2019s Extensions system may let users pick Claude or other models \u2014 turning rivals into optional plug-ins rather than pure competitors.',
+   url:'https://www.theverge.com/tech/947432/siri-ai-apple-intelligence-ios-27-wwdc',
+   counter:'Lean into the Extensions angle as a strength: Apple as the neutral orchestration layer that lets users bring their preferred model, rather than Apple losing to standalone chatbots.'},
+];
+let viewF='all',actF=null,tpF=null,tiF=null;
+document.querySelectorAll('.stat').forEach(s=>{
+  s.addEventListener('click',()=>{
+    viewF=s.dataset.v;
+    document.querySelectorAll('.stat').forEach(x=>x.classList.remove('active'));
+    s.classList.add('active');
+    document.querySelectorAll('.vtab').forEach(t=>t.classList.toggle('on',t.dataset.v===viewF));
+    filter();
+  });
+});
+document.querySelectorAll('.vtab').forEach(t=>{
+  t.addEventListener('click',()=>{
+    viewF=t.dataset.v;
+    document.querySelectorAll('.vtab').forEach(x=>x.classList.remove('on'));
+    t.classList.add('on');
+    document.querySelectorAll('.stat').forEach(s=>s.classList.toggle('active',s.dataset.v===viewF));
+    filter();
+  });
+});
+function toggleAdv(){document.getElementById('adv-panel').classList.toggle('open');}
+document.querySelectorAll('.apill').forEach(p=>{
+  p.addEventListener('click',()=>{
+    const f=p.dataset.f,v=p.dataset.v;
+    if(f==='act')actF=actF===v?null:v; else tpF=tpF===v?null:v;
+    document.querySelectorAll(`.apill[data-f="${f}"]`).forEach(x=>x.classList.remove('on'));
+    if((f==='act'&&actF)||(f==='tp'&&tpF))p.classList.add('on');
+    renderChips();filter();
+  });
+});
+function renderChips(){
+  const c=document.getElementById('chips'),btn=document.getElementById('clear-btn');
+  c.innerHTML='';
+  const active=[];
+  if(actF)active.push({f:'act',label:'Action: '+actF});
+  if(tpF)active.push({f:'tp',label:'Type: '+tpF});
+  if(tiF!==null)active.push({f:'ti',label:'Time: pt '+tiF});
+  active.forEach(a=>{
+    const ch=document.createElement('span');ch.className='chip';
+    ch.innerHTML=`${a.label} <span class="chip-x">×</span>`;
+    ch.querySelector('.chip-x').addEventListener('click',()=>{
+      if(a.f==='act'){actF=null;document.querySelectorAll('.apill[data-f="act"]').forEach(x=>x.classList.remove('on'));}
+      else if(a.f==='tp'){tpF=null;document.querySelectorAll('.apill[data-f="tp"]').forEach(x=>x.classList.remove('on'));}
+      else{tiF=null;drawChart();}
+      renderChips();filter();
+    });
+    c.appendChild(ch);
+  });
+  btn.style.display=active.length?'inline-block':'none';
+}
+function clearAll(){
+  actF=null;tpF=null;tiF=null;viewF='all';
+  document.querySelectorAll('.apill,.vtab').forEach(x=>x.classList.remove('on'));
+  document.querySelector('.vtab[data-v="all"]').classList.add('on');
+  document.querySelectorAll('.stat').forEach(s=>s.classList.toggle('active',s.dataset.v==='all'));
+  renderChips();drawChart();filter();
+}
+function filter(){
+  let n=0;
+  document.querySelectorAll('.sc').forEach(c=>{
+    const uOk=viewF==='all'||(viewF==='mischar'&&c.dataset.tp==='mischar')||c.dataset.u===viewF;
+    const aOk=!actF||c.dataset.act===actF;
+    const tOk=!tpF||c.dataset.tp===tpF;
+    const tiOk=tiF===null||parseInt(c.dataset.ti)===tiF;
+    c.classList.toggle('hidden',!(uOk&&aOk&&tOk&&tiOk));
+    if(uOk&&aOk&&tOk&&tiOk)n++;
+  });
+  document.getElementById('nosig').style.display=n===0?'block':'none';
+  document.getElementById('rcount').querySelector('span').textContent=n;
+}
+const feed=document.getElementById('feed');
+sigs.forEach(s=>{
+  const c=document.createElement('div');
+  c.className='sc';c.dataset.u=s.u;c.dataset.act=s.act;c.dataset.tp=s.tp;c.dataset.ti=s.ti;
+  const top=document.createElement('div');top.className='sc-top';
+  top.innerHTML=`<div class="sc-header"><div class="sc-badges"><div class="ud ${s.u}"></div><span class="ab ${s.act}">${s.act}</span><span class="tt">${s.tp}</span></div><span class="chev">&#8964;</span></div><div class="sh">${s.h}</div><div class="sctx">${s.ctx}</div><div class="smeta-row"><span class="smeta">${s.meta}</span><a href="${s.url}" class="src-link">↗ source</a></div>`;
+  const exp=document.createElement('div');exp.className='sc-expand';
+  exp.innerHTML=`<div class="act-lbl">Suggested action</div><div class="act-text">${s.action}</div>`;
+  c.appendChild(top);c.appendChild(exp);
+  top.addEventListener('click',()=>c.classList.toggle('exp'));
+  feed.appendChild(c);
+});
+filter();
+function drawChart(){
+  const canvas=document.getElementById('vc');
+  const dpr=window.devicePixelRatio||1;
+  const W=canvas.parentElement.clientWidth-28,H=110;
+  canvas.width=W*dpr;canvas.height=H*dpr;
+  canvas.style.width=W+'px';canvas.style.height=H+'px';
+  const ctx=canvas.getContext('2d');ctx.scale(dpr,dpr);
+  const labels=velData.labels,n=labels.length;
+  const pL=28,pR=8,pT=8,pB=20;
+  const pW=W-pL-pR,pH=H-pT-pB;
+  const maxV=Math.max(...velData.pos,...velData.neg,...velData.neu,1);
+  const xP=i=>pL+(i/(n-1))*pW,yP=v=>pT+pH-(v/maxV)*pH;
+  ctx.strokeStyle='rgba(128,128,128,.12)';ctx.lineWidth=.5;
+  for(let i=0;i<=4;i++){const y=pT+(i/4)*pH;ctx.beginPath();ctx.moveTo(pL,y);ctx.lineTo(pL+pW,y);ctx.stroke();}
+  [[velData.pos,'#3B6D11'],[velData.neg,'#A32D2D'],[velData.neu,'#854F0B']].forEach(([d,col])=>{
+    ctx.beginPath();ctx.strokeStyle=col;ctx.lineWidth=2;ctx.lineJoin='round';
+    d.forEach((v,i)=>i===0?ctx.moveTo(xP(i),yP(v)):ctx.lineTo(xP(i),yP(v)));ctx.stroke();
+    d.forEach((v,i)=>{
+      const active=tiF===i;
+      ctx.beginPath();ctx.fillStyle=active?'#1a1a1a':col;
+      ctx.arc(xP(i),yP(v),active?5.5:3.5,0,Math.PI*2);ctx.fill();
+      if(active){ctx.beginPath();ctx.strokeStyle=col;ctx.lineWidth=1.5;ctx.arc(xP(i),yP(v),7.5,0,Math.PI*2);ctx.stroke();}
+    });
+  });
+  ctx.fillStyle='rgba(128,128,128,.65)';ctx.font='10px system-ui';ctx.textAlign='center';
+  labels.forEach((l,i)=>ctx.fillText(l,xP(i),H-4));
+  canvas.onclick=function(e){
+    const rect=canvas.getBoundingClientRect(),mx=e.clientX-rect.left;
+    let cl=0,md=Infinity;
+    labels.forEach((_,i)=>{const d=Math.abs(mx-xP(i));if(d<md){md=d;cl=i;}});
+    tiF=tiF===cl?null:cl;renderChips();drawChart();filter();
+  };
+}
+drawChart();
+(function(){
+  const grid=document.getElementById('hs-grid');
+  if(!grid||typeof heatData==='undefined')return;
+  const tt=document.getElementById('hs-tt');
+  const inner=grid.closest('.hs-inner');
+  const detail=document.getElementById('hs-detail');
+  const detailIn=document.getElementById('hs-detail-in');
+  const colRGB={neg:'226,75,74',pos:'59,109,17',neu:'136,135,128'};
+  const sName={neg:'Negative',pos:'Positive',neu:'Neutral'};
+  const nCols=heatCols.length;
+  let pinned=null;
+  function cellColor(c){return c.n===0?'rgba(128,128,128,.06)':`rgba(${colRGB[c.s]},${0.15+c.i*0.85})`;}
+  window.closeHS=function(){pinned=null;detail.classList.remove('open');document.querySelectorAll('.hs-cell').forEach(x=>x.classList.remove('sel'));};
+  function openDetail(row,ci,el){
+    document.querySelectorAll('.hs-cell').forEach(x=>x.classList.remove('sel'));el.classList.add('sel');pinned=row+ci;
+    const c=heatData[row][ci];let body;
+    if(c.n===0){body='<div class="hsd-empty">No signals in this window.</div>';}
+    else{body='<div class="hsd-list">'+c.sigs.map(s=>`<div class="hsd-sig ${s.u}"><div class="hsd-sig-main"><div class="hsd-sig-head">${s.head}</div><div class="hsd-sig-meta">${s.meta}</div></div><a href="${s.url}" target="_blank" rel="noopener" class="hsd-sig-link">↗ open</a></div>`).join('')+'</div>';}
+    detailIn.innerHTML=`<div class="hsd-head"><div class="hsd-title"><span class="hsd-dot" style="background:${c.n===0?'var(--color-border-secondary)':`rgb(${colRGB[c.s]})`}"></span>${row} · ${heatCols[ci]}</div><div class="hsd-sub">${c.n} signal${c.n===1?'':'s'} · ${sName[c.s]}</div><button class="hsd-close" onclick="closeHS()">Close</button></div>${body}`;
+    detail.classList.add('open');
+  }
+  heatRows.forEach(row=>{
+    const r=document.createElement('div');r.className='hs-row';r.innerHTML=`<div class="hs-rlbl">${row}</div>`;
+    const cells=document.createElement('div');cells.className='hs-cells';cells.style.gridTemplateColumns=`repeat(${nCols},1fr)`;
+    (heatData[row]||[]).forEach((c,ci)=>{
+      const cell=document.createElement('div');cell.className='hs-cell'+(c.n===0?' empty':'');cell.style.background=cellColor(c);
+      if(c.n>0){
+        cell.addEventListener('mouseenter',()=>{
+          const top=c.sigs[0];
+          tt.innerHTML=`<div class="hs-tt-h"><span class="hs-tt-dot" style="background:rgb(${colRGB[c.s]})"></span>${row} · ${heatCols[ci]}</div><div class="hs-tt-row"><span>Sentiment</span><span class="hs-tt-v">${sName[c.s]}</span></div><div class="hs-tt-row"><span>Signals</span><span class="hs-tt-v">${c.n}</span></div>${top?`<div class="hs-tt-sig">${top.head}</div>`:''}<div class="hs-tt-hint">Click to see all signals</div>`;
+          const ir=inner.getBoundingClientRect(),cr=cell.getBoundingClientRect();
+          let x=cr.left-ir.left+cr.width+8,y=cr.top-ir.top-4;
+          if(x+230>ir.width)x=cr.left-ir.left-238;if(x<0)x=4;
+          tt.style.left=x+'px';tt.style.top=Math.max(y,4)+'px';tt.style.opacity=1;
+        });
+        cell.addEventListener('mouseleave',()=>{tt.style.opacity=0;});
+        cell.addEventListener('click',()=>{ pinned===row+ci?closeHS():openDetail(row,ci,cell); });
+      }
+      cells.appendChild(cell);
+    });
+    r.appendChild(cells);grid.appendChild(r);
+  });
+  const axis=document.getElementById('hs-axis');
+  axis.style.gridTemplateColumns=`repeat(${nCols},1fr)`;
+  heatCols.forEach(l=>{const d=document.createElement('div');d.className='hs-ax';d.textContent=l;axis.appendChild(d);});
+})();
+const mcp=document.getElementById('mcp');
+if(!mcData||mcData.length===0){
+  mcp.previousElementSibling.style.display='none';
+} else {
+  mcData.forEach(m=>{
+    const r=document.createElement('div');r.className='mc-row';
+    r.innerHTML=`<div class="mc-l"><div class="mc-lbl claim">The claim</div><div class="mc-text">"${m.claim}"</div><div class="mc-meta">${m.src} <a href="${m.url}" class="src-link">↗ source</a></div><span class="sbdg ${m.status}">${m.status}</span></div><div class="mc-r"><div class="mc-lbl fix">The correction</div><div class="mc-text">${m.correct}</div><div class="mc-meta">Suggested response:</div><div class="mc-text" style="font-style:italic;color:var(--color-text-secondary);font-size:11px">"${m.suggestion}"</div><button class="cpybtn" data-txt="${m.suggestion}">Copy correction</button></div>`;
+    r.querySelector('.cpybtn').addEventListener('click',function(){
+      navigator.clipboard.writeText(this.dataset.txt);
+      this.textContent='Copied ✓';this.classList.add('copied');
+      setTimeout(()=>{this.textContent='Copy correction';this.classList.remove('copied');},2000);
+    });
+    mcp.appendChild(r);
+  });
+}
+const ccp=document.getElementById('ccp');
+if(!compData||compData.length===0){
+  ccp.previousElementSibling.style.display='none';
+} else {
+  compData.forEach(c=>{
+    const card=document.createElement('div');card.className='comp-card';
+    card.innerHTML=`<div class="ud ${c.u}" style="width:10px;height:10px;margin-top:3px;flex-shrink:0"></div><div style="flex:1"><div class="comp-name">${c.name}</div><div class="comp-act">${c.act} <a href="${c.url}" class="src-link">↗ source</a></div><div class="comp-ctr"><div class="ctr-lbl">Suggested counter-move</div>${c.counter}</div></div>`;
+    ccp.appendChild(card);
+  });
+}
+</script>
