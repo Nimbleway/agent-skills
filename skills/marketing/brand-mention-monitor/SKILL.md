@@ -204,6 +204,8 @@ How fast is this gaining ground? This is what separates "viral forming" from "st
 | Press picking up a social post | +25 | No |
 | 2.3K+ reposts in 40 minutes (crisis velocity) | +40 | No — observable in single sweep |
 
+**Tier upgrade on rapid re-check:** if re-running within 2 hours of a previous run, re-fetch every mention that scored Watch or higher and compare engagement counts. If engagement has grown 20%+ since last check, upgrade the tier and flag it `↑ accelerating`. If flat or declining, note `→ stable` or `↓ declining`.
+
 ### Sentiment (0–100 risk score; 0–100 opportunity score)
 | Negative signals (risk) | Points |
 |---|---|
@@ -399,15 +401,6 @@ For date window calculation, follow the Smart Date Windowing pattern in `referen
 > "Sweeping for new mentions since [last run]. Anything to add to the watch list?"
 
 Net-new mentions only. Crisis and Watch items carry forward until marked handled.
-
----
-
-## Velocity re-check
-
-If re-running within 2 hours of a previous run:
-- For every mention that scored Watch or higher on the previous run, re-fetch the post to check current engagement
-- If engagement has grown 20%+ since last check, upgrade tier and flag as "accelerating ↑"
-- If engagement is flat or declining, note "stable →" or "declining ↓"
 
 ---
 

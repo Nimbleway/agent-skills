@@ -2,7 +2,7 @@
 
 Brand monitoring requires broad coverage across all platforms where your audience talks. Run sources in this order: social first (fastest to surface new mentions), then news, then review platforms.
 
-Use `search_depth: "lite"` with `include_answer: true` for the discovery pass. Use `search_depth: "deep"` to extract full content for scoring high-impact mentions.
+Use `--search-depth lite` for the discovery pass. Use `--search-depth deep` to extract full content for scoring high-impact mentions.
 
 ---
 
@@ -15,7 +15,7 @@ Use `search_depth: "lite"` with `include_answer: true` for the discovery pass. U
 - `"[brand name]" complaint OR issue OR problem site:reddit.com` — risk signals
 - `"[brand name]" recommend OR love OR "switched to" OR "best" site:reddit.com` — opportunity
 - `"[brand name]" vs OR alternative OR "compared to" site:reddit.com` — competitive
-- Nimble `focus:"social"` query `"[brand name]" reddit`
+- `nimble search --query '"[brand name]" reddit' --focus social`
 - Signal: sort by "new" for recency, "top" for reach; threads with 100+ comments = high priority
 
 ### X / Twitter
@@ -24,7 +24,7 @@ Use `search_depth: "lite"` with `include_answer: true` for the discovery pass. U
 - `"[brand name]" angry OR disappointed OR broken OR "doesn't work" OR "worst" site:x.com` — risk
 - `"[brand name]" love OR amazing OR "highly recommend" OR "can't believe" site:x.com` — opportunity
 - `"[brand name]" OR "#[brand]" complaint OR refund OR scam site:x.com` — escalation risk
-- Nimble `focus:"social"` query `"[brand name]" twitter recent`
+- `nimble search --query '"[brand name]" twitter recent' --focus social`
 - Signal: verified accounts, accounts with 10K+ followers, threads with 50+ replies
 
 ### LinkedIn
@@ -34,25 +34,25 @@ Use `search_depth: "lite"` with `include_answer: true` for the discovery pass. U
 - Signal: practitioner posts carry weight with B2B buyers; exec commentary shapes enterprise perception
 
 ### Instagram
-- Nimble `focus:"social"` query `"[brand name]" instagram`
-- Nimble `focus:"social"` query `#[brand] instagram`
-- Nimble `focus:"social"` query `"[brand name]" instagram review OR unboxing OR haul`
+- `nimble search --query '"[brand name]" instagram' --focus social`
+- `nimble search --query '#[brand] instagram' --focus social`
+- `nimble search --query '"[brand name]" instagram review OR unboxing OR haul' --focus social`
 - Signal: influencer posts, brand account engagement, comment sentiment, UGC reposting opportunities
 
 ### TikTok
-- Nimble `focus:"social"` query `"[brand name]" tiktok`
-- Nimble `focus:"social"` query `#[brand] tiktok review OR reaction OR honest`
-- Nimble `focus:"social"` query `"[brand name]" tiktok made me buy`
+- `nimble search --query '"[brand name]" tiktok' --focus social`
+- `nimble search --query '#[brand] tiktok review OR reaction OR honest' --focus social`
+- `nimble search --query '"[brand name]" tiktok made me buy' --focus social`
 - Signal: viral reaction content moves faster than press; high-view negative TikToks = urgent; "TikTok made me buy it" = high opportunity
 
 ### Facebook
-- Nimble `focus:"social"` query `"[brand name]" facebook group`
-- Nimble `focus:"social"` query `"[brand name]" facebook review`
+- `nimble search --query '"[brand name]" facebook group' --focus social`
+- `nimble search --query '"[brand name]" facebook review' --focus social`
 - Signal: consumer and SMB brand communities; older demographic feedback
 
 ### Threads
 - `"[brand name]" site:threads.net`
-- Nimble `focus:"social"` query `"[brand name]" threads`
+- `nimble search --query '"[brand name]" threads' --focus social`
 
 ### YouTube
 - `"[brand name]" review OR "honest review" OR "is it worth it" site:youtube.com`
@@ -137,31 +137,22 @@ Run these specifically to find high-opportunity mentions:
 
 ## Nimble social search configuration
 
-For social media sweeps:
-- `focus: "social"` — Nimble's social search mode surfaces posts and threads more effectively
-- `search_depth: "lite"` with `include_answer: true` for discovery passes
-- `time_range: "week"` or `time_range: "day"` for recency-filtered results
+For social media sweeps, use `--focus social` (CLI) or `focus="social"` (MCP) — Nimble's social mode surfaces posts and threads more effectively than a plain web search. Apply the time window via `--start-date`/`--end-date` (CLI) or `time_range` (MCP) on every call. Use `--search-depth lite` for discovery passes and `--search-depth deep` to pull full thread content on high-signal hits.
 
-Example for social risk sweep:
-```
-nimble_search(
-  query='"[brand name]" complaint OR disappointed OR broken',
-  focus="social",
-  search_depth="lite",
-  include_answer=True,
-  time_range="week"
-)
+CLI example — social risk sweep:
+```bash
+nimble --client-source skill-brand-mention-monitor search \
+  --query '"[brand name]" complaint OR disappointed OR broken' \
+  --focus social --search-depth lite \
+  --start-date [YYYY-MM-DD] --end-date [YYYY-MM-DD]
 ```
 
-Example for opportunity sweep:
-```
-nimble_search(
-  query='"[brand name]" love OR recommend OR "game changer"',
-  focus="social",
-  search_depth="lite",
-  include_answer=True,
-  time_range="week"
-)
+CLI example — opportunity sweep:
+```bash
+nimble --client-source skill-brand-mention-monitor search \
+  --query '"[brand name]" love OR recommend OR "game changer"' \
+  --focus social --search-depth lite \
+  --start-date [YYYY-MM-DD] --end-date [YYYY-MM-DD]
 ```
 
 ---
