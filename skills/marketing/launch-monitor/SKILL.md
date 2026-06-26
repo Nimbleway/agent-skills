@@ -9,15 +9,18 @@ description: |
   dashboard with a live signal feed, mischaracterization tracker, competitor response panel,
   and sentiment velocity chart.
 
-  Use when asked to "monitor my launch", "track my launch", "what's being said about our
-  launch", "flag any mischaracterizations", "competitor response to our launch", "post-launch
-  coverage", "check press coverage for our launch", or "what's the reaction to our
+  Use when asked to "monitor this launch", "track the launch", "what's being said about the
+  launch", "flag any mischaracterizations", "competitor response to the launch", "post-launch
+  coverage", "check press coverage for the launch", or "what's the reaction to the
   announcement".
 
   Do NOT use for ongoing brand monitoring unrelated to a launch — use brand-mention-monitor
-  instead.
+  instead. Do NOT use for ongoing competitor intelligence unrelated to a specific launch
+  window — use competitor-positioning instead.
 allowed-tools:
   - Bash(nimble:*)
+  - Bash(claude:*)
+  - Bash(grep:*)
   - Bash(date:*)
   - Bash(cat:*)
   - Bash(mkdir:*)
@@ -42,7 +45,7 @@ Monitors press, social, and community forums from launch day — tracking sentim
 
 ## Onboarding message
 
-When this skill is triggered for the first time in a session, send this message:
+When this skill is triggered for the first time in a session, send this message. Send it exactly once per session, before asking any setup questions. Do not skip it even when the user's opening message already names a product — the onboarding sets expectations for what the skill collects and how it works.
 
 > 👋 **Launch Monitor is ready.**
 >
@@ -236,7 +239,7 @@ Every signal must include the **exact URL** returned by Nimble for that article,
 - `https://techcrunch.com/2026/06/11/nimble-mcp-connector-launch`
 - `https://news.ycombinator.com/item?id=12345678`
 - `https://reddit.com/r/MachineLearning/comments/abc123/is_nimble_just_another_scraper`
-- `https://x.com/swyx/status/1234567890123456789`
+- `https://x.com/[username]/status/[POST_ID]`
 
 **WRONG — never use these:**
 - `https://techcrunch.com`
@@ -286,7 +289,15 @@ Skill-specific rules:
 
 ## Output template (REQUIRED)
 
-Claude MUST follow `references/template.html` exactly when generating the HTML output. Load the template, substitute real researched data into placeholders, keep all CSS, JS, and interaction patterns identical.
+Claude MUST follow `references/template.html` exactly when generating the HTML output. Load the template, substitute real researched data into placeholders, keep all CSS, JS, and interaction patterns identical. See `references/example.html` for a fully-populated example (Apple Intelligence / Siri AI, WWDC 2026).
+
+### Required response structure
+
+Every launch-monitor response must follow this structure, in order:
+
+1. **`## TL;DR`** — first section, always. Two to three sentences: overall sentiment read (positive / mixed / negative / trending), count of act-now items, and the single most urgent signal or mischaracterization. Example: "Sentiment is mixed-to-negative in the first 48 hours, with 5 act-now items. The dominant risk is the 'Gemini reskin' framing spreading across HN and press. Three mischaracterizations are active, two spreading."
+2. **The inline Response War Room widget** — rendered immediately after TL;DR per the sequence below.
+3. **`## What This Means`** — final section, always. Two to three sentences synthesizing what the signal pattern implies for launch trajectory and the single most important action for the team to take right now.
 
 ### Rendering — INLINE FIRST, ALWAYS (read this before producing output)
 
@@ -388,6 +399,9 @@ Compact stats row: Total signals · Press mentions · Community threads · Socia
 **Generated:** [TIMESTAMP]
 **Total signals:** [N]
 
+## TL;DR
+[2-3 sentences: overall sentiment read, count of act-now items, single most urgent signal or mischaracterization]
+
 ## Summary
 - Act now: [N] | Monitor: [N] | Good signals: [N] | Noise: [N]
 - Mischaracterizations found: [N]
@@ -418,6 +432,9 @@ Compact stats row: Total signals · Press mentions · Community threads · Socia
 
 ## Source Index
 - [URL] | [Source] | [Date] | [Urgency] | [Action]
+
+## What This Means
+[2-3 sentences: what the signal pattern implies for launch trajectory; the single most important action for the team to take right now]
 ```
 
 ---
@@ -447,6 +464,16 @@ If the user asks to re-run or refresh monitoring:
 > "I'll sweep for new signals since [last run timestamp] and update the war room. Anything new to add to the watch list?"
 
 Only surface net-new signals since last run. Carry forward unresolved mischaracterizations and open action items.
+
+---
+
+## Related skills — next steps
+
+After delivering the war room, suggest relevant next steps in the `## What This Means` section:
+
+- **Ongoing brand monitoring:** Once the active launch window closes (typically 2–4 weeks post-launch), suggest handing off to `brand-mention-monitor` for continuous brand health tracking — it is optimized for steady-state monitoring rather than launch spikes.
+- **Competitor follow-up:** If competitors made significant moves during the launch window, suggest `competitor-positioning` for deeper, ongoing competitive intelligence — it tracks messaging, positioning shifts, and counter-narrative development over time.
+- **Consumer sentiment:** If the product is consumer-facing and early usage data is accumulating, suggest `consumer-sentiment-monitor` to track how real users are experiencing the product beyond the launch press cycle.
 
 ---
 

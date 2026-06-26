@@ -1,6 +1,6 @@
 # Source query templates — Launch Monitor
 
-Launch monitoring requires speed and precision. Run sources in this order: highest-reach first, then community, then niche. Use `search_depth: "lite"` with `include_answer: true` for the discovery pass. Switch to `search_depth: "deep"` only to extract full article or thread content for mischaracterization analysis.
+Launch monitoring requires speed and precision. Run sources in this order: highest-reach first, then community, then niche. For search depth, time windowing, and transport selection (CLI vs MCP), follow `references/nimble-playbook.md` — those mechanics are not restated here. Tag every CLI call: `nimble --client-source skill-launch-monitor search …`
 
 ---
 
@@ -101,17 +101,8 @@ Build queries around the most likely inaccuracies based on context profiling:
 
 ---
 
-## Search configuration
+## Re-run cadence
 
-**Discovery pass** (every source, fast):
-- `search_depth: "lite"`, `include_answer: true`
-- Goal: find which sources have coverage, what the signal is
-
-**Extraction pass** (confirmed sources with material content):
-- `search_depth: "deep"`
-- Goal: get full article text for mischaracterization analysis, full thread text for community signals
-
-**Re-run cadence:**
 - First 6h post-launch: run every 1-2h
 - 6h–24h: run every 3-4h
 - After 24h: run once or twice daily until momentum dies
@@ -234,30 +225,24 @@ Run all of these, not just one:
 
 ---
 
-## Nimble social-specific search configuration
+## Nimble social search configuration
 
-For social media sweeps, use:
-- `focus: "social"` — Nimble's social-focused search mode surfaces posts, threads, and social content more effectively than general search
-- `search_depth: "lite"` with `include_answer: true` for the discovery pass
-- Run social queries with `time_range: "day"` or `time_range: "week"` to surface recency-relevant content
+**Transport-agnostic.** Examples below are shown in CLI form. In MCP-only environments call `nimble_search` instead — drop the `--` and snake_case each flag (`--focus` → `focus`, `--search-depth` → `search_depth`, `--start-date`/`--end-date` → `time_range`). Pick the transport once at preflight per `references/nimble-playbook.md`.
 
-Example:
-```
-nimble_search(
-  query='"[product name]" reaction launch',
-  focus="social",
-  search_depth="lite",
-  include_answer=True,
-  time_range="week"
-)
+For social media sweeps, use `--focus social` (CLI) or `focus="social"` (MCP) — Nimble's social mode surfaces posts and threads more effectively than plain web search. Apply the date window on every call. Use `--search-depth lite` for the discovery pass.
+
+CLI example — social reaction sweep:
+```bash
+nimble --client-source skill-launch-monitor search \
+  --query '"[product name]" reaction launch' \
+  --focus social --search-depth lite \
+  --start-date [YYYY-MM-DD] --end-date [YYYY-MM-DD]
 ```
 
-For mischaracterization hunting on social specifically:
-```
-nimble_search(
-  query='"[product name]" wrong OR incorrect OR "actually" OR "misleading"',
-  focus="social",
-  search_depth="lite",
-  time_range="week"
-)
+CLI example — mischaracterization hunt on social:
+```bash
+nimble --client-source skill-launch-monitor search \
+  --query '"[product name]" wrong OR incorrect OR "actually" OR "misleading"' \
+  --focus social --search-depth lite \
+  --start-date [YYYY-MM-DD] --end-date [YYYY-MM-DD]
 ```

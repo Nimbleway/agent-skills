@@ -1,7 +1,7 @@
 <!--
 LAUNCH MONITOR — REQUIRED HTML OUTPUT TEMPLATE (Response War Room)
 ===================================================================
-Claude MUST use this exact template for launch_monitor.html.
+Claude MUST use this exact template for launch-monitor-{YYYY-MM-DD}.html.
 Replace every [PLACEHOLDER] with real researched data.
 Keep all CSS, JS, class names, and interaction patterns identical.
 Light background using CSS variables — inherits host theme, works in light and dark mode.
@@ -204,7 +204,7 @@ body{font-size:13px;color:var(--color-text-primary);background:transparent;paddi
 <div class="sec">Competitor responses</div>
 <div id="ccp"></div>
 
-<div class="footer">Generated [DATE] · Powered by Nimble + Claude · launch_monitor.html · launch_monitor.md</div>
+<div class="footer">Generated [DATE] · Powered by Nimble + Claude · [REPORT_HTML_FILENAME] · [REPORT_MD_FILENAME]</div>
 
 <script>
 // ── SIGNAL DATA ──────────────────────────────────────────────────────────
@@ -212,6 +212,7 @@ body{font-size:13px;color:var(--color-text-primary);background:transparent;paddi
 // act: 'RESPOND' | 'CORRECT' | 'AMPLIFY' | 'ESCALATE' | 'WATCH'
 // tp: 'press' | 'community' | 'social' | 'competitor' | 'mischar'
 // ti: time bucket index (0 = first interval in velocity chart)
+// event_date: YYYY-MM-DD from the Nimble result timestamp — REQUIRED, never null
 // action: suggested action text shown on card expand
 //
 // URL RULE — DO NOT USE HOMEPAGES. Every url field must be the exact URL
@@ -225,25 +226,25 @@ body{font-size:13px;color:var(--color-text-primary);background:transparent;paddi
 // The url powers the clickable source link on each card. A homepage is useless.
 const sigs=[
   // REPLACE ALL WITH REAL SIGNALS FROM RESEARCH
-  {u:'r',act:'CORRECT',tp:'mischar',ti:1,
+  {u:'r',act:'CORRECT',tp:'mischar',ti:1,event_date:'[YYYY-MM-DD]',
    h:'[Outlet] describes [product] as [wrong category]',
    ctx:'[One sentence: what they got wrong and why it matters]',
    meta:'[Outlet] · ~[N]K readers · [X]h after launch',
    url:'[EXACT_NIMBLE_URL]',
    action:'[Specific suggested action — what to say, where to post it, and how to frame it]'},
-  {u:'r',act:'RESPOND',tp:'community',ti:2,
+  {u:'r',act:'RESPOND',tp:'community',ti:2,event_date:'[YYYY-MM-DD]',
    h:'[Community] thread gains traction with inaccurate claim',
    ctx:'[What the claim is and how many people are citing it]',
    meta:'[Platform] · [N] upvotes · [X]h after launch',
    url:'[EXACT_NIMBLE_URL]',
    action:'[Suggested response text and where to post it]'},
-  {u:'a',act:'WATCH',tp:'press',ti:2,
+  {u:'a',act:'WATCH',tp:'press',ti:2,event_date:'[YYYY-MM-DD]',
    h:'[Outlet] coverage accurate but uses narrow category framing',
    ctx:'[What the framing is and why it matters if it spreads]',
    meta:'[Outlet] · ~[N]K readers · [X]h after launch',
    url:'[EXACT_NIMBLE_URL]',
    action:'[What to watch for and when to act]'},
-  {u:'g',act:'AMPLIFY',tp:'community',ti:1,
+  {u:'g',act:'AMPLIFY',tp:'community',ti:1,event_date:'[YYYY-MM-DD]',
    h:'[Platform]: [positive organic signal]',
    ctx:'[Quote or description of what was said]',
    meta:'[Platform] · [N] upvotes/impressions · [X]h after launch',
@@ -282,6 +283,12 @@ const compData=[
    url:'[EXACT_NIMBLE_URL]',
    counter:'[Suggested counter-move]'},
 ];
+
+// ── SANITIZE — fields come from public web content; never trust them ──────
+// All strings are escaped before innerHTML concatenation; URLs are validated
+// to http(s) to prevent javascript: injection.
+function esc(s){return String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
+function safeUrl(u){const s=String(u==null?'':u).trim();return /^https?:\/\//i.test(s)?s:'#';}
 
 // ── FILTER STATE ─────────────────────────────────────────────────────────
 let viewF='all',actF=null,tpF=null,tiF=null;
@@ -362,9 +369,9 @@ sigs.forEach(s=>{
   const c=document.createElement('div');
   c.className='sc';c.dataset.u=s.u;c.dataset.act=s.act;c.dataset.tp=s.tp;c.dataset.ti=s.ti;
   const top=document.createElement('div');top.className='sc-top';
-  top.innerHTML=`<div class="sc-header"><div class="sc-badges"><div class="ud ${s.u}"></div><span class="ab ${s.act}">${s.act}</span><span class="tt">${s.tp}</span></div><span class="chev">&#8964;</span></div><div class="sh">${s.h}</div><div class="sctx">${s.ctx}</div><div class="smeta-row"><span class="smeta">${s.meta}</span><a href="${s.url}" class="src-link">↗ source</a></div>`;
+  top.innerHTML=`<div class="sc-header"><div class="sc-badges"><div class="ud ${esc(s.u)}"></div><span class="ab ${esc(s.act)}">${esc(s.act)}</span><span class="tt">${esc(s.tp)}</span></div><span class="chev">&#8964;</span></div><div class="sh">${esc(s.h)}</div><div class="sctx">${esc(s.ctx)}</div><div class="smeta-row"><span class="smeta">${esc(s.meta)}</span><a href="${safeUrl(s.url)}" class="src-link">↗ source</a></div>`;
   const exp=document.createElement('div');exp.className='sc-expand';
-  exp.innerHTML=`<div class="act-lbl">Suggested action</div><div class="act-text">${s.action}</div>`;
+  exp.innerHTML=`<div class="act-lbl">Suggested action</div><div class="act-text">${esc(s.action)}</div>`;
   c.appendChild(top);c.appendChild(exp);
   top.addEventListener('click',()=>c.classList.toggle('exp'));
   feed.appendChild(c);
@@ -414,7 +421,8 @@ if(!mcData||mcData.length===0){
 } else {
   mcData.forEach(m=>{
     const r=document.createElement('div');r.className='mc-row';
-    r.innerHTML=`<div class="mc-l"><div class="mc-lbl claim">The claim</div><div class="mc-text">"${m.claim}"</div><div class="mc-meta">${m.src} <a href="${m.url}" class="src-link">↗ source</a></div><span class="sbdg ${m.status}">${m.status}</span></div><div class="mc-r"><div class="mc-lbl fix">The correction</div><div class="mc-text">${m.correct}</div><div class="mc-meta">Suggested response:</div><div class="mc-text" style="font-style:italic;color:var(--color-text-secondary);font-size:11px">"${m.suggestion}"</div><button class="cpybtn" data-txt="${m.suggestion}">Copy correction</button></div>`;
+    r.innerHTML=`<div class="mc-l"><div class="mc-lbl claim">The claim</div><div class="mc-text">"${esc(m.claim)}"</div><div class="mc-meta">${esc(m.src)} <a href="${safeUrl(m.url)}" class="src-link">↗ source</a></div><span class="sbdg ${esc(m.status)}">${esc(m.status)}</span></div><div class="mc-r"><div class="mc-lbl fix">The correction</div><div class="mc-text">${esc(m.correct)}</div><div class="mc-meta">Suggested response:</div><div class="mc-text" style="font-style:italic;color:var(--color-text-secondary);font-size:11px">"${esc(m.suggestion)}"</div><button class="cpybtn">Copy correction</button></div>`;
+    r.querySelector('.cpybtn').dataset.txt=m.suggestion;
     r.querySelector('.cpybtn').addEventListener('click',function(){
       navigator.clipboard.writeText(this.dataset.txt);
       this.textContent='Copied ✓';this.classList.add('copied');
@@ -431,7 +439,7 @@ if(!compData||compData.length===0){
 } else {
   compData.forEach(c=>{
     const card=document.createElement('div');card.className='comp-card';
-    card.innerHTML=`<div class="ud ${c.u}" style="width:10px;height:10px;margin-top:3px;flex-shrink:0"></div><div style="flex:1"><div class="comp-name">${c.name}</div><div class="comp-act">${c.act} <a href="${c.url}" class="src-link">↗ source</a></div><div class="comp-ctr"><div class="ctr-lbl">Suggested counter-move</div>${c.counter}</div></div>`;
+    card.innerHTML=`<div class="ud ${esc(c.u)}" style="width:10px;height:10px;margin-top:3px;flex-shrink:0"></div><div style="flex:1"><div class="comp-name">${esc(c.name)}</div><div class="comp-act">${esc(c.act)} <a href="${safeUrl(c.url)}" class="src-link">↗ source</a></div><div class="comp-ctr"><div class="ctr-lbl">Suggested counter-move</div>${esc(c.counter)}</div></div>`;
     ccp.appendChild(card);
   });
 }
