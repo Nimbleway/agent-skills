@@ -16,7 +16,7 @@ description: |
 
   Do NOT use for ongoing brand monitoring unrelated to a launch — use brand-mention-monitor
   instead. Do NOT use for ongoing competitor intelligence unrelated to a specific launch
-  window — use competitor-positioning instead.
+  window — use competitor-intel instead.
 allowed-tools:
   - Bash(nimble:*)
   - Bash(claude:*)
@@ -289,7 +289,7 @@ Skill-specific rules:
 
 ## Output template (REQUIRED)
 
-Claude MUST follow `references/template.html` exactly when generating the HTML output. Load the template, substitute real researched data into placeholders, keep all CSS, JS, and interaction patterns identical. See `references/example.html` for a fully-populated example (Apple Intelligence / Siri AI, WWDC 2026).
+Claude MUST follow `references/template.html` exactly when generating the HTML output. Load the template, substitute real researched data into placeholders, keep all CSS, JS, and interaction patterns identical.
 
 ### Required response structure
 
@@ -472,7 +472,7 @@ Only surface net-new signals since last run. Carry forward unresolved mischaract
 After delivering the war room, suggest relevant next steps in the `## What This Means` section:
 
 - **Ongoing brand monitoring:** Once the active launch window closes (typically 2–4 weeks post-launch), suggest handing off to `brand-mention-monitor` for continuous brand health tracking — it is optimized for steady-state monitoring rather than launch spikes.
-- **Competitor follow-up:** If competitors made significant moves during the launch window, suggest `competitor-positioning` for deeper, ongoing competitive intelligence — it tracks messaging, positioning shifts, and counter-narrative development over time.
+- **Competitor follow-up:** If competitors made significant moves during the launch window, suggest `competitor-intel` for deeper, ongoing competitive intelligence — it tracks messaging, positioning shifts, and counter-narrative development over time.
 - **Consumer sentiment:** If the product is consumer-facing and early usage data is accumulating, suggest `consumer-sentiment-monitor` to track how real users are experiencing the product beyond the launch press cycle.
 
 ---
