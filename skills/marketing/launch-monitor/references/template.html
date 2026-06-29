@@ -1,0 +1,448 @@
+<!--
+LAUNCH MONITOR — REQUIRED HTML OUTPUT TEMPLATE (Response War Room)
+===================================================================
+Claude MUST use this exact template for launch-monitor-{YYYY-MM-DD}.html.
+Replace every [PLACEHOLDER] with real researched data.
+Keep all CSS, JS, class names, and interaction patterns identical.
+Light background using CSS variables — inherits host theme, works in light and dark mode.
+Source links: use <a href="[EXACT_NIMBLE_URL]" class="src-link">↗ source</a>
+  - EXACT_NIMBLE_URL = direct article/thread/post URL from Nimble, never a homepage
+  - Click listener is on sc-top (not sc) so link clicks pass through without stopPropagation
+-->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Launch Monitor — [PRODUCT NAME]</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-size:13px;color:var(--color-text-primary);background:transparent;padding:0 0 1.5rem;font-family:system-ui,-apple-system,sans-serif}
+.launch-bar{background:var(--color-background-secondary);border:0.5px solid var(--color-border-tertiary);border-radius:var(--border-radius-lg,10px);padding:10px 16px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-bottom:1rem}
+.launch-product{font-size:15px;font-weight:500;display:flex;align-items:center;gap:7px}
+.live-dot{width:7px;height:7px;border-radius:50%;background:#3B6D11;flex-shrink:0;animation:pulse 2s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.35}}
+.lmeta{display:flex;gap:16px;flex-wrap:wrap}
+.lmi{font-size:11px;color:var(--color-text-secondary);font-family:'SF Mono','Fira Code',monospace}
+.lmi span{color:var(--color-text-primary);font-weight:500}
+.stats{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:8px;margin-bottom:1rem}
+.stat{background:var(--color-background-secondary);border:0.5px solid var(--color-border-tertiary);border-radius:8px;padding:10px 12px;cursor:pointer;transition:border-color .12s}
+.stat:hover{border-color:var(--color-border-secondary)}
+.stat.active{border:1.5px solid var(--color-text-primary)}
+.stat-lbl{font-size:10px;color:var(--color-text-secondary);margin-bottom:4px;text-transform:uppercase;letter-spacing:.06em}
+.stat-val{font-size:20px;font-weight:500}
+.sv-r{color:#A32D2D}.sv-a{color:#854F0B}.sv-g{color:#3B6D11}
+.attn{border:0.5px solid var(--color-border-danger,#f0b8bc);background:var(--color-background-danger,#fff5f5);border-radius:8px;padding:10px 14px;margin-bottom:1rem;font-size:12px;line-height:1.6}
+.attn strong{color:var(--color-text-danger,#A32D2D)}
+.sec{font-size:10px;font-weight:500;letter-spacing:.08em;text-transform:uppercase;color:var(--color-text-secondary);margin:1.25rem 0 8px;padding-bottom:6px;border-bottom:0.5px solid var(--color-border-tertiary)}
+.chart-wrap{background:var(--color-background-secondary);border:0.5px solid var(--color-border-tertiary);border-radius:var(--border-radius-lg,10px);padding:12px 14px;margin-bottom:1.25rem}
+.chart-hint{font-size:11px;color:var(--color-text-secondary);margin-bottom:7px}
+.chart-leg{display:flex;gap:12px;margin-bottom:8px;font-size:11px;color:var(--color-text-secondary)}
+.ld{width:8px;height:8px;border-radius:50%;display:inline-block;margin-right:4px;vertical-align:middle}
+.filter-zone{margin-bottom:10px}
+.view-tabs{display:flex;gap:4px;margin-bottom:8px;flex-wrap:wrap}
+.vtab{font-size:12px;padding:5px 12px;border-radius:8px;border:0.5px solid var(--color-border-secondary);background:var(--color-background-primary);cursor:pointer;color:var(--color-text-secondary);transition:all .12s;font-family:inherit;display:flex;align-items:center;gap:5px}
+.vtab:hover{background:var(--color-background-secondary)}
+.vtab.on{background:var(--color-text-primary);color:var(--color-background-primary);border-color:var(--color-text-primary);font-weight:500}
+.vcnt{font-size:10px;opacity:.7;background:rgba(128,128,128,.15);border-radius:3px;padding:0 4px}
+.vtab.on .vcnt{background:rgba(255,255,255,.2);opacity:1}
+.adv-row{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:2px}
+.adv-btn{font-size:11px;padding:3px 9px;border-radius:20px;border:0.5px solid var(--color-border-secondary);background:var(--color-background-primary);cursor:pointer;color:var(--color-text-secondary);transition:all .12s;font-family:inherit}
+.adv-btn:hover{background:var(--color-background-secondary)}
+.adv-panel{display:none;border:0.5px solid var(--color-border-tertiary);border-radius:8px;padding:10px 12px;margin-top:6px;background:var(--color-background-secondary)}
+.adv-panel.open{display:block}
+.adv-group{margin-bottom:8px}
+.adv-group:last-child{margin-bottom:0}
+.adv-lbl{font-size:10px;text-transform:uppercase;letter-spacing:.06em;color:var(--color-text-secondary);margin-bottom:5px}
+.adv-pills{display:flex;gap:4px;flex-wrap:wrap}
+.apill{font-size:11px;padding:2px 8px;border-radius:20px;border:0.5px solid var(--color-border-secondary);background:var(--color-background-primary);cursor:pointer;color:var(--color-text-secondary);transition:all .12s;font-family:inherit}
+.apill:hover{border-color:var(--color-border-primary)}
+.apill.on{background:var(--color-text-primary);color:var(--color-background-primary);border-color:var(--color-text-primary)}
+.chips{display:flex;gap:5px;flex-wrap:wrap}
+.chip{font-size:11px;padding:2px 8px;border-radius:20px;background:var(--color-background-secondary);border:0.5px solid var(--color-border-secondary);color:var(--color-text-secondary);display:inline-flex;align-items:center;gap:4px}
+.chip-x{cursor:pointer;opacity:.6;font-size:13px;line-height:1}
+.chip-x:hover{opacity:1}
+.clear-btn{font-size:11px;color:var(--color-text-secondary);cursor:pointer;background:none;border:none;font-family:inherit;text-decoration:underline;text-underline-offset:2px;padding:0}
+.clear-btn:hover{color:var(--color-text-primary)}
+.rcount{font-size:11px;color:var(--color-text-secondary);margin-bottom:8px}
+.rcount span{font-weight:500;color:var(--color-text-primary)}
+.feed{display:grid;grid-template-columns:repeat(auto-fill,minmax(215px,1fr));gap:8px;margin-bottom:1.25rem}
+.sc{background:var(--color-background-primary);border:0.5px solid var(--color-border-tertiary);border-radius:8px;cursor:pointer;transition:border-color .12s;display:flex;flex-direction:column}
+.sc:hover{border-color:var(--color-border-secondary)}
+.sc.hidden{display:none}
+.sc-top{padding:10px 11px;flex:1;display:flex;flex-direction:column;gap:5px}
+.ud{width:7px;height:7px;border-radius:50%;flex-shrink:0;margin-top:2px}
+.ud.r{background:#A32D2D}.ud.a{background:#854F0B}.ud.g{background:#3B6D11}
+.sc-header{display:flex;align-items:flex-start;justify-content:space-between;gap:6px}
+.sc-badges{display:flex;gap:4px;align-items:center;flex-wrap:wrap}
+.sbadges{display:flex;gap:4px;align-items:center;margin-bottom:4px;flex-wrap:wrap}
+.ab{font-size:10px;font-weight:500;padding:1px 6px;border-radius:3px}
+.ab.RESPOND{background:#f8d7da;color:#A32D2D}
+.ab.CORRECT{background:#fef3cd;color:#854F0B}
+.ab.AMPLIFY{background:#d4edda;color:#3B6D11}
+.ab.ESCALATE{background:#f8d7da;color:#A32D2D}
+.ab.WATCH{background:var(--color-background-secondary);color:var(--color-text-secondary)}
+.tt{font-size:10px;color:var(--color-text-secondary);padding:1px 5px;border-radius:3px;background:var(--color-background-secondary)}
+.sh{font-size:12px;font-weight:500;line-height:1.4}
+.sctx{font-size:11px;color:var(--color-text-secondary);line-height:1.4}
+.smeta-row{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:auto;padding-top:6px;border-top:0.5px solid var(--color-border-tertiary)}
+.smeta{font-size:10px;color:var(--color-text-secondary);font-family:'SF Mono','Fira Code',monospace;opacity:.7;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.src-link{font-size:11px;color:#185FA5;text-decoration:none;transition:opacity .12s}
+.src-link:hover{opacity:.75;text-decoration:underline}
+.chev{font-size:11px;color:var(--color-text-secondary);flex-shrink:0;transition:transform .18s}
+.sc.exp .chev{transform:rotate(180deg)}
+.sc-expand{display:none;padding:0 11px 10px 28px;border-top:0.5px solid var(--color-border-tertiary);margin-top:4px}
+.sc.exp .sc-expand{display:block}
+.act-lbl{font-size:10px;text-transform:uppercase;letter-spacing:.08em;color:#854F0B;margin-bottom:3px;font-weight:500;margin-top:8px}
+.act-text{font-size:12px;background:var(--color-background-secondary);border-radius:8px;padding:7px 10px;line-height:1.55;border-left:2px solid #854F0B}
+.no-sigs{padding:20px;text-align:center;font-size:12px;color:var(--color-text-secondary);border:0.5px dashed var(--color-border-tertiary);border-radius:8px;display:none;grid-column:1/-1}
+.mc-row{display:grid;grid-template-columns:1fr 1fr;background:var(--color-background-primary);border:0.5px solid var(--color-border-tertiary);border-radius:8px;overflow:hidden;margin-bottom:8px}
+.mc-l{padding:11px 13px;border-right:0.5px solid var(--color-border-tertiary)}
+.mc-r{padding:11px 13px}
+.mc-lbl{font-size:10px;font-weight:500;letter-spacing:.06em;text-transform:uppercase;margin-bottom:5px}
+.mc-lbl.claim{color:#A32D2D}.mc-lbl.fix{color:#3B6D11}
+.mc-text{font-size:12px;line-height:1.5;margin-bottom:5px}
+.mc-meta{font-size:11px;color:var(--color-text-secondary);font-family:'SF Mono','Fira Code',monospace;margin-bottom:7px;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.sbdg{font-size:10px;font-weight:500;padding:2px 6px;border-radius:3px;display:inline-block}
+.sbdg.SPREADING{background:#f8d7da;color:#A32D2D}
+.sbdg.CONTAINED{background:var(--color-background-secondary);color:var(--color-text-secondary)}
+.cpybtn{font-size:11px;padding:4px 10px;border-radius:8px;border:0.5px solid var(--color-border-secondary);background:var(--color-background-secondary);cursor:pointer;color:var(--color-text-secondary);font-family:inherit;margin-top:6px;display:inline-block;transition:all .12s}
+.cpybtn:hover{background:var(--color-background-primary);border-color:var(--color-border-primary)}
+.cpybtn.copied{color:#3B6D11;border-color:#a8d5b5}
+.comp-card{background:var(--color-background-primary);border:0.5px solid var(--color-border-tertiary);border-radius:8px;padding:11px 13px;margin-bottom:8px;display:flex;gap:10px}
+.comp-name{font-size:13px;font-weight:500;margin-bottom:3px}
+.comp-act{font-size:12px;color:var(--color-text-secondary);margin-bottom:6px;line-height:1.45;display:flex;align-items:baseline;gap:8px;flex-wrap:wrap}
+.comp-ctr{font-size:12px;color:#854F0B;background:#fffbeb;border-radius:8px;padding:6px 9px;border-left:2px solid #854F0B;line-height:1.45}
+.ctr-lbl{font-size:10px;text-transform:uppercase;letter-spacing:.06em;color:#854F0B;margin-bottom:2px;font-weight:500}
+.footer{font-size:11px;color:var(--color-text-secondary);border-top:0.5px solid var(--color-border-tertiary);padding-top:8px;margin-top:4px;font-family:'SF Mono','Fira Code',monospace}
+</style>
+</head>
+<body>
+
+<!-- LAUNCH HEADER BAR -->
+<div class="launch-bar">
+  <div class="launch-product"><div class="live-dot"></div>[PRODUCT NAME]</div>
+  <div class="lmeta">
+    <div class="lmi">Launch <span>[LAUNCH DATE]</span></div>
+    <div class="lmi">Since launch <span>[X days/hours]</span></div>
+    <div class="lmi">Updated <span>[TIMESTAMP]</span></div>
+  </div>
+</div>
+
+<!-- ATTENTION SUMMARY — plain language, 2-3 most urgent items -->
+<div class="attn">
+  <strong>[N] things need your attention right now —</strong> [Plain-language summary of the most urgent signals found. Be specific: name the outlet, the claim, or the competitor move.]
+</div>
+
+<!-- STAT CARDS — clickable, synced with view tabs -->
+<div class="stats">
+  <div class="stat active" data-v="all"><div class="stat-lbl">All signals</div><div class="stat-val">[N]</div></div>
+  <div class="stat" data-v="r"><div class="stat-lbl">Act now</div><div class="stat-val sv-r">[N]</div></div>
+  <div class="stat" data-v="a"><div class="stat-lbl">Monitor</div><div class="stat-val sv-a">[N]</div></div>
+  <div class="stat" data-v="g"><div class="stat-lbl">Good signals</div><div class="stat-val sv-g">[N]</div></div>
+  <div class="stat" data-v="mischar"><div class="stat-lbl">Mischaracterizations</div><div class="stat-val sv-r">[N]</div></div>
+</div>
+
+<!-- SENTIMENT VELOCITY CHART -->
+<div class="sec">Sentiment velocity — since launch</div>
+<div class="chart-wrap">
+  <div class="chart-hint">Click any point to filter the feed to that time window · click again to clear</div>
+  <div class="chart-leg">
+    <span><span class="ld" style="background:#3B6D11"></span>Positive</span>
+    <span><span class="ld" style="background:#A32D2D"></span>Negative</span>
+    <span><span class="ld" style="background:#854F0B"></span>Neutral</span>
+  </div>
+  <canvas id="vc" style="width:100%;height:110px"></canvas>
+</div>
+
+<!-- SIGNAL FEED -->
+<div class="sec">Signal feed</div>
+<div class="filter-zone">
+  <div class="view-tabs" id="vtabs">
+    <button class="vtab on" data-v="all">All <span class="vcnt">[N]</span></button>
+    <button class="vtab" data-v="r">🔴 Act now <span class="vcnt">[N]</span></button>
+    <button class="vtab" data-v="a">🟡 Monitor <span class="vcnt">[N]</span></button>
+    <button class="vtab" data-v="g">🟢 Good <span class="vcnt">[N]</span></button>
+    <button class="vtab" data-v="mischar">Mischar. <span class="vcnt">[N]</span></button>
+  </div>
+  <div class="adv-row">
+    <button class="adv-btn" onclick="toggleAdv()">Refine &#8964;</button>
+    <div class="chips" id="chips"></div>
+    <button class="clear-btn" id="clear-btn" style="display:none" onclick="clearAll()">Clear all</button>
+  </div>
+  <div class="adv-panel" id="adv-panel">
+    <div class="adv-group">
+      <div class="adv-lbl">Action type</div>
+      <div class="adv-pills">
+        <button class="apill" data-f="act" data-v="RESPOND">RESPOND</button>
+        <button class="apill" data-f="act" data-v="CORRECT">CORRECT</button>
+        <button class="apill" data-f="act" data-v="AMPLIFY">AMPLIFY</button>
+        <button class="apill" data-f="act" data-v="ESCALATE">ESCALATE</button>
+        <button class="apill" data-f="act" data-v="WATCH">WATCH</button>
+      </div>
+    </div>
+    <div class="adv-group">
+      <div class="adv-lbl">Signal type</div>
+      <div class="adv-pills">
+        <button class="apill" data-f="tp" data-v="press">Press</button>
+        <button class="apill" data-f="tp" data-v="community">Community</button>
+        <button class="apill" data-f="tp" data-v="social">Social</button>
+        <button class="apill" data-f="tp" data-v="competitor">Competitor</button>
+        <button class="apill" data-f="tp" data-v="mischar">Mischar.</button>
+      </div>
+    </div>
+  </div>
+</div>
+<div class="rcount" id="rcount"><span>[N]</span> signals shown</div>
+<div class="feed" id="feed"></div>
+<div class="no-sigs" id="nosig">No signals match. <button class="clear-btn" onclick="clearAll()">Clear filters</button></div>
+
+<!-- MISCHARACTERIZATION TRACKER — only render if mischaracterizations found -->
+<div class="sec">Mischaracterization tracker</div>
+<div id="mcp"></div>
+
+<!-- COMPETITOR RESPONSES — only render if competitor monitoring enabled and moves found -->
+<div class="sec">Competitor responses</div>
+<div id="ccp"></div>
+
+<div class="footer">Generated [DATE] · Powered by Nimble + Claude · [REPORT_HTML_FILENAME] · [REPORT_MD_FILENAME]</div>
+
+<script>
+// ── SIGNAL DATA ──────────────────────────────────────────────────────────
+// urgency: 'r' (act now) | 'a' (monitor) | 'g' (good)
+// act: 'RESPOND' | 'CORRECT' | 'AMPLIFY' | 'ESCALATE' | 'WATCH'
+// tp: 'press' | 'community' | 'social' | 'competitor' | 'mischar'
+// ti: time bucket index (0 = first interval in velocity chart)
+// event_date: YYYY-MM-DD from the Nimble result timestamp — REQUIRED, never null
+// action: suggested action text shown on card expand
+//
+// URL RULE — DO NOT USE HOMEPAGES. Every url field must be the exact URL
+// returned by Nimble for that specific article, post, or thread.
+//   CORRECT: 'https://techcrunch.com/2026/06/11/nimble-mcp-launch'
+//   CORRECT: 'https://news.ycombinator.com/item?id=12345678'
+//   CORRECT: 'https://reddit.com/r/MachineLearning/comments/abc123/title_here'
+//   WRONG:   'https://techcrunch.com'
+//   WRONG:   'https://news.ycombinator.com'
+//   WRONG:   'https://reddit.com'
+// The url powers the clickable source link on each card. A homepage is useless.
+const sigs=[
+  // REPLACE ALL WITH REAL SIGNALS FROM RESEARCH
+  {u:'r',act:'CORRECT',tp:'mischar',ti:1,event_date:'[YYYY-MM-DD]',
+   h:'[Outlet] describes [product] as [wrong category]',
+   ctx:'[One sentence: what they got wrong and why it matters]',
+   meta:'[Outlet] · ~[N]K readers · [X]h after launch',
+   url:'[EXACT_NIMBLE_URL]',
+   action:'[Specific suggested action — what to say, where to post it, and how to frame it]'},
+  {u:'r',act:'RESPOND',tp:'community',ti:2,event_date:'[YYYY-MM-DD]',
+   h:'[Community] thread gains traction with inaccurate claim',
+   ctx:'[What the claim is and how many people are citing it]',
+   meta:'[Platform] · [N] upvotes · [X]h after launch',
+   url:'[EXACT_NIMBLE_URL]',
+   action:'[Suggested response text and where to post it]'},
+  {u:'a',act:'WATCH',tp:'press',ti:2,event_date:'[YYYY-MM-DD]',
+   h:'[Outlet] coverage accurate but uses narrow category framing',
+   ctx:'[What the framing is and why it matters if it spreads]',
+   meta:'[Outlet] · ~[N]K readers · [X]h after launch',
+   url:'[EXACT_NIMBLE_URL]',
+   action:'[What to watch for and when to act]'},
+  {u:'g',act:'AMPLIFY',tp:'community',ti:1,event_date:'[YYYY-MM-DD]',
+   h:'[Platform]: [positive organic signal]',
+   ctx:'[Quote or description of what was said]',
+   meta:'[Platform] · [N] upvotes/impressions · [X]h after launch',
+   url:'[EXACT_NIMBLE_URL]',
+   action:'[How to amplify — retweet, reach out, co-author, etc.]'},
+];
+
+// ── VELOCITY CHART DATA ──────────────────────────────────────────────────
+// labels: time intervals since launch
+// REPLACE WITH REAL COUNTS PER INTERVAL
+const velData={
+  labels:['Launch','+6h','Day 1','Day 2','Day 3'],
+  pos:[1,2,3,2,4],
+  neg:[0,1,2,2,1],
+  neu:[1,1,2,1,2],
+};
+
+// ── MISCHARACTERIZATION DATA ─────────────────────────────────────────────
+// ⚠️  url: EXACT URL of the source making the wrong claim — same rule as signal urls above
+// status: 'SPREADING' | 'CONTAINED' | 'CORRECTED'
+const mcData=[
+  {claim:'[Exact wrong claim as published]',
+   src:'[Outlet] · [Author] · [Date] · ~[N]K readers',
+   url:'[EXACT_NIMBLE_URL]',
+   correct:'[The accurate version of this claim]',
+   suggestion:'[One sentence correction Claude recommends copying and using]',
+   status:'SPREADING'},
+];
+
+// ── COMPETITOR DATA ───────────────────────────────────────────────────────
+// ⚠️  url: EXACT URL of the competitor post/article — same rule as signal urls above
+// Remove this array or leave empty [] if competitor monitoring is off
+const compData=[
+  {name:'[Competitor]',u:'a',
+   act:'[What they did — published comparison, tweeted, counter-announced, stayed silent]',
+   url:'[EXACT_NIMBLE_URL]',
+   counter:'[Suggested counter-move]'},
+];
+
+// ── SANITIZE — fields come from public web content; never trust them ──────
+// All strings are escaped before innerHTML concatenation; URLs are validated
+// to http(s) to prevent javascript: injection.
+function esc(s){return String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
+function safeUrl(u){const s=String(u==null?'':u).trim();return /^https?:\/\//i.test(s)?s:'#';}
+
+// ── FILTER STATE ─────────────────────────────────────────────────────────
+let viewF='all',actF=null,tpF=null,tiF=null;
+
+document.querySelectorAll('.stat').forEach(s=>{
+  s.addEventListener('click',()=>{
+    viewF=s.dataset.v;
+    document.querySelectorAll('.stat').forEach(x=>x.classList.remove('active'));
+    s.classList.add('active');
+    document.querySelectorAll('.vtab').forEach(t=>t.classList.toggle('on',t.dataset.v===viewF));
+    filter();
+  });
+});
+document.querySelectorAll('.vtab').forEach(t=>{
+  t.addEventListener('click',()=>{
+    viewF=t.dataset.v;
+    document.querySelectorAll('.vtab').forEach(x=>x.classList.remove('on'));
+    t.classList.add('on');
+    document.querySelectorAll('.stat').forEach(s=>s.classList.toggle('active',s.dataset.v===viewF));
+    filter();
+  });
+});
+function toggleAdv(){document.getElementById('adv-panel').classList.toggle('open');}
+document.querySelectorAll('.apill').forEach(p=>{
+  p.addEventListener('click',()=>{
+    const f=p.dataset.f,v=p.dataset.v;
+    if(f==='act')actF=actF===v?null:v; else tpF=tpF===v?null:v;
+    document.querySelectorAll(`.apill[data-f="${f}"]`).forEach(x=>x.classList.remove('on'));
+    if((f==='act'&&actF)||(f==='tp'&&tpF))p.classList.add('on');
+    renderChips();filter();
+  });
+});
+function renderChips(){
+  const c=document.getElementById('chips'),btn=document.getElementById('clear-btn');
+  c.innerHTML='';
+  const active=[];
+  if(actF)active.push({f:'act',label:'Action: '+actF});
+  if(tpF)active.push({f:'tp',label:'Type: '+tpF});
+  if(tiF!==null)active.push({f:'ti',label:'Time: pt '+tiF});
+  active.forEach(a=>{
+    const ch=document.createElement('span');ch.className='chip';
+    ch.innerHTML=`${a.label} <span class="chip-x">×</span>`;
+    ch.querySelector('.chip-x').addEventListener('click',()=>{
+      if(a.f==='act'){actF=null;document.querySelectorAll('.apill[data-f="act"]').forEach(x=>x.classList.remove('on'));}
+      else if(a.f==='tp'){tpF=null;document.querySelectorAll('.apill[data-f="tp"]').forEach(x=>x.classList.remove('on'));}
+      else{tiF=null;drawChart();}
+      renderChips();filter();
+    });
+    c.appendChild(ch);
+  });
+  btn.style.display=active.length?'inline-block':'none';
+}
+function clearAll(){
+  actF=null;tpF=null;tiF=null;viewF='all';
+  document.querySelectorAll('.apill,.vtab').forEach(x=>x.classList.remove('on'));
+  document.querySelector('.vtab[data-v="all"]').classList.add('on');
+  document.querySelectorAll('.stat').forEach(s=>s.classList.toggle('active',s.dataset.v==='all'));
+  renderChips();drawChart();filter();
+}
+function filter(){
+  let n=0;
+  document.querySelectorAll('.sc').forEach(c=>{
+    const uOk=viewF==='all'||(viewF==='mischar'&&c.dataset.tp==='mischar')||c.dataset.u===viewF;
+    const aOk=!actF||c.dataset.act===actF;
+    const tOk=!tpF||c.dataset.tp===tpF;
+    const tiOk=tiF===null||parseInt(c.dataset.ti)===tiF;
+    c.classList.toggle('hidden',!(uOk&&aOk&&tOk&&tiOk));
+    if(uOk&&aOk&&tOk&&tiOk)n++;
+  });
+  document.getElementById('nosig').style.display=n===0?'block':'none';
+  document.getElementById('rcount').querySelector('span').textContent=n;
+}
+
+// ── RENDER SIGNAL FEED ────────────────────────────────────────────────────
+// IMPORTANT: click listener on sc-top (not sc) so src-link <a href> clicks pass through
+const feed=document.getElementById('feed');
+sigs.forEach(s=>{
+  const c=document.createElement('div');
+  c.className='sc';c.dataset.u=s.u;c.dataset.act=s.act;c.dataset.tp=s.tp;c.dataset.ti=s.ti;
+  const top=document.createElement('div');top.className='sc-top';
+  top.innerHTML=`<div class="sc-header"><div class="sc-badges"><div class="ud ${esc(s.u)}"></div><span class="ab ${esc(s.act)}">${esc(s.act)}</span><span class="tt">${esc(s.tp)}</span></div><span class="chev">&#8964;</span></div><div class="sh">${esc(s.h)}</div><div class="sctx">${esc(s.ctx)}</div><div class="smeta-row"><span class="smeta">${esc(s.meta)}</span><a href="${safeUrl(s.url)}" class="src-link">↗ source</a></div>`;
+  const exp=document.createElement('div');exp.className='sc-expand';
+  exp.innerHTML=`<div class="act-lbl">Suggested action</div><div class="act-text">${esc(s.action)}</div>`;
+  c.appendChild(top);c.appendChild(exp);
+  top.addEventListener('click',()=>c.classList.toggle('exp'));
+  feed.appendChild(c);
+});
+filter();
+
+// ── VELOCITY CHART ────────────────────────────────────────────────────────
+function drawChart(){
+  const canvas=document.getElementById('vc');
+  const dpr=window.devicePixelRatio||1;
+  const W=canvas.parentElement.clientWidth-28,H=110;
+  canvas.width=W*dpr;canvas.height=H*dpr;
+  canvas.style.width=W+'px';canvas.style.height=H+'px';
+  const ctx=canvas.getContext('2d');ctx.scale(dpr,dpr);
+  const labels=velData.labels,n=labels.length;
+  const pL=28,pR=8,pT=8,pB=20;
+  const pW=W-pL-pR,pH=H-pT-pB;
+  const maxV=Math.max(...velData.pos,...velData.neg,...velData.neu,1);
+  const xP=i=>pL+(i/(n-1))*pW,yP=v=>pT+pH-(v/maxV)*pH;
+  ctx.strokeStyle='rgba(128,128,128,.12)';ctx.lineWidth=.5;
+  for(let i=0;i<=4;i++){const y=pT+(i/4)*pH;ctx.beginPath();ctx.moveTo(pL,y);ctx.lineTo(pL+pW,y);ctx.stroke();}
+  [[velData.pos,'#3B6D11'],[velData.neg,'#A32D2D'],[velData.neu,'#854F0B']].forEach(([d,col])=>{
+    ctx.beginPath();ctx.strokeStyle=col;ctx.lineWidth=2;ctx.lineJoin='round';
+    d.forEach((v,i)=>i===0?ctx.moveTo(xP(i),yP(v)):ctx.lineTo(xP(i),yP(v)));ctx.stroke();
+    d.forEach((v,i)=>{
+      const active=tiF===i;
+      ctx.beginPath();ctx.fillStyle=active?'#1a1a1a':col;
+      ctx.arc(xP(i),yP(v),active?5.5:3.5,0,Math.PI*2);ctx.fill();
+      if(active){ctx.beginPath();ctx.strokeStyle=col;ctx.lineWidth=1.5;ctx.arc(xP(i),yP(v),7.5,0,Math.PI*2);ctx.stroke();}
+    });
+  });
+  ctx.fillStyle='rgba(128,128,128,.65)';ctx.font='10px system-ui';ctx.textAlign='center';
+  labels.forEach((l,i)=>ctx.fillText(l,xP(i),H-4));
+  canvas.onclick=function(e){
+    const rect=canvas.getBoundingClientRect(),mx=e.clientX-rect.left;
+    let cl=0,md=Infinity;
+    labels.forEach((_,i)=>{const d=Math.abs(mx-xP(i));if(d<md){md=d;cl=i;}});
+    tiF=tiF===cl?null:cl;renderChips();drawChart();filter();
+  };
+}
+drawChart();
+
+// ── MISCHARACTERIZATION PANEL ─────────────────────────────────────────────
+const mcp=document.getElementById('mcp');
+if(!mcData||mcData.length===0){
+  mcp.previousElementSibling.style.display='none';
+} else {
+  mcData.forEach(m=>{
+    const r=document.createElement('div');r.className='mc-row';
+    r.innerHTML=`<div class="mc-l"><div class="mc-lbl claim">The claim</div><div class="mc-text">"${esc(m.claim)}"</div><div class="mc-meta">${esc(m.src)} <a href="${safeUrl(m.url)}" class="src-link">↗ source</a></div><span class="sbdg ${esc(m.status)}">${esc(m.status)}</span></div><div class="mc-r"><div class="mc-lbl fix">The correction</div><div class="mc-text">${esc(m.correct)}</div><div class="mc-meta">Suggested response:</div><div class="mc-text" style="font-style:italic;color:var(--color-text-secondary);font-size:11px">"${esc(m.suggestion)}"</div><button class="cpybtn">Copy correction</button></div>`;
+    r.querySelector('.cpybtn').dataset.txt=m.suggestion;
+    r.querySelector('.cpybtn').addEventListener('click',function(){
+      navigator.clipboard.writeText(this.dataset.txt);
+      this.textContent='Copied ✓';this.classList.add('copied');
+      setTimeout(()=>{this.textContent='Copy correction';this.classList.remove('copied');},2000);
+    });
+    mcp.appendChild(r);
+  });
+}
+
+// ── COMPETITOR PANEL ──────────────────────────────────────────────────────
+const ccp=document.getElementById('ccp');
+if(!compData||compData.length===0){
+  ccp.previousElementSibling.style.display='none';
+} else {
+  compData.forEach(c=>{
+    const card=document.createElement('div');card.className='comp-card';
+    card.innerHTML=`<div class="ud ${esc(c.u)}" style="width:10px;height:10px;margin-top:3px;flex-shrink:0"></div><div style="flex:1"><div class="comp-name">${esc(c.name)}</div><div class="comp-act">${esc(c.act)} <a href="${safeUrl(c.url)}" class="src-link">↗ source</a></div><div class="comp-ctr"><div class="ctr-lbl">Suggested counter-move</div>${esc(c.counter)}</div></div>`;
+    ccp.appendChild(card);
+  });
+}
+</script>
+</body>
+</html>

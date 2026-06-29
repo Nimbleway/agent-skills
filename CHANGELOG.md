@@ -1,5 +1,10 @@
 # Changelog
 
+## [0.25.0] - 2026-06-24
+
+### Added
+- **`launch-monitor` skill** in `marketing/` — monitors press, social, developer communities, and competitor channels around a product launch, tracking sentiment, flagging mischaracterizations, surfacing competitor responses, and recommending actions in real time. Delivers a Response War Room dashboard with a live signal feed, mischaracterization tracker, competitor response panel, and sentiment velocity chart. Ships with `references/template.html` and `references/sources.md`.
+
 ## [0.24.0] - 2026-06-24
 
 ### Added
