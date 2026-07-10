@@ -119,34 +119,30 @@ Then re-run the init script above.
 
 ---
 
-## Set up API key
-
-**Step 1 — Open the Nimble dashboard:**
+## Set up authentication
 
 ```bash
-open -a "Google Chrome" "https://online.nimbleway.com/overview" 2>/dev/null || open "https://online.nimbleway.com/overview"
+nimble login
 ```
 
-Go to **Overview → API Token**, copy your token, and paste it when prompted.
+Two options:
 
-**Step 2 — Save permanently + activate now:**
+1. **Browser (recommended)** — opens `online.nimbleway.com` for OAuth. No API key to copy or manage.
+2. **Paste an API key** — enter your key from [online.nimbleway.com](https://online.nimbleway.com) → Overview → API Token.
 
-Replace `<TOKEN>` with the pasted value:
+Verify after login:
 
 ```bash
-export NIMBLE_API_KEY="<TOKEN>"
-python3 -c "
-import json, pathlib
-key = '<TOKEN>'
-p = pathlib.Path.home() / '.claude/settings.json'
-d = json.loads(p.read_text()) if p.exists() else {}
-d.setdefault('env', {})['NIMBLE_API_KEY'] = key
-p.write_text(json.dumps(d, indent=2))
-print('✓ Saved to ~/.claude/settings.json')
-"
+nimble whoami
 ```
 
-⚠️ **After this point: never prepend `export NIMBLE_API_KEY=...` to any subsequent command.** The key is in the environment. Just run `nimble ...` directly.
+Credentials are stored at `~/.nimble/credentials.json` and used automatically on every `nimble` command — stored credentials take priority over the `NIMBLE_API_KEY` env var if both are set.
+
+To sign out:
+
+```bash
+nimble logout
+```
 
 ---
 
