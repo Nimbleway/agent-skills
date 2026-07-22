@@ -17,10 +17,13 @@ description: |
   Must be pre-installed and authenticated. Run `nimble --version` to verify (>= 1.1.0).
 allowed-tools:
   - Bash(nimble:*)
+  - Bash(claude:*)
   - Bash(mkdir:*)
   - Bash(cat:*)
   - Bash(head:*)
   - Bash(ls:*)
+  - Bash(grep:*)
+  - Bash(echo:*)
   - Bash(python3:*)
   - Bash(uv:*)
   - Bash(npm:*)
