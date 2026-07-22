@@ -63,7 +63,7 @@ When this skill is triggered for the first time in a session, send this message:
 
 ## Preflight
 
-Follow the transport selection and standard preflight from `references/nimble-playbook.md`: pick CLI vs MCP at session start, then run the parallel preflight calls (date, profile, memory index) simultaneously. Tag every Nimble CLI call: `nimble --client-source skill-brand-mention-monitor <subcommand>`.
+Follow the transport selection and standard preflight from `references/nimble-playbook.md`: pick CLI vs MCP at session start, then run the parallel preflight calls (date, profile, memory index) simultaneously. Tag every Nimble CLI call: `nimble --client-source nimble-agent-skills <subcommand>`.
 
 From the profile (`~/.nimble/business-profile.json`): load brand name, competitors, routing preferences, and `last_runs.brand-mention-monitor` for date windowing. Pre-populate setup questions so the user confirms rather than re-enters. If no profile exists, follow the first-run onboarding flow in `references/profile-and-onboarding.md` and create a stub after the first run. Check `~/.nimble/memory/index.md` to understand what mention data already exists before sweeping.
 
@@ -145,7 +145,7 @@ Search to establish the brand's industry, business model (B2B/B2C), geography, l
 
 For deep sweeps, fan out across source tiers using parallel sub-agents (max 4 concurrent) via the `Agent` tool — one agent per source group (e.g., social, review platforms, news, community). Follow the parallel-gathering pattern in `references/nimble-playbook.md`. Always include a fallback: if a sub-agent fails, continue with remaining agents and note the gap in the output.
 
-Run sources matching the brand's profile (Step 0). Use `--search-depth lite` for discovery; use `--search-depth deep` for full content on high-score candidates. Apply `--start-date` / `--end-date` from the user's date range on every search call. Tag every call: `nimble --client-source skill-brand-mention-monitor search ...`
+Run sources matching the brand's profile (Step 0). Use `--search-depth lite` for discovery; use `--search-depth deep` for full content on high-score candidates. Apply `--start-date` / `--end-date` from the user's date range on every search call. Tag every call: `nimble --client-source nimble-agent-skills search ...`
 
 ### Core queries (run for every brand type)
 - `"[brand name]" site:reddit.com`

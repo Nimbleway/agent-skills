@@ -55,7 +55,7 @@ Follow the transport selection + standard preflight from `references/nimble-play
 
 From the results:
 - CLI missing or API key unset → `references/profile-and-onboarding.md`, stop
-- Tag all `nimble` CLI calls: `nimble --client-source skill-meeting-prep <subcommand>`. MCP path: not yet supported — see `references/nimble-playbook.md` for status.
+- Tag all `nimble` CLI calls: `nimble --client-source nimble-agent-skills <subcommand>`. MCP requests are attributed at the transport level — see `references/nimble-playbook.md`.
 - Profile exists → read `~/.nimble/memory/people/index.md` to identify existing
   person profiles. Load relevant `~/.nimble/memory/people/` files for attendees
   before — skip redundant searches, surface prior meeting notes. Follow

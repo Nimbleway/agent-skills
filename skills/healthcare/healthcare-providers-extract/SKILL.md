@@ -69,7 +69,7 @@ Classify discovered agents into phases and validate with `nimble extract:templat
 
 From the preflight results:
 - CLI missing or API key unset -> `references/profile-and-onboarding.md`, stop
-- Tag all `nimble` CLI calls: `nimble --client-source skill-healthcare-providers-extract <subcommand>`. MCP path: not yet supported — see `references/nimble-playbook.md` for status.
+- Tag all `nimble` CLI calls: `nimble --client-source nimble-agent-skills <subcommand>`. MCP requests are attributed at the transport level — see `references/nimble-playbook.md`.
 - Profile exists -> note it for context. Determine mode using smart date windowing
   from `references/nimble-playbook.md`:
   - **Full mode:** first run OR last run > 14 days ago

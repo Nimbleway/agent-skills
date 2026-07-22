@@ -66,7 +66,7 @@ When this skill is triggered for the first time in a session, send this message.
 
 ## Preflight
 
-Follow the transport selection and standard preflight from `references/nimble-playbook.md`: pick CLI vs MCP at session start, then run the parallel preflight calls (date, profile, memory index) simultaneously. Tag every Nimble CLI call: `nimble --client-source skill-launch-monitor <subcommand>`.
+Follow the transport selection and standard preflight from `references/nimble-playbook.md`: pick CLI vs MCP at session start, then run the parallel preflight calls (date, profile, memory index) simultaneously. Tag every Nimble CLI call: `nimble --client-source nimble-agent-skills <subcommand>`.
 
 From the profile (`~/.nimble/business-profile.json`): load product/brand context and `last_runs.launch-monitor` for date windowing. Pre-populate setup questions so the user confirms rather than re-enters. If no profile exists, follow the first-run onboarding flow in `references/profile-and-onboarding.md` and create a stub after the first run.
 
@@ -133,7 +133,7 @@ Use this profile to:
 
 ## Step 1 — Signal sweep
 
-Run all of the following in parallel. Use `--search-depth lite` for the discovery pass. Switch to `--search-depth deep` only when extracting full article or thread content. Tag every call: `nimble --client-source skill-launch-monitor search ...`
+Run all of the following in parallel. Use `--search-depth lite` for the discovery pass. Switch to `--search-depth deep` only when extracting full article or thread content. Tag every call: `nimble --client-source nimble-agent-skills search ...`
 
 ### Press & editorial
 - `"[product name]" site:techcrunch.com`
