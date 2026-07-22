@@ -64,7 +64,7 @@ Follow the transport selection + standard preflight from `references/nimble-play
   `references/wsa-reference.md`. Layer 2 (session-specific) runs after Step 1 when
   you know the user's specialty.
 
-Classify discovered agents into phases and validate with `nimble agent get` per
+Classify discovered agents into phases and validate with `nimble extract:templates get` per
 `references/wsa-reference.md`.
 
 From the preflight results:
@@ -114,15 +114,15 @@ Only if the user provided a specialty + location instead of URLs.
 discovery for session-specific agents:
 
 ```bash
-nimble agent list --limit 50 --search "[specialty]"
-nimble agent list --limit 50 --search "[directory-user-mentioned]"
+nimble extract:templates list --limit 50  # filter items for "[specialty]"
+nimble extract:templates list --limit 50  # filter items for "[directory-user-mentioned]"
 ```
 
 See `references/wsa-reference.md` for the full discovery strategy, agent evaluation
 criteria, and healthcare discovery prioritization.
 
 Run all discovery-phase agents simultaneously. Validate params with
-`nimble agent get` first.
+`nimble extract:templates get` first.
 
 **Path B — Market-finder handoff.** User ran `market-finder` first and wants to
 extract providers from those results. Read the market-finder output:

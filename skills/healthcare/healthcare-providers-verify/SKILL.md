@@ -70,7 +70,7 @@ Bash calls: date calc, today, CLI check, profile load, index.md load).
   you know the user's specialty and verification focus.
 
 Classify discovered agents into verification categories and validate with
-`nimble agent get` per `references/wsa-reference.md`.
+`nimble extract:templates get` per `references/wsa-reference.md`.
 
 From the preflight results:
 - CLI missing or API key unset -> `references/profile-and-onboarding.md`, stop
@@ -141,8 +141,8 @@ Build a verification plan summary:
 
 Run Layer 2 WSA discovery now that you know the specialty:
 ```bash
-nimble agent list --limit 50 --search "[specialty]"
-nimble agent list --limit 50 --search "[registry-user-mentioned]"
+nimble extract:templates list --limit 50  # filter items for "[specialty]"
+nimble extract:templates list --limit 50  # filter items for "[registry-user-mentioned]"
 ```
 
 See `references/wsa-reference.md` for session-specific discovery.

@@ -61,12 +61,12 @@ and page cap per domain (50 / 200 / 500).
 Search for relevant WSAs in parallel:
 
 ```bash
-nimble agent list --search "seo" --limit 100
-nimble agent list --search "keyword" --limit 100
+nimble extract:templates list --limit 100  # then filter items for "seo"
+nimble extract:templates list --limit 100  # then filter items for "keyword"
 ```
 
 From results, filter for agents relevant to SEO data extraction. Validate any
-promising agents with `nimble agent get --template-name {name}` before using them.
+promising agents with `nimble extract:templates get --extract-template-name {name}` before using them.
 Cache discovered agent names and parameters.
 
 **Fall back to `nimble map` + `nimble extract` / `nimble crawl` if no useful WSAs

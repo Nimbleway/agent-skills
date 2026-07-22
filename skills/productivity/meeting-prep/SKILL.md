@@ -134,11 +134,11 @@ internal, general external**.
 Discover available WSAs for each attendee's company domain:
 
 ```bash
-nimble agent list --search "{company-domain}" --limit 20
+nimble extract:templates list --limit 100  # then filter items for "{company-domain}"
 ```
 
 Run one search per unique company simultaneously. Filter for SERP/PDP WSAs,
-prefer `managed_by: "nimble"`, validate with `nimble agent get --template-name {name}`.
+prefer `managed_by: "nimble"`, validate with `nimble extract:templates get --extract-template-name {name}`.
 Cache discovered names + params. Pass them to attendee agents in Step 3 for richer
 data. If no WSAs found, continue with `nimble search` alone.
 

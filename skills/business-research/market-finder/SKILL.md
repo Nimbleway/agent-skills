@@ -177,7 +177,7 @@ Check: `cat ~/.nimble/memory/market-finder/checkpoints/{slug}/discovery.json 2>/
 For each target domain in the selected vertical preset, discover current WSAs:
 
 ```bash
-nimble agent list --search "{domain}" --limit 20
+nimble extract:templates list --limit 100  # then filter items for "{domain}"
 ```
 
 Run these searches simultaneously (one per target domain). From the results:
@@ -188,7 +188,7 @@ Run these searches simultaneously (one per target domain). From the results:
 
 Then validate each discovered WSA's input params:
 ```bash
-nimble agent get --template-name {discovered_name}
+nimble extract:templates get --extract-template-name {discovered_name}
 ```
 
 Cache the discovered WSA names + params for the rest of the run.
@@ -198,10 +198,10 @@ Cache the discovered WSA names + params for the rest of the run.
 For each metro in the tiling plan, run the discovered WSAs simultaneously:
 
 ```bash
-nimble agent run --agent {maps_wsa} --params '{...validated params...}'
+nimble extract:templates run --template {maps_wsa} --params '{...validated params...}'
 ```
 ```bash
-nimble agent run --agent {yelp_wsa} --params '{...validated params...}'
+nimble extract:templates run --template {yelp_wsa} --params '{...validated params...}'
 ```
 
 Run tertiary domain WSAs only if the preset includes them AND primary + secondary
@@ -241,7 +241,7 @@ target domains. Prioritize entities with the highest source count first. Choose
 execution tier per Scaled Execution in `references/nimble-playbook.md`.
 
 ```bash
-nimble agent run --agent {enrichment_wsa} --params '{...validated params...}'
+nimble extract:templates run --template {enrichment_wsa} --params '{...validated params...}'
 ```
 
 Only run enrichment WSAs that apply to the current vertical's enrichment targets
@@ -429,7 +429,7 @@ Slack: TL;DR with total count + top 10 entities only.
 
 ## Sub-Agent Strategy
 
-For large jobs, `nimble agent run-batch` handles WSA parallelism server-side (see
+For large jobs, `nimble extract:templates batch` handles WSA parallelism server-side (see
 Scaled Execution in `references/nimble-playbook.md`). Sub-agents are useful for
 **preparing** batch inputs and **processing** results, not for running individual
 WSA calls.

@@ -81,18 +81,18 @@ the AI platform agents and the SERP agents can be discovered independently:
 
 ```bash
 # SERP surfaces
-nimble agent list --search "google serp" --limit 100
-nimble agent list --search "search engine" --limit 100
+nimble extract:templates list --limit 100  # then filter items for "google serp"
+nimble extract:templates list --limit 100  # then filter items for "search engine"
 
 # AI platform surfaces
-nimble agent list --search "chatgpt" --limit 50
-nimble agent list --search "perplexity" --limit 50
-nimble agent list --search "google ai" --limit 50
-nimble agent list --search "gemini" --limit 50
-nimble agent list --search "grok" --limit 50
+nimble extract:templates list --limit 100  # then filter items for "chatgpt"
+nimble extract:templates list --limit 100  # then filter items for "perplexity"
+nimble extract:templates list --limit 100  # then filter items for "google ai"
+nimble extract:templates list --limit 100  # then filter items for "gemini"
+nimble extract:templates list --limit 100  # then filter items for "grok"
 ```
 
-For each promising match, validate with `nimble agent get --template-name {name}`
+For each promising match, validate with `nimble extract:templates get --extract-template-name {name}`
 and confirm the expected input param (`prompt` or `keyword`) and output fields
 (`answer`, `sources`). Cache the discovered template names for this run as
 `{chatgpt_agent}`, `{perplexity_agent}`, `{google_ai_agent}`, `{gemini_agent}`,
@@ -137,19 +137,19 @@ literally:
 
 ```bash
 # Per-query, per-platform — {*_agent} come from Step 4 discovery
-nimble agent run --agent "{chatgpt_agent}" --params '{"prompt": "{query}", "skip_sources": false}'
-nimble agent run --agent "{perplexity_agent}" --params '{"prompt": "{query}"}'
-nimble agent run --agent "{google_ai_agent}" --params '{"keyword": "{query}"}'
-nimble agent run --agent "{gemini_agent}" --params '{"prompt": "{query}", "skip_sources": false}'
-nimble agent run --agent "{grok_agent}" --params '{"prompt": "{query}"}'
+nimble extract:templates run --template "{chatgpt_agent}" --params '{"prompt": "{query}", "skip_sources": false}'
+nimble extract:templates run --template "{perplexity_agent}" --params '{"prompt": "{query}"}'
+nimble extract:templates run --template "{google_ai_agent}" --params '{"keyword": "{query}"}'
+nimble extract:templates run --template "{gemini_agent}" --params '{"prompt": "{query}", "skip_sources": false}'
+nimble extract:templates run --template "{grok_agent}" --params '{"prompt": "{query}"}'
 ```
 
-For 6+ queries per platform, use `nimble agent run-batch` with the same
+For 6+ queries per platform, use `nimble extract:templates batch` with the same
 discovered template name:
 
 ```bash
-nimble agent run-batch \
-  --shared-inputs "agent: {chatgpt_agent}" \
+nimble extract:templates batch \
+  --template "{chatgpt_agent}" \
   --input '{"params": {"prompt": "query 1", "skip_sources": false}}' \
   --input '{"params": {"prompt": "query 2", "skip_sources": false}}'
 ```

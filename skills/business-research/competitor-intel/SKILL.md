@@ -112,12 +112,12 @@ integrations, preferences).
 For each competitor domain and the user's domain, discover available WSAs:
 
 ```bash
-nimble agent list --search "{domain}" --limit 20
+nimble extract:templates list --limit 100  # then filter items for "{domain}"
 ```
 
 Run one search per domain simultaneously. From the results, filter for WSAs with
 `entity_type` matching SERP or PDP, prefer `managed_by: "nimble"`, and validate
-each with `nimble agent get --template-name {name}`. Cache discovered WSA names +
+each with `nimble extract:templates get --extract-template-name {name}`. Cache discovered WSA names +
 params for the run. Use discovered WSAs alongside `nimble search` in Steps 3-4
 for richer data. If no WSAs found, continue with `nimble search` alone.
 

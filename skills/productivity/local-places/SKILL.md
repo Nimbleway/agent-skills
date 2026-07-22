@@ -12,7 +12,7 @@ description: |
   "find places near", "list all [business type] in [area]", "best [type]
   near [location]", "build a neighborhood guide", "local place search".
 
-  Requires the Nimble CLI (nimble agent run, nimble search, nimble extract)
+  Requires the Nimble CLI (nimble extract:templates run, nimble search, nimble extract)
   for live web data via WSAs and fallback search.
   Do NOT use for competitor analysis or monitoring (use competitor-intel),
   company research or deep dives (use company-deep-dive), general web search
@@ -141,26 +141,26 @@ Discover available WSAs for all phases before execution. Run these searches
 simultaneously:
 
 ```bash
-nimble agent list --search "maps" --limit 20
+nimble extract:templates list --limit 100  # then filter items for "maps"
 ```
 
 ```bash
-nimble agent list --search "reviews" --limit 20
+nimble extract:templates list --limit 100  # then filter items for "reviews"
 ```
 
 ```bash
-nimble agent list --search "social" --limit 20
+nimble extract:templates list --limit 100  # then filter items for "social"
 ```
 
 ```bash
-nimble agent list --search "{place-type}" --limit 20
+nimble extract:templates list --limit 100  # then filter items for "{place-type}"
 ```
 
 From the combined results:
 1. Filter by `entity_type`: SERP for discovery, PDP/Profile for enrichment/detail
 2. Prefer `managed_by: "nimble"` over `managed_by: "community"`
 3. Classify into phases -- see `references/wsa-pipeline.md` for classification strategy
-4. Validate each with `nimble agent get --template-name {name}` to confirm params
+4. Validate each with `nimble extract:templates get --extract-template-name {name}` to confirm params
 5. Cache all discovered WSA names + validated params for the rest of the run
 
 If no WSAs found for a phase, that phase falls back to `nimble search`. Log
@@ -174,11 +174,11 @@ Run discovered maps/location WSAs simultaneously, using the validated params fro
 Step 4:
 
 ```bash
-nimble agent run --agent {discovered_maps_wsa} --params '{...validated params...}'
+nimble extract:templates run --template {discovered_maps_wsa} --params '{...validated params...}'
 ```
 
 ```bash
-nimble agent run --agent {discovered_review_site_wsa} --params '{...validated params...}'
+nimble extract:templates run --template {discovered_review_site_wsa} --params '{...validated params...}'
 ```
 
 **Tertiary (conditional):** Run discovered credibility WSAs only if primary +
@@ -202,7 +202,7 @@ For each discovered place that has a Facebook page or Instagram handle, run the
 social WSAs discovered in Step 4. Batch max **4 concurrent Bash calls**.
 
 ```bash
-nimble agent run --agent {discovered_social_wsa} --params '{...validated params...}'
+nimble extract:templates run --template {discovered_social_wsa} --params '{...validated params...}'
 ```
 
 Run each discovered social WSA for places with matching handles. Skip social
@@ -217,7 +217,7 @@ For the top places (by source count and data completeness), run the review WSAs
 discovered in Step 4:
 
 ```bash
-nimble agent run --agent {discovered_reviews_wsa} --params '{...validated params...}'
+nimble extract:templates run --template {discovered_reviews_wsa} --params '{...validated params...}'
 ```
 
 Batch max 4 concurrent calls. Focus on places that have a `place_id` or equivalent
@@ -236,14 +236,14 @@ If triggered, run the delivery/food WSAs discovered in Step 4. Discovery first,
 then detail:
 
 ```bash
-nimble agent run --agent {discovered_delivery_serp_wsa} --params '{...validated params...}'
+nimble extract:templates run --template {discovered_delivery_serp_wsa} --params '{...validated params...}'
 ```
 
 For places found on delivery platforms, fetch full details using discovered
 detail WSAs:
 
 ```bash
-nimble agent run --agent {discovered_delivery_detail_wsa} --params '{...validated params...}'
+nimble extract:templates run --template {discovered_delivery_detail_wsa} --params '{...validated params...}'
 ```
 
 If no delivery WSAs were found in Step 4, fall back to:

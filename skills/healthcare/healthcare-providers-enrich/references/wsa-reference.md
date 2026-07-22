@@ -18,7 +18,7 @@ inventory. Run all searches simultaneously:
 
 **Layer 1 — Vertical search:**
 ```bash
-nimble agent list --limit 100 --search "healthcare"
+nimble extract:templates list --limit 100  # filter items for "healthcare"
 ```
 Returns all agents tagged with the Healthcare vertical (clinical trials, FDA,
 regulatory, and any newly added healthcare agents).
@@ -28,13 +28,13 @@ Search for terms derived from the user's input — their specialty, specific
 directories, or data sources they mentioned:
 ```bash
 # If user's list is ophthalmologists:
-nimble agent list --limit 50 --search "ophthalmology"
-nimble agent list --limit 50 --search "eye"
+nimble extract:templates list --limit 50  # filter items for "ophthalmology"
+nimble extract:templates list --limit 50  # filter items for "eye"
 
 # If user mentioned specific directories:
-nimble agent list --limit 50 --search "healthgrades"
-nimble agent list --limit 50 --search "zocdoc"
-nimble agent list --limit 50 --search "npi"
+nimble extract:templates list --limit 50  # filter items for "healthgrades"
+nimble extract:templates list --limit 50  # filter items for "zocdoc"
+nimble extract:templates list --limit 50  # filter items for "npi"
 ```
 Adapt search terms to whatever the user provided. Include the specialty, common
 directory names for that specialty, and any data sources the user mentioned.
@@ -43,10 +43,10 @@ directory names for that specialty, and any data sources the user mentioned.
 These WSAs are useful across verticals for reputation, verification, and practice
 details:
 ```bash
-nimble agent list --limit 50 --search "google_maps"
-nimble agent list --limit 50 --search "yelp"
-nimble agent list --limit 50 --search "bbb"
-nimble agent list --limit 50 --search "review"
+nimble extract:templates list --limit 50  # filter items for "google_maps"
+nimble extract:templates list --limit 50  # filter items for "yelp"
+nimble extract:templates list --limit 50  # filter items for "bbb"
+nimble extract:templates list --limit 50  # filter items for "review"
 ```
 
 ### Evaluating discovered agents
@@ -63,7 +63,7 @@ into an enrichment category:
 
 Validate each relevant agent's params before using it:
 ```bash
-nimble agent get --template-name [agent_name]
+nimble extract:templates get --extract-template-name [agent_name]
 ```
 
 **Skip agents that don't fit** — not every healthcare-tagged agent is useful for

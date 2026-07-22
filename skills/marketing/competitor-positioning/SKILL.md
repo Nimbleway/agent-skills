@@ -118,11 +118,11 @@ about right now. Each competitor costs ~3-5 Nimble API credits (1 map + 3-4 extr
 For each competitor domain and the user's domain, discover available WSAs:
 
 ```bash
-nimble agent list --search "{domain}" --limit 20
+nimble extract:templates list --limit 100  # then filter items for "{domain}"
 ```
 
 Run one search per domain simultaneously. Filter for SERP/PDP WSAs, prefer
-`managed_by: "nimble"`, validate with `nimble agent get --template-name {name}`.
+`managed_by: "nimble"`, validate with `nimble extract:templates get --extract-template-name {name}`.
 Cache discovered names + params. Pass them to competitor agents in Step 5 for
 richer extraction. If no WSAs found, continue with `nimble search/extract/map`.
 

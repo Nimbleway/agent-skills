@@ -70,7 +70,7 @@ Bash calls: date calc, today, CLI check, profile load, index.md load).
   `references/wsa-reference.md`. Layer 2 (session-specific) runs after Step 1 when
   you know the user's specialty.
 
-Classify discovered agents into phases and validate with `nimble agent get` per
+Classify discovered agents into phases and validate with `nimble extract:templates get` per
 `references/wsa-reference.md`.
 
 From the preflight results:
@@ -147,8 +147,8 @@ Build a gap analysis summary:
 
 Run Layer 2 WSA discovery now that you know the specialty:
 ```bash
-nimble agent list --limit 50 --search "[specialty]"
-nimble agent list --limit 50 --search "[directory-user-mentioned]"
+nimble extract:templates list --limit 50  # filter items for "[specialty]"
+nimble extract:templates list --limit 50  # filter items for "[directory-user-mentioned]"
 ```
 
 See `references/wsa-reference.md` for session-specific discovery.

@@ -18,7 +18,7 @@ inventory. Run all searches simultaneously:
 
 **Layer 1 — Vertical search:**
 ```bash
-nimble agent list --limit 100 --search "healthcare"
+nimble extract:templates list --limit 100  # filter items for "healthcare"
 ```
 Returns all agents tagged with the Healthcare vertical (clinical trials, FDA,
 regulatory, licensing, and any newly added healthcare agents).
@@ -28,16 +28,16 @@ Search for terms derived from the user's input — their specialty, specific
 registries, or data sources they mentioned:
 ```bash
 # Registry and licensing searches:
-nimble agent list --limit 50 --search "npi"
-nimble agent list --limit 50 --search "license"
-nimble agent list --limit 50 --search "board certification"
+nimble extract:templates list --limit 50  # filter items for "npi"
+nimble extract:templates list --limit 50  # filter items for "license"
+nimble extract:templates list --limit 50  # filter items for "board certification"
 
 # If user mentioned specific registries:
-nimble agent list --limit 50 --search "medical board"
-nimble agent list --limit 50 --search "[state] license lookup"
+nimble extract:templates list --limit 50  # filter items for "medical board"
+nimble extract:templates list --limit 50  # filter items for "[state] license lookup"
 
 # Specialty-specific:
-nimble agent list --limit 50 --search "[user's specialty]"
+nimble extract:templates list --limit 50  # filter items for "[user's specialty]"
 ```
 Adapt search terms to whatever the user provided. Focus on regulatory and
 verification-related agents.
@@ -46,9 +46,9 @@ verification-related agents.
 These WSAs are useful across verticals for identity confirmation and practice
 verification:
 ```bash
-nimble agent list --limit 50 --search "google_maps"
-nimble agent list --limit 50 --search "yelp"
-nimble agent list --limit 50 --search "bbb"
+nimble extract:templates list --limit 50  # filter items for "google_maps"
+nimble extract:templates list --limit 50  # filter items for "yelp"
+nimble extract:templates list --limit 50  # filter items for "bbb"
 ```
 
 ### Evaluating discovered agents
@@ -65,7 +65,7 @@ into a verification category:
 
 Validate each relevant agent's params before using it:
 ```bash
-nimble agent get --template-name [agent_name]
+nimble extract:templates get --extract-template-name [agent_name]
 ```
 
 **Skip agents that don't fit** — not every healthcare-tagged agent is useful for

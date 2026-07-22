@@ -9,7 +9,7 @@ disambiguation, and interactive map generation. For general WSA execution rules
 ## WSA Discovery Strategy
 
 WSA names are dynamic and change frequently. Discover all WSAs at runtime in
-Step 4 using `nimble agent list --search`. Never hardcode WSA names.
+Step 4 using `nimble extract:templates list` (filtered client-side). Never hardcode WSA names.
 
 ### Discovery search terms
 

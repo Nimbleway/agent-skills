@@ -92,15 +92,15 @@ Inform the user which mode was selected:
 Discover SERP-related agents in parallel:
 
 ```bash
-nimble agent list --search "serp" --limit 20
-nimble agent list --search "google search" --limit 20
+nimble extract:templates list --limit 100  # then filter items for "serp"
+nimble extract:templates list --limit 100  # then filter items for "google search"
 ```
 
 From the results, look for agents that return structured SERP data (organic results,
 positions, SERP features). Validate any candidate with:
 
 ```bash
-nimble agent get --template-name {name}
+nimble extract:templates get --extract-template-name {name}
 ```
 
 Check that the agent accepts keyword/query input and returns ranked organic results.
@@ -162,11 +162,11 @@ identify the top 5 keywords by business priority. Discover a SERP agent at
 runtime (do not hardcode template names — see `references/nimble-playbook.md`):
 
 ```bash
-nimble agent list --search "google serp" --limit 100
-nimble agent list --search "search engine" --limit 100
+nimble extract:templates list --limit 100  # then filter items for "google serp"
+nimble extract:templates list --limit 100  # then filter items for "search engine"
 ```
 
-Validate candidates with `nimble agent get --template-name {name}` and cache
+Validate candidates with `nimble extract:templates get --extract-template-name {name}` and cache
 the chosen template as `{serp_agent}`. If no suitable SERP agent is found,
 skip enrichment and leave `serp_features` as `[]`.
 
@@ -174,7 +174,7 @@ Run the discovered SERP agent for those keywords to get typed SERP entities:
 
 ```bash
 # {serp_agent} resolved above
-nimble agent run --agent "{serp_agent}" --params '{"query": "{keyword}", "num_results": 20, "country": "{cc}", "locale": "{locale}"}'
+nimble extract:templates run --template "{serp_agent}" --params '{"query": "{keyword}", "num_results": 20, "country": "{cc}", "locale": "{locale}"}'
 ```
 
 The discovered SERP agent returns `data.parsing.entities` — a dict keyed by

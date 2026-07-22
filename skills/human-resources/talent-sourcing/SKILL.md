@@ -96,17 +96,17 @@ Discover available Web Search Agents for candidate-sourcing platforms. Run
 simultaneously:
 
 ```bash
-nimble agent list --search "linkedin people" --limit 20
-nimble agent list --search "indeed resume" --limit 20
-nimble agent list --search "github profile" --limit 20
-nimble agent list --search "wellfound talent" --limit 20
+nimble extract:templates list --limit 100  # then filter items for "linkedin people"
+nimble extract:templates list --limit 100  # then filter items for "indeed resume"
+nimble extract:templates list --limit 100  # then filter items for "github profile"
+nimble extract:templates list --limit 100  # then filter items for "wellfound talent"
 ```
 
 Filter results for `entity_type: SERP` or `entity_type: PDP`. Prefer
 `managed_by: "nimble"`. Validate promising agents with:
 
 ```bash
-nimble agent get --template-name {name}
+nimble extract:templates get --extract-template-name {name}
 ```
 
 Cache discovered WSA names and required params. If no WSAs found for a platform,
