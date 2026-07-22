@@ -41,6 +41,7 @@ allowed-tools:
   - mcp__plugin_nimble_nimble__nimble_extract_templates_get
   - mcp__plugin_nimble_nimble__nimble_extract_templates_run
   - mcp__plugin_nimble_nimble__nimble_extract_templates_run_async
+  - mcp__plugin_nimble_nimble__nimble_agents_list
   - mcp__plugin_nimble_nimble__nimble_agent_templates_list
   - mcp__plugin_nimble_nimble__nimble_agent_templates_get
   - mcp__plugin_nimble_nimble__nimble_agents_run
@@ -56,7 +57,7 @@ allowed-tools:
   - AskUserQuestion
 license: MIT
 metadata:
-  version: "0.25.0"
+  version: "1.0.0"
   author: Nimbleway
   repository: https://github.com/Nimbleway/agent-skills
 ---

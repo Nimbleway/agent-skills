@@ -35,7 +35,7 @@ allowed-tools:
   - AskUserQuestion
 metadata:
   author: Nimbleway
-  version: 0.25.0
+  version: 1.0.0
 ---
 
 # Market Finder
