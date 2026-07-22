@@ -7,13 +7,14 @@ description: |
   USE FOR:
   - Fetching any URL or reading any webpage
   - Scraping prices, listings, reviews, jobs, stats, docs from any site
+  - Running Extraction Templates — reusable, site-specific structured scrapers
+  - Running Web Search Agents — open-ended research, enrichment, and dataset building with citations
   - Discovering URLs on a site before bulk extraction
   - Calling public REST/XHR API endpoints
   - Web search and research (8 focus modes)
   - Bulk crawling website sections
 
-  Must be pre-installed and authenticated. Run `nimble --version` to verify.
-  For building reusable extraction workflows to run at scale over time, use nimble-agent-builder instead.
+  Must be pre-installed and authenticated. Run `nimble --version` to verify (>= 1.1.0).
 allowed-tools:
   - Bash(nimble:*)
   - Bash(mkdir:*)
@@ -36,10 +37,16 @@ allowed-tools:
   - mcp__plugin_nimble_nimble__nimble_crawl_list
   - mcp__plugin_nimble_nimble__nimble_crawl_terminate
   - mcp__plugin_nimble_nimble__nimble_task_results
-  - mcp__plugin_nimble_nimble__nimble_agents_list
-  - mcp__plugin_nimble_nimble__nimble_agents_get
+  - mcp__plugin_nimble_nimble__nimble_extract_templates_list
+  - mcp__plugin_nimble_nimble__nimble_extract_templates_get
+  - mcp__plugin_nimble_nimble__nimble_extract_templates_run
+  - mcp__plugin_nimble_nimble__nimble_extract_templates_run_async
+  - mcp__plugin_nimble_nimble__nimble_agent_templates_list
+  - mcp__plugin_nimble_nimble__nimble_agent_templates_get
   - mcp__plugin_nimble_nimble__nimble_agents_run
-  - mcp__plugin_nimble_nimble__nimble_agent_run_async
+  - mcp__plugin_nimble_nimble__nimble_agents_run_status
+  - mcp__plugin_nimble_nimble__nimble_agents_run_result
+  - mcp__plugin_nimble_nimble__nimble_agents_runs_list
   - Read
   - Write
   - Edit
@@ -62,8 +69,8 @@ User request: $ARGUMENTS
 
 ## Core principles
 
-- **Route by intent first.** Named site/domain → check for pre-built agent first (announce it out loud). Direct URL → `nimble extract`. Research/topic → `nimble search`. Discover/crawl URLs → `nimble map` or `nimble crawl`.
-- **One command → present results → done.** Run once with `--transform "data.parsing"` for agents. Show the data immediately as a table. Do NOT experiment, loop, or write Python to parse output.
+- **Route by intent first** (see [Analyze & Route](#analyze--route) for the full decision model). Named site with a matching Extraction Template + a direct item to look up → run the template. Site with no template, or a need that requires discovery/reasoning across pages → a Web Search Agent. One-off single URL → `nimble extract`. Research/topic → `nimble search`. Discover/crawl URLs → `nimble map` or `nimble crawl`.
+- **One command → present results → done.** Run once, show the data immediately as a table. Do NOT experiment, loop, or write Python to parse output.
 - **Multiple inputs → always parallel.** 2+ URLs/keywords/ASINs → `&`+`wait`. 6–20 → `xargs -P`. 20+ → Python asyncio script. See `references/batch-patterns.md`.
 - **Escalate render tiers silently.** Tier 1 → 2 → 3 → … without asking. Surface a decision only when all tiers fail and investigation tools are needed.
 - **Never answer from training data.** Live prices, current news, today's listings → always fetch via Nimble. If unavailable, say so.
@@ -73,16 +80,20 @@ User request: $ARGUMENTS
 - **No working CLI and no connected MCP → stop.** Do not fall back to WebFetch, WebSearch, curl, or `dangerouslyDisableSandbox`. If the plugin is installed but the connector isn't connected (typical Cowork / claude.ai), surface the verbatim connect steps from `rules/setup.md` and stop; if no plugin at all, follow the install flow in `rules/setup.md`.
 - **If a tool hands back an OAuth "Authorize" link instead of data, present it exactly as given and stop.** Never invent a "paste the URL back" / "I'll complete the connection" step — none exists — and never claim tools "will activate" then call them in the same turn. Wait for the user to authorize, then retry or re-probe.
 
-## Skill ecosystem
+## Capabilities
 
-| Skill                              | Best for                                                                   | Key commands                                     |
-| ---------------------------------- | -------------------------------------------------------------------------- | ------------------------------------------------ |
-| **nimble-web-expert** (this skill) | Real-time data — fetch any URL, search, map, crawl, run existing agents    | `extract`, `search`, `map`, `crawl`, `agent run` |
-| **nimble-agent-builder**           | Build reusable agents — create, refine, publish named extraction templates | CLI: `generate`, `get-generation`, `publish`     |
+One skill, one taxonomy. Use Nimble's own product names precisely — never paraphrase them.
 
-**Hand off to nimble-agent-builder only when all of these are true:** the user has signalled a recurring/scheduled need, the pattern is repetitive (same site, same fields), and they've seen and approved the results. Don't ask after every extract — only when language clearly signals a recurring workflow ("I want to do this every day", "build me a pipeline", "make this reusable").
+| Capability             | What it is                                                                        | Command family              |
+| ---------------------- | --------------------------------------------------------------------------------- | --------------------------- |
+| **Search**             | Real-time web search — raw results (pages, snippets), 8 focus modes               | `nimble search`             |
+| **Extract**            | Fetch + parse a single known URL (the one-off primitive)                          | `nimble extract`            |
+| **Extraction Template**| Reusable, site-specific structured scraper for a known item (by URL or identifier)| `nimble extract:templates`  |
+| **Web Search Agent**   | Open-ended research / enrichment / dataset building — discovers sources, synthesizes, cites | `nimble agents` / `agents:runs` |
+| **Map**                | Discover the URLs that exist on a site                                            | `nimble map`                |
+| **Crawl**              | Bulk-fetch many pages across a site (one-time, at scale)                          | `nimble crawl`              |
 
-**For agent refinement:** _"Agent updates are handled by nimble-agent-builder — it can refine the existing agent without rebuilding from scratch."_
+Extraction Templates and Web Search Agents are distinct — an Extraction Template is a fixed, site-specific parser; a Web Search Agent reasons across sources. Never call an Extraction Template a "WSA" or a "legacy WSA," and never route a template use to `agents` (or vice-versa) by name alone. Building new templates/agents is out of scope here — use **existing** ones (point users to the Nimble app to build new).
 
 ## Interactive UX
 
@@ -112,59 +123,62 @@ claude mcp list 2>/dev/null | grep -q "nimble" && echo "MCP: ok"  # plugin MCP
 
 ## Analyze & Route
 
-| User signal                        | Command                                       | Notes                                          |
-| ---------------------------------- | --------------------------------------------- | ---------------------------------------------- |
-| Names a specific site or domain    | `nimble agent` → `nimble extract` if no agent | Always check for agent first — announce it     |
-| Provides a direct URL              | `nimble extract`                              | Skip agent check                               |
-| Research, topic, or vertical query | `nimble search`                               | Use focus modes for news, jobs, shopping, etc. |
-| "Find URLs / sitemap / all pages"  | `nimble map`                                  | Returns URL list + metadata                    |
-| "Crawl / archive a whole section"  | `nimble crawl`                                | Async bulk extraction                          |
+Start by eliminating what clearly doesn't fit, then pick from what remains:
 
-### Step 0 — Agent check (when a domain is named)
+| User signal                                   | Route                                                                                 |
+| --------------------------------------------- | ------------------------------------------------------------------------------------- |
+| Direct single URL to fetch                    | `nimble extract`                                                                      |
+| Named site + a direct item to look up (URL/ID)| **Step 0** — check for an Extraction Template first                                   |
+| Data from a site with **no** template         | **Web Search Agent** (not a raw extract, not a new template) — see the overlap rule   |
+| Open-ended research / enrichment / a dataset  | **Web Search Agent** (`agents:runs`) — synthesizes and cites                          |
+| Raw search results / "find pages about…"      | `nimble search` (focus modes for news, jobs, shopping, academic…)                     |
+| "Find URLs / sitemap / all pages"             | `nimble map`                                                                          |
+| "Crawl / archive a whole section"             | `nimble crawl`                                                                        |
 
-Pre-built agents return clean structured data with zero selector work. Always check first.
+**The most common overlap — a site with no Extraction Template.** It looks like a choice between a raw `extract` (which dumps parsing work on the user) or building a template (out of scope). Neither is right: route to a **Web Search Agent** — it configures fresh for any site and reasons about structure without a maintained template. This isn't a question to put to the user; when no template fits, the answer is the same every time.
+
+### Step 0 — Extraction Template check (when a site + direct item is named)
+
+Templates return clean structured data with zero selector work. Always check first.
 
 **Always verbalize — never silently:**
 
-1. **Announce:** _"Let me check if there's a pre-built Nimble agent for [site]..."_
-2. **Report:** _"Found `<agent_name>` — using it now."_ or _"No pre-built agent — falling back to extraction."_
+1. **Announce:** _"Let me check if there's a Nimble Extraction Template for [site]..."_
+2. **Report:** _"Found `<template_name>` — using it now."_ or _"No template for [site] — using a Web Search Agent instead."_
 
 **Lookup order:**
 
-1. `~/.claude/skills/nimble-web-expert/learned/examples.json` → `agents[]` array
-2. `references/nimble-agents/SKILL.md` → baked-in table (50+ sites)
-3. `nimble agent list --limit 100 --search "<domain or vertical>"` → show table, confirm with user
-4. No match → proceed to extract/search
-
-**Run with `--transform "data.parsing"` — always:**
+1. `~/.claude/skills/nimble-web-expert/learned/examples.json` → learned templates
+2. `nimble extract:templates list --limit 100` → filter by site/domain client-side; confirm the match
+3. Inspect the schema before running: `nimble extract:templates get --extract-template-name <name>`
+4. No match → route to a Web Search Agent (per the overlap rule above)
 
 ```bash
-nimble --transform "data.parsing" agent run --agent <name> --params '{"keyword": "..."}'
+nimble extract:templates run --template <name> --params '{"key": "value"}'
 ```
 
-Do NOT run without `--transform "data.parsing"` and then parse raw output. The raw response contains `html` (useless), `headers`, and `parsing` (what you want). The transform flag extracts `parsing` in one shot.
+`--params` is a JSON/YAML mapping matching the template's `input_schema`. The response is the records defined by the template's `output_schema` (array for list/SERP-style, object for detail/PDP-style) — read the schema from `get` to know the shape. See `references/nimble-extract-templates/SKILL.md`.
 
-For the full agent list (50+ sites), see `references/nimble-agents/SKILL.md`.
-
-⚠️ `google_search` is for SEO/SERP rank analysis only — not general information retrieval. For finding information, use `nimble search`.
+⚠️ For finding information, use `nimble search`, not a SERP-analysis template. SERP templates are for rank/SEO analysis, not general retrieval.
 
 ---
 
 ## Workflow
 
-| Situation                       | Command                                      | Reference                                            |
-| ------------------------------- | -------------------------------------------- | ---------------------------------------------------- |
-| Site/domain → check agent first | `nimble agent list` → `nimble agent run`     | `references/nimble-agents/SKILL.md`                  |
-| Direct URL                      | `nimble extract`                             | `references/nimble-extract/SKILL.md`                 |
-| Search the live web             | `nimble search`                              | `references/nimble-search/SKILL.md`                  |
-| Discover URLs on a site         | `nimble map`                                 | `references/nimble-map/SKILL.md`                     |
-| Bulk crawl a section            | `nimble crawl run`                           | `references/nimble-crawl/SKILL.md`                   |
-| Batch agents (up to 1,000)      | `nimble agent run-batch`                     | `references/nimble-agents/SKILL.md`                  |
-| Batch extract (up to 1,000)     | `nimble extract-batch`                       | `references/nimble-extract/SKILL.md`                 |
-| Poll tasks / batches / results  | `nimble tasks` / `nimble batches`            | `references/nimble-tasks/SKILL.md`                   |
-| Unknown selectors or XHR path   | browser-use or Playwright investigation      | `references/nimble-extract/browser-investigation.md` |
-| Proven site patterns            | copy a recipe                                | `references/recipes.md`                              |
-| 2+ inputs                       | parallel bash `&`+`wait` or generated script | `references/batch-patterns.md`                       |
+| Situation                        | Command                                        | Reference                                            |
+| -------------------------------- | ---------------------------------------------- | ---------------------------------------------------- |
+| Site + item → template first     | `extract:templates list` → `extract:templates run` | `references/nimble-extract-templates/SKILL.md`   |
+| Research / enrichment / dataset  | `agents:runs create` → `get` → `result`        | `references/nimble-agents/SKILL.md`                  |
+| Direct URL                       | `nimble extract`                               | `references/nimble-extract/SKILL.md`                 |
+| Search the live web              | `nimble search`                                | `references/nimble-search/SKILL.md`                  |
+| Discover URLs on a site          | `nimble map`                                   | `references/nimble-map/SKILL.md`                     |
+| Bulk crawl a section             | `nimble crawl run`                             | `references/nimble-crawl/SKILL.md`                   |
+| Batch templates (up to 1,000)    | `nimble extract:templates batch`               | `references/nimble-extract-templates/SKILL.md`       |
+| Batch extract (up to 1,000)      | `nimble extract-batch`                         | `references/nimble-extract/SKILL.md`                 |
+| Poll tasks / batches / results   | `nimble tasks` / `nimble batches`              | `references/nimble-tasks/SKILL.md`                   |
+| Unknown selectors or XHR path    | browser-use or Playwright investigation        | `references/nimble-extract/browser-investigation.md` |
+| Proven site patterns             | copy a recipe                                  | `references/recipes.md`                              |
+| 2+ inputs                        | parallel bash `&`+`wait` or generated script   | `references/batch-patterns.md`                       |
 
 For the full extract waterfall (tiers, flags, browser actions, network capture), see `references/nimble-extract/SKILL.md`.
 
@@ -172,15 +186,16 @@ For the full extract waterfall (tiers, flags, browser actions, network capture),
 
 ## Response shapes
 
-| Command          | Output                                                                      |
-| ---------------- | --------------------------------------------------------------------------- |
-| `nimble agent`   | Structured data in `data.parsing` — array (SERP/list) or dict (PDP/product) |
-| `nimble extract` | HTML, Markdown, or parsed JSON — depends on `--format` and `--parse`        |
-| `nimble search`  | Structured results array (title, URL, description)                          |
-| `nimble map`     | URL list + metadata                                                         |
-| `nimble crawl`   | Async job — poll with `nimble crawl status <job_id>`                        |
+| Command                     | Output                                                                                  |
+| --------------------------- | --------------------------------------------------------------------------------------- |
+| `nimble extract:templates`  | Records per the template's `output_schema` — array (list/SERP) or object (detail/PDP)   |
+| `nimble agents:runs result` | `output` (`type:"text"` prose or `type:"json"` structured) + `trust` per-claim citations |
+| `nimble extract`            | HTML, Markdown, or parsed JSON — depends on `--format` and `--parse`                     |
+| `nimble search`             | Structured results array (title, URL, description)                                      |
+| `nimble map`                | URL list + metadata                                                                     |
+| `nimble crawl`              | Async job — poll with `nimble crawl status <job_id>`                                     |
 
-**Agent runs always need `--transform "data.parsing"`.** If the agent name suggests a list (serp, search, plp), expect an array. If it suggests a single item (pdp, product, profile), expect a dict.
+**Read the template's `output_schema` (from `extract:templates get`) before parsing** — a list/SERP-style template returns an array, a detail/PDP-style template returns an object. Web Search Agent runs are async: poll `agents:runs get` to a terminal state, then fetch `result`.
 
 ## Output & Organization
 
@@ -214,11 +229,13 @@ The skill maintains `~/.claude/skills/nimble-web-expert/learned/examples.json`.
 ## Guardrails
 
 - **NEVER answer from training data** for live prices, current news, or real-time data. If Nimble is unavailable, say so.
-- **NEVER skip Step 0 silently.** Even if certain there's no agent, announce the check before running extract/search/map.
+- **NEVER skip Step 0 silently.** Even if certain there's no template, announce the check before falling back to a Web Search Agent or extract/search.
+- **Distinguish Extraction Templates from Web Search Agents.** Never call a template a "WSA"/"legacy WSA," and never route a template use to `agents` by name alone (or the reverse). Building new templates/agents is out of scope — use existing ones.
+- **When a run comes back empty, partial, or clearly wrong, say so plainly** — a domain that returned nothing, a template that matched poorly, a search with no relevant hits are real outcomes, not something to present as success. Suggest an obvious next step (broader source, a different capability) where one exists.
 - **NEVER retry the same render tier.** If a tier returns empty or blocked, escalate — do not re-run.
 - **NEVER substitute WebFetch, WebSearch, curl, or wget for nimble operations.** They're not in `allowed-tools` — if a Nimble transport isn't available, stop and follow the guidance in the no-transport branch of Core principles. Don't try to work around it.
 - **NEVER load reference files speculatively.** Only read a reference when the current task explicitly needs it.
-- **Task agents MUST use `run_in_background=False`.** See [nimble-agent-builder delegation model](../nimble-agent-builder/SKILL.md#delegation-model) for the why.
+- **Task agents MUST use `run_in_background=False`.**
 - **Hard retry limit.** On error (not empty content): retry at most 2 times with different flags. After 2 errors, report and stop.
 - **Hard 429 rule.** On rate-limit error: stop immediately. Do not retry or switch tiers.
 
@@ -231,7 +248,8 @@ Load only when needed:
 | File                                                 | Load when                                                                     |
 | ---------------------------------------------------- | ----------------------------------------------------------------------------- |
 | `references/recipes.md`                              | Need a proven command for a common site (Amazon, Yelp, LinkedIn…)             |
-| `references/nimble-agents/SKILL.md`                  | Step 0 lookup — full agent table (50+ sites)                                  |
+| `references/nimble-extract-templates/SKILL.md`       | Step 0 — discover/inspect/run Extraction Templates for a known site           |
+| `references/nimble-agents/SKILL.md`                  | Web Search Agents — discovery, run lifecycle, authoring, trust/citations      |
 | `references/nimble-extract/SKILL.md`                 | Extract flags, render tiers, browser actions, network capture, parser schemas |
 | `references/nimble-search/SKILL.md`                  | Search flags, all 8 focus modes                                               |
 | `references/nimble-map/SKILL.md`                     | Map flags, response structure                                                 |

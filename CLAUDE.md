@@ -5,12 +5,12 @@
 **Nimble Web Search Skills** — agent skills that give any AI agent the ability to search, scrape, and extract structured data from any website using the Nimble CLI. Built following the [Agent Skills specification](https://agentskills.io/specification.md), compatible with Claude Code, Codex, Cursor, and any agent platform that supports the spec.
 
 Two layers of skills:
-- **Core data skills** (`skills/web-search-tools/`) — the raw capabilities: fetch a URL, run a search, build a reusable extraction agent
+- **Core data skill** (`skills/web-search-tools/nimble-web-expert/`) — the raw capabilities: fetch a URL, run a search, map/crawl a site, run Extraction Templates, and run Web Search Agents
 - **Business intelligence skills** (all other verticals) — one-command workflows that turn live web data into actionable reports
 
 See `.claude-plugin/marketplace.json` for the full list of published skills.
 
-Business skills are built on top of core skills — they call `nimble search` / `nimble extract` under the hood. The two core skills also form a feedback loop: web-expert runs agents built by agent-builder, and when a one-off lookup becomes recurring, agent-builder turns it into a reusable pipeline.
+Business skills are built on top of the core skill — they call `nimble search` / `nimble extract`, run Extraction Templates for structured site data, and run Web Search Agents for open-ended research, under the hood.
 
 ## Prerequisites
 
