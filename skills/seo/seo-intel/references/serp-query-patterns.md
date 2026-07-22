@@ -105,7 +105,7 @@ an `entity_type` field (e.g., `OrganicResult`, `PeopleAlsoAsk`, `FeaturedSnippet
 keywords after the lite pass:
 
 ```bash
-nimble agent run --agent google_search --params '{"query": "{keyword}", "num_results": 20, "country": "US", "locale": "en"}'
+nimble extract:templates run --template google_search --params '{"query": "{keyword}", "num_results": 20, "country": "US", "locale": "en"}'
 ```
 
 Additional params: `time` (hour/day/week/month/year), `location` (city string or

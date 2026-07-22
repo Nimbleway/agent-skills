@@ -1,11 +1,11 @@
 # Batch Patterns
 
-Patterns for running `nimble agent`, `nimble extract`, and `nimble search` in parallel across multiple inputs — instead of one at a time.
+Patterns for running Extraction Templates, `nimble extract`, and `nimble search` in parallel across multiple inputs — instead of one at a time.
 
 ## Table of Contents
 
 - [When to use batch patterns](#when-to-use-batch-patterns)
-- [Parallel agent runs](#parallel-agent-runs)
+- [Parallel Extraction Template runs](#parallel-extraction-template-runs)
 - [Parallel URL extraction](#parallel-url-extraction)
 - [Parallel search queries](#parallel-search-queries)
 - [Large-scale batches — generate a script](#large-scale-batches--generate-a-script)
@@ -17,7 +17,7 @@ Patterns for running `nimble agent`, `nimble extract`, and `nimble search` in pa
 
 | Scenario                                 | Inputs | Method                                         |
 | ---------------------------------------- | ------ | ---------------------------------------------- |
-| Run same agent with different params     | 2–5    | Parallel bash: `&` + `wait`                    |
+| Run same template with different params     | 2–5    | Parallel bash: `&` + `wait`                    |
 | Extract multiple URLs                    | 2–5    | Parallel bash: `&` + `wait`                    |
 | Run multiple search queries              | 2–5    | Parallel bash: `&` + `wait`                    |
 | Any of the above                         | 6–20   | `xargs -P` or bash array with `&` + `wait`     |
@@ -28,16 +28,16 @@ Patterns for running `nimble agent`, `nimble extract`, and `nimble search` in pa
 
 ---
 
-## Parallel agent runs
+## Parallel Extraction Template runs
 
 ### 2–5 inputs — parallel bash
 
 ```bash
 mkdir -p .nimble
 
-nimble --transform "data.parsing" agent run --agent amazon_serp --params '{"keyword": "trackpad"}' > .nimble/trackpad.json &
-nimble --transform "data.parsing" agent run --agent amazon_serp --params '{"keyword": "mouse"}' > .nimble/mouse.json &
-nimble --transform "data.parsing" agent run --agent amazon_serp --params '{"keyword": "keyboard"}' > .nimble/keyboard.json &
+nimble --transform "data.parsing" extract:templates run --template amazon_serp --params '{"keyword": "trackpad"}' > .nimble/trackpad.json &
+nimble --transform "data.parsing" extract:templates run --template amazon_serp --params '{"keyword": "mouse"}' > .nimble/mouse.json &
+nimble --transform "data.parsing" extract:templates run --template amazon_serp --params '{"keyword": "keyboard"}' > .nimble/keyboard.json &
 wait
 
 echo "All done"
@@ -52,8 +52,8 @@ mkdir -p .nimble
 keywords=("trackpad" "mouse" "keyboard")
 
 for kw in "${keywords[@]}"; do
-  nimble --transform "data.parsing" agent run \
-    --agent amazon_serp \
+  nimble --transform "data.parsing" extract:templates run \
+    --template amazon_serp \
     --params "{\"keyword\": \"$kw\"}" \
     > ".nimble/amazon-${kw// /-}.json" &
 done
@@ -67,7 +67,7 @@ echo "All ${#keywords[@]} searches complete"
 mkdir -p .nimble
 # One keyword per line in keywords.txt
 cat keywords.txt | xargs -P 8 -I{} sh -c \
-  'nimble --transform "data.parsing" agent run --agent amazon_serp --params "{\"keyword\": \"{}\"}" > ".nimble/amazon-{}.json" && echo "✓ {}"'
+  'nimble --transform "data.parsing" extract:templates run --template amazon_serp --params "{\"keyword\": \"{}\"}" > ".nimble/amazon-{}.json" && echo "✓ {}"'
 ```
 
 `-P 8` = up to 8 concurrent requests. Adjust based on your rate limit.
@@ -148,26 +148,34 @@ wait
 
 For 20+ inputs, generate a Python script and run it with `uv run`.
 
-**Which template to use:**
+**Prefer the server-side batch endpoint.** For a single template over many items, one
+`nimble extract:templates batch` call (up to 1,000 items, server-side parallelism) beats
+any client-side loop — submit once, poll, collect:
 
-| Command            | Template                     | Why                                                                         |
-| ------------------ | ---------------------------- | --------------------------------------------------------------------------- |
-| `nimble agent run` | Python SDK (`nimble_python`) | Direct SDK call — no subprocess overhead, built-in retries, typed responses |
-| `nimble extract`   | CLI subprocess               | No Python SDK equivalent for `extract`                                      |
-| `nimble search`    | CLI subprocess               | No Python SDK equivalent for `search`                                       |
+```bash
+nimble --client-source nimble-agent-skills extract:templates batch \
+  --template amazon_serp \
+  --input '{"params": {"keyword": "trackpad"}}' \
+  --input '{"params": {"keyword": "mouse"}}'
+# → returns batch_id; poll with `nimble batches progress --batch-id <id>`,
+#   then `nimble batches get` + `nimble tasks results` (see references/nimble-tasks/SKILL.md)
+```
 
-### Template — parallel agent runs (Python SDK)
+**When to script instead:** mixing templates/extract/search, custom per-item output shaping,
+or interleaving with other work. Shell out to the verified CLI via `asyncio.create_subprocess_exec`
+— no Python SDK dependency:
+
+### Template — parallel Extraction Template runs (CLI subprocess)
 
 ```python
 # /// script
 # requires-python = ">=3.11"
-# dependencies = ["nimble_python"]
+# dependencies = []
 # ///
-"""Run nimble agent in parallel across multiple inputs."""
+"""Run a Nimble Extraction Template in parallel across inputs via the CLI."""
 import asyncio, json, os, pathlib
-from nimble_python import AsyncNimble
 
-AGENT = "amazon_serp"
+TEMPLATE = "amazon_serp"
 INPUTS = [
     {"keyword": "trackpad"},
     {"keyword": "mouse"},
@@ -177,43 +185,41 @@ INPUTS = [
 CONCURRENCY = 8
 OUT_DIR = pathlib.Path(".nimble")
 OUT_DIR.mkdir(exist_ok=True)
-
-nimble = AsyncNimble(api_key=os.environ["NIMBLE_API_KEY"], max_retries=4, timeout=120.0)
 SEM = asyncio.Semaphore(CONCURRENCY)
 
 
 async def run_one(params: dict) -> dict:
     key = next(iter(params.values()))
     slug = str(key).replace(" ", "-")
-    out_file = OUT_DIR / f"{AGENT}-{slug}.json"
+    out_file = OUT_DIR / f"{TEMPLATE}-{slug}.json"
 
     async with SEM:
-        try:
-            resp = await nimble.agent.run(agent=AGENT, params=params)
-            parsing = resp.data.parsing
-        except Exception as e:
-            print(f"  ✗ {key}: {e}")
-            return {"input": params, "error": str(e)}
+        proc = await asyncio.create_subprocess_exec(
+            "nimble", "--client-source", "nimble-agent-skills",
+            "--transform", "data.parsing",
+            "extract:templates", "run", "--template", TEMPLATE,
+            "--params", json.dumps(params),
+            stdout=asyncio.subprocess.PIPE, stderr=asyncio.subprocess.PIPE,
+            env={**os.environ},
+        )
+        stdout, stderr = await proc.communicate()
 
-    # SERP items are typed Pydantic objects — must call .model_dump() to serialize to JSON
-    serializable = [item.model_dump() for item in parsing] if isinstance(parsing, list) else parsing
-    out_file.write_text(json.dumps(serializable, ensure_ascii=False, indent=2))
+    if proc.returncode != 0:
+        print(f"  ✗ {key}: {stderr.decode().strip()[:80]}")
+        return {"input": params, "error": stderr.decode().strip()}
+
+    # data.parsing is a list (SERP-style) or object (PDP-style) — write as-is
+    out_file.write_text(stdout.decode())
     print(f"  ✓ {key} → {out_file}")
-    return {"input": params, "file": str(out_file), "count": len(parsing) if isinstance(parsing, list) else 1}
+    return {"input": params, "file": str(out_file)}
 
 
 async def main():
     print(f"Running {len(INPUTS)} inputs (concurrency={CONCURRENCY})...")
     results = await asyncio.gather(*[run_one(p) for p in INPUTS], return_exceptions=True)
-
     ok = [r for r in results if isinstance(r, dict) and "error" not in r]
     fail = [r for r in results if isinstance(r, dict) and "error" in r]
     print(f"\nDone: {len(ok)} succeeded, {len(fail)} failed")
-    if fail:
-        for f in fail:
-            print(f"  ✗ {f['input']}: {f['error'][:80]}")
-
-    await nimble.close()
 
 asyncio.run(main())
 ```

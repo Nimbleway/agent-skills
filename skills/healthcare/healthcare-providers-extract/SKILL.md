@@ -36,7 +36,7 @@ allowed-tools:
   - AskUserQuestion
 metadata:
   author: Nimbleway
-  version: 0.25.0
+  version: 1.0.0
 ---
 
 # Healthcare Providers Extract
@@ -64,12 +64,12 @@ Follow the transport selection + standard preflight from `references/nimble-play
   `references/wsa-reference.md`. Layer 2 (session-specific) runs after Step 1 when
   you know the user's specialty.
 
-Classify discovered agents into phases and validate with `nimble agent get` per
+Classify discovered agents into phases and validate with `nimble extract:templates get` per
 `references/wsa-reference.md`.
 
 From the preflight results:
 - CLI missing or API key unset -> `references/profile-and-onboarding.md`, stop
-- Tag all `nimble` CLI calls: `nimble --client-source skill-healthcare-providers-extract <subcommand>`. MCP path: not yet supported — see `references/nimble-playbook.md` for status.
+- Tag all `nimble` CLI calls: `nimble --client-source nimble-agent-skills <subcommand>`. MCP requests are attributed at the transport level — see `references/nimble-playbook.md`.
 - Profile exists -> note it for context. Determine mode using smart date windowing
   from `references/nimble-playbook.md`:
   - **Full mode:** first run OR last run > 14 days ago
@@ -114,15 +114,15 @@ Only if the user provided a specialty + location instead of URLs.
 discovery for session-specific agents:
 
 ```bash
-nimble agent list --limit 50 --search "[specialty]"
-nimble agent list --limit 50 --search "[directory-user-mentioned]"
+nimble extract:templates list --limit 50  # filter items for "[specialty]"
+nimble extract:templates list --limit 50  # filter items for "[directory-user-mentioned]"
 ```
 
 See `references/wsa-reference.md` for the full discovery strategy, agent evaluation
 criteria, and healthcare discovery prioritization.
 
 Run all discovery-phase agents simultaneously. Validate params with
-`nimble agent get` first.
+`nimble extract:templates get` first.
 
 **Path B — Market-finder handoff.** User ran `market-finder` first and wants to
 extract providers from those results. Read the market-finder output:

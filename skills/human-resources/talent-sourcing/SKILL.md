@@ -34,7 +34,7 @@ allowed-tools:
   - AskUserQuestion
 metadata:
   author: Nimbleway
-  version: 0.25.0
+  version: 1.0.0
 ---
 
 # Talent Sourcing
@@ -59,7 +59,7 @@ Also simultaneously:
 
 From the results:
 - CLI missing or API key unset → read `references/profile-and-onboarding.md`, stop
-- Tag all `nimble` CLI calls: `nimble --client-source skill-talent-sourcing <subcommand>`. MCP path: not yet supported — see `references/nimble-playbook.md` for status.
+- Tag all `nimble` CLI calls: `nimble --client-source nimble-agent-skills <subcommand>`. MCP requests are attributed at the transport level — see `references/nimble-playbook.md`.
 - Profile exists → note industry keywords if any; proceed to Step 1
 - No profile → fine, talent-sourcing doesn't require onboarding; proceed to Step 1
 
@@ -96,17 +96,17 @@ Discover available Web Search Agents for candidate-sourcing platforms. Run
 simultaneously:
 
 ```bash
-nimble agent list --search "linkedin people" --limit 20
-nimble agent list --search "indeed resume" --limit 20
-nimble agent list --search "github profile" --limit 20
-nimble agent list --search "wellfound talent" --limit 20
+nimble extract:templates list --limit 100  # then filter items for "linkedin people"
+nimble extract:templates list --limit 100  # then filter items for "indeed resume"
+nimble extract:templates list --limit 100  # then filter items for "github profile"
+nimble extract:templates list --limit 100  # then filter items for "wellfound talent"
 ```
 
 Filter results for `entity_type: SERP` or `entity_type: PDP`. Prefer
 `managed_by: "nimble"`. Validate promising agents with:
 
 ```bash
-nimble agent get --template-name {name}
+nimble extract:templates get --extract-template-name {name}
 ```
 
 Cache discovered WSA names and required params. If no WSAs found for a platform,

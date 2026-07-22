@@ -5,12 +5,12 @@
 **Nimble Web Search Skills** — agent skills that give any AI agent the ability to search, scrape, and extract structured data from any website using the Nimble CLI. Built following the [Agent Skills specification](https://agentskills.io/specification.md), compatible with Claude Code, Codex, Cursor, and any agent platform that supports the spec.
 
 Two layers of skills:
-- **Core data skills** (`skills/web-search-tools/`) — the raw capabilities: fetch a URL, run a search, build a reusable extraction agent
+- **Core data skill** (`skills/web-search-tools/nimble-web-expert/`) — the raw capabilities: fetch a URL, run a search, map/crawl a site, run Extraction Templates, and run Web Search Agents
 - **Business intelligence skills** (all other verticals) — one-command workflows that turn live web data into actionable reports
 
 See `.claude-plugin/marketplace.json` for the full list of published skills.
 
-Business skills are built on top of core skills — they call `nimble search` / `nimble extract` under the hood. The two core skills also form a feedback loop: web-expert runs agents built by agent-builder, and when a one-off lookup becomes recurring, agent-builder turns it into a reusable pipeline.
+Business skills are built on top of the core skill — they call `nimble search` / `nimble extract`, run Extraction Templates for structured site data, and run Web Search Agents for open-ended research, under the hood.
 
 ## Prerequisites
 
@@ -92,15 +92,19 @@ metadata:
 
 ### Data access
 - Use `nimble search` / `nimble extract` via Bash for web data access.
-- WSA names are dynamic — never hardcode them in skills or reference files, not even
-  Nimble-managed agents. Discover at runtime using 3 layers: (1) vertical search
-  (`nimble agent list --search "healthcare"`), (2) session-specific search (user's
-  specialty, directories they mention), (3) general tools (`google_maps`, `yelp`, `bbb`).
-  Validate with `nimble agent get --template-name {name}` before running.
+- Two structured-data families (CLI 1.1.0+): **Extraction Templates** (`extract:templates
+  list`/`get --extract-template-name`/`run --template`) for site-specific structured
+  scrapers, and **Web Search Agents** (`agents:templates`, `agents create`, `agents:runs
+  create`/`get`/`result`) for open-ended research/enrichment with trust/citations. The
+  singular `nimble agent …` group is retired.
+- Template/agent names are dynamic — never hardcode them. `extract:templates list` has no
+  server-side search: list and filter client-side (by domain, keyword, entity_type). Web
+  Search Agents follow the reuse-priority chain (existing agent → clone a template → from
+  scratch). Validate a template's `input_schema` before running.
 - WSA reference files must teach discovery strategy, not list known agents. The test:
-  if 10 new WSAs were added tomorrow, would the skill find them automatically?
+  if 10 new agents/templates were added tomorrow, would the skill find them automatically?
 - `--search-depth` valid values: `lite`, `fast`, `deep` (not `standard`). Use `lite` for discovery, `deep` for full content.
-- `nimble agent list --limit` max is 250.
+- All Nimble calls carry `--client-source nimble-agent-skills` (the stable integration attribution).
 - Always verify CLI commands with real data before writing them into SKILL.md — `--help` alone isn't enough.
 
 ### Agent definitions (`agents/`)

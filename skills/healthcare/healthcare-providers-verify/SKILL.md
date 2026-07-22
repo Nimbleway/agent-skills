@@ -34,7 +34,7 @@ allowed-tools:
   - AskUserQuestion
 metadata:
   author: Nimbleway
-  version: 0.25.0
+  version: 1.0.0
 ---
 
 # Healthcare Providers Verify
@@ -70,11 +70,11 @@ Bash calls: date calc, today, CLI check, profile load, index.md load).
   you know the user's specialty and verification focus.
 
 Classify discovered agents into verification categories and validate with
-`nimble agent get` per `references/wsa-reference.md`.
+`nimble extract:templates get` per `references/wsa-reference.md`.
 
 From the preflight results:
 - CLI missing or API key unset -> `references/profile-and-onboarding.md`, stop
-- Tag all `nimble` CLI calls: `nimble --client-source skill-healthcare-providers-verify <subcommand>`. MCP path: not yet supported — see `references/nimble-playbook.md` for status.
+- Tag all `nimble` CLI calls: `nimble --client-source nimble-agent-skills <subcommand>`. MCP requests are attributed at the transport level — see `references/nimble-playbook.md`.
 - Profile exists -> note it for context. Determine mode using smart date windowing
   from `references/nimble-playbook.md`:
   - **Full mode:** first run OR last run > 14 days ago
@@ -141,8 +141,8 @@ Build a verification plan summary:
 
 Run Layer 2 WSA discovery now that you know the specialty:
 ```bash
-nimble agent list --limit 50 --search "[specialty]"
-nimble agent list --limit 50 --search "[registry-user-mentioned]"
+nimble extract:templates list --limit 50  # filter items for "[specialty]"
+nimble extract:templates list --limit 50  # filter items for "[registry-user-mentioned]"
 ```
 
 See `references/wsa-reference.md` for session-specific discovery.

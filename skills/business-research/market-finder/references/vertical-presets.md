@@ -2,7 +2,7 @@
 
 Each preset defines query patterns, target domains, and entity types for a
 business vertical. The skill auto-selects the preset based on user input, then
-**discovers available WSAs at runtime** using `nimble agent list --search`.
+**discovers available WSAs at runtime** using `nimble extract:templates list` (filtered client-side).
 
 ---
 

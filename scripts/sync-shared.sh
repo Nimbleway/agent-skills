@@ -23,9 +23,10 @@ for refs_dir in "$REPO_ROOT"/skills/*/*/references; do
   skill_name="$(basename "$skill_dir")"
   vertical="$(basename "$(dirname "$skill_dir")")"
 
-  # Skip non-business skills (they manage their own references)
+  # Skip skills that manage their own references (core data skill + SQL-native
+  # Databricks skill, which is intentionally CLI-free and doesn't use these).
   case "$skill_name" in
-    nimble-web-expert|nimble-agent-builder) continue ;;
+    nimble-web-expert|nimble-databricks-data-products) continue ;;
   esac
 
   # Only sync skills that have a SKILL.md (i.e., actually implemented)

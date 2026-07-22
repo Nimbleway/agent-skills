@@ -35,7 +35,7 @@ allowed-tools:
   - AskUserQuestion
 metadata:
   author: Nimbleway
-  version: 0.25.0
+  version: 1.0.0
 ---
 
 # SEO Intelligence Toolkit
@@ -47,7 +47,7 @@ User request: $ARGUMENTS
 
 **Before running any commands**, read `references/nimble-playbook.md` for Claude Code
 constraints (no shell state, no `&`/`wait`, sub-agent permissions, communication style).
-Tag all `nimble` CLI calls: `nimble --client-source skill-seo-intel <subcommand>`. MCP path: not yet supported — see `references/nimble-playbook.md` for status.
+Tag all `nimble` CLI calls: `nimble --client-source nimble-agent-skills <subcommand>`. MCP requests are attributed at the transport level — see `references/nimble-playbook.md`.
 
 ---
 

@@ -15,14 +15,14 @@ three-layer pattern from `nimble-playbook.md`.
 Run broad searches to discover all available AI and SERP agents:
 
 ```bash
-nimble agent list --search "ai" --limit 250
-nimble agent list --search "chatgpt" --limit 50
-nimble agent list --search "perplexity" --limit 50
-nimble agent list --search "google ai" --limit 50
-nimble agent list --search "gemini" --limit 50
-nimble agent list --search "grok" --limit 50
-nimble agent list --search "google serp" --limit 100
-nimble agent list --search "search engine" --limit 100
+nimble extract:templates list --limit 100  # then filter items for "ai"
+nimble extract:templates list --limit 100  # then filter items for "chatgpt"
+nimble extract:templates list --limit 100  # then filter items for "perplexity"
+nimble extract:templates list --limit 100  # then filter items for "google ai"
+nimble extract:templates list --limit 100  # then filter items for "gemini"
+nimble extract:templates list --limit 100  # then filter items for "grok"
+nimble extract:templates list --limit 100  # then filter items for "google serp"
+nimble extract:templates list --limit 100  # then filter items for "search engine"
 ```
 
 ### Layer 2: Session-Specific Narrowing
@@ -38,7 +38,7 @@ visibility workflows, look for agents whose description mentions:
 Validate each candidate before use:
 
 ```bash
-nimble agent get --template-name {discovered-name}
+nimble extract:templates get --extract-template-name {discovered-name}
 ```
 
 Confirm:
@@ -57,14 +57,14 @@ After discovery, use the cached template names:
 
 ```bash
 # AI platform query — substitute discovered name
-nimble agent run --agent "{chatgpt_agent}" --params '{"prompt": "...", "skip_sources": false}'
+nimble extract:templates run --template "{chatgpt_agent}" --params '{"prompt": "...", "skip_sources": false}'
 
 # SERP enrichment — substitute discovered name
-nimble agent run --agent "{serp_agent}" --params '{"query": "...", "num_results": 20, "country": "US"}'
+nimble extract:templates run --template "{serp_agent}" --params '{"query": "...", "num_results": 20, "country": "US"}'
 
 # Batch queries (6+ per platform)
-nimble agent run-batch \
-  --shared-inputs "agent: {chatgpt_agent}" \
+nimble extract:templates batch \
+  --template "{chatgpt_agent}" \
   --input '{"params": {"prompt": "query 1", "skip_sources": false}}' \
   --input '{"params": {"prompt": "query 2", "skip_sources": false}}'
 ```
@@ -78,7 +78,7 @@ AI platform agents send a real prompt to the platform and return structured data
 
 Source arrays vary by platform: some include position fields (`startPosition`,
 `endPosition`) for citation placement; some include `source_domain` for direct
-domain matching. Check the validated schema from `nimble agent get`.
+domain matching. Check the validated schema from `nimble extract:templates get`.
 
 ### What to Expect from SERP Agents
 

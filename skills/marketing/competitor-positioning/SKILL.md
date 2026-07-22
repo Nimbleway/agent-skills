@@ -34,7 +34,7 @@ allowed-tools:
   - AskUserQuestion
 metadata:
   author: Nimbleway
-  version: 0.25.0
+  version: 1.0.0
 ---
 
 # Competitor Positioning
@@ -68,7 +68,7 @@ Follow the transport selection + standard preflight from `references/nimble-play
 
 From the results:
 - CLI missing or API key unset → `references/profile-and-onboarding.md`, stop
-- Tag all `nimble` CLI calls: `nimble --client-source skill-competitor-positioning <subcommand>`. MCP path: not yet supported — see `references/nimble-playbook.md` for status.
+- Tag all `nimble` CLI calls: `nimble --client-source nimble-agent-skills <subcommand>`. MCP requests are attributed at the transport level — see `references/nimble-playbook.md`.
 - Profile exists → load prior data from two sources:
   - `~/.nimble/memory/positioning/*.md` — prior positioning snapshots (used for
     delta detection in Steps 4 + 5)
@@ -118,11 +118,11 @@ about right now. Each competitor costs ~3-5 Nimble API credits (1 map + 3-4 extr
 For each competitor domain and the user's domain, discover available WSAs:
 
 ```bash
-nimble agent list --search "{domain}" --limit 20
+nimble extract:templates list --limit 100  # then filter items for "{domain}"
 ```
 
 Run one search per domain simultaneously. Filter for SERP/PDP WSAs, prefer
-`managed_by: "nimble"`, validate with `nimble agent get --template-name {name}`.
+`managed_by: "nimble"`, validate with `nimble extract:templates get --extract-template-name {name}`.
 Cache discovered names + params. Pass them to competitor agents in Step 5 for
 richer extraction. If no WSAs found, continue with `nimble search/extract/map`.
 

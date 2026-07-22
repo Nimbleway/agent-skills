@@ -33,7 +33,7 @@ allowed-tools:
   - AskUserQuestion
 metadata:
   author: Nimbleway
-  version: 0.25.0
+  version: 1.0.0
 ---
 
 # Meeting Prep
@@ -55,7 +55,7 @@ Follow the transport selection + standard preflight from `references/nimble-play
 
 From the results:
 - CLI missing or API key unset → `references/profile-and-onboarding.md`, stop
-- Tag all `nimble` CLI calls: `nimble --client-source skill-meeting-prep <subcommand>`. MCP path: not yet supported — see `references/nimble-playbook.md` for status.
+- Tag all `nimble` CLI calls: `nimble --client-source nimble-agent-skills <subcommand>`. MCP requests are attributed at the transport level — see `references/nimble-playbook.md`.
 - Profile exists → read `~/.nimble/memory/people/index.md` to identify existing
   person profiles. Load relevant `~/.nimble/memory/people/` files for attendees
   before — skip redundant searches, surface prior meeting notes. Follow
@@ -134,11 +134,11 @@ internal, general external**.
 Discover available WSAs for each attendee's company domain:
 
 ```bash
-nimble agent list --search "{company-domain}" --limit 20
+nimble extract:templates list --limit 100  # then filter items for "{company-domain}"
 ```
 
 Run one search per unique company simultaneously. Filter for SERP/PDP WSAs,
-prefer `managed_by: "nimble"`, validate with `nimble agent get --template-name {name}`.
+prefer `managed_by: "nimble"`, validate with `nimble extract:templates get --extract-template-name {name}`.
 Cache discovered names + params. Pass them to attendee agents in Step 3 for richer
 data. If no WSAs found, continue with `nimble search` alone.
 

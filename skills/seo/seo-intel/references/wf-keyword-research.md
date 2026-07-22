@@ -49,20 +49,20 @@ Capture answers into the profile under `seo_context` and create the profile per
 ### Step 2: WSA Discovery
 
 Never hardcode agent template names — discover dynamically every run and
-validate with `nimble agent get --template-name {name}` before use, per
+validate with `nimble extract:templates get --extract-template-name {name}` before use, per
 `references/nimble-playbook.md`.
 
 Discover available WSAs for SEO data. Run searches simultaneously:
 
 ```bash
-nimble agent list --search "seo" --limit 20
-nimble agent list --search "google" --limit 20
-nimble agent list --search "serp" --limit 20
-nimble agent list --search "trends" --limit 20
+nimble extract:templates list --limit 100  # then filter items for "seo"
+nimble extract:templates list --limit 100  # then filter items for "google"
+nimble extract:templates list --limit 100  # then filter items for "serp"
+nimble extract:templates list --limit 100  # then filter items for "trends"
 ```
 
 From the results, filter for WSAs related to search results, keyword data, or
-trend analysis. Validate each candidate with `nimble agent get --template-name {name}`
+trend analysis. Validate each candidate with `nimble extract:templates get --extract-template-name {name}`
 to confirm input params and output fields. Cache discovered WSA names for this
 run as variables such as `{serp_agent}` (structured SERP entities) and
 `{trends_agent}` (query volume/trend data). Use those variables everywhere
@@ -113,7 +113,7 @@ Featured Snippets, Shopping, Sitelinks):
 
 ```bash
 # {serp_agent} resolved at runtime from Step 2
-nimble agent run --agent "{serp_agent}" --params '{"query": "{keyword}", "num_results": 20, "country": "US", "locale": "en"}'
+nimble extract:templates run --template "{serp_agent}" --params '{"query": "{keyword}", "num_results": 20, "country": "US", "locale": "en"}'
 ```
 
 If no SERP agent was discovered, skip this enrichment and continue with

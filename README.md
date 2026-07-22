@@ -1,7 +1,7 @@
 # Nimble Web Search Skills & Plugin
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![Version](https://img.shields.io/badge/version-0.25.0-green)](https://github.com/Nimbleway/agent-skills)
+[![Version](https://img.shields.io/badge/version-1.0.0-green)](https://github.com/Nimbleway/agent-skills)
 
 Unlock the web for your AI agents — search, scrape, extract structured data, and run business intelligence workflows, all powered by Nimble's web data infrastructure. One plugin for Claude Code, Cursor, and any platform that supports the [Agent Skills spec](https://agentskills.io/specification.md).
 
@@ -15,14 +15,14 @@ Unlock the web for your AI agents — search, scrape, extract structured data, a
 | **[Marketing](skills/marketing/)** | Track how competitors position themselves — messaging shifts, pricing changes, content gaps, battlecard inputs |
 | **[SEO](skills/seo/)** | All-in-one SEO intelligence (`seo-intel`) — keyword research, rank tracking, technical site audits with JS rendering, content gap analysis, competitor on-page teardowns, AI visibility across 5 platforms, and GitHub repo SEO. Single entry point with intent-based routing |
 | **[Productivity](skills/productivity/)** | Walk into any meeting fully briefed — attendee backgrounds, company context, talking points, relationship mapping. Discover and score local businesses in any neighborhood with interactive maps |
-| **[Web Data Toolkit](skills/web-search-tools/)** | Search, scrape, extract, map, and crawl any website — plus build reusable extraction agents that run at scale |
+| **[Web Data Toolkit](skills/web-search-tools/)** | Search, scrape, extract, map, and crawl any website — run site-specific Extraction Templates for clean structured data, and Web Search Agents for open-ended research with citations |
 | **[Data Platforms](skills/data-platforms/)** | Turn live web data into Databricks data products — discover Nimble agents, scrape into Delta tables, and build an AI/BI dashboard and/or a deployed Databricks App (`nimble-databricks-data-products`) |
 
 **Business Research**, **Marketing**, and **Productivity** skills are one-command workflows. They spawn parallel sub-agents, gather live web data via Nimble APIs, synthesize findings, and deliver structured reports with dates and source URLs. They learn from previous runs and only surface what's new.
 
 These skills also extend into specific industries — starting with **[Healthcare](skills/healthcare/)**: extract structured practitioner data from practice websites, enrich provider lists with missing fields, and verify credentials against the NPI registry. The **[Human Resources](skills/human-resources/)** vertical covers talent sourcing with more skills (comp analysis, interview prep, onboarding) planned.
 
-**Web Data Toolkit** skills expose Nimble's raw capabilities for any web task. They also power the business skills under the hood — and form a feedback loop: web-expert runs agents built by agent-builder, and when a one-off lookup becomes recurring, agent-builder turns it into a reusable pipeline.
+**Web Data Toolkit** skills expose Nimble's raw capabilities for any web task and power the business skills under the hood — search and extract for raw data, Extraction Templates for reusable site-specific scraping, and Web Search Agents for open-ended research, enrichment, and dataset building.
 
 ## Quick Start
 
@@ -109,7 +109,7 @@ nimble search --query "AI agent frameworks" --max-results 10
 
 Nimble Web Search Skills follow a shared pattern: **preflight** (check CLI, load profile) → **parallel research** (spawn sub-agents for concurrent data gathering) → **analysis** (synthesize findings, deduplicate against previous runs) → **report** (structured output with sources) → **distribute** (offer Notion/Slack delivery).
 
-Core skills expose the Nimble CLI directly — search, extract, map, crawl, and manage extraction agents.
+Core skills expose the Nimble CLI directly — search, extract, map, crawl, run Extraction Templates, and run Web Search Agents.
 
 ### Local Web Knowledge Wiki
 
@@ -142,8 +142,9 @@ All platforms read the same `skills/` directory. Platform-specific files coexist
 | `nimble extract --url "<url>" --format markdown` | Extract content from a URL |
 | `nimble map --url "<url>" --limit 20` | Discover URLs on a site |
 | `nimble crawl run --url "<url>" --limit 50` | Crawl a website section |
-| `nimble agent list --limit 100` | Browse available extraction agents |
-| `nimble agent run --agent <name> --params '{...}'` | Execute an extraction agent |
+| `nimble extract:templates list --limit 100` | Browse Extraction Templates for known sites |
+| `nimble extract:templates run --template <name> --params '{...}'` | Run an Extraction Template |
+| `nimble agents:runs create --agent-id <id> --input "<task>"` | Start a Web Search Agent run (research/enrichment) |
 
 ## Contributing
 

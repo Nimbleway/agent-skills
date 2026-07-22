@@ -1,5 +1,15 @@
 # Changelog
 
+## [1.0.0] - 2026-07-22
+
+### Changed
+- **Migrated the plugin to Nimble's current web-data surface (CLI 1.1.0+ / production MCP).** The taxonomy is now Search · Extract · **Extraction Templates** · **Web Search Agents** · Map · Crawl, using Nimble's own product names. `nimble-web-expert` was reworked around this taxonomy and the Ask-Nimble tool-selection model (including the "no template for a site → use a Web Search Agent" rule and the Web Search Agent reuse-priority chain). Added `references/nimble-extract-templates/` (existing-only discover/inspect/run) and reworked `references/nimble-agents/` into the Web Search Agents / Agent API V2 lifecycle (`agents` / `agents:templates` / `agents:runs`) with the agent-authoring schema and per-claim trust/citation metadata.
+- **Repointed every skill off the removed singular `nimble agent` command group.** CLI 1.1.0 replaced it with `extract:templates *` (structured site scrapers — the old `amazon_pdp`/`google_maps`/`yelp`/NPI-style agents) and `agents:runs *` (open-ended research). Business, healthcare, marketing, HR, and SEO skills now discover via `extract:templates list` + client-side filter (the `--search` flag is gone) and run via `extract:templates run`. The response envelope is unchanged (`data.parsing`).
+- **Request attribution** is now the stable integration tag `nimble-agent-skills`, carried on the CLI path via `--client-source` / `CLIENT_SOURCE`. MCP requests are attributed at the transport level, so the CLI path is used when per-integration attribution matters.
+
+### Removed
+- **`nimble-agent-builder` skill** — removed entirely. Building/publishing new templates or agents is out of scope for the plugin; use existing Extraction Templates and Web Search Agents, or the Nimble app to author new ones. Removed from both plugin manifests and the marketplace.
+
 ## [0.25.0] - 2026-06-24
 
 ### Added

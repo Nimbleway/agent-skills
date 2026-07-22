@@ -220,11 +220,11 @@ agents (see `references/ai-platform-profiles.md`). Never hardcode template
 names — discover and validate at runtime per `references/nimble-playbook.md`:
 
 ```bash
-nimble agent list --search "chatgpt" --limit 50
-nimble agent list --search "perplexity" --limit 50
+nimble extract:templates list --limit 100  # then filter items for "chatgpt"
+nimble extract:templates list --limit 100  # then filter items for "perplexity"
 ```
 
-Validate the top candidates with `nimble agent get --template-name {name}`
+Validate the top candidates with `nimble extract:templates get --extract-template-name {name}`
 and cache the chosen template names as `{chatgpt_agent}` and
 `{perplexity_agent}`. If a platform is not discovered, skip it for this run
 and note reduced coverage.
@@ -233,9 +233,9 @@ Run 2-3 queries across the discovered platforms:
 
 ```bash
 # {*_agent} come from the discovery step above
-nimble agent run --agent "{chatgpt_agent}" --params '{"prompt": "What are the best {category} tools for {language}?", "skip_sources": false}'
-nimble agent run --agent "{perplexity_agent}" --params '{"prompt": "What is {repo-name} and is it any good?"}'
-nimble agent run --agent "{chatgpt_agent}" --params '{"prompt": "{use-case} tool recommendation for {language}", "skip_sources": false}'
+nimble extract:templates run --template "{chatgpt_agent}" --params '{"prompt": "What are the best {category} tools for {language}?", "skip_sources": false}'
+nimble extract:templates run --template "{perplexity_agent}" --params '{"prompt": "What is {repo-name} and is it any good?"}'
+nimble extract:templates run --template "{chatgpt_agent}" --params '{"prompt": "{use-case} tool recommendation for {language}", "skip_sources": false}'
 ```
 
 Parse `data.parsing.answer` for brand/repo mentions and `data.parsing.sources`
@@ -248,7 +248,7 @@ for GitHub URL citations. Check for:
 Also check if Nimble has relevant agents that could surface the repo:
 
 ```bash
-nimble agent list --search "{category}" --limit 50
+nimble extract:templates list --limit 100  # then filter items for "{category}"
 ```
 
 If a relevant agent exists, run a test query to see if the repo appears in

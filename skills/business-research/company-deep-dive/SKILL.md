@@ -33,7 +33,7 @@ allowed-tools:
   - AskUserQuestion
 metadata:
   author: Nimbleway
-  version: 0.25.0
+  version: 1.0.0
 ---
 
 # Company Deep Dive
@@ -55,7 +55,7 @@ Follow the transport selection + standard preflight from `references/nimble-play
 
 From the results:
 - CLI missing or API key unset → `references/profile-and-onboarding.md`, stop
-- Tag all `nimble` CLI calls: `nimble --client-source skill-company-deep-dive <subcommand>`. MCP path: not yet supported — see `references/nimble-playbook.md` for status.
+- Tag all `nimble` CLI calls: `nimble --client-source nimble-agent-skills <subcommand>`. MCP requests are attributed at the transport level — see `references/nimble-playbook.md`.
 - Profile exists → note it for context (company name helps frame the research). Read
   `~/.nimble/memory/companies/index.md` to check if the target company already has
   prior research. Follow `[[path/entity]]` cross-references to load related context.
@@ -92,16 +92,16 @@ Discover available WSAs for the target company's domain. Run both searches
 simultaneously:
 
 ```bash
-nimble agent list --search "{company-domain}" --limit 20
+nimble extract:templates list --limit 100  # then filter items for "{company-domain}"
 ```
 
 ```bash
-nimble agent list --search "{company-name}" --limit 20
+nimble extract:templates list --limit 100  # then filter items for "{company-name}"
 ```
 
 From the results, filter for WSAs with `entity_type` matching SERP or PDP, and
 prefer `managed_by: "nimble"`. Validate each with
-`nimble agent get --template-name {name}`, then cache discovered WSA names + params
+`nimble extract:templates get --extract-template-name {name}`, then cache discovered WSA names + params
 for the run. Pass them to dimension agents in Step 3 for enrichment alongside
 `nimble search`. If no WSAs found, continue with `nimble search` alone.
 
