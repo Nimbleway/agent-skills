@@ -134,11 +134,9 @@ nimble --client-source nimble-agent-skills map --url "..."
 nimble --client-source nimble-agent-skills crawl run --url "..."
 ```
 
-**MCP path** — the managed MCP transport records its own source
-(`X-Client-Source: nimble_mcp_server`) for every call and does not currently accept an
-integration-specific override, so `nimble-agent-skills` cannot be propagated over MCP. Use
-the CLI path when integration attribution matters; the MCP limitation is expected, not an
-error to work around. Do not invent a header flag to force it.
+**MCP path** — integration attribution rides the CLI path via `--client-source`; MCP
+requests are attributed at the transport level. Use the CLI path when per-integration
+attribution matters. Don't add a header flag to override the MCP transport's attribution.
 
 ## Sibling Handoff
 
