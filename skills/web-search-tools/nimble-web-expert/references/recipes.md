@@ -27,13 +27,13 @@ Works for articles, docs, blogs. If empty → add `--render`. Still empty → ad
 
 ### Product page (PDP)
 ```bash
-nimble agent run --agent amazon_pdp --params '{"asin": "B0CHWRXH8B"}' > .nimble/amazon-pdp.json
+nimble extract:templates run --template amazon_pdp --params '{"asin": "B0CHWRXH8B"}' > .nimble/amazon-pdp.json
 python3 -c "import json; d=json.load(open('.nimble/amazon-pdp.json')); p=d['data']['parsing']; print(p.get('product_title'), p.get('web_price'), p.get('average_of_reviews'))"
 ```
 
 ### Search results
 ```bash
-nimble agent run --agent amazon_serp --params '{"keyword": "wireless headphones"}' > .nimble/amazon-serp.json
+nimble extract:templates run --template amazon_serp --params '{"keyword": "wireless headphones"}' > .nimble/amazon-serp.json
 python3 -c "
 import json
 items = json.load(open('.nimble/amazon-serp.json'))['data']['parsing']
@@ -42,8 +42,8 @@ for i in items[:10]:
 "
 ```
 
-### Manual extract (if agent unavailable)
-> ⚠ CSS selectors may break on Amazon redesigns. Prefer the `amazon_pdp` agent when available.
+### Manual extract (if no template)
+> ⚠ CSS selectors may break on Amazon redesigns. Prefer the `amazon_pdp` Extraction Template when available.
 ```bash
 nimble extract --url "https://www.amazon.com/dp/B0CHWRXH8B" --country US --parse \
   --parser '{
@@ -61,9 +61,9 @@ nimble extract --url "https://www.amazon.com/dp/B0CHWRXH8B" --country US --parse
 
 ## Yelp
 
-### Via agent
+### Via Extraction Template
 ```bash
-nimble agent run --agent yelp_serp \
+nimble extract:templates run --template yelp_serp \
   --params '{"search_query": "italian restaurant", "location": "San Francisco, CA"}' > .nimble/yelp.json
 python3 -c "
 import json
@@ -74,7 +74,7 @@ for i in items[:10]:
 ```
 
 ### Manual extract (v0.5.0+)
-> ⚠ CSS selectors may break on Yelp redesigns. Prefer the `yelp_serp` agent when available.
+> ⚠ CSS selectors may break on Yelp redesigns. Prefer the `yelp_serp` Extraction Template when available.
 ```bash
 nimble extract \
   --url "https://www.yelp.com/search?find_desc=italian+restaurant&find_loc=San+Francisco%2C+CA" \
@@ -99,7 +99,7 @@ nimble extract \
 
 ## Target
 
-> ⚠ CSS selectors may break on Target redesigns. If a Target agent becomes available, prefer it.
+> ⚠ CSS selectors may break on Target redesigns. If a Target Extraction Template is available, prefer it.
 ```bash
 nimble extract \
   --url "https://www.target.com/p/-/A-88790928" \
@@ -157,8 +157,8 @@ head -100 .nimble/linkedin-jobs.md
 ## Google search & maps
 
 ```bash
-# Google search via agent
-nimble agent run --agent google_search --params '{"query": "OpenAI news 2026"}' | python3 -c "
+# Google search via Extraction Template
+nimble extract:templates run --template google_search --params '{"query": "OpenAI news 2026"}' | python3 -c "
 import json, sys
 entities = json.load(sys.stdin)['data']['parsing']['entities']
 for r in entities.get('OrganicResult', [])[:5]:
@@ -166,7 +166,7 @@ for r in entities.get('OrganicResult', [])[:5]:
 "
 
 # Google Maps
-nimble agent run --agent google_maps_search --params '{"query": "italian restaurants NYC"}' > .nimble/maps.json
+nimble extract:templates run --template google_maps_search --params '{"query": "italian restaurants NYC"}' > .nimble/maps.json
 ```
 
 ---

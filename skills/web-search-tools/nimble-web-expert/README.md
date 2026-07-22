@@ -69,13 +69,5 @@ Each command supports multiple output formats — see [docs.nimbleway.com](https
 | `references/nimble-search/search-focus-modes.md`     | 8 focus modes (news, web, jobs, etc.)                         |
 | `references/nimble-map/SKILL.md`                     | `nimble map` URL discovery reference                          |
 | `references/nimble-crawl/SKILL.md`                   | `nimble crawl` bulk extraction reference                      |
-| `references/nimble-agents/SKILL.md`                  | `nimble agent` CLI reference                                  |
-
-## Works alongside nimble-agent-builder
-
-| Skill                        | Best for                                                    |
-| ---------------------------- | ----------------------------------------------------------- |
-| **nimble-web-expert** (this) | Get data now — one-off fetches, real-time lookups           |
-| **nimble-agent-builder**     | Build reusable agents — scheduled, at-scale, API-accessible |
-
-Agents built by nimble-agent-builder appear in `nimble agent list` and are immediately usable here via `nimble agent run`.
+| `references/nimble-extract-templates/SKILL.md`       | Extraction Templates — discover, inspect, and run site scrapers |
+| `references/nimble-agents/SKILL.md`                  | Web Search Agents — discovery, run lifecycle, trust/citations  |

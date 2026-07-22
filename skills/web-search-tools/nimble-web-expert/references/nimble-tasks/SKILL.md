@@ -3,7 +3,7 @@ name: nimble-tasks-reference
 description: |
   Reference for nimble tasks and batches commands. Load when polling async task status,
   tracking batch progress, or fetching results.
-  Works for ALL async types: agent run-async, agent run-batch, extract-async, extract-batch,
+  Works for ALL async types: extract:templates async, extract:templates batch, extract-async, extract-batch,
   crawl (per-page tasks), search async, map async.
   CRITICAL: agent tasks use "success"/"error" states; crawl page tasks use "completed"/"failed".
 ---
@@ -57,8 +57,8 @@ state = task.task.state
 
 | Source | Terminal states | Intermediate |
 |--------|----------------|--------------|
-| `agent run-async` | `success` / `error` | `pending` |
-| `agent run-batch` (per task) | `success` / `error` | `pending` / `in_progress` |
+| `extract:templates async` | `success` / `error` | `pending` |
+| `extract:templates batch` (per task) | `success` / `error` | `pending` / `in_progress` |
 | `extract-async` | `success` / `error` | `pending` |
 | `extract-batch` (per task) | `success` / `error` | `pending` / `in_progress` |
 | Crawl page task | `completed` / `failed` | `pending` / `processing` |
@@ -87,7 +87,7 @@ results = await nimble.tasks.results(task_id)  # returns plain dict
 
 | Source | Shape |
 |--------|-------|
-| `agent run-async` / batch | `{"data": {"parsing": ...}, "status": "success", ...}` |
+| `extract:templates async` / batch | `{"data": {"parsing": ...}, "status": "success", ...}` |
 | Crawl page | `{"url": "...", "data": {"html": "...", "markdown": "..."}, "status_code": 200, ...}` |
 | Extract async / batch | `{"data": {"html": "...", "markdown": "...", "parsing": {}}, "status": "success", ...}` |
 
@@ -118,7 +118,7 @@ result = nimble.tasks.list()
 
 ## Batches
 
-Batch operations (`agent run-batch`, `extract-batch`) return a `batch_id` containing
+Batch operations (`extract:templates batch`, `extract-batch`) return a `batch_id` containing
 multiple tasks. Use these commands to track overall progress and retrieve individual
 task results.
 
@@ -197,7 +197,7 @@ nimble batches list --limit 20
 
 ```bash
 # Submit
-TASK_ID=$(nimble agent run-async --agent amazon_pdp --params '{"asin": "B0CHWRXH8B"}' \
+TASK_ID=$(nimble extract:templates async --template amazon_pdp --params '{"asin": "B0CHWRXH8B"}' \
   | python3 -c "import json,sys; print(json.load(sys.stdin)['task']['id'])")
 
 # Poll
@@ -211,33 +211,16 @@ done
 nimble tasks results --task-id "$TASK_ID"
 ```
 
-**Python SDK (async):**
-```python
-import asyncio, os
-from nimble_python import AsyncNimble
-
-async def run():
-    nimble = AsyncNimble(api_key=os.environ["NIMBLE_API_KEY"])
-    resp = await nimble.agent.run_async(agent="amazon_pdp", params={"asin": "B0CHWRXH8B"})
-    task_id = resp.task["id"]
-
-    while True:
-        task = await nimble.tasks.get(task_id)
-        if task.task.state in ("success", "error"):
-            break
-        await asyncio.sleep(2)
-
-    results = await nimble.tasks.results(task_id)
-    parsing = results["data"]["parsing"]
-    await nimble.close()
-```
+> To script this in Python, shell out to the CLI with `asyncio.create_subprocess_exec`
+> (submit with `extract:templates async`, poll `tasks get`, fetch `tasks results`) — see the
+> CLI-subprocess template in `references/batch-patterns.md`.
 
 ### Batch — full poll loop
 
 ```bash
 # Submit batch
-BATCH_ID=$(nimble agent run-batch \
-  --shared-inputs 'agent: amazon_serp' \
+BATCH_ID=$(nimble extract:templates batch \
+  --template amazon_serp \
   --input '{"params": {"keyword": "iphone 15"}}' \
   --input '{"params": {"keyword": "iphone 16"}}' \
   | python3 -c "import json,sys; print(json.load(sys.stdin)['batch_id'])")
@@ -263,39 +246,10 @@ for task in batch['tasks']:
 done
 ```
 
-**Python SDK:**
-```python
-import asyncio
-from nimble_python import AsyncNimble
-
-async def run_batch():
-    nimble = AsyncNimble(api_key=os.environ["NIMBLE_API_KEY"])
-
-    resp = nimble.agent.batch(
-        inputs=[
-            {"params": {"keyword": "iphone 15"}},
-            {"params": {"keyword": "iphone 16"}},
-        ],
-        shared_inputs={"agent": "amazon_serp"},
-    )
-    batch_id = resp["batch_id"]
-
-    # Poll until complete
-    while True:
-        progress = nimble.batches.progress(batch_id)
-        if progress["completed"]:
-            break
-        await asyncio.sleep(5)
-
-    # Fetch results
-    batch = nimble.batches.get(batch_id)
-    for task in batch["tasks"]:
-        if task["state"] == "success":
-            result = await nimble.tasks.results(task["id"])
-            print(result["data"]["parsing"])
-
-    await nimble.close()
-```
+> To script the batch flow, submit with `nimble extract:templates batch --template <name>`
+> then poll `batches progress` / `batches get` / `tasks results` — the bash loop above is the
+> canonical pattern; wrap it with `asyncio.create_subprocess_exec` for Python orchestration
+> (see `references/batch-patterns.md`).
 
 ---
 
