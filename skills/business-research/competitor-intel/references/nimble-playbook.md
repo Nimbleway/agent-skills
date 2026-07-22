@@ -346,7 +346,8 @@ for list/SERP-style templates, an object for detail/PDP-style templates. Always 
 `output_schema` from `extract:templates get` to know the shape before parsing. REST/SDK
 equivalent: `POST /v2/extract/templates/run` (and `/async`, `/batch`).
 
-**Async task states:** `pending` → `success` or `error`. Poll with
+**Async task states:** `pending` → `success` or `error`. Poll status with
+`nimble tasks get --task-id <task_id>` until terminal, then fetch with
 `nimble tasks results --task-id <task_id>`; batches with `nimble batches progress`.
 
 ## Web Search Agents

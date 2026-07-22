@@ -116,7 +116,8 @@ nimble --client-source nimble-agent-skills extract:templates async \
   --template <template_name> --params '{…}'
 ```
 
-Returns a task to poll. States: `pending` → `success` or `error`. Fetch with
+Returns a task to poll. States: `pending` → `success` or `error`. Poll status with
+`nimble tasks get --task-id <id>` until terminal, then fetch with
 `nimble tasks results --task-id <id>` (see `references/nimble-tasks/SKILL.md`).
 
 ---
