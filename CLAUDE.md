@@ -92,15 +92,19 @@ metadata:
 
 ### Data access
 - Use `nimble search` / `nimble extract` via Bash for web data access.
-- WSA names are dynamic — never hardcode them in skills or reference files, not even
-  Nimble-managed agents. Discover at runtime using 3 layers: (1) vertical search
-  (`nimble agent list --search "healthcare"`), (2) session-specific search (user's
-  specialty, directories they mention), (3) general tools (`google_maps`, `yelp`, `bbb`).
-  Validate with `nimble agent get --template-name {name}` before running.
+- Two structured-data families (CLI 1.1.0+): **Extraction Templates** (`extract:templates
+  list`/`get --extract-template-name`/`run --template`) for site-specific structured
+  scrapers, and **Web Search Agents** (`agents:templates`, `agents create`, `agents:runs
+  create`/`get`/`result`) for open-ended research/enrichment with trust/citations. The
+  singular `nimble agent …` group is retired.
+- Template/agent names are dynamic — never hardcode them. `extract:templates list` has no
+  server-side search: list and filter client-side (by domain, keyword, entity_type). Web
+  Search Agents follow the reuse-priority chain (existing agent → clone a template → from
+  scratch). Validate a template's `input_schema` before running.
 - WSA reference files must teach discovery strategy, not list known agents. The test:
-  if 10 new WSAs were added tomorrow, would the skill find them automatically?
+  if 10 new agents/templates were added tomorrow, would the skill find them automatically?
 - `--search-depth` valid values: `lite`, `fast`, `deep` (not `standard`). Use `lite` for discovery, `deep` for full content.
-- `nimble agent list --limit` max is 250.
+- All Nimble calls carry `--client-source nimble-agent-skills` (the stable integration attribution).
 - Always verify CLI commands with real data before writing them into SKILL.md — `--help` alone isn't enough.
 
 ### Agent definitions (`agents/`)
