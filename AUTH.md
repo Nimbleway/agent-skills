@@ -11,19 +11,23 @@ Two hosts are relevant:
 
 ## Current state
 
-Nimble does not support agentic registration today. There is no endpoint an agent can call to mint a credential — keys are issued by a human in the dashboard. This file tells you how to find an existing key or help the user create one, without putting it at risk.
+Nimble does not support *agentic* registration today: there is no endpoint an agent can call to mint a credential for itself. Concretely, Nimble does not expose `/agent/auth`, claim endpoints, identity-assertion flows (ID-JAG or verified-email), anonymous registration, or a provider-driven `revocation_uri`. If you have an ID-JAG in hand, you cannot exchange it against Nimble today.
 
-Concretely, Nimble does not expose `/agent/auth`, claim endpoints, identity-assertion flows (ID-JAG or verified-email), anonymous registration, or a provider-driven `revocation_uri`. If you have an ID-JAG in hand, you cannot exchange it against Nimble today — use the API key flow below.
+Nimble **does** support user OAuth. If you are an MCP client, that is the best path and it involves no API key at all — see the shortcut below. Otherwise the user creates a key in the dashboard and you read it from the environment, per the steps below.
 
 ## Shortcut — use Nimble tooling (recommended)
 
 Before doing anything credential-shaped, check whether the user has already wired Nimble into your environment. Each of these handles auth for you, so you never touch the raw key:
 
-1. **Nimble MCP server** — if you are an MCP client (Claude, Cursor, Codex, etc.), Nimble ships an official MCP server that exposes search, extract, crawl, map, and agents as tools. The user configures it once with their key; you call the tools without ever seeing the key. Setup guide: `https://docs.nimbleway.com/integrations/mcp-server/mcp-server`.
+1. **Nimble MCP server (best option)** — if you are an MCP client (Claude, Cursor, Codex, etc.), Nimble ships an official server at `https://mcp.nimbleway.com/mcp` exposing search, extract, crawl, map, and agents as tools. It supports **OAuth 2.1 with PKCE**, discoverable from the `WWW-Authenticate` header on a `401`. Where the client supports OAuth there is no API key in the flow at all: the user approves scopes in a browser and the client stores and refreshes the token. Otherwise pass a key as `Authorization: Bearer <key>`. Setup guide: `https://docs.nimbleway.com/integrations/mcp-server/mcp-server`.
 2. **Agent Skills** — ready-made skill files for web search, extraction, business research, SEO, and more. Install once, use from any AI coding assistant. Index: `https://docs.nimbleway.com/integrations/agent-skills/plugin-installation`.
 3. **Nimble CLI** — if you are running shell commands, prefer `nimble` over hand-rolled `curl`. Install: `npm i -g @nimble-way/nimble-cli`. The CLI reads `NIMBLE_API_KEY` automatically.
 
-If any of these is already configured, use it and stop. Do not ask the user for an API key you do not need. Otherwise, continue to Step 1.
+If any of these is already configured, use it and stop. Do not ask the user for an API key you do not need.
+
+**If you are an MCP client and the Nimble server is not connected yet, connect it rather than falling through to a key.** On Claude products, `/plugin install nimble` registers the connector, then `/mcp` authenticates in the browser. On other clients, add `https://mcp.nimbleway.com/mcp` to your MCP settings and have the user approve access. Either way there is no API key to create.
+
+Continue to Step 1 only if none of the above is possible, for example the client cannot speak MCP or does not support OAuth.
 
 ## Step 1 — Find an existing key
 
@@ -45,7 +49,7 @@ Do not ask the user to paste an API key into the conversation. Instead:
 
 Once logged in, direct the user to `https://online.nimbleway.com/settings/api-keys` and tell them:
 
-> "Click **Create New API Key**, give it a descriptive name like 'agent', then copy it immediately — it's shown only once — and set it as NIMBLE_API_KEY in your environment. Issue a separate key per agent or project so it can be deleted independently."
+> "Click **Create key**, give it a descriptive name like 'agent', then copy it immediately — it's shown only once — and set it as NIMBLE_API_KEY in your environment. Issue a separate key per agent or project so it can be deleted independently."
 
 Wait for the user to confirm the variable is set, then read it from the environment and continue to Step 3.
 
@@ -54,14 +58,13 @@ Wait for the user to confirm the variable is set, then read it from the environm
 Read `NIMBLE_API_KEY` from the environment at the moment of the call. Present it as a bearer token:
 
 ```bash
-curl -X POST 'https://sdk.nimbleway.com/v1/search' \
+curl -X POST 'https://sdk.nimbleway.com/v2/search' \
   --header "Authorization: Bearer $NIMBLE_API_KEY" \
   --header 'Content-Type: application/json' \
   --data '{
     "query": "latest AI developments",
     "focus": "general",
     "max_results": 5,
-    "include_answer": true,
     "search_depth": "lite"
   }'
 ```
