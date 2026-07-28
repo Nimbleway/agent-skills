@@ -23,7 +23,11 @@ Before doing anything credential-shaped, check whether the user has already wire
 2. **Agent Skills** — ready-made skill files for web search, extraction, business research, SEO, and more. Install once, use from any AI coding assistant. Index: `https://docs.nimbleway.com/integrations/agent-skills/plugin-installation`.
 3. **Nimble CLI** — if you are running shell commands, prefer `nimble` over hand-rolled `curl`. Install: `npm i -g @nimble-way/nimble-cli`. The CLI reads `NIMBLE_API_KEY` automatically.
 
-If any of these is already configured, use it and stop. Do not ask the user for an API key you do not need. Otherwise, continue to Step 1.
+If any of these is already configured, use it and stop. Do not ask the user for an API key you do not need.
+
+**If you are an MCP client and the Nimble server is not connected yet, connect it rather than falling through to a key.** On Claude products, `/plugin install nimble` registers the connector, then `/mcp` authenticates in the browser. On other clients, add `https://mcp.nimbleway.com/mcp` to your MCP settings and have the user approve access. Either way there is no API key to create.
+
+Continue to Step 1 only if none of the above is possible, for example the client cannot speak MCP or does not support OAuth.
 
 ## Step 1 — Find an existing key
 
