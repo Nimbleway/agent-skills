@@ -190,7 +190,7 @@ A Web Search Agent at `high` effort takes minutes and costs more; a search takes
 
 Below `high`, don't ask — just run the Web Search Agent. Never ask when Gate A already resolved the route.
 
-**Dataset and enrichment requests always clear the threshold.** "Build a list of…", "enrich these rows" → `dataset_building` / `enrichment`, which run at `high` or above by definition, so the fork always applies to them.
+**Dataset requests always clear the threshold.** "Build a list of…" → `dataset_building`, which runs at `high` or above by definition, so the fork always applies. Enrichment has no such floor — judge "enrich these rows" on the normal effort rule and skip the prompt when a small, well-specified fill-in lands below `high`.
 
 **Before starting any Web Search Agent run, say how long it will take**, then narrate at phase transitions. On MCP, progress comes from bounded status polling rather than a live stream — poll and report each step, because an un-narrated multi-minute run reads as a hang.
 
