@@ -25,7 +25,7 @@ session and stick with it; don't re-probe on every command.
 
 | Check | If it works | What to use |
 |---|---|---|
-| `nimble --version` (>= 1.1.0) and `NIMBLE_API_KEY` is set | CLI is ready | Bash `nimble ...` commands |
+| `nimble --version` (>= 1.2.0) and `NIMBLE_API_KEY` is set | CLI is ready | Bash `nimble ...` commands |
 | `claude mcp list 2>/dev/null \| grep -q "nimble"` (or first `mcp__plugin_nimble_nimble__*` call succeeds) | Plugin MCP is connected | `mcp__plugin_nimble_nimble__*` tools |
 | `mcp__plugin_nimble_nimble__*` tools are listed, but a read-only `nimble_agents_list` probe returns an auth / not-connected error or an OAuth authorization URL | Plugin is installed but the **connector isn't connected** (typical Cowork / claude.ai state) | **Stop — guide connector connection (below). Never invent an auth-completion flow.** |
 | None of the above | Stop — guide install (below) | — |
@@ -364,36 +364,81 @@ because there's no single known page to parse (see the routing note above).
 2. A close-match **agent template** worth materializing (`agents:templates list`).
 3. Only if neither fits, create one from scratch.
 
+Neither list command takes a server-side search term — list and filter client-side on
+`agent_name` / `template_name` / `description` / `use_case`. Never hardcode names.
+
+### Pick a run mode first
+
+The identity you pass decides the route, and the route decides the command:
+
+| Mode                          | Identity                    | Command                                     |
+| ----------------------------- | --------------------------- | ------------------------------------------- |
+| **1 — named create-or-reuse** | `--agent-name`, no agent ID | `nimble agents run --agent-name <name>`     |
+| **2 — explicit agent**        | `--agent-id`                | `nimble agents:runs create --agent-id <id>` |
+| **3 — caller-anonymous**      | neither                     | `nimble agents run`                         |
+
+**Mode 1 is the default for these skills** — derive a deterministic name (`{skill}-{purpose}`)
+so repeat sessions reuse the same agent instead of creating near-duplicates. A repeated name
+returns the **same `web_search_agent_id`**. `agents:runs create` **requires** `--agent-id`
+and ignores `--agent-name`; use `nimble agents run` for Modes 1 and 3. Mode 3 still returns a
+generated `web_search_agent_id` — keep it, `get` and `result` both need it.
+
 ```bash
 # Discover pre-built agent templates, then inspect one
 nimble agents:templates list
 nimble agents:templates get --template-name <template_name>
 
-# Create an agent — from a template, or from scratch (goals/sources/output_schema)
+# Create an agent up front — from a template, or from scratch
 nimble agents create --template <template_name>
 nimble agents create --display-name "<name>" --goal "<goal>" --sources '{...}' \
-  --output-schema '{...}' --effort high
+  --output-schema '{...}' --use-case research --effort high
 
-# Start a run (async), poll status, then fetch the result
-nimble agents:runs create --agent-id <agent_id> --input "<task or question>" --effort high
+# Mode 1 run (async), then poll status and fetch the result
+nimble agents run --agent-name "<skill>-<purpose>" --use-case research \
+  --input "<task or question>" --effort high
 nimble agents:runs get    --agent-id <agent_id> --run-id <run_id>
 nimble agents:runs result --agent-id <agent_id> --run-id <run_id>
 ```
 
-**Key flags for `agents:runs create`:**
-- `--agent-id` — the agent to run (required)
-- `--input` — the natural-language task/question for the run (required)
-- `--effort` — `low` / `medium` / `high` / `x-high` / `max`. Default high once several
-  fields need real digging; low/medium for fast simple asks
-- `--output-schema` — JSON schema overriding the agent's default structured output
-- `--input-data` — existing rows to ENRICH (mirrors the output_schema shape)
-- `--sources` — source guidance overriding the agent default
-- `--enable-events` — publish live progress events (`agents:runs stream-events`)
+**Run controls** (both run commands): `--input` (required), `--effort`
+(`low`/`medium`/`high`/`x-high`/`max` — default `high` once several fields need real digging),
+`--output-schema`, `--input-data`, `--sources`, `--enable-events`,
+`--previous-interaction-id`, plus `--skill` and `--use-case` per the rules below.
 
-**Run lifecycle:** `queued` → poll `agents:runs get` until `completed` (terminal states:
-`completed`, `failed`, `cancelled`) → fetch output with `agents:runs result`. The result's
-`output` is `type: "text"` (prose answer) or `type: "json"` (structured data), plus
-`trust` metadata with per-claim citations. REST/SDK equivalent: `POST /v2/agents/*`.
+- **`--sources`** has two shapes in one object: `allow` / `block` are arrays of ordered
+  groups (`{title, domains, order}`); `prioritize` / `avoid` are plain guidance strings.
+- **`--input-data`** carries the rows you already have; `--output-schema` describes the shape
+  of the answer. Enriching several rows needs an **array** schema — an object schema returns
+  one object. Carried-in fields come back with `confidence: "pre_existing"` and no citations;
+  never present them as sourced findings.
+
+### `use_case` locks; `skill` overrides once
+
+`use_case` is exactly `research`, `enrichment`, or `dataset_building`. It is stored when the
+agent is **created** (including a Mode 1 first call or a Mode 3 run). Against an existing
+agent the same value is a no-op and a different value is **rejected** — omit it, match it, or
+use a different agent. `dataset_building` additionally requires an `--output-schema` and
+effort `high` or above.
+
+`--skill` on a run against an **existing** agent applies to that run only and leaves stored
+config untouched. On the call that **creates** the agent, `--skill` and `--use-case` become
+its stored configuration instead.
+
+**Run lifecycle:** `queued` → poll `agents:runs get` until terminal (`completed`, `failed`,
+`cancelled`) → fetch output with `agents:runs result`. Calling `result` early returns `409`
+"Run still active" — go back to `get`, don't hammer `result`. The result's `output` is
+`type: "text"` (prose) or `type: "json"` (structured), plus `trust` metadata with per-claim
+citations. REST/SDK equivalent: `POST /v2/agents/*`.
+
+**Live progress:** on the CLI, create with `--enable-events` and consume
+`nimble agents:runs stream-events --agent-id <id> --run-id <id> [--max-items <n>]`. The stream
+closes on its own at a terminal state and never carries the output — still fetch `result`
+afterwards. **On MCP, use bounded status polling instead**: poll `nimble_agents_run_status`
+every ~15–30s with a capped total wait, and report a run as still active rather than hanging
+or calling it failed.
+
+> Full contract (mode table, source shapes, trust metadata, error table):
+> `skills/web-search-tools/nimble-web-expert/references/nimble-agents/SKILL.md`.
 
 **Fallback rule:** If neither an Extraction Template nor a Web Search Agent fits, fall
 back to `nimble search` + `nimble extract`. Don't fail silently — log which domains
@@ -425,6 +470,16 @@ to understand the expected input params and output fields.
 If `nimble --version` returns "command not found", fall back to the Nimble MCP server.
 All CLI commands have MCP equivalents — discover them via the MCP tool list. MCP tools
 accept the same parameters as CLI flags, passed as tool arguments instead of flags.
+
+Two Web Search Agent controls are CLI-only, each with a documented MCP alternative:
+
+| CLI-only control          | MCP alternative                                                        |
+| ------------------------- | ---------------------------------------------------------------------- |
+| `--enable-events` + `agents:runs stream-events` | Bounded `nimble_agents_run_status` polling (~15–30s, capped total wait) |
+| `--previous-interaction-id` | Start a fresh run with the prior context restated in `input`          |
+
+All three run modes, `use_case`, `skill`, `sources`, `output_schema`, `input_data`, and
+`effort` are available on both transports.
 
 ## Parallel Execution
 

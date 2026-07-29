@@ -1,7 +1,7 @@
 # Nimble Web Search Skills & Plugin
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![Version](https://img.shields.io/badge/version-1.0.0-green)](https://github.com/Nimbleway/agent-skills)
+[![Version](https://img.shields.io/badge/version-1.1.0-green)](https://github.com/Nimbleway/agent-skills)
 
 Unlock the web for your AI agents — search, scrape, extract structured data, and run business intelligence workflows, all powered by Nimble's web data infrastructure. One plugin for Claude Code, Cursor, and any platform that supports the [Agent Skills spec](https://agentskills.io/specification.md).
 
@@ -144,7 +144,9 @@ All platforms read the same `skills/` directory. Platform-specific files coexist
 | `nimble crawl run --url "<url>" --limit 50` | Crawl a website section |
 | `nimble extract:templates list --limit 100` | Browse Extraction Templates for known sites |
 | `nimble extract:templates run --template <name> --params '{...}'` | Run an Extraction Template |
-| `nimble agents:runs create --agent-id <id> --input "<task>"` | Start a Web Search Agent run (research/enrichment) |
+| `nimble agents run --agent-name <name> --input "<task>"` | Start a Web Search Agent run — creates the named agent, or reuses it on repeat calls |
+| `nimble agents:runs create --agent-id <id> --input "<task>"` | Start a run against an agent you already hold the ID for |
+| `nimble agents:runs get / result --agent-id <id> --run-id <id>` | Poll a run to a terminal state, then fetch its output and citations |
 
 ## Contributing
 

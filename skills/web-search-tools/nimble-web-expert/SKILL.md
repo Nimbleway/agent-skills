@@ -14,7 +14,7 @@ description: |
   - Web search and research (8 focus modes)
   - Bulk crawling website sections
 
-  Must be pre-installed and authenticated. Run `nimble --version` to verify (>= 1.1.0).
+  Must be pre-installed and authenticated. Run `nimble --version` to verify (>= 1.2.0).
 allowed-tools:
   - Bash(nimble:*)
   - Bash(claude:*)
@@ -45,6 +45,7 @@ allowed-tools:
   - mcp__plugin_nimble_nimble__nimble_extract_templates_run
   - mcp__plugin_nimble_nimble__nimble_extract_templates_run_async
   - mcp__plugin_nimble_nimble__nimble_agents_list
+  - mcp__plugin_nimble_nimble__nimble_agents_get
   - mcp__plugin_nimble_nimble__nimble_agent_templates_list
   - mcp__plugin_nimble_nimble__nimble_agent_templates_get
   - mcp__plugin_nimble_nimble__nimble_agents_run
@@ -60,7 +61,7 @@ allowed-tools:
   - AskUserQuestion
 license: MIT
 metadata:
-  version: "1.0.0"
+  version: "1.1.0"
   author: Nimbleway
   repository: https://github.com/Nimbleway/agent-skills
 ---
@@ -74,6 +75,7 @@ User request: $ARGUMENTS
 ## Core principles
 
 - **Route by intent first** (see [Analyze & Route](#analyze--route) for the full decision model). Named site with a matching Extraction Template + a direct item to look up → run the template. Site with no template, or a need that requires discovery/reasoning across pages → a Web Search Agent. One-off single URL → `nimble extract`. Research/topic → `nimble search`. Discover/crawl URLs → `nimble map` or `nimble crawl`.
+- **Web Search Agent runs: pick a run mode before building the command.** Default to named create-or-reuse — `nimble agents run --agent-name <stable-name>` — so a repeat session lands on the same agent. `agents:runs create` is the explicit-agent-ID route only and requires `--agent-id`. `references/nimble-agents/SKILL.md` has the mode table, `use_case` locking, and the one-time `skill` override.
 - **One command → present results → done.** Run once, show the data immediately as a table. Do NOT experiment, loop, or write Python to parse output.
 - **Multiple inputs → always parallel.** 2+ URLs/keywords/ASINs → `&`+`wait`. 6–20 → `xargs -P`. 20+ → Python asyncio script. See `references/batch-patterns.md`.
 - **Escalate render tiers silently.** Tier 1 → 2 → 3 → … without asking. Surface a decision only when all tiers fail and investigation tools are needed.
@@ -134,7 +136,7 @@ Start by eliminating what clearly doesn't fit, then pick from what remains:
 | Direct single URL to fetch                    | `nimble extract`                                                                      |
 | Named site + a direct item to look up (URL/ID)| **Step 0** — check for an Extraction Template first                                   |
 | Data from a site with **no** template         | **Web Search Agent** (not a raw extract, not a new template) — see the overlap rule   |
-| Open-ended research / enrichment / a dataset  | **Web Search Agent** (`agents:runs`) — synthesizes and cites                          |
+| Open-ended research / enrichment / a dataset  | **Web Search Agent** (`agents run` / `agents:runs`) — synthesizes and cites            |
 | Raw search results / "find pages about…"      | `nimble search` (focus modes for news, jobs, shopping, academic…)                     |
 | "Find URLs / sitemap / all pages"             | `nimble map`                                                                          |
 | "Crawl / archive a whole section"             | `nimble crawl`                                                                        |
@@ -172,7 +174,7 @@ nimble extract:templates run --template <name> --params '{"key": "value"}'
 | Situation                        | Command                                        | Reference                                            |
 | -------------------------------- | ---------------------------------------------- | ---------------------------------------------------- |
 | Site + item → template first     | `extract:templates list` → `extract:templates run` | `references/nimble-extract-templates/SKILL.md`   |
-| Research / enrichment / dataset  | `agents:runs create` → `get` → `result`        | `references/nimble-agents/SKILL.md`                  |
+| Research / enrichment / dataset  | pick a run mode → `get` → `result`             | `references/nimble-agents/SKILL.md`                  |
 | Direct URL                       | `nimble extract`                               | `references/nimble-extract/SKILL.md`                 |
 | Search the live web              | `nimble search`                                | `references/nimble-search/SKILL.md`                  |
 | Discover URLs on a site          | `nimble map`                                   | `references/nimble-map/SKILL.md`                     |

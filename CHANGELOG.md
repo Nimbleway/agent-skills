@@ -1,5 +1,26 @@
 # Changelog
 
+## [1.1.0] - 2026-07-29
+
+### Added
+- **Three Web Search Agent run modes, taught and routed.** The canonical WSA reference and the shared playbook now lead with a mode decision table: **named create-or-reuse** (`agents run --agent-name <name>`, no agent ID — the default for skills, since a repeated name resolves to the same `web_search_agent_id`), **explicit agent** (`agents:runs create --agent-id <id>`), and **caller-anonymous** (`agents run` with neither, which still returns a generated `web_search_agent_id`). Documented the routing trap behind it: `agents:runs create` **requires** `--agent-id` and ignores `--agent-name`, so Modes 1 and 3 must go through `nimble agents run`.
+- **`use_case` locking semantics.** `research` / `enrichment` / `dataset_building` are documented exactly. `use_case` is stored when the agent is created (including on a Mode 1 first call), accepted as a no-op when it matches an existing agent, and rejected when it differs — it is not a per-run override. Also documented the two server-side rules that come with `dataset_building`: an `output_schema` is required, and effort must be `high` or above.
+- **Run-level `skill` override.** Against an existing agent, `--skill` applies to that run only and leaves stored config untouched; on the call that *creates* the agent, `--skill` and `--use-case` become its stored configuration instead.
+- **Verified live-progress documentation.** On the CLI, `--enable-events` plus `agents:runs stream-events` emits `task_run.state` / `task_run.progress_msg.*` / `task_run.progress_stats` events and **closes on its own** at a terminal state (`--max-items <n>` closes it after `n` events). The stream never carries the output — `agents:runs result` is still required. On production MCP the documented approach is bounded status polling, verified separately rather than assumed from the CLI behavior.
+- **Error table for the run contract** — `409` "Run still active", `404` run/agent mismatch, the four distinct `422` shapes (locked `use_case`, invalid enum, missing `dataset_building` schema, effort too low), the `sources` shape rejection, and the `Required flag "agent-id" not set` routing mistake.
+
+### Changed
+- **CLI prerequisite raised to 1.2.0**, the first release exposing the complete run contract. Updated in the playbook transport table, the onboarding install/upgrade flow, and the `nimble-web-expert` description.
+- **Corrected the `use_case` enum.** The stale value `data_enrichment` is replaced with the released `enrichment` everywhere.
+- **Documented the real `--sources` shape.** `allow` / `block` are arrays of ordered source groups (`{title, domains, order}`); `prioritize` / `avoid` are plain guidance strings. The previous docs implied a single uniform shape, which the API rejects.
+- **Separated enrichment input from output shape.** `--input-data` carries the rows you already have; `--output-schema` describes the shape of the answer. Enriching several rows needs an **array** schema — an object schema returns a single object. Fields carried in from `input_data` come back as `confidence: "pre_existing"` with no citations and must not be presented as sourced findings.
+- **Discovery is client-side filtering everywhere.** `agents list` and `agents:templates list` take no server-side search term, matching the already-documented `extract:templates list` behavior.
+- **Transport differences are now documented per capability** rather than assumed parity: all three run modes, `use_case`, `skill`, `sources`, `output_schema`, `input_data`, and `effort` work on both transports; `enable_events`/`stream-events` and `previous_interaction_id` run on the CLI path, each with a documented MCP approach (bounded polling; restating prior context in `input`). Added `nimble_agents_get` to the `nimble-web-expert` MCP allow-list so an agent's stored `use_case` can be checked before a run.
+- **Attribution unchanged** — `--client-source nimble-agent-skills` on every CLI call; production MCP still exposes no integration-specific attribution parameter, so the managed-transport exception is retained.
+
+### Verified
+Every command and error above was exercised end-to-end against CLI 1.2.0 and production MCP — the three run modes, same-name reuse returning the same agent ID, a run-level `skill` override leaving stored config untouched, a locked-`use_case` rejection, a structured `enrichment` run with `input_data` + `output_schema` + `sources`, event streaming to self-termination, terminal result retrieval with trust/citations, and the not-ready and validation-error paths. Nothing here was inferred from SDK types.
+
 ## [1.0.0] - 2026-07-22
 
 ### Changed

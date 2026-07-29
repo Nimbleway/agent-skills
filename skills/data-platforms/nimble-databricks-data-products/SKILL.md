@@ -25,7 +25,7 @@ allowed-tools:
   - Skill
 metadata:
   author: Nimbleway
-  version: 1.0.0
+  version: 1.1.0
 ---
 
 # Nimble on Databricks — data products builder
