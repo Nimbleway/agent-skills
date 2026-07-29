@@ -1,0 +1,84 @@
+{
+  "skill_name": "nimble-web-expert",
+  "description": "Routing eval — given a user prompt, which Nimble capability does the skill's routing guidance select? Grades the routing instructions in SKILL.md, not a live Nimble run.",
+  "routes": {
+    "EXTRACT": "nimble extract — fetch one known URL",
+    "TEMPLATE": "Step 0 Extraction Template check for a named site + direct item",
+    "SEARCH": "nimble search — raw results to skim",
+    "WSA": "Web Search Agent — synthesized, cited deliverable",
+    "MAP": "nimble map — discover URLs on a site",
+    "CRAWL": "nimble crawl — bulk-fetch a section"
+  },
+  "cases": [
+    {
+      "id": 1,
+      "prompt": "create report on best AI agents framework in 2026",
+      "expected_route": "WSA",
+      "why": "Regression case (Cowork, v1.0.0 routed this to SEARCH). Gate A finds no location signal; Gate B sees the deliverable nouns 'report' and 'best X'.",
+      "expect_fork_offer": true
+    },
+    {
+      "id": 2,
+      "prompt": "find articles about AI agent frameworks",
+      "expected_route": "SEARCH",
+      "why": "Same topic as case 1, but the deliverable is raw material to skim — 'find articles about'. Cases 1 and 2 must not collapse onto the same route.",
+      "expect_fork_offer": false
+    },
+    {
+      "id": 3,
+      "prompt": "compare pricing across the top 5 web observability vendors",
+      "expected_route": "WSA",
+      "why": "'compare' is a Gate B synthesis verb; no single page holds the answer.",
+      "expect_fork_offer": true
+    },
+    {
+      "id": 4,
+      "prompt": "latest news on Acme Corp",
+      "expected_route": "SEARCH",
+      "why": "'latest news' is a Gate B raw-material trigger and maps to the news focus mode.",
+      "expect_fork_offer": false
+    },
+    {
+      "id": 5,
+      "prompt": "build a list of Series B fintech companies in NYC with their headcount",
+      "expected_route": "WSA",
+      "why": "'build a list' plus per-entity attributes — dataset_building, not a search.",
+      "expect_fork_offer": true
+    },
+    {
+      "id": 6,
+      "prompt": "what's on https://example.com/pricing",
+      "expected_route": "EXTRACT",
+      "why": "Gate A resolves on a direct URL; Gate B is never reached.",
+      "expect_fork_offer": false
+    },
+    {
+      "id": 7,
+      "prompt": "get me the product details for Amazon ASIN B08N5WRWNW",
+      "expected_route": "TEMPLATE",
+      "why": "Named site plus a direct item identifier — Step 0 template check runs first.",
+      "expect_fork_offer": false
+    },
+    {
+      "id": 8,
+      "prompt": "find all the pages on example.com",
+      "expected_route": "MAP",
+      "why": "URL inventory request — Gate A resolves it.",
+      "expect_fork_offer": false
+    },
+    {
+      "id": 9,
+      "prompt": "archive every post in the example.com blog section",
+      "expected_route": "CRAWL",
+      "why": "Bulk section fetch — Gate A resolves it.",
+      "expect_fork_offer": false
+    },
+    {
+      "id": 10,
+      "prompt": "give me a brief on how gizmotech.io positions itself, their site has no template",
+      "expected_route": "WSA",
+      "why": "Two things at once. Routing: a named site with no Extraction Template falls through Gate A to Gate B, where 'brief' lands on a Web Search Agent rather than a raw extract. Fork: a single-site positioning brief is medium effort, below the high+ threshold, so the skill must NOT prompt — this is the guard against fork-offer creep on cheap runs.",
+      "expect_fork_offer": false
+    }
+  ]
+}

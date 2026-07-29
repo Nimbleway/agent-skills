@@ -47,7 +47,17 @@ bash scripts/sync-shared.sh
 
 # Test a skill locally — trigger it by name in a Claude Code session
 claude "run competitor-intel for acme.com"
+
+# Routing eval — does nimble-web-expert pick the right capability per prompt?
+# Reads the routing text out of SKILL.md, so eval and doc can't drift. No
+# Nimble calls, no credits, no API key.
+python3 scripts/run-routing-eval.py --runs 3
 ```
+
+Run the routing eval after any change to `nimble-web-expert`'s Core principles
+or Analyze & Route sections. Cases live in `evals/nimble-web-expert-routing.json`;
+add one whenever a mis-route is found in the wild. A failing case is not
+automatically a doc bug — check whether the expectation is right first.
 
 ## Skill authoring
 
@@ -92,15 +102,21 @@ metadata:
 
 ### Data access
 - Use `nimble search` / `nimble extract` via Bash for web data access.
-- Two structured-data families (CLI 1.1.0+): **Extraction Templates** (`extract:templates
+- Two structured-data families (CLI 1.2.0+): **Extraction Templates** (`extract:templates
   list`/`get --extract-template-name`/`run --template`) for site-specific structured
-  scrapers, and **Web Search Agents** (`agents:templates`, `agents create`, `agents:runs
-  create`/`get`/`result`) for open-ended research/enrichment with trust/citations. The
-  singular `nimble agent …` group is retired.
-- Template/agent names are dynamic — never hardcode them. `extract:templates list` has no
-  server-side search: list and filter client-side (by domain, keyword, entity_type). Web
-  Search Agents follow the reuse-priority chain (existing agent → clone a template → from
-  scratch). Validate a template's `input_schema` before running.
+  scrapers, and **Web Search Agents** (`agents:templates`, `agents create`, `agents run`,
+  `agents:runs create`/`get`/`result`/`stream-events`) for open-ended research/enrichment
+  with trust/citations. The singular `nimble agent …` group is retired.
+- WSA runs have three modes — named create-or-reuse (`agents run --agent-name`, the
+  default), explicit agent ID (`agents:runs create --agent-id`, which *requires* the ID),
+  and caller-anonymous (`agents run` with neither). `use_case` (`research` / `enrichment` /
+  `dataset_building`) locks on agent creation; run-level `skill` overrides once. Full
+  contract: `skills/web-search-tools/nimble-web-expert/references/nimble-agents/SKILL.md`.
+- Template/agent names are dynamic — never hardcode them. `extract:templates list`,
+  `agents list`, and `agents:templates list` have no server-side search: list and filter
+  client-side (by domain, keyword, entity_type). Web Search Agents follow the
+  reuse-priority chain (existing agent → clone a template → from scratch). Validate a
+  template's `input_schema` before running.
 - WSA reference files must teach discovery strategy, not list known agents. The test:
   if 10 new agents/templates were added tomorrow, would the skill find them automatically?
 - `--search-depth` valid values: `lite`, `fast`, `deep` (not `standard`). Use `lite` for discovery, `deep` for full content.
