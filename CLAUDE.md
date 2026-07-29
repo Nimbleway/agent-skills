@@ -47,7 +47,17 @@ bash scripts/sync-shared.sh
 
 # Test a skill locally — trigger it by name in a Claude Code session
 claude "run competitor-intel for acme.com"
+
+# Routing eval — does nimble-web-expert pick the right capability per prompt?
+# Reads the routing text out of SKILL.md, so eval and doc can't drift. No
+# Nimble calls, no credits, no API key.
+python3 scripts/run-routing-eval.py --runs 3
 ```
+
+Run the routing eval after any change to `nimble-web-expert`'s Core principles
+or Analyze & Route sections. Cases live in `evals/nimble-web-expert-routing.json`;
+add one whenever a mis-route is found in the wild. A failing case is not
+automatically a doc bug — check whether the expectation is right first.
 
 ## Skill authoring
 
