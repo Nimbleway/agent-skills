@@ -154,8 +154,8 @@ Available on both `agents run` and `agents:runs create`:
 }
 ```
 
-- **`allow` / `block`** are arrays of ordered source *groups* — objects with `title`,
-  `domains`, and `order`. A bare domain string is rejected.
+- **`allow` / `block`** are arrays of source *groups* — objects with `title` (**required**),
+  `domains`, and an optional `order` that sets priority. A bare domain string is rejected.
 - **`prioritize` / `avoid`** are plain guidance **strings**. An array is rejected.
 
 `allow` is a hard whitelist; `prioritize`/`avoid` are soft steering. Prefer a domain already
@@ -325,14 +325,21 @@ what makes a Web Search Agent's answer verifiable rather than an unsourced summa
 
 ## MCP fallback — transport differences
 
-Shell-less hosts use the production Nimble MCP server. Run parameters have parity — the run
+Shell-less hosts use the production Nimble MCP server. Run parameters carry over — the run
 tool takes `agent_id`, `agent_name` (create-or-reuse, same semantics as Mode 1), `use_case`,
-`skill`, `sources`, `output_schema`, `input_data`, and `effort`. Omit both `agent_id` and
-`agent_name` for Mode 3.
+`skill`, `sources`, `output_schema`, `input_data`, and `effort`.
+
+**One routing rule to know:** `nimble_agents_run` takes **either** `agent_id` **or**
+`agent_name` — always pass one. Sending neither returns *"Provide either `agent_id` (run an
+existing agent) or `agent_name` (create-or-reuse by name)."* On MCP, then, reach for a
+Mode 1 `agent_name` wherever you'd have used Mode 3 on the CLI. That's the better default
+anyway: a named agent is reusable next session, which is exactly what Mode 3 gives up.
 
 | Capability                           | CLI                              | MCP                                        |
 | ------------------------------------ | -------------------------------- | ------------------------------------------ |
-| All three run modes                  | ✅                                | ✅ (`nimble_agents_run`)                    |
+| Mode 1 — named create-or-reuse       | ✅                                | ✅ (`nimble_agents_run` + `agent_name`)     |
+| Mode 2 — explicit agent              | ✅                                | ✅ (`nimble_agents_run` + `agent_id`)       |
+| Mode 3 — caller-anonymous            | ✅                                | Pass an `agent_name` — one identity is required |
 | Discovery / inspect                  | ✅                                | ✅ (`nimble_agents_list`, `nimble_agents_get`, `nimble_agent_templates_list` / `_get`) |
 | Status → result                      | ✅                                | ✅ (`nimble_agents_run_status`, `nimble_agents_run_result`) |
 | Live events                          | ✅ `--enable-events` + `stream-events` | Use bounded status polling instead     |
@@ -351,7 +358,7 @@ tool takes `agent_id`, `agent_name` (create-or-reuse, same semantics as Mode 1),
 | `422` "Input should be 'research', 'enrichment' or 'dataset_building'" | Invalid enum value                                    | Use one of the three exactly                                   |
 | `422` `output_schema is required when use_case is dataset_building` | Missing schema on a dataset run                          | Supply `--output-schema`                                       |
 | `422` `dataset_building requires effort 'high' or higher`           | Effort too low for a dataset run                         | Raise to `high` or above                                       |
-| `422` on `sources`                                                  | Wrong shape                                              | `allow`/`block` = arrays of objects; `prioritize`/`avoid` = strings |
+| `422` on `sources`                                                  | Wrong shape, or a group missing `title`                  | `allow`/`block` = arrays of objects, each with a `title`; `prioritize`/`avoid` = strings |
 | `Required flag "agent-id" not set`                                  | Used `agents:runs create` for a Mode 1 / Mode 3 run      | Switch to `nimble agents run`                                  |
 | Run reaches `failed` / `cancelled`                                  | A real outcome                                           | Report it plainly; suggest broadening sources or raising effort |
 

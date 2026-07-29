@@ -405,8 +405,9 @@ nimble agents:runs result --agent-id <agent_id> --run-id <run_id>
 `--output-schema`, `--input-data`, `--sources`, `--enable-events`,
 `--previous-interaction-id`, plus `--skill` and `--use-case` per the rules below.
 
-- **`--sources`** has two shapes in one object: `allow` / `block` are arrays of ordered
-  groups (`{title, domains, order}`); `prioritize` / `avoid` are plain guidance strings.
+- **`--sources`** has two shapes in one object: `allow` / `block` are arrays of groups
+  (`title` required, `domains`, optional `order` for priority); `prioritize` / `avoid` are
+  plain guidance strings.
 - **`--input-data`** carries the rows you already have; `--output-schema` describes the shape
   of the answer. Enriching several rows needs an **array** schema — an object schema returns
   one object. Carried-in fields come back with `confidence: "pre_existing"` and no citations;
@@ -477,9 +478,10 @@ Two Web Search Agent controls are CLI-only, each with a documented MCP alternati
 | ------------------------- | ---------------------------------------------------------------------- |
 | `--enable-events` + `agents:runs stream-events` | Bounded `nimble_agents_run_status` polling (~15–30s, capped total wait) |
 | `--previous-interaction-id` | Start a fresh run with the prior context restated in `input`          |
+| Mode 3 (no agent identity) | Pass an `agent_name` — `nimble_agents_run` requires `agent_id` or `agent_name` |
 
-All three run modes, `use_case`, `skill`, `sources`, `output_schema`, `input_data`, and
-`effort` are available on both transports.
+Modes 1 and 2, `use_case`, `skill`, `sources`, `output_schema`, `input_data`, and `effort`
+work the same on both transports.
 
 ## Parallel Execution
 
