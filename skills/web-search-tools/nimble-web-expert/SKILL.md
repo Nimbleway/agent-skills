@@ -74,7 +74,7 @@ User request: $ARGUMENTS
 
 ## Core principles
 
-- **Route by intent first** (see [Analyze & Route](#analyze--route) for the full decision model). Named site with a matching Extraction Template + a direct item to look up → run the template. Site with no template, or a need that requires discovery/reasoning across pages → a Web Search Agent. One-off single URL → `nimble extract`. Research/topic → `nimble search`. Discover/crawl URLs → `nimble map` or `nimble crawl`.
+- **Route by intent first** (see [Analyze & Route](#analyze--route) for the full decision model). Named site with a matching Extraction Template + a direct item to look up → run the template. Site with no template, or a need that requires discovery/reasoning across pages → a Web Search Agent. One-off single URL → `nimble extract`. Raw results to work from ("find pages/articles about…") → `nimble search`; a synthesized deliverable (report, brief, comparison, recommendation) → a Web Search Agent. Discover/crawl URLs → `nimble map` or `nimble crawl`.
 - **Web Search Agent runs: pick a run mode before building the command.** Default to named create-or-reuse — `nimble agents run --agent-name <stable-name>` — so a repeat session lands on the same agent. `agents:runs create` is the explicit-agent-ID route only and requires `--agent-id`. `references/nimble-agents/SKILL.md` has the mode table, `use_case` locking, and the one-time `skill` override.
 - **One command → present results → done.** Run once, show the data immediately as a table. Do NOT experiment, loop, or write Python to parse output.
 - **Multiple inputs → always parallel.** 2+ URLs/keywords/ASINs → `&`+`wait`. 6–20 → `xargs -P`. 20+ → Python asyncio script. See `references/batch-patterns.md`.
