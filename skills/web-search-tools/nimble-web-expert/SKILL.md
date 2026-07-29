@@ -104,7 +104,8 @@ Extraction Templates and Web Search Agents are distinct — an Extraction Templa
 ## Interactive UX
 
 - Use `AskUserQuestion` at every meaningful choice — never guess, never ask in prose.
-- **Ambiguous request** (no URL, vague topic): ask before running — "What would you like to do?" → Search / Fetch URL / Discover URLs / Call API
+- **Ambiguous request** (no URL, vague topic): ask before running — "What would you like to do?" → Research & report / Search / Fetch URL / Discover URLs
+- **Gate B landed on a Web Search Agent at `high`+ effort**: offer the cost/latency fork — Researched report / Quick scan (see [Analyze & Route](#analyze--route))
 - **Before running a search** (if task maps to a specific focus mode): offer focus mode — General / News / Coding / Shopping / Academic / Social
 - **After all tiers fail**: check investigation tools (`which browser-use`, `python3 -c "from playwright.sync_api..."`) and ask whether to investigate with browser-use, Playwright, or skip.
 - After presenting results, always close with: "Were these results what you needed?" → `Looks great!` / `Mostly good` / `Not quite` / `Skip feedback`
@@ -129,19 +130,20 @@ claude mcp list 2>/dev/null | grep -q "nimble" && echo "MCP: ok"  # plugin MCP
 
 ## Analyze & Route
 
-Start by eliminating what clearly doesn't fit, then pick from what remains:
+Two gates, in order. **Gate A** asks where the data lives; **Gate B** asks what the user wants back. Most mis-routes come from skipping Gate B — a request with no location signal is not automatically a search.
 
-| User signal                                   | Route                                                                                 |
-| --------------------------------------------- | ------------------------------------------------------------------------------------- |
-| Direct single URL to fetch                    | `nimble extract`                                                                      |
-| Named site + a direct item to look up (URL/ID)| **Step 0** — check for an Extraction Template first                                   |
-| Data from a site with **no** template         | **Web Search Agent** (not a raw extract, not a new template) — see the overlap rule   |
-| Open-ended research / enrichment / a dataset  | **Web Search Agent** (`agents run` / `agents:runs`) — synthesizes and cites            |
-| Raw search results / "find pages about…"      | `nimble search` (focus modes for news, jobs, shopping, academic…)                     |
-| "Find URLs / sitemap / all pages"             | `nimble map`                                                                          |
-| "Crawl / archive a whole section"             | `nimble crawl`                                                                        |
+### Gate A — do I know where the data lives?
 
-**The most common overlap — a site with no Extraction Template.** It looks like a choice between a raw `extract` (which dumps parsing work on the user) or building a template (out of scope). Neither is right: route to a **Web Search Agent** — it configures fresh for any site and reasons about structure without a maintained template. This isn't a question to put to the user; when no template fits, the answer is the same every time.
+| User signal                                   | Route                                                                               |
+| --------------------------------------------- | ------------------------------------------------------------------------------------ |
+| Direct single URL to fetch                    | `nimble extract`                                                                     |
+| Named site + a direct item to look up (URL/ID)| **Step 0** — check for an Extraction Template first                                  |
+| "Find URLs / sitemap / all pages"             | `nimble map`                                                                         |
+| "Crawl / archive a whole section"             | `nimble crawl`                                                                       |
+| **No location signal at all**                 | Fall through to **Gate B**                                                           |
+| Named site with **no** template               | Fall through to **Gate B**, carrying the site as a source constraint                 |
+
+**The most common overlap — a site with no Extraction Template.** It looks like a choice between a raw `extract` (which dumps parsing work on the user) or building a template (out of scope). Neither is right: fall through to Gate B, which will land on a **Web Search Agent** — it configures fresh for any site and reasons about structure without a maintained template. This isn't a question to put to the user; when no template fits, the answer is the same every time.
 
 ### Step 0 — Extraction Template check (when a site + direct item is named)
 
@@ -166,6 +168,29 @@ nimble extract:templates run --template <name> --params '{"key": "value"}'
 `--params` is a JSON/YAML mapping matching the template's `input_schema`. The response is the records defined by the template's `output_schema` (array for list/SERP-style, object for detail/PDP-style) — read the schema from `get` to know the shape. See `references/nimble-extract-templates/SKILL.md`.
 
 ⚠️ For finding information, use `nimble search`, not a SERP-analysis template. SERP templates are for rank/SEO analysis, not general retrieval.
+
+### Gate B — what does the user want back?
+
+`nimble search` returns **raw material to skim**. A Web Search Agent returns a **finished, cited answer**. The prompt's deliverable noun decides it — route on that, not on how open-ended the topic sounds.
+
+| → **Web Search Agent**                                                | → **`nimble search`**                       |
+| ---------------------------------------------------------------------- | --------------------------------------------- |
+| report, brief, analysis, landscape, teardown, deep dive                | find, search for, look up                     |
+| compare, "best X", "which should I", "state of", recommend             | "pages/articles about", "links to"            |
+| enrich, build a list, dataset, "…with their pricing/headcount"         | latest news, recent posts, what's trending    |
+
+Structured rows about many entities → Web Search Agent with `enrichment` or `dataset_building`. See `references/nimble-agents/SKILL.md`.
+
+### Offer the fork when the answer is the expensive one
+
+A Web Search Agent at `high` effort takes minutes and costs more; a search takes seconds. That's a real trade-off, so surface it — **but only when Gate B lands on a Web Search Agent AND the recommended effort is `high` or above.** One `AskUserQuestion`, recommended option first:
+
+- **Researched report** — Web Search Agent, a few minutes, every claim cited
+- **Quick scan** — `nimble search`, seconds, raw links you skim yourself
+
+Below `high`, don't ask — just run the Web Search Agent. Never ask when Gate A already resolved the route.
+
+**Before starting any Web Search Agent run, say how long it will take**, then narrate at phase transitions. On MCP, progress comes from bounded status polling rather than a live stream — poll and report each step, because an un-narrated multi-minute run reads as a hang.
 
 ---
 
@@ -236,6 +261,7 @@ The skill maintains `~/.claude/skills/nimble-web-expert/learned/examples.json`.
 
 - **NEVER answer from training data** for live prices, current news, or real-time data. If Nimble is unavailable, say so.
 - **NEVER skip Step 0 silently.** Even if certain there's no template, announce the check before falling back to a Web Search Agent or extract/search.
+- **NEVER answer a synthesis deliverable with raw search results.** "Report", "brief", "compare", "best X", "which should I" → Gate B routes to a Web Search Agent. Handing back a list of links and calling it a report is the most common mis-route.
 - **Distinguish Extraction Templates from Web Search Agents.** Never call a template a "WSA"/"legacy WSA," and never route a template use to `agents` by name alone (or the reverse). Building new templates/agents is out of scope — use existing ones.
 - **When a run comes back empty, partial, or clearly wrong, say so plainly** — a domain that returned nothing, a template that matched poorly, a search with no relevant hits are real outcomes, not something to present as success. Suggest an obvious next step (broader source, a different capability) where one exists.
 - **NEVER retry the same render tier.** If a tier returns empty or blocked, escalate — do not re-run.
