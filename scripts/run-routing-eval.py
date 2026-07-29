@@ -14,6 +14,8 @@ Usage:
     python3 scripts/run-routing-eval.py --case 1
 """
 
+from __future__ import annotations  # keeps `X | None` hints working on Python 3.9
+
 import argparse
 import concurrent.futures
 import json
@@ -32,7 +34,7 @@ VALID = ["EXTRACT", "TEMPLATE", "SEARCH", "WSA", "MAP", "CRAWL"]
 
 def routing_text() -> str:
     """Pull the two routing-bearing sections out of SKILL.md."""
-    md = SKILL.read_text()
+    md = SKILL.read_text(encoding="utf-8")
 
     def section(start: str, end: str) -> str:
         i = md.index(start)
@@ -65,16 +67,32 @@ choice before running, otherwise NO>
 
 
 def ask(request: str, guidance: str, model: str | None, timeout: int):
+    """Return (route, fork). A None route means no usable answer — see stderr."""
     cmd = ["claude", "-p", PROMPT.format(guidance=guidance, request=request)]
     if model:
         cmd += ["--model", model]
     try:
-        out = subprocess.run(
+        proc = subprocess.run(
             cmd, capture_output=True, text=True, timeout=timeout, cwd=REPO
-        ).stdout
+        )
+    except FileNotFoundError:
+        sys.exit("claude CLI not found on PATH — install it and sign in, then re-run.")
     except subprocess.TimeoutExpired:
+        print(f"  timeout after {timeout}s: {request[:50]}", file=sys.stderr)
         return None, None
 
+    if proc.returncode != 0:
+        # An infra failure, not a routing disagreement — say so loudly so it
+        # isn't silently tallied as a NO-ANSWER vote.
+        err = (proc.stderr or proc.stdout or "").strip().splitlines()
+        print(
+            f"  claude exited {proc.returncode} for {request[:50]!r}: "
+            f"{err[-1] if err else '<no output>'}",
+            file=sys.stderr,
+        )
+        return None, None
+
+    out = proc.stdout
     route = re.search(r"ROUTE:\s*([A-Z]+)", out)
     fork = re.search(r"FORK:\s*(YES|NO)", out)
     return (
@@ -93,8 +111,8 @@ def main() -> int:
     args = ap.parse_args()
 
     guidance = routing_text()
-    cases = json.loads(CASES.read_text())["cases"]
-    if args.case:
+    cases = json.loads(CASES.read_text(encoding="utf-8"))["cases"]
+    if args.case is not None:
         cases = [c for c in cases if c["id"] == args.case]
         if not cases:
             print(f"no case with id {args.case}", file=sys.stderr)
