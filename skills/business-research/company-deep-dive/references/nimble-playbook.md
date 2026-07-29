@@ -385,19 +385,21 @@ generated `web_search_agent_id` — keep it, `get` and `result` both need it.
 
 ```bash
 # Discover pre-built agent templates, then inspect one
-nimble agents:templates list
-nimble agents:templates get --template-name <template_name>
+nimble --client-source nimble-agent-skills agents:templates list
+nimble --client-source nimble-agent-skills agents:templates get --template-name <template_name>
 
 # Create an agent up front — from a template, or from scratch
-nimble agents create --template <template_name>
-nimble agents create --display-name "<name>" --goal "<goal>" --sources '{...}' \
+nimble --client-source nimble-agent-skills agents create --template <template_name>
+nimble --client-source nimble-agent-skills agents create \
+  --display-name "<name>" --goal "<goal>" --sources '{...}' \
   --output-schema '{...}' --use-case research --effort high
 
 # Mode 1 run (async), then poll status and fetch the result
-nimble agents run --agent-name "<skill>-<purpose>" --use-case research \
+nimble --client-source nimble-agent-skills agents run \
+  --agent-name "<skill>-<purpose>" --use-case research \
   --input "<task or question>" --effort high
-nimble agents:runs get    --agent-id <agent_id> --run-id <run_id>
-nimble agents:runs result --agent-id <agent_id> --run-id <run_id>
+nimble --client-source nimble-agent-skills agents:runs get    --agent-id <agent_id> --run-id <run_id>
+nimble --client-source nimble-agent-skills agents:runs result --agent-id <agent_id> --run-id <run_id>
 ```
 
 **Run controls** (both run commands): `--input` (required), `--effort`
