@@ -1,0 +1,39 @@
+name: Version consistency
+
+# The plugin version is duplicated across both plugin manifests, the marketplace
+# manifest, the README badge, and every skill's frontmatter. A partial bump ships a
+# plugin whose manifests disagree, so this gate fails the PR instead.
+#
+# The assertion lives in scripts/tag-release.sh --check, which is the same code path
+# used when cutting a release tag. It is deliberately not reimplemented here.
+#
+# The check needs no secrets and makes no network calls of its own. It runs on
+# `pull_request` (not `pull_request_target`) with a read-only token, so a fork PR
+# cannot reach anything privileged.
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: version-consistency-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  check:
+    name: All version references agree
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      # Pinned to a full commit SHA rather than a mutable tag, so a retagged or
+      # compromised release cannot silently run new code. Update deliberately.
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
+
+      - name: Verify version consistency
+        run: bash scripts/tag-release.sh --check
