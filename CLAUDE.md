@@ -150,7 +150,47 @@ Skills spawn agents with `mode: "bypassPermissions"` (they don't inherit parent 
 
 Plugin manifests live in `.claude-plugin/plugin.json` and `.cursor-plugin/plugin.json`. They declare which `skills/` directories and `agents/` files are included. Update these when adding or removing a skill.
 
-When adding a new skill, also add it to `.claude-plugin/marketplace.json` `skills` array. Version bump (minor) must touch ALL files: both plugin.json manifests, marketplace.json, README.md badge, and every `skills/**/SKILL.md` `metadata.version` field. Grep for the version number itself (e.g., `0.12.1`) — some files quote it (`"0.12.1"`), some don't.
+When adding a new skill, also add it to `.claude-plugin/marketplace.json` `skills` array.
+
+### Version bumps
+
+`.claude-plugin/plugin.json` is the source of truth. A bump must touch every reference: both
+`plugin.json` manifests, `marketplace.json`, the `README.md` badge, and every
+`skills/**/SKILL.md` `metadata.version` field (some quote the value, some don't). The checker
+below prints the live count, so don't rely on a number written down here.
+
+**Do not search-and-replace the bare version string** — it also matches CHANGELOG history and
+Nimble CLI version references like `CLI 1.1.0+`, which must not be rewritten. Anchor each
+replacement to its context: `"version": "X"` in the JSON files, `version-X-green` in the README
+badge, and an indented `version:` key inside `SKILL.md` frontmatter.
+
+Verify with:
+
+```bash
+bash scripts/tag-release.sh --check
+```
+
+This is the same assertion CI runs on every PR, so a partial bump fails the build. It ignores
+illustrative `version:` values in documentation examples — only real references are enforced.
+
+### Cutting a release
+
+After a version-bump PR merges to `main`:
+
+```bash
+git checkout main && git pull
+bash scripts/tag-release.sh      # verifies, then creates the annotated tag
+git show v1.2.0                  # review the notes
+git push origin v1.2.0           # deliberate, manual
+```
+
+The tag message is taken from that version's `CHANGELOG.md` section, so the notes must be
+written before tagging. The script refuses to run on a dirty worktree, off `main`, or when the
+tag already exists — and it never pushes. **A published tag is never moved**; if a release is
+wrong, cut a new version.
+
+Note that both Anthropic marketplaces pin this plugin by commit SHA rather than by tag, so a tag
+is a named rollback target and release-notes anchor, not the distribution mechanism.
 
 ## Memory Wiki Architecture
 
