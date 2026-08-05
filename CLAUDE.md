@@ -59,9 +59,13 @@ metadata:
   category: business-research
 ```
 
-Add a new category by setting `metadata.category`, not by creating a folder. All three
-manifests point at `./skills/`, so adding a skill needs no manifest path change — only a
-`marketplace.json` entry, and an `agents` update if applicable.
+Add a new category by setting `metadata.category`, not by creating a folder.
+
+The two plugin manifests (`.claude-plugin/plugin.json`, `.cursor-plugin/plugin.json`) point at
+`./skills/`, so they need no per-skill path. `.claude-plugin/marketplace.json` enumerates skills
+individually — add an entry there when you add a skill, plus an `agents` update if applicable.
+That enumeration is deliberate: it keeps reference `SKILL.md` files under `references/` from
+being picked up as skills by consumers that scan recursively.
 
 ## Commands
 
