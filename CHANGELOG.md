@@ -1,5 +1,18 @@
 # Changelog
 
+## [1.2.0] - 2026-08-05
+
+### Changed
+- **Flattened the skills tree.** All 15 skills are now direct children of `skills/` instead of being grouped into vertical subdirectories (`business-research/`, `data-platforms/`, `healthcare/`, `human-resources/`, `marketing/`, `productivity/`, `seo/`, `web-search-tools/`). **Skill directory names are unchanged**, so every skill identifier (`nimble:competitor-intel`, `nimble:meeting-prep`, …) and every `npx skills add --skill <name>` invocation keeps working exactly as before. Both plugin platforms require the flat layout: OpenAI/Codex rejects nested skill directories at submission (`skill_manifest_nested`, `skill_manifest_missing`), and xAI indexes only direct children of `skills/`. Runtime discovery in Claude Code and Codex is recursive, so the previous layout worked locally while being absent from both catalogs.
+- **Verticals are now recorded as `metadata.category`** in each skill's `SKILL.md` frontmatter rather than as directory names. The README skills table keeps the same categories and links to each skill directly.
+- `.claude-plugin/plugin.json` `skills` is now a single `./skills/` entry instead of eight vertical paths; `.claude-plugin/marketplace.json` lists the 15 flat skill paths. `.cursor-plugin/plugin.json` was already pointing at `./skills/` and is unchanged.
+- `scripts/sync-shared.sh` globs `skills/*/references` instead of `skills/*/*/references`.
+- `CONTRIBUTING.md` now instructs contributors to create skills directly under `skills/` and set `metadata.category`, and to register them in `marketplace.json` only — the plugin manifests no longer need a per-skill path.
+- `CLAUDE.md` documents the flat-tree requirement and both platforms' constraints so the layout can't silently regress.
+
+### Fixed
+- Broken relative link in `skills/nimble-web-expert/README.md` — `../../README.md` resolved to a nonexistent `skills/README.md` at the previous nesting depth and now resolves to the root README.
+
 ## [1.1.0] - 2026-07-29
 
 ### Added

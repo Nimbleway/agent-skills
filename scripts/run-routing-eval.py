@@ -26,7 +26,7 @@ from collections import Counter
 from pathlib import Path
 
 REPO = Path(__file__).resolve().parent.parent
-SKILL = REPO / "skills/web-search-tools/nimble-web-expert/SKILL.md"
+SKILL = REPO / "skills/nimble-web-expert/SKILL.md"
 CASES = REPO / "evals/nimble-web-expert-routing.json"
 
 VALID = ["EXTRACT", "TEMPLATE", "SEARCH", "WSA", "MAP", "CRAWL"]

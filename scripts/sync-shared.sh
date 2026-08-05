@@ -16,12 +16,11 @@ fi
 
 synced=0
 
-for refs_dir in "$REPO_ROOT"/skills/*/*/references; do
+for refs_dir in "$REPO_ROOT"/skills/*/references; do
   [ -d "$refs_dir" ] || continue
 
   skill_dir="$(dirname "$refs_dir")"
   skill_name="$(basename "$skill_dir")"
-  vertical="$(basename "$(dirname "$skill_dir")")"
 
   # Skip skills that manage their own references (core data skill + SQL-native
   # Databricks skill, which is intentionally CLI-free and doesn't use these).
@@ -31,13 +30,13 @@ for refs_dir in "$REPO_ROOT"/skills/*/*/references; do
 
   # Only sync skills that have a SKILL.md (i.e., actually implemented)
   if [ ! -f "$skill_dir/SKILL.md" ]; then
-    echo "Skipping skills/$vertical/$skill_name/ (no SKILL.md yet)"
+    echo "Skipping skills/$skill_name/ (no SKILL.md yet)"
     continue
   fi
 
   cp "$SHARED_DIR"/*.md "$refs_dir/"
   synced=$((synced + 1))
-  echo "Synced _shared/ -> skills/$vertical/$skill_name/references/"
+  echo "Synced _shared/ -> skills/$skill_name/references/"
 done
 
 if [ "$synced" -eq 0 ]; then

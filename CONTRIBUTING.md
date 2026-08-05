@@ -13,9 +13,9 @@ The fastest way is to use an AI agent (Claude Code, Cursor, etc.) pointed at thi
 If you prefer to do it manually:
 
 1. Read `CLAUDE.md` at the repo root — it covers repo structure, skill anatomy, and authoring rules
-2. Look at an existing skill (e.g., `skills/business-research/competitor-intel/SKILL.md`) as a template
-3. Create your skill folder under the right vertical in `skills/`
-4. Register it in `.claude-plugin/plugin.json` and `.claude-plugin/marketplace.json`
+2. Look at an existing skill (e.g., `skills/competitor-intel/SKILL.md`) as a template
+3. Create your skill folder directly under `skills/` — never inside a grouping subdirectory — and set `metadata.category` in the frontmatter to record its vertical
+4. Register it in `.claude-plugin/marketplace.json` (the plugin manifests already point at `./skills/`, so no per-skill path entry is needed)
 5. Test it locally: `claude "run {skill-name} for acme.com"`
 
 ## Conventions

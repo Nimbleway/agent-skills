@@ -12,7 +12,7 @@
       "name": "nimble",
       "source": "./",
       "description": "Real-time web search and data extraction for AI agents - powered by Nimble. Search, extract, map, and crawl any site on the web with built-in stealth, JS rendering, and retries. Get clean, structured web data from any public webpage with site-specific Extraction Templates, or run Web Search Agents for open-ended research and enrichment. The definitive web data toolkit for AI-native development.",
-      "version": "1.1.0",
+      "version": "1.2.0",
       "category": "data",
       "tags": [
         "web-search",
@@ -31,21 +31,21 @@
         "delta-lake"
       ],
       "skills": [
-        "./skills/web-search-tools/nimble-web-expert",
-        "./skills/productivity/meeting-prep",
-        "./skills/productivity/local-places",
-        "./skills/business-research/competitor-intel",
-        "./skills/business-research/company-deep-dive",
-        "./skills/business-research/market-finder",
-        "./skills/marketing/competitor-positioning",
-        "./skills/marketing/brand-mention-monitor",
-        "./skills/marketing/launch-monitor",
-        "./skills/healthcare/healthcare-providers-extract",
-        "./skills/healthcare/healthcare-providers-enrich",
-        "./skills/healthcare/healthcare-providers-verify",
-        "./skills/seo/seo-intel",
-        "./skills/human-resources/talent-sourcing",
-        "./skills/data-platforms/nimble-databricks-data-products"
+        "./skills/nimble-web-expert",
+        "./skills/meeting-prep",
+        "./skills/local-places",
+        "./skills/competitor-intel",
+        "./skills/company-deep-dive",
+        "./skills/market-finder",
+        "./skills/competitor-positioning",
+        "./skills/brand-mention-monitor",
+        "./skills/launch-monitor",
+        "./skills/healthcare-providers-extract",
+        "./skills/healthcare-providers-enrich",
+        "./skills/healthcare-providers-verify",
+        "./skills/seo-intel",
+        "./skills/talent-sourcing",
+        "./skills/nimble-databricks-data-products"
       ]
     }
   ]
