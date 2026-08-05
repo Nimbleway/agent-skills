@@ -43,10 +43,12 @@ fail() { echo "ERROR: $*" >&2; exit 1; }
 VERSION="$(grep -o '"version": *"[^"]*"' "$SOURCE_OF_TRUTH" | head -1 | sed 's/.*"\([0-9][^"]*\)"/\1/')"
 [ -n "$VERSION" ] || fail "could not read a version from $SOURCE_OF_TRUTH"
 
-case "$VERSION" in
-  [0-9]*.[0-9]*.[0-9]*) ;;
-  *) fail "version '$VERSION' in $SOURCE_OF_TRUTH is not strict semver (X.Y.Z)" ;;
-esac
+# A regex, not a `case` glob: in shell patterns `*` matches any characters, so
+# [0-9]*.[0-9]*.[0-9]* would accept 1.2.3-beta, 1x.2y.3z, 10.20.30extra and 1.2.3.4 —
+# a malformed version could reach a tag name while the error claimed strict semver.
+if [[ ! "$VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+  fail "version '$VERSION' in $SOURCE_OF_TRUTH is not strict semver (X.Y.Z)"
+fi
 
 echo "Expected version: $VERSION  (source: $SOURCE_OF_TRUTH)"
 echo
