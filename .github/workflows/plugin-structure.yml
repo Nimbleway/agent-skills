@@ -1,4 +1,4 @@
-name: Plugin structure
+name: Plugin packaging
 
 # Marketplace ingestion is stricter than runtime discovery, and in the direction that
 # hides mistakes: Claude Code and Codex both discover skills recursively, so a nested
@@ -6,11 +6,16 @@ name: Plugin structure
 # while OpenAI rejects the submission (skill_manifest_nested) and xAI silently omits
 # every skill from its index. Nothing local surfaces either failure, so it is gated here.
 #
-# The assertion lives in scripts/check-plugin-structure.sh so the same code runs locally.
+# Two complementary assertions, both runnable locally:
+#   - check-plugin-structure.sh validates the skills tree — where SKILL.md files sit
+#     and what their frontmatter says.
+#   - check-plugin-manifests.py validates the manifest fields — the listing metadata
+#     OpenAI reads, including asset dimensions and brand-color contrast, which a JSON
+#     parse and the tree check both pass straight over.
 #
-# The check needs no secrets and makes no network calls. It runs on `pull_request`
-# (not `pull_request_target`) with a read-only token, so a fork PR cannot reach
-# anything privileged.
+# Neither needs secrets nor makes network calls. They run on `pull_request` (not
+# `pull_request_target`) with a read-only token, so a fork PR cannot reach anything
+# privileged.
 
 on:
   pull_request:
@@ -21,12 +26,12 @@ permissions:
   contents: read
 
 concurrency:
-  group: plugin-structure-${{ github.ref }}
+  group: plugin-packaging-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
   check:
-    name: Skills tree is packageable on every platform
+    name: Plugin is packageable on every platform
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
@@ -36,5 +41,11 @@ jobs:
         with:
           persist-credentials: false
 
-      - name: Verify plugin structure
+      - name: Verify skills tree structure
         run: bash scripts/check-plugin-structure.sh
+
+      # Runs even when the tree check fails, so one PR surfaces every packaging
+      # problem instead of revealing the next one only after the first is fixed.
+      - name: Verify plugin manifest fields
+        if: always()
+        run: python3 scripts/check-plugin-manifests.py

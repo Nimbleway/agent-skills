@@ -139,7 +139,8 @@ All platforms read the same `skills/` directory. Platform-specific files coexist
 Every skill directory is an immediate child of `skills/`, with its vertical recorded as
 `metadata.category` in the frontmatter. Reference documents inside a skill's `references/`
 directory are named `reference.md` — never `SKILL.md`, which would register them as skills on
-platforms that discover recursively. `bash scripts/check-plugin-structure.sh` enforces both rules.
+platforms that discover recursively. `bash scripts/check-plugin-structure.sh` enforces both
+rules, and `python3 scripts/check-plugin-manifests.py` validates the per-platform manifests.
 
 ### CLI Commands
 

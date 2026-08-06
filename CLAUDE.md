@@ -88,9 +88,10 @@ claude "run competitor-intel for acme.com"
 # Nimble calls, no credits, no API key.
 python3 scripts/run-routing-eval.py --runs 3
 
-# Packaging gates — both run in CI on every PR
-bash scripts/tag-release.sh --check          # all version references agree
-bash scripts/check-plugin-structure.sh       # skills tree is packageable everywhere
+# Packaging gates — all three run in CI on every PR
+bash scripts/tag-release.sh --check           # all version references agree
+bash scripts/check-plugin-structure.sh        # skills tree is packageable everywhere
+python3 scripts/check-plugin-manifests.py     # manifest fields, assets, brand contrast
 ```
 
 Run the routing eval after any change to `nimble-web-expert`'s Core principles
@@ -213,7 +214,11 @@ hard limits are enforced at submission, so keep them in mind when editing: `inte
 and `interface.composerIcon` are both required and must be square images; `brandColor` needs
 at least 2:1 contrast against white and `brandColorDark` at least 2:1 against `#212121`;
 `defaultPrompt` allows at most three entries; and `category` must come from OpenAI's fixed
-list. Run `bash scripts/check-plugin-structure.sh` after any change to the skills tree.
+list.
+
+`python3 scripts/check-plugin-manifests.py` asserts all of that, naming each failure after
+the error code OpenAI would raise. Run it after editing any manifest, and
+`bash scripts/check-plugin-structure.sh` after any change to the skills tree — CI runs both.
 
 ### Version bumps
 
