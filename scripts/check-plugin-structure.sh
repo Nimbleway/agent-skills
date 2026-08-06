@@ -35,8 +35,30 @@ fail() { echo "ERROR: $*" >&2; exit 1; }
 [ -d skills ] || fail "missing skills/ directory"
 [ -f "$SOURCE_OF_TRUTH" ] || fail "missing $SOURCE_OF_TRUTH"
 
-PLUGIN_NAME="$(grep -o '"name": *"[^"]*"' "$SOURCE_OF_TRUTH" | head -1 | sed 's/.*: *"\(.*\)"/\1/')"
-[ -n "$PLUGIN_NAME" ] || fail "could not read a plugin name from $SOURCE_OF_TRUTH"
+# Read the plugin name with a real JSON parser, not grep | head -1.
+#
+# The manifest holds two "name" keys — the top-level plugin name and author.name — and
+# JSON member order carries no meaning. "First match wins" is therefore correct only by
+# accident of the current formatting: emit author first, which is a semantically identical
+# manifest, and the identity prefix becomes the author's name. With a long author name
+# that overshoots IDENTITY_MAX and fails CI on a perfectly valid skills tree.
+#
+# python3 is already required by scripts/check-plugin-manifests.py and
+# scripts/run-routing-eval.py, so this adds no dependency. jq is deliberately avoided —
+# nothing in this repo declares it.
+PLUGIN_NAME="$(python3 -c '
+import json, sys
+try:
+    manifest = json.load(open(sys.argv[1], encoding="utf-8"))
+except (OSError, ValueError) as exc:
+    sys.exit(f"{sys.argv[1]}: {exc}")
+if not isinstance(manifest, dict):
+    sys.exit(f"{sys.argv[1]}: top level must be a JSON object")
+name = manifest.get("name")
+if not isinstance(name, str) or not name.strip():
+    sys.exit(f"{sys.argv[1]}: top-level \"name\" must be a non-empty string")
+print(name)
+' "$SOURCE_OF_TRUTH")" || fail "could not read a plugin name from $SOURCE_OF_TRUTH"
 
 echo "Plugin: $PLUGIN_NAME"
 echo
