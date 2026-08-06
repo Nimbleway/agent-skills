@@ -1,0 +1,51 @@
+name: Plugin packaging
+
+# Marketplace ingestion is stricter than runtime discovery, and in the direction that
+# hides mistakes: Claude Code and Codex both discover skills recursively, so a nested
+# skill or a reference document named SKILL.md works perfectly on a developer's machine
+# while OpenAI rejects the submission (skill_manifest_nested) and xAI silently omits
+# every skill from its index. Nothing local surfaces either failure, so it is gated here.
+#
+# Two complementary assertions, both runnable locally:
+#   - check-plugin-structure.sh validates the skills tree — where SKILL.md files sit
+#     and what their frontmatter says.
+#   - check-plugin-manifests.py validates the manifest fields — the listing metadata
+#     OpenAI reads, including asset dimensions and brand-color contrast, which a JSON
+#     parse and the tree check both pass straight over.
+#
+# Neither needs secrets nor makes network calls. They run on `pull_request` (not
+# `pull_request_target`) with a read-only token, so a fork PR cannot reach anything
+# privileged.
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: plugin-packaging-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  check:
+    name: Plugin is packageable on every platform
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      # Pinned to a full commit SHA rather than a mutable tag, so a retagged or
+      # compromised release cannot silently run new code. Update deliberately.
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
+
+      - name: Verify skills tree structure
+        run: bash scripts/check-plugin-structure.sh
+
+      # Runs even when the tree check fails, so one PR surfaces every packaging
+      # problem instead of revealing the next one only after the first is fixed.
+      - name: Verify plugin manifest fields
+        if: always()
+        run: python3 scripts/check-plugin-manifests.py

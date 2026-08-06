@@ -1,7 +1,7 @@
 # Nimble Web Search Skills & Plugin
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![Version](https://img.shields.io/badge/version-1.2.0-green)](https://github.com/Nimbleway/agent-skills)
+[![Version](https://img.shields.io/badge/version-1.3.0-green)](https://github.com/Nimbleway/agent-skills)
 
 Unlock the web for your AI agents — search, scrape, extract structured data, and run business intelligence workflows, all powered by Nimble's web data infrastructure. One plugin for Claude Code, Cursor, and any platform that supports the [Agent Skills spec](https://agentskills.io/specification.md).
 
@@ -127,14 +127,20 @@ Every finding carries a verified event date and source URL. Stale signals are dr
 
 ### Platform Compatibility
 
-| Aspect | Claude Code | Cursor | npx skills |
-| ------ | ----------- | ------ | ---------- |
-| Plugin config | `.claude-plugin/` | `.cursor-plugin/` | N/A (reads `skills/`) |
-| MCP config | `.mcp.json` | `mcp.json` | Manual setup |
-| Rules | N/A | `rules/*.mdc` | N/A |
-| Skills | `skills/` (shared) | `skills/` (shared) | `skills/` (shared) |
+| Aspect | Claude Code | Cursor | Codex | npx skills |
+| ------ | ----------- | ------ | ----- | ---------- |
+| Plugin config | `.claude-plugin/` | `.cursor-plugin/` | `.codex-plugin/` | N/A (reads `skills/`) |
+| MCP config | `.mcp.json` | `mcp.json` | `.mcp.json` (shared) | Manual setup |
+| Rules | N/A | `rules/*.mdc` | N/A | N/A |
+| Skills | `skills/` (shared) | `skills/` (shared) | `skills/` (shared) | `skills/` (shared) |
 
 All platforms read the same `skills/` directory. Platform-specific files coexist without interference.
+
+Every skill directory is an immediate child of `skills/`, with its vertical recorded as
+`metadata.category` in the frontmatter. Reference documents inside a skill's `references/`
+directory are named `reference.md` — never `SKILL.md`, which would register them as skills on
+platforms that discover recursively. `bash scripts/check-plugin-structure.sh` enforces both
+rules, and `python3 scripts/check-plugin-manifests.py` validates the per-platform manifests.
 
 ### CLI Commands
 
@@ -164,3 +170,7 @@ Have a web data workflow that should be one command? We'd love new skills — wh
 ## License
 
 MIT License — see [LICENSE](LICENSE) for details.
+
+The MIT license covers the code, skills, and documentation in this repository. It does not
+grant rights to Nimble's trademarks or brand assets: the Nimble name, the Nimble logo, and
+the brand marks under `assets/` remain the property of Nimble and are not licensed for reuse.

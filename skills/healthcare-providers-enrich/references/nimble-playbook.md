@@ -441,7 +441,7 @@ every ~15–30s with a capped total wait, and report a run as still active rathe
 or calling it failed.
 
 > Full contract (mode table, source shapes, trust metadata, error table):
-> `skills/nimble-web-expert/references/nimble-agents/SKILL.md`.
+> `skills/nimble-web-expert/references/nimble-agents/reference.md`.
 
 **Fallback rule:** If neither an Extraction Template nor a Web Search Agent fits, fall
 back to `nimble search` + `nimble extract`. Don't fail silently — log which domains

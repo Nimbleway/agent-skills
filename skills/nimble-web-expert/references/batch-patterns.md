@@ -158,7 +158,7 @@ nimble --client-source nimble-agent-skills extract:templates batch \
   --input '{"params": {"keyword": "trackpad"}}' \
   --input '{"params": {"keyword": "mouse"}}'
 # → returns batch_id; poll with `nimble batches progress --batch-id <id>`,
-#   then `nimble batches get` + `nimble tasks results` (see references/nimble-tasks/SKILL.md)
+#   then `nimble batches get` + `nimble tasks results` (see references/nimble-tasks/reference.md)
 ```
 
 **When to script instead:** mixing templates/extract/search, custom per-item output shaping,

@@ -61,7 +61,7 @@ allowed-tools:
   - AskUserQuestion
 license: MIT
 metadata:
-  version: "1.2.0"
+  version: 1.3.0
   author: Nimbleway
   repository: https://github.com/Nimbleway/agent-skills
   category: web-search-tools
@@ -76,7 +76,7 @@ User request: $ARGUMENTS
 ## Core principles
 
 - **Route by intent first** (see [Analyze & Route](#analyze--route) for the full decision model). Named site with a matching Extraction Template + a direct item to look up → run the template. Site with no template, or a need that requires discovery/reasoning across pages → a Web Search Agent. One-off single URL → `nimble extract`. Raw results to work from ("find pages/articles about…") → `nimble search`; a synthesized deliverable (report, brief, comparison, recommendation) → a Web Search Agent. Discover/crawl URLs → `nimble map` or `nimble crawl`.
-- **Web Search Agent runs: pick a run mode before building the command.** Default to named create-or-reuse — `nimble agents run --agent-name <stable-name>` — so a repeat session lands on the same agent. `agents:runs create` is the explicit-agent-ID route only and requires `--agent-id`. `references/nimble-agents/SKILL.md` has the mode table, `use_case` locking, and the one-time `skill` override.
+- **Web Search Agent runs: pick a run mode before building the command.** Default to named create-or-reuse — `nimble agents run --agent-name <stable-name>` — so a repeat session lands on the same agent. `agents:runs create` is the explicit-agent-ID route only and requires `--agent-id`. `references/nimble-agents/reference.md` has the mode table, `use_case` locking, and the one-time `skill` override.
 - **One command → present results → done.** Run once, show the data immediately as a table. Do NOT experiment, loop, or write Python to parse output.
 - **Multiple inputs → always parallel.** 2+ URLs/keywords/ASINs → `&`+`wait`. 6–20 → `xargs -P`. 20+ → Python asyncio script. See `references/batch-patterns.md`.
 - **Escalate render tiers silently.** Tier 1 → 2 → 3 → … without asking. Surface a decision only when all tiers fail and investigation tools are needed.
@@ -166,7 +166,7 @@ Templates return clean structured data with zero selector work. Always check fir
 nimble extract:templates run --template <name> --params '{"key": "value"}'
 ```
 
-`--params` is a JSON/YAML mapping matching the template's `input_schema`. The response is the records defined by the template's `output_schema` (array for list/SERP-style, object for detail/PDP-style) — read the schema from `get` to know the shape. See `references/nimble-extract-templates/SKILL.md`.
+`--params` is a JSON/YAML mapping matching the template's `input_schema`. The response is the records defined by the template's `output_schema` (array for list/SERP-style, object for detail/PDP-style) — read the schema from `get` to know the shape. See `references/nimble-extract-templates/reference.md`.
 
 ⚠️ For finding information, use `nimble search`, not a SERP-analysis template. SERP templates are for rank/SEO analysis, not general retrieval.
 
@@ -180,7 +180,7 @@ nimble extract:templates run --template <name> --params '{"key": "value"}'
 | compare, "best X", "which should I", "state of", recommend             | "pages/articles about", "links to"            |
 | enrich, build a list, dataset, "…with their pricing/headcount"         | latest news, recent posts, what's trending    |
 
-Structured rows about many entities → Web Search Agent with `enrichment` or `dataset_building`. See `references/nimble-agents/SKILL.md`.
+Structured rows about many entities → Web Search Agent with `enrichment` or `dataset_building`. See `references/nimble-agents/reference.md`.
 
 ### Offer the fork when the answer is the expensive one
 
@@ -201,20 +201,20 @@ Below `high`, don't ask — just run the Web Search Agent. Never ask when Gate A
 
 | Situation                        | Command                                        | Reference                                            |
 | -------------------------------- | ---------------------------------------------- | ---------------------------------------------------- |
-| Site + item → template first     | `extract:templates list` → `extract:templates run` | `references/nimble-extract-templates/SKILL.md`   |
-| Research / enrichment / dataset  | pick a run mode → `get` → `result`             | `references/nimble-agents/SKILL.md`                  |
-| Direct URL                       | `nimble extract`                               | `references/nimble-extract/SKILL.md`                 |
-| Search the live web              | `nimble search`                                | `references/nimble-search/SKILL.md`                  |
-| Discover URLs on a site          | `nimble map`                                   | `references/nimble-map/SKILL.md`                     |
-| Bulk crawl a section             | `nimble crawl run`                             | `references/nimble-crawl/SKILL.md`                   |
-| Batch templates (up to 1,000)    | `nimble extract:templates batch`               | `references/nimble-extract-templates/SKILL.md`       |
-| Batch extract (up to 1,000)      | `nimble extract-batch`                         | `references/nimble-extract/SKILL.md`                 |
-| Poll tasks / batches / results   | `nimble tasks` / `nimble batches`              | `references/nimble-tasks/SKILL.md`                   |
+| Site + item → template first     | `extract:templates list` → `extract:templates run` | `references/nimble-extract-templates/reference.md`   |
+| Research / enrichment / dataset  | pick a run mode → `get` → `result`             | `references/nimble-agents/reference.md`                  |
+| Direct URL                       | `nimble extract`                               | `references/nimble-extract/reference.md`                 |
+| Search the live web              | `nimble search`                                | `references/nimble-search/reference.md`                  |
+| Discover URLs on a site          | `nimble map`                                   | `references/nimble-map/reference.md`                     |
+| Bulk crawl a section             | `nimble crawl run`                             | `references/nimble-crawl/reference.md`                   |
+| Batch templates (up to 1,000)    | `nimble extract:templates batch`               | `references/nimble-extract-templates/reference.md`       |
+| Batch extract (up to 1,000)      | `nimble extract-batch`                         | `references/nimble-extract/reference.md`                 |
+| Poll tasks / batches / results   | `nimble tasks` / `nimble batches`              | `references/nimble-tasks/reference.md`                   |
 | Unknown selectors or XHR path    | browser-use or Playwright investigation        | `references/nimble-extract/browser-investigation.md` |
 | Proven site patterns             | copy a recipe                                  | `references/recipes.md`                              |
 | 2+ inputs                        | parallel bash `&`+`wait` or generated script   | `references/batch-patterns.md`                       |
 
-For the full extract waterfall (tiers, flags, browser actions, network capture), see `references/nimble-extract/SKILL.md`.
+For the full extract waterfall (tiers, flags, browser actions, network capture), see `references/nimble-extract/reference.md`.
 
 ---
 
@@ -283,13 +283,13 @@ Load only when needed:
 | File                                                 | Load when                                                                     |
 | ---------------------------------------------------- | ----------------------------------------------------------------------------- |
 | `references/recipes.md`                              | Need a proven command for a common site (Amazon, Yelp, LinkedIn…)             |
-| `references/nimble-extract-templates/SKILL.md`       | Step 0 — discover/inspect/run Extraction Templates for a known site           |
-| `references/nimble-agents/SKILL.md`                  | Web Search Agents — discovery, run lifecycle, authoring, trust/citations      |
-| `references/nimble-extract/SKILL.md`                 | Extract flags, render tiers, browser actions, network capture, parser schemas |
-| `references/nimble-search/SKILL.md`                  | Search flags, all 8 focus modes                                               |
-| `references/nimble-map/SKILL.md`                     | Map flags, response structure                                                 |
-| `references/nimble-crawl/SKILL.md`                   | Full async crawl workflow                                                     |
-| `references/nimble-tasks/SKILL.md`                   | Poll tasks/batches, fetch results — for async, batch, and crawl operations    |
+| `references/nimble-extract-templates/reference.md`       | Step 0 — discover/inspect/run Extraction Templates for a known site           |
+| `references/nimble-agents/reference.md`                  | Web Search Agents — discovery, run lifecycle, authoring, trust/citations      |
+| `references/nimble-extract/reference.md`                 | Extract flags, render tiers, browser actions, network capture, parser schemas |
+| `references/nimble-search/reference.md`                  | Search flags, all 8 focus modes                                               |
+| `references/nimble-map/reference.md`                     | Map flags, response structure                                                 |
+| `references/nimble-crawl/reference.md`                   | Full async crawl workflow                                                     |
+| `references/nimble-tasks/reference.md`                   | Poll tasks/batches, fetch results — for async, batch, and crawl operations    |
 | `references/nimble-extract/browser-investigation.md` | Tier 6 — CSS selector/XHR discovery with browser-use or Playwright            |
 | `references/nimble-extract/parsing-schema.md`        | Parser types, selectors, extractors, post-processors                          |
 | `references/nimble-extract/browser-actions.md`       | Full browser action types and parameters                                      |

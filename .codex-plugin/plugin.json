@@ -1,0 +1,60 @@
+{
+  "name": "nimble",
+  "version": "1.3.0",
+  "description": "Real-time web search and data extraction for AI agents - powered by Nimble. Search, extract, map, and crawl any site on the web with built-in stealth, JS rendering, and retries. Get clean, structured web data from any public webpage with site-specific Extraction Templates, or run Web Search Agents for open-ended research and enrichment. The definitive web data toolkit for AI-native development.",
+  "author": {
+    "name": "Nimble",
+    "email": "support@nimbleway.com",
+    "url": "https://www.nimbleway.com"
+  },
+  "homepage": "https://www.nimbleway.com",
+  "repository": "https://github.com/Nimbleway/agent-skills",
+  "license": "MIT",
+  "keywords": [
+    "nimble",
+    "web-extraction",
+    "web-search",
+    "web-crawl",
+    "web-map",
+    "scraping",
+    "agents",
+    "mcp",
+    "cli",
+    "data-extraction",
+    "structured-data",
+    "competitor-intelligence",
+    "meeting-prep",
+    "company-research",
+    "business-intelligence"
+  ],
+  "skills": "./skills/",
+  "mcpServers": "./.mcp.json",
+  "interface": {
+    "displayName": "Nimble Web Data Toolkit",
+    "shortDescription": "Real-time web data for agents",
+    "longDescription": "Nimble gives agents live access to the public web through four distinct capabilities.\n\nSearch runs web queries across eight focus modes and returns ranked results with snippets, for finding pages when you do not yet know the URL.\n\nExtract fetches any single URL and returns clean, structured content, escalating through render tiers for JavaScript-heavy pages and supporting browser actions and network capture when a page needs interaction before its data appears.\n\nExtraction Templates are reusable, site-specific scrapers with declared input and output schemas. Discover a template for a known site, inspect its schema, then run it for consistently shaped records — well suited to product pages, listings, and directories.\n\nWeb Search Agents handle open-ended work that spans many pages and sources. An agent is created once and reused by name, then each run is created asynchronously and polled to a terminal state, returning results with trust signals and citations. Three use cases are supported: research for questions that need synthesis across sources, enrichment for filling fields on entities you already have, and dataset building for assembling structured rows from scratch.\n\nMap discovers URLs across a site before bulk work, and Crawl bulk-extracts a whole section asynchronously.\n\nOn top of these, the plugin ships business workflow skills that turn live web data into finished reports — competitor intelligence, company research, meeting preparation, market and local-business discovery, brand monitoring, launch monitoring, SEO analysis, talent sourcing, and healthcare provider extraction, enrichment, and verification.",
+    "developerName": "Nimble",
+    "category": "Data & Analytics",
+    "capabilities": [
+      "Web search",
+      "Page extraction",
+      "Extraction Templates",
+      "Web Search Agents",
+      "Site mapping",
+      "Bulk crawling"
+    ],
+    "websiteURL": "https://www.nimbleway.com",
+    "privacyPolicyURL": "https://www.nimbleway.com/privacy-policy",
+    "termsOfServiceURL": "https://www.nimbleway.com/terms-of-use",
+    "brandColor": "#0D0D0D",
+    "brandColorDark": "#F8E71C",
+    "defaultPrompt": [
+      "Search the web and summarize what is being said about a company this month.",
+      "Extract the pricing table from a URL as structured rows.",
+      "Research a market with a Web Search Agent and return findings with citations."
+    ],
+    "composerIcon": "./assets/nimble-logo.png",
+    "logo": "./assets/nimble-logo.png",
+    "screenshots": []
+  }
+}

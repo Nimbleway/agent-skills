@@ -4,7 +4,9 @@ Want to add a new web data skill? Great — the more workflows this plugin cover
 
 ## Quick overview
 
-Each skill is a `SKILL.md` file inside `skills/{vertical}/{skill-name}/`. Skills are grouped into verticals like `business-research/`, `marketing/`, `productivity/`, and `web-search-tools/`. New verticals are welcome.
+Each skill is a `SKILL.md` file inside `skills/{skill-name}/` — always an immediate child of `skills/`, never inside a grouping subdirectory. The vertical is recorded as `metadata.category` in the frontmatter (`business-research`, `marketing`, `productivity`, `web-search-tools`, and others). New categories are welcome; add one by setting `metadata.category`, not by creating a folder.
+
+Deeper documentation goes in the skill's `references/` directory. Name those files `reference.md` or anything descriptive — never `SKILL.md`, which some platforms would register as a separate skill.
 
 ## How to add a skill
 
@@ -17,6 +19,8 @@ If you prefer to do it manually:
 3. Create your skill folder directly under `skills/` — never inside a grouping subdirectory — and set `metadata.category` in the frontmatter to record its vertical
 4. Register it in `.claude-plugin/marketplace.json` (the plugin manifests already point at `./skills/`, so no per-skill path entry is needed)
 5. Test it locally: `claude "run {skill-name} for acme.com"`
+6. Check the packaging gates: `bash scripts/check-plugin-structure.sh` and, if you touched a
+   manifest, `python3 scripts/check-plugin-manifests.py`
 
 ## Conventions
 
@@ -26,8 +30,9 @@ If you prefer to do it manually:
 
 ## Versions and releases
 
-The plugin version is duplicated across both plugin manifests, `marketplace.json`, the README
-badge, and every skill's `metadata.version`. `.claude-plugin/plugin.json` is the source of truth.
+The plugin version is duplicated across all three plugin manifests (Claude Code, Cursor, and
+Codex), `marketplace.json`, the README badge, and every skill's `metadata.version`.
+`.claude-plugin/plugin.json` is the source of truth.
 
 If your change warrants a version bump, bump all of them in one pass and check it:
 

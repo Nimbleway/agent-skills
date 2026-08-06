@@ -60,14 +60,14 @@ Each command supports multiple output formats — see [docs.nimbleway.com](https
 | ---------------------------------------------------- | ------------------------------------------------------------- |
 | `references/recipes.md`                              | Ready-to-run commands for 20+ popular sites                   |
 | `references/error-handling.md`                       | Common errors and fixes                                       |
-| `references/nimble-extract/SKILL.md`                 | Full `nimble extract` flag reference                          |
+| `references/nimble-extract/reference.md`                 | Full `nimble extract` flag reference                          |
 | `references/nimble-extract/parsing-schema.md`        | Parser schema and CSS selector patterns                       |
 | `references/nimble-extract/browser-actions.md`       | Click, scroll, wait action sequences                          |
 | `references/nimble-extract/browser-investigation.md` | Tier 6 — finding selectors/XHR with browser-use or Playwright |
 | `references/nimble-extract/network-capture.md`       | XHR/API interception patterns                                 |
-| `references/nimble-search/SKILL.md`                  | `nimble search` flag reference                                |
+| `references/nimble-search/reference.md`                  | `nimble search` flag reference                                |
 | `references/nimble-search/search-focus-modes.md`     | 8 focus modes (news, web, jobs, etc.)                         |
-| `references/nimble-map/SKILL.md`                     | `nimble map` URL discovery reference                          |
-| `references/nimble-crawl/SKILL.md`                   | `nimble crawl` bulk extraction reference                      |
-| `references/nimble-extract-templates/SKILL.md`       | Extraction Templates — discover, inspect, and run site scrapers |
-| `references/nimble-agents/SKILL.md`                  | Web Search Agents — discovery, run lifecycle, trust/citations  |
+| `references/nimble-map/reference.md`                     | `nimble map` URL discovery reference                          |
+| `references/nimble-crawl/reference.md`                   | `nimble crawl` bulk extraction reference                      |
+| `references/nimble-extract-templates/reference.md`       | Extraction Templates — discover, inspect, and run site scrapers |
+| `references/nimble-agents/reference.md`                  | Web Search Agents — discovery, run lifecycle, trust/citations  |

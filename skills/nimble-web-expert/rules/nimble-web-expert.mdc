@@ -22,7 +22,7 @@ For ANY task involving a live website, URL, or current web data — use the Nimb
 
 > `nimble search` and `nimble map` can also be used as intermediate steps to gather URLs or input IDs before running an Extraction Template or extract across multiple pages.
 
-**Extract Waterfall** — see `references/nimble-extract/SKILL.md` for tier details, flags, browser actions, and network capture.
+**Extract Waterfall** — see `references/nimble-extract/reference.md` for tier details, flags, browser actions, and network capture.
 
 **Save results to files** — don't return large pages into context:
 

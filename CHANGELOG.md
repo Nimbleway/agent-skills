@@ -1,5 +1,18 @@
 # Changelog
 
+## [1.3.0] - 2026-08-06
+
+### Added
+- **OpenAI/Codex plugin layer.** New `.codex-plugin/plugin.json` declares `skills` as the single `./skills/` string path (an array is rejected with `plugin_skills_path_wrong_type`), `mcpServers` pointing at the existing root `.mcp.json`, and an `interface` block carrying the listing metadata: display name, short and long descriptions, developer name, category, capabilities, brand colors, three starter prompts, and the required `logo` and `composerIcon` assets. The long description and `capabilities` separate the four data capabilities explicitly — Search, Extract, Extraction Templates, and Web Search Agents — alongside Map and Crawl. The shared skill tree, the hosted MCP configuration, and all Claude, Cursor, and CLI behavior are unchanged; no OpenAI-only skill copies were added.
+- **`assets/nimble-logo.png`** at the repository root, referenced by `interface.logo` and `interface.composerIcon`. Square 200×200 PNG, satisfying the square, minimum 48×48, maximum 4096×4096, and 5 MiB asset gates.
+- **`scripts/check-plugin-manifests.py`.** Validates the manifest fields the structure check and a JSON parse both pass straight over: `skills` declared as a string rather than an array, the required `logo` and `composerIcon` assets and their dimensions read from the file header, brand-color contrast against both the light and dark surfaces, the `category` enum, and the display-name, description, and starter-prompt length limits. Each check is named after the error code OpenAI would raise, so a CI failure maps onto the published submission-error reference directly. Standard library only — no new dependency.
+- **`scripts/check-plugin-structure.sh` and a `Plugin packaging` CI workflow.** Asserts every `SKILL.md` is an immediate child of `skills/`, that no `SKILL.md` exists under any `references/` directory, that each skill's frontmatter `name` matches its directory, that `<plugin>:<skill>` stays within 64 characters, that frontmatter is present and closed, that descriptions stay within 1024 characters, and that `marketplace.json` enumerates exactly the skills that exist. Runtime discovery is recursive on both Claude Code and Codex, so these violations work locally while blocking OpenAI submission and silently emptying the xAI index — a CI gate is the only thing that surfaces them.
+
+### Changed
+- **Reference documents under `skills/nimble-web-expert/references/` are now named `reference.md` instead of `SKILL.md`.** The seven affected documents cover Search, Extract, Extraction Templates, Web Search Agents, Map, Crawl, and Tasks. A `.codex-plugin/plugin.json` is read as a Legacy-format manifest whose loader scans for `SKILL.md` recursively, so these progressive-disclosure documents registered as seven extra skills in the model-visible catalog — 22 instead of 15. Every pointer was updated across `CLAUDE.md`, `_shared/nimble-playbook.md` and its synced copies, `nimble-web-expert`'s `SKILL.md`, `README.md`, `rules/nimble-web-expert.mdc`, and `references/batch-patterns.md`. Directory names are unchanged, so no skill identifier moves.
+- **`scripts/tag-release.sh` also asserts `.codex-plugin/plugin.json`.** All four manifests, the README badge, and every skill's frontmatter must agree, so a partial bump fails CI instead of shipping manifests that disagree about the version.
+- **Trimmed the `brand-mention-monitor` and `launch-monitor` descriptions** to 1006 and 1005 characters, from 1102 and 1072. Both exceeded the 1024-character cap and would have been rejected with `skill_description_too_long`. Only descriptive prose was removed — every trigger phrase and every negative trigger is intact.
+
 ## [1.2.0] - 2026-08-05
 
 ### Changed
