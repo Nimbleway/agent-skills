@@ -2,12 +2,11 @@
 name: brand-mention-monitor
 description: |
   Scans Reddit, X, LinkedIn, Instagram, TikTok, YouTube, blogs, news, and review platforms
-  for brand mentions — scoring each one across four dimensions (reach, velocity, sentiment,
-  and risk-topic match) so marketing teams can respond before a mention spirals. Source
-  selection is market- and company-specific: B2B SaaS brands get weighted coverage of
-  LinkedIn, G2, HN, and trade press; consumer brands get TikTok, Instagram, X, and YouTube.
-  Every mention is bucketed into Crisis / Watch / Engage / Log with a suggested owner and
-  response window. Powered by Nimble.
+  for brand mentions — scoring each across four dimensions (reach, velocity, sentiment, and
+  risk-topic match) so teams can respond before one spirals. Sources adapt to the market: B2B
+  brands weight LinkedIn, G2, and trade press; consumer brands weight TikTok, Instagram, and
+  YouTube. Each is bucketed into Crisis / Watch / Engage / Log with a suggested owner and
+  response window.
 
   Use when asked to "monitor brand mentions", "scan for brand mentions", "what are people
   saying about [brand]", "brand monitoring", "social listening", "run a brand sweep",
@@ -31,7 +30,7 @@ allowed-tools:
   - AskUserQuestion
 metadata:
   author: Nimbleway
-  version: 1.2.0
+  version: 1.3.0
   category: marketing
 ---
 

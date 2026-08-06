@@ -21,7 +21,7 @@ discovered; the data is scattered across sources that may not be specified; page
 inconsistent enough that fixed parsing won't work and the tool needs to reason about what it
 finds; or free-text synthesis is needed (a report or summary, not just raw results). When a
 single known page can be parsed directly, prefer an Extraction Template
-(`references/nimble-extract-templates/SKILL.md`); for raw results to work from, use
+(`references/nimble-extract-templates/reference.md`); for raw results to work from, use
 `nimble search`.
 
 Requires **Nimble CLI 1.2.0+**. REST/SDK surface: `POST /v2/agents/*`. Credentials: read

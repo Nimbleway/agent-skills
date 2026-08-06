@@ -17,7 +17,7 @@ it returns clean, structured fields with zero selector work.
 **Existing templates only.** Building or publishing new templates is out of scope here. If no
 template covers a site, do **not** fall back to a raw `extract` (that pushes parsing onto the
 user) and do **not** try to build one — route to a **Web Search Agent** instead
-(`references/nimble-agents/SKILL.md`), which reasons about any site's structure without a
+(`references/nimble-agents/reference.md`), which reasons about any site's structure without a
 maintained template.
 
 REST/SDK surface: `POST /v2/extract/templates/{run,async,batch}`.
@@ -118,7 +118,7 @@ nimble --client-source nimble-agent-skills extract:templates async \
 
 Returns a task to poll. States: `pending` → `success` or `error`. Poll status with
 `nimble tasks get --task-id <id>` until terminal, then fetch with
-`nimble tasks results --task-id <id>` (see `references/nimble-tasks/SKILL.md`).
+`nimble tasks results --task-id <id>` (see `references/nimble-tasks/reference.md`).
 
 ---
 
@@ -135,7 +135,7 @@ nimble --client-source nimble-agent-skills extract:templates batch \
 
 Returns a `batch_id`. Poll with `nimble batches progress --batch-id <id>`, then
 `nimble batches get --batch-id <id>` for task IDs and `nimble tasks results --task-id <id>`
-for each. See `references/nimble-tasks/SKILL.md`.
+for each. See `references/nimble-tasks/reference.md`.
 
 ---
 

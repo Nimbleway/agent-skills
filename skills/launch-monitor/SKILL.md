@@ -3,11 +3,10 @@ name: launch-monitor
 description: |
   Monitors press, social, developer communities, and competitor channels from any point around
   a product launch — tracking sentiment, flagging mischaracterizations, surfacing competitor
-  responses, and recommending actions in real time. Nimble reaches sources that block standard
-  agents — including paywalled press, Reddit, LinkedIn, JavaScript-heavy pages, and live
-  community forums — while Claude triages every signal by urgency. Delivers a Response War Room
-  dashboard with a live signal feed, mischaracterization tracker, competitor response panel,
-  and sentiment velocity chart.
+  responses, and recommending actions in real time. Reaches paywalled press, Reddit, LinkedIn,
+  JavaScript-heavy pages, and live community forums, triaging every signal by urgency.
+  Delivers a Response War Room dashboard with a live signal feed, mischaracterization tracker,
+  competitor response panel, and sentiment velocity chart.
 
   Use when asked to "monitor this launch", "track the launch", "what's being said about the
   launch", "flag any mischaracterizations", "competitor response to the launch", "post-launch
@@ -34,7 +33,7 @@ allowed-tools:
   - AskUserQuestion
 metadata:
   author: Nimbleway
-  version: 1.2.0
+  version: 1.3.0
   category: marketing
 ---
 

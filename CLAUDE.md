@@ -25,11 +25,14 @@ export NIMBLE_API_KEY="your-key"   # or set in ~/.claude/settings.json under env
 skills/
   {skill-name}/                  # Each skill is a DIRECT child of skills/
     SKILL.md                     #   Skill definition (frontmatter + instructions)
-    references/                  #   On-demand docs, loaded when needed
+    references/                  #   On-demand docs, loaded when needed (reference.md, never SKILL.md)
 agents/                          # Shared sub-agent definitions (.md with frontmatter)
 _shared/                         # Canonical shared references (synced into skills)
+assets/                          # Plugin listing assets (logo, composer icon)
 .claude-plugin/plugin.json       # Claude Code plugin manifest
 .cursor-plugin/plugin.json       # Cursor plugin manifest
+.codex-plugin/plugin.json        # OpenAI / Codex plugin manifest
+.mcp.json                        # Hosted MCP config, shared by Claude Code and Codex
 commands/                        # Slash commands
 scripts/                         # Repo tooling
 ```
@@ -55,17 +58,21 @@ Verticals are recorded as `metadata.category` in each `SKILL.md` frontmatter:
 ```yaml
 metadata:
   author: Nimbleway
-  version: 1.2.0
+  version: 1.3.0
   category: business-research
 ```
 
 Add a new category by setting `metadata.category`, not by creating a folder.
 
-The two plugin manifests (`.claude-plugin/plugin.json`, `.cursor-plugin/plugin.json`) point at
-`./skills/`, so they need no per-skill path. `.claude-plugin/marketplace.json` enumerates skills
-individually — add an entry there when you add a skill, plus an `agents` update if applicable.
-That enumeration is deliberate: it keeps reference `SKILL.md` files under `references/` from
-being picked up as skills by consumers that scan recursively.
+The three plugin manifests (`.claude-plugin/plugin.json`, `.cursor-plugin/plugin.json`,
+`.codex-plugin/plugin.json`) point at `./skills/`, so they need no per-skill path.
+`.claude-plugin/marketplace.json` enumerates skills individually — add an entry there when you
+add a skill, plus an `agents` update if applicable. That enumeration is deliberate: it gives
+consumers that scan recursively an explicit list rather than a filesystem walk.
+
+Reference documents inside a skill's `references/` directory are named `reference.md`, never
+`SKILL.md` — see [Naming & structure](#naming--structure). `bash scripts/check-plugin-structure.sh`
+enforces the flat tree, the `reference.md` convention, and the marketplace enumeration together.
 
 ## Commands
 
@@ -80,6 +87,10 @@ claude "run competitor-intel for acme.com"
 # Reads the routing text out of SKILL.md, so eval and doc can't drift. No
 # Nimble calls, no credits, no API key.
 python3 scripts/run-routing-eval.py --runs 3
+
+# Packaging gates — both run in CI on every PR
+bash scripts/tag-release.sh --check          # all version references agree
+bash scripts/check-plugin-structure.sh       # skills tree is packageable everywhere
 ```
 
 Run the routing eval after any change to `nimble-web-expert`'s Core principles
@@ -101,6 +112,13 @@ Every skill follows the [Agent Skills specification](https://agentskills.io/spec
 - Name: `{domain}-{action}`, lowercase, hyphenated. Folder name must match frontmatter `name`.
 - The folder must sit directly under `skills/` — no grouping subdirectory (see [`skills/` must stay flat](#skills-must-stay-flat)). Set `metadata.category` for the vertical.
 - Aim to keep SKILL.md under ~500 lines. Use progressive disclosure: frontmatter (always loaded) → body (on trigger) → `references/` directory (on demand). The `references/` directory IS the dedicated deeper layer — SKILL.md does not need a `## References` heading.
+- **Never name a reference document `SKILL.md`.** Use `reference.md`. Codex reads a
+  `.codex-plugin/plugin.json` as a Legacy-format manifest and scans for `SKILL.md`
+  recursively, so a reference document named `SKILL.md` registers as a real skill in the
+  model-visible catalog. `bash scripts/check-plugin-structure.sh` fails on any `SKILL.md`
+  under a `references/` directory.
+- The frontmatter `description` must stay within **1024 characters** — OpenAI rejects a
+  longer one with `skill_description_too_long`, and `check-plugin-structure.sh` measures it.
 
 ### SKILL.md frontmatter
 ```yaml
@@ -140,7 +158,7 @@ metadata:
   default), explicit agent ID (`agents:runs create --agent-id`, which *requires* the ID),
   and caller-anonymous (`agents run` with neither). `use_case` (`research` / `enrichment` /
   `dataset_building`) locks on agent creation; run-level `skill` overrides once. Full
-  contract: `skills/nimble-web-expert/references/nimble-agents/SKILL.md`.
+  contract: `skills/nimble-web-expert/references/nimble-agents/reference.md`.
 - Template/agent names are dynamic — never hardcode them. `extract:templates list`,
   `agents list`, and `agents:templates list` have no server-side search: list and filter
   client-side (by domain, keyword, entity_type). Web Search Agents follow the
@@ -177,14 +195,30 @@ Skills spawn agents with `mode: "bypassPermissions"` (they don't inherit parent 
 
 ## Publishing
 
-Plugin manifests live in `.claude-plugin/plugin.json` and `.cursor-plugin/plugin.json`. They declare which `skills/` directories and `agents/` files are included. Update these when adding or removing a skill.
+Three plugin manifests declare the same shared `skills/` tree, one per platform:
 
-When adding a new skill, also add it to `.claude-plugin/marketplace.json` `skills` array.
+| Manifest | Platform | `skills` field |
+|---|---|---|
+| `.claude-plugin/plugin.json` | Claude Code | array of paths (`["./skills/"]`) |
+| `.cursor-plugin/plugin.json` | Cursor | string path (`"./skills/"`) |
+| `.codex-plugin/plugin.json` | OpenAI / Codex | string path (`"./skills/"`) |
+
+They point at the directory, not at individual skills, so adding a skill needs no manifest
+path. `.claude-plugin/marketplace.json` is the exception — it enumerates skills individually,
+so **add an entry there when you add a skill**, plus an `agents` update if applicable.
+
+The Codex manifest carries an `interface` block with the listing metadata OpenAI shows at
+install time, and `mcpServers` pointing at the root `.mcp.json` shared with Claude Code. Its
+hard limits are enforced at submission, so keep them in mind when editing: `interface.logo`
+and `interface.composerIcon` are both required and must be square images; `brandColor` needs
+at least 2:1 contrast against white and `brandColorDark` at least 2:1 against `#212121`;
+`defaultPrompt` allows at most three entries; and `category` must come from OpenAI's fixed
+list. Run `bash scripts/check-plugin-structure.sh` after any change to the skills tree.
 
 ### Version bumps
 
-`.claude-plugin/plugin.json` is the source of truth. A bump must touch every reference: both
-`plugin.json` manifests, `marketplace.json`, the `README.md` badge, and every
+`.claude-plugin/plugin.json` is the source of truth. A bump must touch every reference: all
+three `plugin.json` manifests, `marketplace.json`, the `README.md` badge, and every
 `skills/**/SKILL.md` `metadata.version` field (some quote the value, some don't). The checker
 below prints the live count, so don't rely on a number written down here.
 
@@ -209,8 +243,8 @@ After a version-bump PR merges to `main`:
 ```bash
 git checkout main && git pull
 bash scripts/tag-release.sh      # verifies, then creates the annotated tag
-git show v1.2.0                  # review the notes
-git push origin v1.2.0           # deliberate, manual
+git show v1.3.0                  # review the notes
+git push origin v1.3.0           # deliberate, manual
 ```
 
 The tag message is taken from that version's `CHANGELOG.md` section, so the notes must be
