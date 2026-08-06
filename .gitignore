@@ -8,6 +8,9 @@
 # Local docs / design documents
 docs/
 
+# Local-only working output (release note drafts, scratch)
+local/
+
 # IDE / editor plugin state
 .cursor/
 *.bak
