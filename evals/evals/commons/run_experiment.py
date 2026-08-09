@@ -516,7 +516,7 @@ def _print_summary(results: list[dict[str, Any]]) -> None:
         "skill_selection",
         "tool_selection",
         "forbidden_tools",
-        "response_adequate",
+        "response_non_empty",
     ]
     _log("\nScore summary:")
     for metric in metrics:

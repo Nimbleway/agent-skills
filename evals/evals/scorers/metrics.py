@@ -204,12 +204,16 @@ def forbidden_tools(
     return _score("forbidden_tools", ok, None if ok else f"hits={hits}")
 
 
-def response_adequate(
+def response_non_empty(
     *,
     output: Any = None,
     expected_output: Any = None,
     **kwargs: Any,
 ) -> Evaluation | None:
+    """True when the final response has more than 10 non-whitespace chars.
+
+    This is a length gate, not an LLM quality judgement — name matches that.
+    """
     expected = _expected(expected_output)
     trace = _as_trace(output)
     if _empty(trace):
@@ -219,7 +223,7 @@ def response_adequate(
     assert trace is not None
     text = (trace.final_response or trace.response or "").strip()
     ok = len(text) > 10
-    return _score("response_adequate", ok, None if ok else "empty/short response")
+    return _score("response_non_empty", ok, None if ok else "empty/short response")
 
 
 WEB_EXPERT_EVALUATORS = [
@@ -227,5 +231,5 @@ WEB_EXPERT_EVALUATORS = [
     first_turn_action,
     tool_selection,
     forbidden_tools,
-    response_adequate,
+    response_non_empty,
 ]

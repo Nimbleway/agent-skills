@@ -51,9 +51,6 @@ class EvalSettings(BaseSettings):
     eval_codex_reasoning_effort: str = Field(
         default="medium", alias="EVAL_CODEX_REASONING_EFFORT"
     )
-    eval_judge_model: str = Field(
-        default="claude-haiku-4-5-20251001", alias="EVAL_JUDGE_MODEL"
-    )
 
     results_dir: Path = Field(
         default_factory=lambda: _NIMBLE_EVALS_HOME / "results",

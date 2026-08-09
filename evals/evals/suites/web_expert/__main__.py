@@ -403,7 +403,7 @@ def main() -> None:
                 else (
                     "nimble-web-expert on assistant production prompts: "
                     "first_turn_action, skill_selection, tool_selection, "
-                    "forbidden_tools, response_adequate"
+                    "forbidden_tools, response_non_empty"
                 )
             ),
             dataset_name=args.dataset_name,

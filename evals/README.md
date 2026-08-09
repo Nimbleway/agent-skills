@@ -120,7 +120,7 @@ need shell shape and JSONL structure.
 | `skill_selection` | `nimble-web-expert` triggered when expected |
 | `tool_selection` | Soft match on `nimble search\|extract\|map\|crawl\|agent` |
 | `forbidden_tools` | No WSA-create style commands when gold forbids them |
-| `response_adequate` | Non-empty response on act/respond turns |
+| `response_non_empty` | Final response longer than 10 chars (not an LLM judge) |
 
 Gold is remapped at runtime from assistant `expected_output` (see `evals/commons/gold.py`). Extraction Templates are first-class.
 
