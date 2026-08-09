@@ -327,6 +327,8 @@ def main() -> int:
     print("\nGrok manifest, inline MCP declaration:")
     grok = manifests.get(GROK)
     problems_before = len(problems)
+    inline = None
+    canonical = None
     if grok is not None and mcp is not None:
         inline = grok.get("mcpServers")
         if check("grok_mcp_servers_inline", isinstance(inline, dict),
@@ -348,11 +350,21 @@ def main() -> int:
                           f"{inline[name]!r} != {canonical[name]!r}")
     elif grok is None:
         fail("grok_manifest_missing", f"{GROK} not found")
-    # Only claim agreement if nothing in this section failed — reporting "match"
-    # alongside a drift failure would contradict itself.
-    if len(problems) == problems_before and isinstance(mcp, dict):
-        canonical_count = len(mcp.get("mcpServers", mcp))
-        print(f"  ok       {canonical_count} server(s) match {MCP_CONFIG}")
+
+    # Claim agreement only when the comparison actually ran and found nothing wrong.
+    #
+    # All three conditions are load-bearing. `problems_before` is snapshotted after the
+    # earlier .mcp.json shape validation, so "no new problems here" does not imply the
+    # canonical config is well-formed — both isinstance guards are what establish that.
+    # Without them a malformed config (say {"mcpServers": null}) reaches len() and raises
+    # TypeError, crashing the checker instead of reporting the error it exists to report;
+    # a string value would print a server count taken from its character length.
+    if (
+        len(problems) == problems_before
+        and isinstance(inline, dict)
+        and isinstance(canonical, dict)
+    ):
+        print(f"  ok       {len(canonical)} server(s) match {MCP_CONFIG}")
 
     codex = manifests.get(CODEX)
     if codex is None:
