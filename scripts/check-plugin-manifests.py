@@ -47,6 +47,24 @@ MCP_CONFIG = ".mcp.json"
 # two files cannot be merged.
 PORTABLE_MCP = "mcp.json"
 PORTABLE_MCP_SCHEMA = "https://agent-plugins.org/schemas/1.0.0/mcp.schema.json"
+
+# The portable Agent Plugins manifest, at the spec's canonical root path. It coexists
+# with the per-client manifests rather than replacing them: no current consumer reads
+# a root plugin.json (OpenAI accepts .codex-plugin/, .agent-plugin/ and .claude-plugin/;
+# xAI reads .grok-plugin/ then .claude-plugin/), so this is additive.
+PORTABLE_PLUGIN = "plugin.json"
+PORTABLE_PLUGIN_SCHEMA = "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json"
+# additionalProperties: false — anything outside this set is rejected. Note that
+# `category` and `tags`, which the Cursor and marketplace manifests carry, are NOT
+# permitted here; they belong under an `extensions` namespace if ever needed.
+PORTABLE_PLUGIN_FIELDS = {
+    "$schema", "name", "version", "description", "author",
+    "homepage", "repository", "license", "keywords", "extensions",
+}
+PORTABLE_PLUGIN_REQUIRED = {"$schema", "name"}
+PORTABLE_AUTHOR_FIELDS = {"name", "email", "url"}
+# From the published schema, verbatim.
+PORTABLE_NAME_PATTERN = r"^(?!.*(?:--|\.\.))[a-z0-9](?:[a-z0-9.-]*[a-z0-9])?$"
 # Each is a `const` in the published schema; a server declares exactly one.
 PORTABLE_TRANSPORTS = {
     "stdio": "command",
@@ -289,7 +307,7 @@ def main() -> int:
     # -- every manifest must be readable, well-formed JSON ------------------
     print("Manifests parse:")
     manifests: dict[str, dict] = {}
-    for path in ALL_MANIFESTS + [MCP_CONFIG, PORTABLE_MCP]:
+    for path in ALL_MANIFESTS + [MCP_CONFIG, PORTABLE_MCP, PORTABLE_PLUGIN]:
         if not check("plugin_manifest_missing", os.path.isfile(path), f"{path} not found"):
             continue
         try:
@@ -437,6 +455,69 @@ def main() -> int:
     if len(problems) == portable_problems_before and isinstance(portable, dict):
         print(f"  ok       {len(portable.get('mcpServers', {}))} server(s), "
               f"schema and transports valid")
+
+    # -- the portable Agent Plugins manifest ---------------------------------
+    print(f"\nPortable manifest ({PORTABLE_PLUGIN}):")
+    pp = manifests.get(PORTABLE_PLUGIN)
+    pp_problems_before = len(problems)
+    if pp is not None:
+        missing_required = PORTABLE_PLUGIN_REQUIRED - set(pp)
+        check("portable_plugin_required_missing", not missing_required,
+              f"{PORTABLE_PLUGIN} is missing required field(s): "
+              f"{sorted(missing_required)}")
+        if "$schema" in pp:
+            check("portable_plugin_schema_wrong",
+                  pp["$schema"] == PORTABLE_PLUGIN_SCHEMA,
+                  f"{PORTABLE_PLUGIN} $schema must be exactly "
+                  f"{PORTABLE_PLUGIN_SCHEMA!r}, got {pp['$schema']!r}")
+
+        disallowed = set(pp) - PORTABLE_PLUGIN_FIELDS
+        check("portable_plugin_additional_properties", not disallowed,
+              f"{PORTABLE_PLUGIN} permits only {sorted(PORTABLE_PLUGIN_FIELDS)} "
+              f"(additionalProperties: false); found {sorted(disallowed)} — note "
+              f"'category' and 'tags' belong under an extensions namespace")
+
+        name = pp.get("name")
+        if check("portable_plugin_name_wrong_type", isinstance(name, str) and name,
+                 f"{PORTABLE_PLUGIN} name must be a non-empty string"):
+            check("portable_plugin_name_pattern",
+                  bool(re.match(PORTABLE_NAME_PATTERN, name)),
+                  f"{PORTABLE_PLUGIN} name {name!r} must match {PORTABLE_NAME_PATTERN}")
+            check("portable_plugin_name_too_long", len(name) <= 64,
+                  f"{PORTABLE_PLUGIN} name is {len(name)} chars, limit 64")
+
+        author = pp.get("author")
+        if author is not None:
+            if check("portable_plugin_author_wrong_type", isinstance(author, dict),
+                     f"{PORTABLE_PLUGIN} author must be an object"):
+                author_extra = set(author) - PORTABLE_AUTHOR_FIELDS
+                check("portable_plugin_author_additional_properties",
+                      not author_extra,
+                      f"{PORTABLE_PLUGIN} author permits only "
+                      f"{sorted(PORTABLE_AUTHOR_FIELDS)}; found {sorted(author_extra)}")
+
+        keywords = pp.get("keywords")
+        if keywords is not None:
+            check("portable_plugin_keywords_wrong_type",
+                  isinstance(keywords, list)
+                  and all(isinstance(k, str) for k in keywords),
+                  f"{PORTABLE_PLUGIN} keywords must be an array of strings")
+
+        extensions = pp.get("extensions")
+        if extensions is not None:
+            if check("portable_plugin_extensions_wrong_type",
+                     isinstance(extensions, dict),
+                     f"{PORTABLE_PLUGIN} extensions must be an object"):
+                for ns, value in extensions.items():
+                    check("portable_plugin_extension_wrong_type",
+                          isinstance(value, dict),
+                          f"{PORTABLE_PLUGIN} extensions[{ns!r}] must be an object")
+    else:
+        fail("portable_plugin_missing",
+             f"{PORTABLE_PLUGIN} not found at the plugin root")
+    if len(problems) == pp_problems_before and isinstance(pp, dict):
+        print(f"  ok       schema, name, and {len(set(pp) - {'$schema'})} "
+              f"declared field(s) valid")
 
     codex = manifests.get(CODEX)
     if codex is None:
