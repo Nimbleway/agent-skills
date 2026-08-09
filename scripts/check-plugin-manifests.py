@@ -42,6 +42,18 @@ ALL_MANIFESTS = [
 ]
 MCP_CONFIG = ".mcp.json"
 
+# The portable Agent Plugins MCP config, at the spec's canonical root path. Distinct
+# from MCP_CONFIG on purpose — see the portable-config section in main() for why the
+# two files cannot be merged.
+PORTABLE_MCP = "mcp.json"
+PORTABLE_MCP_SCHEMA = "https://agent-plugins.org/schemas/1.0.0/mcp.schema.json"
+# Each is a `const` in the published schema; a server declares exactly one.
+PORTABLE_TRANSPORTS = {
+    "stdio": "command",
+    "streamable-http": "url",
+    "sse": "url",
+}
+
 # interface.category must come from this fixed list (plugin_category_unknown).
 CATEGORIES = {
     "Productivity", "Creativity", "Developer Tools", "Business & Operations",
@@ -277,7 +289,7 @@ def main() -> int:
     # -- every manifest must be readable, well-formed JSON ------------------
     print("Manifests parse:")
     manifests: dict[str, dict] = {}
-    for path in ALL_MANIFESTS + [MCP_CONFIG]:
+    for path in ALL_MANIFESTS + [MCP_CONFIG, PORTABLE_MCP]:
         if not check("plugin_manifest_missing", os.path.isfile(path), f"{path} not found"):
             continue
         try:
@@ -365,6 +377,66 @@ def main() -> int:
         and isinstance(canonical, dict)
     ):
         print(f"  ok       {len(canonical)} server(s) match {MCP_CONFIG}")
+    # -- the portable Agent Plugins MCP config, at the canonical root path --
+    #
+    # Two MCP files, deliberately. They describe the same endpoint in different
+    # vocabularies, and no single file satisfies every consumer:
+    #
+    #   portable mcp.json   "type": "streamable-http"   (a schema const)
+    #   Claude .mcp.json    "type": "http"
+    #   Codex               no type key; HTTP inferred from the presence of url
+    #
+    # The portable schema also sets additionalProperties: false at the root and on
+    # every server, so there is no room to carry a second vocabulary in one file.
+    # Do not "harmonise" these — of the two, only .mcp.json is read by Claude Code's
+    # Connector registration, so collapsing them breaks the primary install path.
+    print(f"\nPortable MCP config ({PORTABLE_MCP}):")
+    portable = manifests.get(PORTABLE_MCP)
+    portable_problems_before = len(problems)
+    if portable is not None:
+        check("portable_mcp_schema_missing", "$schema" in portable,
+              f"{PORTABLE_MCP} must declare $schema — it is required by the spec")
+        if "$schema" in portable:
+            check("portable_mcp_schema_wrong", portable["$schema"] == PORTABLE_MCP_SCHEMA,
+                  f"{PORTABLE_MCP} $schema must be exactly {PORTABLE_MCP_SCHEMA!r}, "
+                  f"got {portable['$schema']!r}")
+        extra = set(portable) - {"$schema", "mcpServers"}
+        check("portable_mcp_additional_properties", not extra,
+              f"{PORTABLE_MCP} permits only $schema and mcpServers at the top level "
+              f"(additionalProperties: false); found {sorted(extra)}")
+
+        p_servers = portable.get("mcpServers")
+        if check("portable_mcp_servers_missing",
+                 isinstance(p_servers, dict) and len(p_servers) > 0,
+                 f"{PORTABLE_MCP} must declare mcpServers with at least one server"):
+            for name, cfg in p_servers.items():
+                if not check("portable_mcp_server_wrong_type", isinstance(cfg, dict),
+                             f"{PORTABLE_MCP}: server {name!r} must be an object"):
+                    continue
+                transport = cfg.get("type")
+                if not check(
+                    "portable_mcp_transport_invalid",
+                    transport in PORTABLE_TRANSPORTS,
+                    f"{PORTABLE_MCP}: server {name!r} type must be one of "
+                    f"{sorted(PORTABLE_TRANSPORTS)}, got {transport!r} — note "
+                    f'"http" is the Claude vocabulary and is not valid here',
+                ):
+                    continue
+                required = PORTABLE_TRANSPORTS[transport]
+                check("portable_mcp_server_missing_field", cfg.get(required),
+                      f"{PORTABLE_MCP}: server {name!r} with type {transport!r} "
+                      f"requires {required!r}")
+                allowed = {"type", required}
+                server_extra = set(cfg) - allowed
+                check("portable_mcp_server_additional_properties", not server_extra,
+                      f"{PORTABLE_MCP}: server {name!r} permits only {sorted(allowed)} "
+                      f"(additionalProperties: false); found {sorted(server_extra)}")
+    else:
+        fail("portable_mcp_missing", f"{PORTABLE_MCP} not found at the plugin root")
+    # Only claim validity when every check in this section actually passed.
+    if len(problems) == portable_problems_before and isinstance(portable, dict):
+        print(f"  ok       {len(portable.get('mcpServers', {}))} server(s), "
+              f"schema and transports valid")
 
     codex = manifests.get(CODEX)
     if codex is None:
