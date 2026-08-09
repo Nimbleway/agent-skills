@@ -1,0 +1,135 @@
+name: Skills production evals
+
+# Manual dispatch — runs nimble-web-expert against Langfuse nimble-web-expert-production.
+# Prompts never appear in this repo; CI must use Langfuse secrets.
+# Prefer redacted summaries only (item ids + metric rates). Do not upload prompt-bearing
+# artifacts on public forks.
+
+on:
+  workflow_dispatch:
+    inputs:
+      runtime:
+        description: "CLI runtime"
+        type: choice
+        options: [claude, codex, both]
+        default: claude
+      max_items:
+        description: "Stratified sample size (empty = full dataset)"
+        type: string
+        default: "50"
+      tag:
+        description: "Optional metadata tag filter (e.g. extraction-templates)"
+        type: string
+        default: ""
+      check_regression:
+        description: "Enforce first_turn_action regression gate"
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+concurrency:
+  group: skills-evals-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  eval:
+    name: nimble-web-expert production (${{ inputs.runtime }})
+    runs-on: ubuntu-latest
+    # Deliberate job ceilings (not inherited): empty max_items = full ~489-item
+    # dataset needs up to ~6h; sampled runs (default 50) cap at 4h. Per-item
+    # harness timeout (600s) bounds a hung CLI; cancel-in-progress drops
+    # superseded dispatches.
+    timeout-minutes: ${{ inputs.max_items == '' && 360 || 240 }}
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@d4b2f3b6ecc6e67c4457f6d3e41ec42d3d0fcb86 # v5.4.2
+        with:
+          enable-cache: true
+
+      - name: Setup Node
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version: "22"
+
+      - name: Sync eval package
+        working-directory: evals
+        run: uv sync
+
+      # Pinned npm installs (no curl|bash). Bump versions intentionally.
+      - name: Install Claude Code + Nimble CLI
+        if: inputs.runtime == 'claude' || inputs.runtime == 'both'
+        run: |
+          set -euo pipefail
+          npm install -g @anthropic-ai/claude-code@2.1.223 @nimble-way/nimble-cli@1.2.0
+          command -v claude
+          command -v nimble
+
+      - name: Install Codex + Nimble CLI
+        if: inputs.runtime == 'codex' || inputs.runtime == 'both'
+        run: |
+          set -euo pipefail
+          npm install -g @openai/codex@0.146.1 @nimble-way/nimble-cli@1.2.0
+          command -v codex
+          command -v nimble
+          codex --version
+
+      - name: Run production eval
+        working-directory: evals
+        env:
+          LANGFUSE_PUBLIC_KEY: ${{ secrets.LANGFUSE_PUBLIC_KEY }}
+          LANGFUSE_SECRET_KEY: ${{ secrets.LANGFUSE_SECRET_KEY }}
+          LANGFUSE_HOST: ${{ secrets.LANGFUSE_HOST || 'https://us.cloud.langfuse.com' }}
+          NIMBLE_API_KEY: ${{ secrets.NIMBLE_API_KEY }}
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          CLAUDE_CODE_OAUTH_TOKEN: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          MAX_CONCURRENCY: "4"
+        run: |
+          set -euo pipefail
+          ARGS=(--dataset-name=nimble-web-expert-production --runtime "${{ inputs.runtime }}")
+          if [[ -n "${{ inputs.max_items }}" ]]; then
+            ARGS+=(--max-items "${{ inputs.max_items }}")
+          fi
+          if [[ -n "${{ inputs.tag }}" ]]; then
+            ARGS+=(--tag "${{ inputs.tag }}")
+          fi
+          if [[ "${{ inputs.check_regression }}" == "true" ]]; then
+            ARGS+=(--check-regression)
+          fi
+          uv run python -m evals.suites.web_expert "${ARGS[@]}"
+
+      - name: Summarize scores (redacted)
+        if: always()
+        run: |
+          python3 - <<'PY'
+          import json, sys
+          from pathlib import Path
+          results = Path.home() / ".nimble" / "skills-evals" / "results"
+          files = sorted(results.glob("*_results.json")) if results.is_dir() else []
+          if not files:
+              print("No results JSON found")
+              sys.exit(0)
+          for path in files:
+              rows = json.loads(path.read_text())
+              print(f"### {path.name} (n={len(rows)})")
+              metrics = ["first_turn_action", "skill_selection", "tool_selection", "forbidden_tools"]
+              for m in metrics:
+                  vals = []
+                  for r in rows:
+                      if r.get("error"):
+                          continue
+                      s = (r.get("scores") or {}).get(m) or {}
+                      v = s.get("value")
+                      if isinstance(v, bool):
+                          vals.append(float(v))
+                  if vals:
+                      print(f"- {m}: {sum(vals)/len(vals):.3f} ({sum(vals):.0f}/{len(vals)})")
+                  else:
+                      print(f"- {m}: n/a")
+              fails = [r for r in rows if (r.get("scores") or {}).get("first_turn_action", {}).get("value") is False]
+              print(f"- first_turn_action failures (ids only): {[r.get('id') for r in fails[:20]]}")
+          PY

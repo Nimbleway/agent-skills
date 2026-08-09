@@ -1,0 +1,8 @@
+{"type":"item.started","item":{"type":"command_execution","id":"cmd_1","command":"cat ~/.agents/skills/nimble-web-expert/SKILL.md | head"}}
+{"type":"item.completed","item":{"type":"command_execution","id":"cmd_1","command":"cat ~/.agents/skills/nimble-web-expert/SKILL.md | head","aggregated_output":"# nimble-web-expert\n","exit_code":0}}
+{"type":"item.started","item":{"type":"web_search","id":"ws_1","query":"acme corp overview","action":{"type":"search","queries":["acme corp overview"]}}}
+{"type":"item.completed","item":{"type":"web_search","id":"ws_1","query":"acme corp overview","action":{"type":"search","queries":["acme corp overview"]}}}
+{"type":"item.started","item":{"type":"command_execution","id":"cmd_2","command":"nimble --client-source nimble-agent-skills search --query \"acme\" --limit 3"}}
+{"type":"item.completed","item":{"type":"command_execution","id":"cmd_2","command":"nimble --client-source nimble-agent-skills search --query \"acme\" --limit 3","aggregated_output":"{\"results\":[]}","exit_code":0}}
+{"type":"item.completed","item":{"type":"agent_message","text":"Here is what I found for acme."}}
+{"type":"turn.completed","usage":{"input_tokens":20,"output_tokens":10}}

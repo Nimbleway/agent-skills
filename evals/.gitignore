@@ -1,0 +1,18 @@
+.env
+.env.*
+!.env.example
+.venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.ruff_cache/
+results/
+*_results.json
+*_meta.json
+*_run_name.txt
+datasets/
+# Production seeds must never be committed
+**/*_seed.json
+**/dataset_production*.json
+.tmp/
+.traces/
