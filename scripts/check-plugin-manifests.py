@@ -65,11 +65,32 @@ PORTABLE_PLUGIN_REQUIRED = {"$schema", "name"}
 PORTABLE_AUTHOR_FIELDS = {"name", "email", "url"}
 # From the published schema, verbatim.
 PORTABLE_NAME_PATTERN = r"^(?!.*(?:--|\.\.))[a-z0-9](?:[a-z0-9.-]*[a-z0-9])?$"
-# Each is a `const` in the published schema; a server declares exactly one.
-PORTABLE_TRANSPORTS = {
+# Each transport `type` is a `const` in the published schema; a server declares exactly
+# one. REQUIRED is the field the schema demands alongside `type`; PERMITTED is the full
+# set of *declared* properties for that transport. The two are not the same — every
+# server sets additionalProperties: false, so a key outside PERMITTED is rejected, but
+# the optional keys inside it are perfectly valid. Conflating the two rejects a standard
+# stdio server that carries `args`.
+PORTABLE_TRANSPORT_REQUIRED = {
     "stdio": "command",
     "streamable-http": "url",
     "sse": "url",
+}
+PORTABLE_TRANSPORT_PERMITTED = {
+    "stdio": {"type", "command", "args", "env", "cwd"},
+    "streamable-http": {"type", "url", "headers"},
+    "sse": {"type", "url", "headers"},
+}
+# Optional fields, with the type the schema declares, so a wrong type is caught rather
+# than passed through on truthiness.
+PORTABLE_SERVER_FIELD_TYPES = {
+    "args": ("array of strings", lambda v: isinstance(v, list)
+             and all(isinstance(i, str) for i in v)),
+    "env": ("object with string values", lambda v: isinstance(v, dict)
+            and all(isinstance(i, str) for i in v.values())),
+    "cwd": ("string", lambda v: isinstance(v, str)),
+    "headers": ("object with string values", lambda v: isinstance(v, dict)
+                and all(isinstance(i, str) for i in v.values())),
 }
 
 # interface.category must come from this fixed list (plugin_category_unknown).
@@ -434,23 +455,42 @@ def main() -> int:
                 transport = cfg.get("type")
                 if not check(
                     "portable_mcp_transport_invalid",
-                    transport in PORTABLE_TRANSPORTS,
+                    transport in PORTABLE_TRANSPORT_REQUIRED,
                     f"{PORTABLE_MCP}: server {name!r} type must be one of "
-                    f"{sorted(PORTABLE_TRANSPORTS)}, got {transport!r} — note "
+                    f"{sorted(PORTABLE_TRANSPORT_REQUIRED)}, got {transport!r} — note "
                     f'"http" is the Claude vocabulary and is not valid here',
                 ):
                     continue
-                required = PORTABLE_TRANSPORTS[transport]
-                check("portable_mcp_server_missing_field", cfg.get(required),
-                      f"{PORTABLE_MCP}: server {name!r} with type {transport!r} "
-                      f"requires {required!r}")
-                allowed = {"type", required}
+
+                # The schema types this as a string with minLength 1, so check the type
+                # rather than truthiness — a number or object is truthy and would
+                # otherwise pass a gate whose whole job is rejecting invalid shapes.
+                required = PORTABLE_TRANSPORT_REQUIRED[transport]
+                value = cfg.get(required)
+                check("portable_mcp_server_missing_field",
+                      isinstance(value, str) and value.strip() != "",
+                      f"{PORTABLE_MCP}: server {name!r} with type {transport!r} requires "
+                      f"{required!r} as a non-empty string, got {type(value).__name__}"
+                      + ("" if value is None else f" ({value!r})"))
+
+                # PERMITTED, not {type, required}: the optional declared fields are valid.
+                allowed = PORTABLE_TRANSPORT_PERMITTED[transport]
                 server_extra = set(cfg) - allowed
                 check("portable_mcp_server_additional_properties", not server_extra,
-                      f"{PORTABLE_MCP}: server {name!r} permits only {sorted(allowed)} "
-                      f"(additionalProperties: false); found {sorted(server_extra)}")
-    else:
+                      f"{PORTABLE_MCP}: server {name!r} with type {transport!r} permits "
+                      f"only {sorted(allowed)} (additionalProperties: false); found "
+                      f"{sorted(server_extra)}")
+
+                for field, (described, ok) in PORTABLE_SERVER_FIELD_TYPES.items():
+                    if field in cfg and field in allowed:
+                        check("portable_mcp_server_field_wrong_type", ok(cfg[field]),
+                              f"{PORTABLE_MCP}: server {name!r} field {field!r} must be "
+                              f"{described}, got {type(cfg[field]).__name__}")
+    elif not os.path.isfile(os.path.join(REPO_ROOT, PORTABLE_MCP)):
         fail("portable_mcp_missing", f"{PORTABLE_MCP} not found at the plugin root")
+    # Otherwise the file exists but did not parse into a JSON object, and the
+    # plugin_manifest_* checks above already said so. Claiming "not found" here would
+    # add a second, contradictory error for one underlying problem.
     # Only claim validity when every check in this section actually passed.
     if len(problems) == portable_problems_before and isinstance(portable, dict):
         print(f"  ok       {len(portable.get('mcpServers', {}))} server(s), "
@@ -512,9 +552,11 @@ def main() -> int:
                     check("portable_plugin_extension_wrong_type",
                           isinstance(value, dict),
                           f"{PORTABLE_PLUGIN} extensions[{ns!r}] must be an object")
-    else:
+    elif not os.path.isfile(os.path.join(REPO_ROOT, PORTABLE_PLUGIN)):
         fail("portable_plugin_missing",
              f"{PORTABLE_PLUGIN} not found at the plugin root")
+    # Same reasoning as the MCP config above: a file that exists but failed to parse
+    # into an object has already been reported by the plugin_manifest_* checks.
     if len(problems) == pp_problems_before and isinstance(pp, dict):
         print(f"  ok       schema, name, and {len(set(pp) - {'$schema'})} "
               f"declared field(s) valid")
