@@ -1,0 +1,8 @@
+{"type":"system","subtype":"init","model":"claude-sonnet-5","session_id":"s1"}
+{"type":"assistant","message":{"model":"claude-sonnet-5","role":"assistant","content":[{"type":"text","text":"I'll fetch the site."}]},"session_id":"s1"}
+{"type":"assistant","message":{"model":"claude-sonnet-5","role":"assistant","content":[{"type":"tool_use","id":"toolu_skill1","name":"Skill","input":{"skill":"nimble:nimble-web-expert","args":"fetch example.com"}}]},"session_id":"s1"}
+{"type":"user","message":{"role":"user","content":[{"type":"tool_result","tool_use_id":"toolu_skill1","content":"Launching skill: nimble:nimble-web-expert"}]},"session_id":"s1"}
+{"type":"assistant","message":{"model":"claude-sonnet-5","role":"assistant","content":[{"type":"tool_use","id":"toolu_bash1","name":"Bash","input":{"command":"nimble --client-source nimble-agent-skills extract run --url https://example.com --format markdown","description":"Extract homepage"}}]},"session_id":"s1"}
+{"type":"user","message":{"role":"user","content":[{"type":"tool_result","tool_use_id":"toolu_bash1","content":"# Acme\nWe build widgets.","is_error":false}]},"session_id":"s1"}
+{"type":"assistant","message":{"model":"claude-sonnet-5","role":"assistant","content":[{"type":"text","text":"Acme builds widgets."}]},"session_id":"s1"}
+{"type":"result","subtype":"success","is_error":false,"num_turns":3,"total_cost_usd":0.12,"result":"Acme builds widgets.","stop_reason":"end_turn","modelUsage":{"claude-sonnet-5":{"inputTokens":100,"outputTokens":50}}}

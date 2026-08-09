@@ -19,7 +19,9 @@ If you prefer to do it manually:
 3. Create your skill folder directly under `skills/` — never inside a grouping subdirectory — and set `metadata.category` in the frontmatter to record its vertical
 4. Register it in `.claude-plugin/marketplace.json` (the plugin manifests already point at `./skills/`, so no per-skill path entry is needed)
 5. Test it locally: `claude "run {skill-name} for acme.com"`
-6. Check the packaging gates: `bash scripts/check-plugin-structure.sh` and, if you touched a
+6. For `nimble-web-expert` changes, also run the production CLI eval (see `evals/README.md`)
+   and/or the routing eval: `python3 scripts/run-routing-eval.py`
+7. Check the packaging gates: `bash scripts/check-plugin-structure.sh` and, if you touched a
    manifest, `python3 scripts/check-plugin-manifests.py`
 
 ## Conventions

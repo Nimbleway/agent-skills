@@ -1,0 +1,7 @@
+{
+  "first_turn_action_pass_rate": null,
+  "skill_selection_pass_rate": null,
+  "dataset_name": "nimble-web-expert-production",
+  "dataset_hash": null,
+  "notes": "Set pass rates after the first calibrated full run. Regression gate skips while rates are null."
+}

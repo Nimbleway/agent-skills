@@ -88,6 +88,13 @@ claude "run competitor-intel for acme.com"
 # Nimble calls, no credits, no API key.
 python3 scripts/run-routing-eval.py --runs 3
 
+# Production CLI eval — run nimble-web-expert via Claude/Codex against the
+# private Langfuse dataset. See evals/README.md.
+# Prompts/traces are never committed to this public repo.
+cd evals && uv sync
+uv run python -m evals.suites.web_expert \
+  --dataset-name=nimble-web-expert-production --runtime claude --max-items 50
+
 # Packaging gates — all three run in CI on every PR
 bash scripts/tag-release.sh --check           # all version references agree
 bash scripts/check-plugin-structure.sh        # skills tree is packageable everywhere
@@ -98,6 +105,10 @@ Run the routing eval after any change to `nimble-web-expert`'s Core principles
 or Analyze & Route sections. Cases live in `evals/nimble-web-expert-routing.json`;
 add one whenever a mis-route is found in the wild. A failing case is not
 automatically a doc bug — check whether the expectation is right first.
+
+Run the production CLI eval (`evals/`) when changing skill load behavior, CLI
+routing to Nimble commands, or before a release that touches `nimble-web-expert`.
+Results stay out of git — see `evals/README.md`.
 
 ## Skill authoring
 

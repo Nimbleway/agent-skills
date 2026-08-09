@@ -79,8 +79,23 @@ out/
 coverage/
 .nyc_output/
 
-# Plugin-specific
+# Plugin-specific / nimble CLI local outputs (skill redirects scrape data here)
+.nimble/
 .nimble-cache/
 research-results/
 extracted-content/
 .agents/
+
+# Eval harness local outputs (prompts/results/seeds must not be published)
+evals/.venv/
+evals/results/
+evals/.traces/
+evals/**/*_results.json
+evals/**/*_meta.json
+evals/**/*_run_name.txt
+evals/.env
+evals/.env.*
+!evals/.env.example
+evals/datasets/
+evals/**/*_seed.json
+evals/**/dataset_production*.json
