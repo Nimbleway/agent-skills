@@ -20,6 +20,8 @@ from evals.commons.langfuse_otel import (
     build_codex_langfuse_env,
     langfuse_basic_auth,
     langfuse_otel_endpoint,
+    merge_cli_env,
+    strip_foreign_provider_secrets,
 )
 from evals.commons.langfuse_payload import (
     claude_stream_to_langfuse_payload,
@@ -272,6 +274,65 @@ def test_langfuse_otel_endpoint_strips_slash() -> None:
         langfuse_otel_endpoint("https://cloud.langfuse.com/")
         == "https://cloud.langfuse.com/api/public/otel"
     )
+
+
+def test_strip_foreign_provider_secrets() -> None:
+    base = {
+        "PATH": "/usr/bin",
+        "NIMBLE_API_KEY": "nbl_x",
+        "OPENAI_API_KEY": "sk-openai",
+        "OPENAI_ORG_ID": "org",
+        "ANTHROPIC_API_KEY": "sk-ant",
+        "CLAUDE_CODE_OAUTH_TOKEN": "oauth",
+        "LANGFUSE_SECRET_KEY": "sk-lf",
+    }
+    claude = strip_foreign_provider_secrets(base, "claude")
+    assert "OPENAI_API_KEY" not in claude
+    assert "OPENAI_ORG_ID" not in claude
+    assert claude["ANTHROPIC_API_KEY"] == "sk-ant"
+    assert claude["NIMBLE_API_KEY"] == "nbl_x"
+
+    codex = strip_foreign_provider_secrets(base, "codex")
+    assert "ANTHROPIC_API_KEY" not in codex
+    assert "CLAUDE_CODE_OAUTH_TOKEN" not in codex
+    assert codex["OPENAI_API_KEY"] == "sk-openai"
+    assert codex["LANGFUSE_SECRET_KEY"] == "sk-lf"
+
+
+def test_merge_cli_env_strips_foreign_keys() -> None:
+    settings = EvalSettings(
+        LANGFUSE_PUBLIC_KEY="pk-lf-test",
+        LANGFUSE_SECRET_KEY="sk-lf-test",
+        LANGFUSE_HOST="https://us.cloud.langfuse.com",
+    )
+    env = merge_cli_env(
+        {
+            "PATH": "/usr/bin",
+            "OPENAI_API_KEY": "sk-openai",
+            "ANTHROPIC_API_KEY": "sk-ant",
+            "CLAUDE_CODE_OAUTH_TOKEN": "oauth",
+        },
+        settings=settings,
+        runtime="claude",
+        enable_otel=False,
+    )
+    assert "OPENAI_API_KEY" not in env
+    assert env["ANTHROPIC_API_KEY"] == "sk-ant"
+
+    codex = merge_cli_env(
+        {
+            "PATH": "/usr/bin",
+            "OPENAI_API_KEY": "sk-openai",
+            "ANTHROPIC_API_KEY": "sk-ant",
+            "CLAUDE_CODE_OAUTH_TOKEN": "oauth",
+        },
+        settings=settings,
+        runtime="codex",
+    )
+    assert "ANTHROPIC_API_KEY" not in codex
+    assert "CLAUDE_CODE_OAUTH_TOKEN" not in codex
+    assert codex["OPENAI_API_KEY"] == "sk-openai"
+    assert codex["TRACE_TO_LANGFUSE"] == "true"
 
 
 def test_payload_truncates_huge_tool_output() -> None:

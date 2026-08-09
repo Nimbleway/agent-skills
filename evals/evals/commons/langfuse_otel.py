@@ -86,6 +86,34 @@ def current_traceparent() -> str | None:
         return None
 
 
+def strip_foreign_provider_secrets(env: dict[str, str], runtime: str) -> dict[str, str]:
+    """Drop the other coding-agent provider's credentials from a child env.
+
+    Child CLIs still inherit PATH / HOME / NIMBLE_* / Langfuse from the parent —
+    a full allowlist is too brittle for local nvm + auth layouts — but a Codex
+    run should not see ANTHROPIC_* / Claude OAuth, and a Claude run should not
+    see OPENAI_*.
+    """
+    out = dict(env)
+    if runtime == "claude":
+        drop_prefixes = ("OPENAI_",)
+        drop_exact: frozenset[str] = frozenset()
+    elif runtime == "codex":
+        drop_prefixes = ("ANTHROPIC_",)
+        drop_exact = frozenset(
+            {
+                "CLAUDE_CODE_OAUTH_TOKEN",
+                "CLAUDE_API_KEY",
+            }
+        )
+    else:
+        return out
+    for key in list(out):
+        if key in drop_exact or key.startswith(drop_prefixes):
+            out.pop(key, None)
+    return out
+
+
 def merge_cli_env(
     base: dict[str, str],
     *,
@@ -94,7 +122,7 @@ def merge_cli_env(
     enable_otel: bool | None = None,
 ) -> dict[str, str]:
     """Merge Langfuse/OTEL wiring into a subprocess env."""
-    env = dict(base)
+    env = strip_foreign_provider_secrets(dict(base), runtime)
     if runtime == "claude":
         # Default OFF — converted stream-json observations are the readable path.
         use_otel = (

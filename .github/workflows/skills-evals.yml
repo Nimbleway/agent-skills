@@ -37,7 +37,11 @@ jobs:
   eval:
     name: nimble-web-expert production (${{ inputs.runtime }})
     runs-on: ubuntu-latest
-    timeout-minutes: 360
+    # Deliberate job ceilings (not inherited): empty max_items = full ~489-item
+    # dataset needs up to ~6h; sampled runs (default 50) cap at 4h. Per-item
+    # harness timeout (600s) bounds a hung CLI; cancel-in-progress drops
+    # superseded dispatches.
+    timeout-minutes: ${{ inputs.max_items == '' && 360 || 240 }}
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
 
