@@ -27,6 +27,11 @@
     "company-research",
     "business-intelligence"
   ],
-  "skills": ["./skills/"],
-  "agents": ["./agents/nimble-researcher.md", "./agents/nimble-analyst.md"]
+  "skills": "./skills/",
+  "mcpServers": {
+    "nimble": {
+      "type": "http",
+      "url": "https://mcp.nimbleway.com/mcp"
+    }
+  }
 }
