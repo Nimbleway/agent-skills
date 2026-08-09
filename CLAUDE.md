@@ -32,7 +32,8 @@ assets/                          # Plugin listing assets (logo, composer icon)
 .claude-plugin/plugin.json       # Claude Code plugin manifest
 .cursor-plugin/plugin.json       # Cursor plugin manifest
 .codex-plugin/plugin.json        # OpenAI / Codex plugin manifest
-.mcp.json                        # Hosted MCP config, shared by Claude Code and Codex
+.grok-plugin/plugin.json         # xAI / Grok Build plugin manifest
+.mcp.json                        # Hosted MCP config — Claude Code and Codex (Grok declares inline)
 commands/                        # Slash commands
 scripts/                         # Repo tooling
 ```
@@ -58,14 +59,14 @@ Verticals are recorded as `metadata.category` in each `SKILL.md` frontmatter:
 ```yaml
 metadata:
   author: Nimbleway
-  version: 1.3.0
+  version: 1.4.0
   category: business-research
 ```
 
 Add a new category by setting `metadata.category`, not by creating a folder.
 
-The three plugin manifests (`.claude-plugin/plugin.json`, `.cursor-plugin/plugin.json`,
-`.codex-plugin/plugin.json`) point at `./skills/`, so they need no per-skill path.
+The four plugin manifests (`.claude-plugin/plugin.json`, `.cursor-plugin/plugin.json`,
+`.codex-plugin/plugin.json`, `.grok-plugin/plugin.json`) point at `./skills/`, so they need no per-skill path.
 `.claude-plugin/marketplace.json` enumerates skills individually — add an entry there when you
 add a skill, plus an `agents` update if applicable. That enumeration is deliberate: it gives
 consumers that scan recursively an explicit list rather than a filesystem walk.
@@ -196,17 +197,36 @@ Skills spawn agents with `mode: "bypassPermissions"` (they don't inherit parent 
 
 ## Publishing
 
-Three plugin manifests declare the same shared `skills/` tree, one per platform:
+Four plugin manifests declare the same shared `skills/` tree, one per platform:
 
-| Manifest | Platform | `skills` field |
-|---|---|---|
-| `.claude-plugin/plugin.json` | Claude Code | array of paths (`["./skills/"]`) |
-| `.cursor-plugin/plugin.json` | Cursor | string path (`"./skills/"`) |
-| `.codex-plugin/plugin.json` | OpenAI / Codex | string path (`"./skills/"`) |
+| Manifest | Platform | `skills` field | MCP declared as |
+|---|---|---|---|
+| `.claude-plugin/plugin.json` | Claude Code | array of paths (`["./skills/"]`) | root `.mcp.json` (auto) |
+| `.cursor-plugin/plugin.json` | Cursor | string path (`"./skills/"`) | root `mcp.json` |
+| `.codex-plugin/plugin.json` | OpenAI / Codex | string path (`"./skills/"`) | `"./.mcp.json"` |
+| `.grok-plugin/plugin.json` | xAI / Grok Build | string path (`"./skills/"`) | **inline object** |
 
 They point at the directory, not at individual skills, so adding a skill needs no manifest
 path. `.claude-plugin/marketplace.json` is the exception — it enumerates skills individually,
 so **add an entry there when you add a skill**, plus an `agents` update if applicable.
+
+### Why the Grok manifest declares MCP inline
+
+**Do not "simplify" `.grok-plugin/plugin.json`'s `mcpServers` to `"./.mcp.json"`.** It looks
+tidier and silently breaks the Grok listing. `scripts/check-plugin-manifests.py` fails on it.
+
+xAI's indexer (`scripts/plugin_catalog.py` in `xai-org/plugin-marketplace`, verified 2026-08-09)
+reads a `.mcp.json` file's `mcpServers` key and nothing else. This repo's `.mcp.json` is a bare
+server map with no such key, so a path declaration indexes **zero** servers and Grok Build's
+catalog would claim the plugin ships no MCP server at all. If xAI later accepts a bare map, this
+rationale is what to re-check — the CI guard asserts our two copies agree, not their parser.
+
+The obvious fix — adding an `mcpServers` wrapper to `.mcp.json` — is the wrong one. That file is
+what Claude Code auto-registers as a Connector over native HTTP with OAuth, and it is the primary
+install path. Declaring inline keeps `.mcp.json` byte-identical, so Claude behaviour cannot
+regress, and it leaves OpenAI's path declaration valid too (OpenAI documents the bare map).
+
+The cost is one duplicated server config, and CI asserts the copies never drift.
 
 The Codex manifest carries an `interface` block with the listing metadata OpenAI shows at
 install time, and `mcpServers` pointing at the root `.mcp.json` shared with Claude Code. Its
@@ -223,7 +243,7 @@ the error code OpenAI would raise. Run it after editing any manifest, and
 ### Version bumps
 
 `.claude-plugin/plugin.json` is the source of truth. A bump must touch every reference: all
-three `plugin.json` manifests, `marketplace.json`, the `README.md` badge, and every
+four `plugin.json` manifests, `marketplace.json`, the `README.md` badge, and every
 `skills/**/SKILL.md` `metadata.version` field (some quote the value, some don't). The checker
 below prints the live count, so don't rely on a number written down here.
 
@@ -248,8 +268,8 @@ After a version-bump PR merges to `main`:
 ```bash
 git checkout main && git pull
 bash scripts/tag-release.sh      # verifies, then creates the annotated tag
-git show v1.3.0                  # review the notes
-git push origin v1.3.0           # deliberate, manual
+git show v1.4.0                  # review the notes
+git push origin v1.4.0           # deliberate, manual
 ```
 
 The tag message is taken from that version's `CHANGELOG.md` section, so the notes must be

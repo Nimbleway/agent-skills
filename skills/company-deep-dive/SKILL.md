@@ -33,7 +33,7 @@ allowed-tools:
   - AskUserQuestion
 metadata:
   author: Nimbleway
-  version: 1.3.0
+  version: 1.4.0
   category: business-research
 ---
 

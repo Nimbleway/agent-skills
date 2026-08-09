@@ -30,8 +30,8 @@ If you prefer to do it manually:
 
 ## Versions and releases
 
-The plugin version is duplicated across all three plugin manifests (Claude Code, Cursor, and
-Codex), `marketplace.json`, the README badge, and every skill's `metadata.version`.
+The plugin version is duplicated across all four plugin manifests (Claude Code, Cursor, Codex,
+and Grok Build), `marketplace.json`, the README badge, and every skill's `metadata.version`.
 `.claude-plugin/plugin.json` is the source of truth.
 
 If your change warrants a version bump, bump all of them in one pass and check it:

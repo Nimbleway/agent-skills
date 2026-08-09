@@ -32,11 +32,13 @@ import xml.etree.ElementTree as ET
 REPO_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 CODEX = ".codex-plugin/plugin.json"
+GROK = ".grok-plugin/plugin.json"
 ALL_MANIFESTS = [
     ".claude-plugin/plugin.json",
     ".cursor-plugin/plugin.json",
     ".claude-plugin/marketplace.json",
     CODEX,
+    GROK,
 ]
 MCP_CONFIG = ".mcp.json"
 
@@ -308,6 +310,61 @@ def main() -> int:
             for name, cfg in servers.items():
                 check("mcp_server_entry", isinstance(cfg, dict),
                       f"{MCP_CONFIG}: server {name!r} must be an object")
+
+    # -- the Grok manifest's inline MCP declaration must not drift ----------
+    #
+    # The Grok manifest declares mcpServers as an inline object rather than as a path
+    # to .mcp.json, and that is deliberate. xAI's indexer reads only the "mcpServers"
+    # key out of a .mcp.json file; ours is a bare server map, so a path declaration
+    # would index zero servers and the Grok listing would claim the plugin ships no
+    # MCP server at all. Declaring inline is what lets .mcp.json stay byte-identical
+    # and keeps Claude Code's Connector registration untouched.
+    #
+    # The cost of that is one duplicated server config. This asserts the copies agree,
+    # so a URL or transport change in .mcp.json cannot silently leave the Grok listing
+    # pointing somewhere else. Do NOT "simplify" the Grok manifest to a path — it looks
+    # tidier and quietly breaks the listing.
+    print("\nGrok manifest, inline MCP declaration:")
+    grok = manifests.get(GROK)
+    problems_before = len(problems)
+    inline = None
+    canonical = None
+    if grok is not None and mcp is not None:
+        inline = grok.get("mcpServers")
+        if check("grok_mcp_servers_inline", isinstance(inline, dict),
+                 f"{GROK} must declare mcpServers as an inline object, not a path — "
+                 f"a path resolves to a bare server map that xAI indexes as zero servers"):
+            canonical = mcp.get("mcpServers", mcp)
+            if isinstance(canonical, dict):
+                missing = set(canonical) - set(inline)
+                extra = set(inline) - set(canonical)
+                check("grok_mcp_servers_missing", not missing,
+                      f"{GROK} is missing server(s) present in {MCP_CONFIG}: "
+                      f"{sorted(missing)}")
+                check("grok_mcp_servers_extra", not extra,
+                      f"{GROK} declares server(s) absent from {MCP_CONFIG}: "
+                      f"{sorted(extra)}")
+                for name in sorted(set(canonical) & set(inline)):
+                    check("grok_mcp_server_drift", inline[name] == canonical[name],
+                          f"{GROK} server {name!r} does not match {MCP_CONFIG}: "
+                          f"{inline[name]!r} != {canonical[name]!r}")
+    elif grok is None:
+        fail("grok_manifest_missing", f"{GROK} not found")
+
+    # Claim agreement only when the comparison actually ran and found nothing wrong.
+    #
+    # All three conditions are load-bearing. `problems_before` is snapshotted after the
+    # earlier .mcp.json shape validation, so "no new problems here" does not imply the
+    # canonical config is well-formed — both isinstance guards are what establish that.
+    # Without them a malformed config (say {"mcpServers": null}) reaches len() and raises
+    # TypeError, crashing the checker instead of reporting the error it exists to report;
+    # a string value would print a server count taken from its character length.
+    if (
+        len(problems) == problems_before
+        and isinstance(inline, dict)
+        and isinstance(canonical, dict)
+    ):
+        print(f"  ok       {len(canonical)} server(s) match {MCP_CONFIG}")
 
     codex = manifests.get(CODEX)
     if codex is None:

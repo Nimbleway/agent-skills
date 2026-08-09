@@ -1,5 +1,15 @@
 # Changelog
 
+## [1.4.0] - 2026-08-09
+
+### Added
+- **xAI/Grok plugin layer.** New `.grok-plugin/plugin.json` declares the shared `./skills/` tree to Grok Build. Verified against xAI's own `scripts/plugin_catalog.py`: the plugin now indexes 15 skills, 2 agents, 1 command, and 1 HTTP MCP server. No Grok-only skill copies, no second repository — the marketplace is an index, so distribution is one catalog entry in xAI's repo pinning a commit from this one.
+- **`mcpServers` drift assertion in `scripts/check-plugin-manifests.py`.** The Grok manifest declares its MCP server as an inline object rather than as a path to `.mcp.json`, which duplicates one server config. The checker now asserts the two copies agree — matching server names and identical config — and fails if the Grok manifest is changed to a path declaration. Verified against fixtures for URL drift, a server present in only one file, and the path-declaration case.
+
+### Changed
+- **`scripts/tag-release.sh` also asserts `.grok-plugin/plugin.json`.** All five manifests, the README badge, and every skill's frontmatter must agree on the version, so a partial bump fails CI.
+- `README.md`, `CLAUDE.md`, and `CONTRIBUTING.md` document Grok as a fourth packaging target, including why the Grok manifest declares MCP inline. xAI's indexer reads only the `mcpServers` key out of a `.mcp.json` file, and this repo's is a bare server map, so a path declaration would index zero servers and the Grok listing would claim the plugin ships no MCP server. Declaring inline is also what keeps `.mcp.json` byte-identical, preserving Claude Code's Connector registration over native HTTP with OAuth.
+
 ## [1.3.0] - 2026-08-06
 
 ### Added

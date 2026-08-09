@@ -1,7 +1,7 @@
 # Nimble Web Search Skills & Plugin
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![Version](https://img.shields.io/badge/version-1.3.0-green)](https://github.com/Nimbleway/agent-skills)
+[![Version](https://img.shields.io/badge/version-1.4.0-green)](https://github.com/Nimbleway/agent-skills)
 
 Unlock the web for your AI agents — search, scrape, extract structured data, and run business intelligence workflows, all powered by Nimble's web data infrastructure. One plugin for Claude Code, Cursor, and any platform that supports the [Agent Skills spec](https://agentskills.io/specification.md).
 
@@ -127,12 +127,12 @@ Every finding carries a verified event date and source URL. Stale signals are dr
 
 ### Platform Compatibility
 
-| Aspect | Claude Code | Cursor | Codex | npx skills |
-| ------ | ----------- | ------ | ----- | ---------- |
-| Plugin config | `.claude-plugin/` | `.cursor-plugin/` | `.codex-plugin/` | N/A (reads `skills/`) |
-| MCP config | `.mcp.json` | `mcp.json` | `.mcp.json` (shared) | Manual setup |
-| Rules | N/A | `rules/*.mdc` | N/A | N/A |
-| Skills | `skills/` (shared) | `skills/` (shared) | `skills/` (shared) | `skills/` (shared) |
+| Aspect | Claude Code | Cursor | Codex | Grok Build | npx skills |
+| ------ | ----------- | ------ | ----- | ---------- | ---------- |
+| Plugin config | `.claude-plugin/` | `.cursor-plugin/` | `.codex-plugin/` | `.grok-plugin/` | N/A (reads `skills/`) |
+| MCP config | `.mcp.json` | `mcp.json` | `.mcp.json` (shared) | inline in manifest | Manual setup |
+| Rules | N/A | `rules/*.mdc` | N/A | N/A | N/A |
+| Skills | `skills/` (shared) | `skills/` (shared) | `skills/` (shared) | `skills/` (shared) | `skills/` (shared) |
 
 All platforms read the same `skills/` directory. Platform-specific files coexist without interference.
 
@@ -141,6 +141,11 @@ Every skill directory is an immediate child of `skills/`, with its vertical reco
 directory are named `reference.md` — never `SKILL.md`, which would register them as skills on
 platforms that discover recursively. `bash scripts/check-plugin-structure.sh` enforces both
 rules, and `python3 scripts/check-plugin-manifests.py` validates the per-platform manifests.
+
+Grok Build is the one platform whose MCP server is declared inline in its manifest rather than by
+a path to `.mcp.json`. That keeps `.mcp.json` identical for Claude Code, whose plugin install
+auto-registers it as a Connector over native HTTP with OAuth. CI asserts the two declarations
+never drift apart.
 
 ### CLI Commands
 
