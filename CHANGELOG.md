@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.6.1] - 2026-08-10
+
+### Changed
+- **`interface.shortDescription` is now "Expert web search for agents"**, replacing "Live web search for AI agents".
+- **`interface.longDescription` opens on accuracy and cost**, replacing "Nimble gives agents live access to the public web." with "Nimble gives agents governed, accurate access to the public web, at a lower token cost per answer." The rest of the paragraph is unchanged; it is now 639 characters.
+
+Only `.codex-plugin/plugin.json` carries an `interface` block, so it is the only file whose copy changes; the rest of this release is the 1.6.1 version bump. The shared `description` remains byte-identical across all five plugin manifests and `marketplace.json`.
+
 ## [1.6.0] - 2026-08-10
 
 ### Changed
