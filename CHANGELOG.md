@@ -1,5 +1,14 @@
 # Changelog
 
+## [1.6.0] - 2026-08-10
+
+### Changed
+- **Plugin listing copy is now consistent across every manifest.** The same `description` is shared by all five plugin manifests and `marketplace.json`, and it now leads with live web search rather than data extraction. Trimmed from 397 to 313 characters.
+- **`displayName` is now `Nimble`**, replacing `Nimble Web Data Toolkit` in `.cursor-plugin/plugin.json` and `.codex-plugin/plugin.json`. The plugin `name` is unchanged at `nimble`, so every skill identifier, `npx skills add --skill <name>` invocation, and MCP tool prefix keeps working.
+- **`interface.shortDescription` is now "Live web search for AI agents"**, and `interface.longDescription` is 591 characters, down from 1638. It describes what each capability returns rather than how it works internally.
+- **`interface.defaultPrompt` no longer uses internal product vocabulary.** The starter prompts are phrased as questions a new user would actually ask.
+- **Categories reconciled.** `.codex-plugin/plugin.json` moves from `Data & Analytics` to `Developer Tools` and `marketplace.json` from `data` to `development`; `.cursor-plugin/plugin.json` was already `developer-tools`.
+
 ## [1.5.0] - 2026-08-09
 
 ### Added
