@@ -25,7 +25,7 @@ allowed-tools:
   - Skill
 metadata:
   author: Nimbleway
-  version: 1.6.0
+  version: 1.6.1
   category: data-platforms
 ---
 

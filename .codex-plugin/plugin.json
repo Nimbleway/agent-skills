@@ -1,6 +1,6 @@
 {
   "name": "nimble",
-  "version": "1.6.0",
+  "version": "1.6.1",
   "description": "Live web search for AI agents. Find current pages, read any URL, and run research agents that work across many sources and return findings with citations. Includes reusable Extraction Templates for consistently shaped records from known sites, and Web Search Agents for research, enrichment, and dataset building.",
   "author": {
     "name": "Nimble",
@@ -30,8 +30,8 @@
   "mcpServers": "./.mcp.json",
   "interface": {
     "displayName": "Nimble",
-    "shortDescription": "Live web search for AI agents",
-    "longDescription": "Nimble gives agents live access to the public web. Search finds current pages with ranked results and snippets. Extract returns clean, structured content from any URL, including pages needing JavaScript or interaction. Extraction Templates give consistently shaped records from known sites. Web Search Agents handle open-ended work across many sources, returning findings with citations, for research, enrichment, and dataset building.\n\nAlso included: ready-made workflows for competitor research, company profiles, meeting prep, market discovery, brand monitoring, SEO, and talent sourcing.",
+    "shortDescription": "Expert web search for agents",
+    "longDescription": "Nimble gives agents governed, accurate access to the public web, at a lower token cost per answer. Search finds current pages with ranked results and snippets. Extract returns clean, structured content from any URL, including pages needing JavaScript or interaction. Extraction Templates give consistently shaped records from known sites. Web Search Agents handle open-ended work across many sources, returning findings with citations, for research, enrichment, and dataset building.\n\nAlso included: ready-made workflows for competitor research, company profiles, meeting prep, market discovery, brand monitoring, SEO, and talent sourcing.",
     "developerName": "Nimble",
     "category": "Developer Tools",
     "capabilities": [
