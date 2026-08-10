@@ -5,15 +5,15 @@
     "email": "support@nimbleway.com"
   },
   "metadata": {
-    "description": "Official Nimble plugin: web data toolkit and business workflow skills"
+    "description": "Official Nimble plugin: live web search and business workflow skills"
   },
   "plugins": [
     {
       "name": "nimble",
       "source": "./",
-      "description": "Real-time web search and data extraction for AI agents - powered by Nimble. Search, extract, map, and crawl any site on the web with built-in stealth, JS rendering, and retries. Get clean, structured web data from any public webpage with site-specific Extraction Templates, or run Web Search Agents for open-ended research and enrichment. The definitive web data toolkit for AI-native development.",
-      "version": "1.5.0",
-      "category": "data",
+      "description": "Live web search for AI agents. Find current pages, read any URL, and run research agents that work across many sources and return findings with citations. Includes reusable Extraction Templates for consistently shaped records from known sites, and Web Search Agents for research, enrichment, and dataset building.",
+      "version": "1.6.0",
+      "category": "development",
       "tags": [
         "web-search",
         "extraction",
