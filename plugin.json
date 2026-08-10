@@ -1,6 +1,6 @@
 {
+  "$schema": "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json",
   "name": "nimble",
-  "displayName": "Nimble Web Data Toolkit",
   "version": "1.5.0",
   "description": "Real-time web search and data extraction for AI agents - powered by Nimble. Search, extract, map, and crawl any site on the web with built-in stealth, JS rendering, and retries. Get clean, structured web data from any public webpage with site-specific Extraction Templates, or run Web Search Agents for open-ended research and enrichment. The definitive web data toolkit for AI-native development.",
   "author": {
@@ -27,21 +27,5 @@
     "meeting-prep",
     "company-research",
     "business-intelligence"
-  ],
-  "category": "developer-tools",
-  "tags": [
-    "web-extraction",
-    "scraping",
-    "search",
-    "crawl",
-    "map",
-    "cli",
-    "agents",
-    "competitor-intelligence",
-    "meeting-prep",
-    "company-research",
-    "business-intelligence"
-  ],
-  "skills": "./skills/",
-  "rules": "./rules/"
+  ]
 }

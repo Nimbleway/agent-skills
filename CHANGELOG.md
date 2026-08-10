@@ -1,5 +1,15 @@
 # Changelog
 
+## [1.5.0] - 2026-08-09
+
+### Added
+- **Conformance with [Agent Plugins v1.0.0](https://agent-plugins.org/)**, the vendor-neutral package format for Agent Skills and MCP servers used by VS Code, Cursor, GitHub Copilot, Kiro, and ChatGPT & Codex. A root `plugin.json` carries the portable manifest with the canonical `$schema` and only the permitted fields, and root `mcp.json` carries the portable MCP config. The `skills/` tree already conformed. This is additive: no current consumer reads a root `plugin.json`, so the four per-client manifests keep working untouched.
+- **Portable-package CI gates in `scripts/check-plugin-manifests.py`.** The manifest is checked for the exact `$schema`, the required fields, the closed field set, the name pattern and length, the restricted `author` sub-keys, and keyword and extension types. The MCP config is checked for the exact `$schema`, the two permitted top-level keys, and a transport from `stdio` / `streamable-http` / `sse` with its required field. `scripts/tag-release.sh` covers the new manifest, taking version parity to 22 references.
+
+### Changed
+- **Root `mcp.json` now declares native Streamable HTTP.** It previously held the superseded `mcp-remote` stdio shim with a bearer token in argv, so a client reading the portable canonical path got the retired pattern instead of OAuth. `.mcp.json` is unchanged — it declares `"type": "http"`, which the portable schema rejects, and it is the file Claude Code auto-registers as a Connector. The two describe one endpoint in mutually exclusive vocabularies and are kept separate deliberately; the portable schema sets `additionalProperties: false` at the root and on every server, so one file could not carry both.
+- **Corrected the platform-compatibility table.** It listed root `mcp.json` as Cursor's MCP config. Cursor reads the user's own `.cursor/mcp.json`; nothing in this repository loads root `mcp.json`. `README.md` and `CLAUDE.md` now document the vocabulary split so the files are not merged later.
+
 ## [1.4.0] - 2026-08-09
 
 ### Added

@@ -78,7 +78,7 @@ report() {
 
 echo "JSON manifests:"
 for f in .claude-plugin/plugin.json .cursor-plugin/plugin.json .claude-plugin/marketplace.json \
-         .codex-plugin/plugin.json .grok-plugin/plugin.json; do
+         .codex-plugin/plugin.json .grok-plugin/plugin.json plugin.json; do
   if [ ! -f "$f" ]; then
     echo "  MISSING  $f — file not found"
     mismatches=$((mismatches + 1)); checked=$((checked + 1))

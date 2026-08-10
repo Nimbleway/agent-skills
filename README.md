@@ -1,7 +1,7 @@
 # Nimble Web Search Skills & Plugin
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![Version](https://img.shields.io/badge/version-1.4.0-green)](https://github.com/Nimbleway/agent-skills)
+[![Version](https://img.shields.io/badge/version-1.5.0-green)](https://github.com/Nimbleway/agent-skills)
 
 Unlock the web for your AI agents — search, scrape, extract structured data, and run business intelligence workflows, all powered by Nimble's web data infrastructure. One plugin for Claude Code, Cursor, and any platform that supports the [Agent Skills spec](https://agentskills.io/specification.md).
 
@@ -130,11 +130,33 @@ Every finding carries a verified event date and source URL. Stale signals are dr
 | Aspect | Claude Code | Cursor | Codex | Grok Build | npx skills |
 | ------ | ----------- | ------ | ----- | ---------- | ---------- |
 | Plugin config | `.claude-plugin/` | `.cursor-plugin/` | `.codex-plugin/` | `.grok-plugin/` | N/A (reads `skills/`) |
-| MCP config | `.mcp.json` | `mcp.json` | `.mcp.json` (shared) | inline in manifest | Manual setup |
+| MCP config | `.mcp.json` | user's `.cursor/mcp.json` | `.mcp.json` (shared) | inline in manifest | Manual setup |
 | Rules | N/A | `rules/*.mdc` | N/A | N/A | N/A |
 | Skills | `skills/` (shared) | `skills/` (shared) | `skills/` (shared) | `skills/` (shared) | `skills/` (shared) |
 
 All platforms read the same `skills/` directory. Platform-specific files coexist without interference.
+
+The repository is also an [Agent Plugins v1.0.0](https://agent-plugins.org/) package, the
+vendor-neutral format used by VS Code, Cursor, GitHub Copilot, Kiro, and ChatGPT & Codex. Root
+`mcp.json` is that format's canonical MCP config. Cursor is listed above as reading the user's own
+`.cursor/mcp.json` because that is where a Cursor user pastes the snippet — Cursor does not load
+this repository's root `mcp.json`.
+
+### Why there are two MCP config files
+
+`mcp.json` and `.mcp.json` describe the same endpoint in different vocabularies, and no single
+file satisfies every consumer:
+
+| Consumer | Transport declared as |
+| -------- | --------------------- |
+| Root `mcp.json` (Agent Plugins) | `"type": "streamable-http"` |
+| `.mcp.json` (Claude Code) | `"type": "http"` |
+| Codex | no `type` key — HTTP is inferred from `url` |
+
+The portable schema sets `additionalProperties: false` at the root and on every server, so there
+is no room to carry a second vocabulary in one file. `.mcp.json` is the file Claude Code
+auto-registers as a Connector, so the two are kept separate deliberately rather than merged.
+`python3 scripts/check-plugin-manifests.py` validates both.
 
 Every skill directory is an immediate child of `skills/`, with its vertical recorded as
 `metadata.category` in the frontmatter. Reference documents inside a skill's `references/`

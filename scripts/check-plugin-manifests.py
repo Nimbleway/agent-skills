@@ -42,6 +42,57 @@ ALL_MANIFESTS = [
 ]
 MCP_CONFIG = ".mcp.json"
 
+# The portable Agent Plugins MCP config, at the spec's canonical root path. Distinct
+# from MCP_CONFIG on purpose — see the portable-config section in main() for why the
+# two files cannot be merged.
+PORTABLE_MCP = "mcp.json"
+PORTABLE_MCP_SCHEMA = "https://agent-plugins.org/schemas/1.0.0/mcp.schema.json"
+
+# The portable Agent Plugins manifest, at the spec's canonical root path. It coexists
+# with the per-client manifests rather than replacing them: no current consumer reads
+# a root plugin.json (OpenAI accepts .codex-plugin/, .agent-plugin/ and .claude-plugin/;
+# xAI reads .grok-plugin/ then .claude-plugin/), so this is additive.
+PORTABLE_PLUGIN = "plugin.json"
+PORTABLE_PLUGIN_SCHEMA = "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json"
+# additionalProperties: false — anything outside this set is rejected. Note that
+# `category` and `tags`, which the Cursor and marketplace manifests carry, are NOT
+# permitted here; they belong under an `extensions` namespace if ever needed.
+PORTABLE_PLUGIN_FIELDS = {
+    "$schema", "name", "version", "description", "author",
+    "homepage", "repository", "license", "keywords", "extensions",
+}
+PORTABLE_PLUGIN_REQUIRED = {"$schema", "name"}
+PORTABLE_AUTHOR_FIELDS = {"name", "email", "url"}
+# From the published schema, verbatim.
+PORTABLE_NAME_PATTERN = r"^(?!.*(?:--|\.\.))[a-z0-9](?:[a-z0-9.-]*[a-z0-9])?$"
+# Each transport `type` is a `const` in the published schema; a server declares exactly
+# one. REQUIRED is the field the schema demands alongside `type`; PERMITTED is the full
+# set of *declared* properties for that transport. The two are not the same — every
+# server sets additionalProperties: false, so a key outside PERMITTED is rejected, but
+# the optional keys inside it are perfectly valid. Conflating the two rejects a standard
+# stdio server that carries `args`.
+PORTABLE_TRANSPORT_REQUIRED = {
+    "stdio": "command",
+    "streamable-http": "url",
+    "sse": "url",
+}
+PORTABLE_TRANSPORT_PERMITTED = {
+    "stdio": {"type", "command", "args", "env", "cwd"},
+    "streamable-http": {"type", "url", "headers"},
+    "sse": {"type", "url", "headers"},
+}
+# Optional fields, with the type the schema declares, so a wrong type is caught rather
+# than passed through on truthiness.
+PORTABLE_SERVER_FIELD_TYPES = {
+    "args": ("array of strings", lambda v: isinstance(v, list)
+             and all(isinstance(i, str) for i in v)),
+    "env": ("object with string values", lambda v: isinstance(v, dict)
+            and all(isinstance(i, str) for i in v.values())),
+    "cwd": ("string", lambda v: isinstance(v, str)),
+    "headers": ("object with string values", lambda v: isinstance(v, dict)
+                and all(isinstance(i, str) for i in v.values())),
+}
+
 # interface.category must come from this fixed list (plugin_category_unknown).
 CATEGORIES = {
     "Productivity", "Creativity", "Developer Tools", "Business & Operations",
@@ -277,7 +328,7 @@ def main() -> int:
     # -- every manifest must be readable, well-formed JSON ------------------
     print("Manifests parse:")
     manifests: dict[str, dict] = {}
-    for path in ALL_MANIFESTS + [MCP_CONFIG]:
+    for path in ALL_MANIFESTS + [MCP_CONFIG, PORTABLE_MCP, PORTABLE_PLUGIN]:
         if not check("plugin_manifest_missing", os.path.isfile(path), f"{path} not found"):
             continue
         try:
@@ -365,6 +416,150 @@ def main() -> int:
         and isinstance(canonical, dict)
     ):
         print(f"  ok       {len(canonical)} server(s) match {MCP_CONFIG}")
+    # -- the portable Agent Plugins MCP config, at the canonical root path --
+    #
+    # Two MCP files, deliberately. They describe the same endpoint in different
+    # vocabularies, and no single file satisfies every consumer:
+    #
+    #   portable mcp.json   "type": "streamable-http"   (a schema const)
+    #   Claude .mcp.json    "type": "http"
+    #   Codex               no type key; HTTP inferred from the presence of url
+    #
+    # The portable schema also sets additionalProperties: false at the root and on
+    # every server, so there is no room to carry a second vocabulary in one file.
+    # Do not "harmonise" these — of the two, only .mcp.json is read by Claude Code's
+    # Connector registration, so collapsing them breaks the primary install path.
+    print(f"\nPortable MCP config ({PORTABLE_MCP}):")
+    portable = manifests.get(PORTABLE_MCP)
+    portable_problems_before = len(problems)
+    if portable is not None:
+        check("portable_mcp_schema_missing", "$schema" in portable,
+              f"{PORTABLE_MCP} must declare $schema — it is required by the spec")
+        if "$schema" in portable:
+            check("portable_mcp_schema_wrong", portable["$schema"] == PORTABLE_MCP_SCHEMA,
+                  f"{PORTABLE_MCP} $schema must be exactly {PORTABLE_MCP_SCHEMA!r}, "
+                  f"got {portable['$schema']!r}")
+        extra = set(portable) - {"$schema", "mcpServers"}
+        check("portable_mcp_additional_properties", not extra,
+              f"{PORTABLE_MCP} permits only $schema and mcpServers at the top level "
+              f"(additionalProperties: false); found {sorted(extra)}")
+
+        p_servers = portable.get("mcpServers")
+        if check("portable_mcp_servers_missing",
+                 isinstance(p_servers, dict) and len(p_servers) > 0,
+                 f"{PORTABLE_MCP} must declare mcpServers with at least one server"):
+            for name, cfg in p_servers.items():
+                if not check("portable_mcp_server_wrong_type", isinstance(cfg, dict),
+                             f"{PORTABLE_MCP}: server {name!r} must be an object"):
+                    continue
+                transport = cfg.get("type")
+                if not check(
+                    "portable_mcp_transport_invalid",
+                    transport in PORTABLE_TRANSPORT_REQUIRED,
+                    f"{PORTABLE_MCP}: server {name!r} type must be one of "
+                    f"{sorted(PORTABLE_TRANSPORT_REQUIRED)}, got {transport!r} — note "
+                    f'"http" is the Claude vocabulary and is not valid here',
+                ):
+                    continue
+
+                # The schema types this as a string with minLength 1, so check the type
+                # rather than truthiness — a number or object is truthy and would
+                # otherwise pass a gate whose whole job is rejecting invalid shapes.
+                required = PORTABLE_TRANSPORT_REQUIRED[transport]
+                value = cfg.get(required)
+                check("portable_mcp_server_missing_field",
+                      isinstance(value, str) and value.strip() != "",
+                      f"{PORTABLE_MCP}: server {name!r} with type {transport!r} requires "
+                      f"{required!r} as a non-empty string, got {type(value).__name__}"
+                      + ("" if value is None else f" ({value!r})"))
+
+                # PERMITTED, not {type, required}: the optional declared fields are valid.
+                allowed = PORTABLE_TRANSPORT_PERMITTED[transport]
+                server_extra = set(cfg) - allowed
+                check("portable_mcp_server_additional_properties", not server_extra,
+                      f"{PORTABLE_MCP}: server {name!r} with type {transport!r} permits "
+                      f"only {sorted(allowed)} (additionalProperties: false); found "
+                      f"{sorted(server_extra)}")
+
+                for field, (described, ok) in PORTABLE_SERVER_FIELD_TYPES.items():
+                    if field in cfg and field in allowed:
+                        check("portable_mcp_server_field_wrong_type", ok(cfg[field]),
+                              f"{PORTABLE_MCP}: server {name!r} field {field!r} must be "
+                              f"{described}, got {type(cfg[field]).__name__}")
+    elif not os.path.isfile(os.path.join(REPO_ROOT, PORTABLE_MCP)):
+        fail("portable_mcp_missing", f"{PORTABLE_MCP} not found at the plugin root")
+    # Otherwise the file exists but did not parse into a JSON object, and the
+    # plugin_manifest_* checks above already said so. Claiming "not found" here would
+    # add a second, contradictory error for one underlying problem.
+    # Only claim validity when every check in this section actually passed.
+    if len(problems) == portable_problems_before and isinstance(portable, dict):
+        print(f"  ok       {len(portable.get('mcpServers', {}))} server(s), "
+              f"schema and transports valid")
+
+    # -- the portable Agent Plugins manifest ---------------------------------
+    print(f"\nPortable manifest ({PORTABLE_PLUGIN}):")
+    pp = manifests.get(PORTABLE_PLUGIN)
+    pp_problems_before = len(problems)
+    if pp is not None:
+        missing_required = PORTABLE_PLUGIN_REQUIRED - set(pp)
+        check("portable_plugin_required_missing", not missing_required,
+              f"{PORTABLE_PLUGIN} is missing required field(s): "
+              f"{sorted(missing_required)}")
+        if "$schema" in pp:
+            check("portable_plugin_schema_wrong",
+                  pp["$schema"] == PORTABLE_PLUGIN_SCHEMA,
+                  f"{PORTABLE_PLUGIN} $schema must be exactly "
+                  f"{PORTABLE_PLUGIN_SCHEMA!r}, got {pp['$schema']!r}")
+
+        disallowed = set(pp) - PORTABLE_PLUGIN_FIELDS
+        check("portable_plugin_additional_properties", not disallowed,
+              f"{PORTABLE_PLUGIN} permits only {sorted(PORTABLE_PLUGIN_FIELDS)} "
+              f"(additionalProperties: false); found {sorted(disallowed)} — note "
+              f"'category' and 'tags' belong under an extensions namespace")
+
+        name = pp.get("name")
+        if check("portable_plugin_name_wrong_type", isinstance(name, str) and name,
+                 f"{PORTABLE_PLUGIN} name must be a non-empty string"):
+            check("portable_plugin_name_pattern",
+                  bool(re.match(PORTABLE_NAME_PATTERN, name)),
+                  f"{PORTABLE_PLUGIN} name {name!r} must match {PORTABLE_NAME_PATTERN}")
+            check("portable_plugin_name_too_long", len(name) <= 64,
+                  f"{PORTABLE_PLUGIN} name is {len(name)} chars, limit 64")
+
+        author = pp.get("author")
+        if author is not None:
+            if check("portable_plugin_author_wrong_type", isinstance(author, dict),
+                     f"{PORTABLE_PLUGIN} author must be an object"):
+                author_extra = set(author) - PORTABLE_AUTHOR_FIELDS
+                check("portable_plugin_author_additional_properties",
+                      not author_extra,
+                      f"{PORTABLE_PLUGIN} author permits only "
+                      f"{sorted(PORTABLE_AUTHOR_FIELDS)}; found {sorted(author_extra)}")
+
+        keywords = pp.get("keywords")
+        if keywords is not None:
+            check("portable_plugin_keywords_wrong_type",
+                  isinstance(keywords, list)
+                  and all(isinstance(k, str) for k in keywords),
+                  f"{PORTABLE_PLUGIN} keywords must be an array of strings")
+
+        extensions = pp.get("extensions")
+        if extensions is not None:
+            if check("portable_plugin_extensions_wrong_type",
+                     isinstance(extensions, dict),
+                     f"{PORTABLE_PLUGIN} extensions must be an object"):
+                for ns, value in extensions.items():
+                    check("portable_plugin_extension_wrong_type",
+                          isinstance(value, dict),
+                          f"{PORTABLE_PLUGIN} extensions[{ns!r}] must be an object")
+    elif not os.path.isfile(os.path.join(REPO_ROOT, PORTABLE_PLUGIN)):
+        fail("portable_plugin_missing",
+             f"{PORTABLE_PLUGIN} not found at the plugin root")
+    # Same reasoning as the MCP config above: a file that exists but failed to parse
+    # into an object has already been reported by the plugin_manifest_* checks.
+    if len(problems) == pp_problems_before and isinstance(pp, dict):
+        print(f"  ok       schema, name, and {len(set(pp) - {'$schema'})} "
+              f"declared field(s) valid")
 
     codex = manifests.get(CODEX)
     if codex is None:

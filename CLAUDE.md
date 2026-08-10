@@ -33,7 +33,9 @@ assets/                          # Plugin listing assets (logo, composer icon)
 .cursor-plugin/plugin.json       # Cursor plugin manifest
 .codex-plugin/plugin.json        # OpenAI / Codex plugin manifest
 .grok-plugin/plugin.json         # xAI / Grok Build plugin manifest
-.mcp.json                        # Hosted MCP config — Claude Code and Codex (Grok declares inline)
+plugin.json                      # Portable Agent Plugins manifest
+.mcp.json                        # Hosted MCP config — Claude Code Connector + Codex (Grok inline)
+mcp.json                         # Portable Agent Plugins MCP config (different vocabulary)
 commands/                        # Slash commands
 scripts/                         # Repo tooling
 ```
@@ -74,6 +76,30 @@ consumers that scan recursively an explicit list rather than a filesystem walk.
 Reference documents inside a skill's `references/` directory are named `reference.md`, never
 `SKILL.md` — see [Naming & structure](#naming--structure). `bash scripts/check-plugin-structure.sh`
 enforces the flat tree, the `reference.md` convention, and the marketplace enumeration together.
+
+### The two MCP config files are not duplicates
+
+**Do not merge `mcp.json` into `.mcp.json`, or "harmonise" their `type` values.** They describe
+the same endpoint in vocabularies that are mutually exclusive:
+
+| File | Consumer | Transport declared as |
+|---|---|---|
+| `mcp.json` | Agent Plugins v1.0.0 (portable) | `"type": "streamable-http"` — a schema `const` |
+| `.mcp.json` | Claude Code, and the Codex manifest's `mcpServers` path | `"type": "http"` |
+| — | Codex | no `type` key at all; HTTP inferred from `url` |
+
+The portable schema sets `additionalProperties: false` at the root *and* on every server, so one
+file cannot carry both. `.mcp.json` is what Claude Code auto-registers as a Connector over native
+HTTP with OAuth — the primary install path — so it is the one that must not move.
+
+Root `mcp.json` is the spec's canonical path and is validated in CI against the published schema:
+`$schema` must be the exact canonical identifier, only `$schema` and `mcpServers` are permitted at
+the top level, and each server's `type` must be one of `stdio`, `streamable-http`, or `sse`.
+Pasting Claude's `"type": "http"` in there fails with `portable_mcp_transport_invalid`.
+
+Note that Cursor does **not** read this repository's root `mcp.json` — a Cursor user pastes the
+snippet into their own `.cursor/mcp.json`. An earlier changelog entry described root `mcp.json` as
+"preserved for Cursor compatibility"; that was inaccurate.
 
 ## Commands
 
