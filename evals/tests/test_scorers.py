@@ -4,7 +4,12 @@ from __future__ import annotations
 
 from evals.commons.nimble_cmd import add_nimble_tools
 from evals.commons.trace import NormalizedTrace
-from evals.scorers.metrics import first_turn_action, skill_selection, tool_selection
+from evals.scorers.metrics import (
+    first_turn_action,
+    forbidden_tools,
+    skill_selection,
+    tool_selection,
+)
 
 
 def test_nimble_tools_detect_global_flags_before_subcommand() -> None:
@@ -91,3 +96,51 @@ def test_tool_selection_accepts_map_for_crawl() -> None:
     }
     score = tool_selection(output=trace, expected_output=expected)
     assert score is not None and score.value is True
+
+
+def test_auth_failure_with_error_sentinel_is_unscorable() -> None:
+    """Regression: tools_called=['error'] must not count as first-turn act.
+
+    The failed Codex CI run (401 Missing bearer) uploaded traces with
+    tools_called=['error'] and scored first_turn_action ≈ 0.94 / forbidden_tools
+    1.0 — false positives from infra sentinels.
+    """
+    trace = _trace(
+        runtime="codex",
+        model="gpt-5.6-sol",
+        tools_called=["error"],
+        tool_names=["error"],
+        triggered_skills=[],
+        final_response="",
+        response="",
+        error=(
+            "{'message': 'unexpected status 401 Unauthorized: Missing bearer "
+            "or basic authentication in header, url: https://api.openai.com/v1/responses'}"
+        ),
+    )
+    expected = {
+        "solution": "Search",
+        "clarification_policy": "must_act",
+        "forbidden_tools": ["web_search"],
+        "scorable": [
+            "first_turn_action",
+            "skill_selection",
+            "tool_selection",
+            "forbidden_tools",
+        ],
+    }
+    assert first_turn_action(output=trace, expected_output=expected) is None
+    assert skill_selection(output=trace, expected_output=expected) is None
+    assert tool_selection(output=trace, expected_output=expected) is None
+    assert forbidden_tools(output=trace, expected_output=expected) is None
+
+
+def test_error_sentinel_alone_is_not_act() -> None:
+    # Even without an error field, a bare infra sentinel is not product work.
+    trace = _trace(tools_called=["error"], tool_names=["error"], final_response="")
+    expected = {"solution": "Search", "clarification_policy": "must_act"}
+    # No auth marker + empty response → infra failure via sentinel-only path
+    # when error is set; without error, observed should be "none" → fail must_act.
+    score = first_turn_action(output=trace, expected_output=expected)
+    assert score is not None and score.value is False
+    assert score.comment and "observed=none" in score.comment

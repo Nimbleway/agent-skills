@@ -45,6 +45,43 @@ jobs:
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
 
+      - name: Require secrets
+        env:
+          LANGFUSE_PUBLIC_KEY: ${{ secrets.LANGFUSE_PUBLIC_KEY }}
+          LANGFUSE_SECRET_KEY: ${{ secrets.LANGFUSE_SECRET_KEY }}
+          NIMBLE_API_KEY: ${{ secrets.NIMBLE_API_KEY }}
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          CLAUDE_CODE_OAUTH_TOKEN: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+        run: |
+          set -euo pipefail
+          missing=()
+          require() {
+            local name="$1"
+            local value="$2"
+            if [[ -z "${value}" ]]; then
+              missing+=("${name}")
+            fi
+          }
+          require LANGFUSE_PUBLIC_KEY "${LANGFUSE_PUBLIC_KEY}"
+          require LANGFUSE_SECRET_KEY "${LANGFUSE_SECRET_KEY}"
+          require NIMBLE_API_KEY "${NIMBLE_API_KEY}"
+          runtime="${{ inputs.runtime }}"
+          if [[ "${runtime}" == "claude" || "${runtime}" == "both" ]]; then
+            if [[ -z "${ANTHROPIC_API_KEY}" && -z "${CLAUDE_CODE_OAUTH_TOKEN}" ]]; then
+              missing+=("ANTHROPIC_API_KEY|CLAUDE_CODE_OAUTH_TOKEN")
+            fi
+          fi
+          if [[ "${runtime}" == "codex" || "${runtime}" == "both" ]]; then
+            require OPENAI_API_KEY "${OPENAI_API_KEY}"
+          fi
+          if ((${#missing[@]} > 0)); then
+            echo "::error::Missing required GitHub Actions secrets for runtime=${runtime}: ${missing[*]}"
+            echo "Set them under Settings → Secrets and variables → Actions, then re-run."
+            exit 1
+          fi
+          echo "Required secrets present for runtime=${runtime}"
+
       - name: Install uv
         uses: astral-sh/setup-uv@d4b2f3b6ecc6e67c4457f6d3e41ec42d3d0fcb86 # v5.4.2
         with:
@@ -76,6 +113,38 @@ jobs:
           command -v codex
           command -v nimble
           codex --version
+
+      # Codex ignores process-env OPENAI_API_KEY for exec; it only uses
+      # $CODEX_HOME/auth.json from `codex login --with-api-key`.
+      - name: Authenticate Codex
+        if: inputs.runtime == 'codex' || inputs.runtime == 'both'
+        env:
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+        run: |
+          set -euo pipefail
+          mkdir -p "${HOME}/.codex"
+          printenv OPENAI_API_KEY | codex login --with-api-key
+          test -s "${HOME}/.codex/auth.json"
+          codex login status
+          # Fail fast if the key cannot call the Responses API.
+          # Capture status without aborting under set -e so diagnostics always run.
+          set +e
+          codex exec \
+            --skip-git-repo-check \
+            --ignore-user-config \
+            --ephemeral \
+            --dangerously-bypass-approvals-and-sandbox \
+            -C "${RUNNER_TEMP:-/tmp}" \
+            -- 'reply with exactly OK' \
+            > /tmp/codex-auth-probe.txt 2>&1
+          probe_rc=$?
+          set -e
+          if [[ "${probe_rc}" -ne 0 ]] || ! grep -q 'OK' /tmp/codex-auth-probe.txt; then
+            echo "::error::Codex auth probe failed (exit ${probe_rc}; expected reply OK). OPENAI_API_KEY may be invalid."
+            sed -n '1,40p' /tmp/codex-auth-probe.txt
+            exit 1
+          fi
+          echo "Codex auth probe OK"
 
       - name: Run production eval
         working-directory: evals

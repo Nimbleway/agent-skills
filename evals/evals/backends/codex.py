@@ -99,6 +99,50 @@ def ensure_isolated_codex_home(home: Path, settings: EvalSettings) -> Path:
     return home
 
 
+def ensure_codex_api_auth(codex_home: Path) -> Path:
+    """Ensure ``$CODEX_HOME/auth.json`` exists for ``codex exec``.
+
+    Codex does **not** send ``OPENAI_API_KEY`` from the process environment on
+    ``exec`` — auth is only read from ``auth.json`` (created by
+    ``codex login --with-api-key``). On CI, seed that file from the secret.
+    """
+    auth_path = codex_home / "auth.json"
+    if auth_path.is_file() and auth_path.stat().st_size > 0:
+        return auth_path
+
+    key = (os.environ.get("OPENAI_API_KEY") or "").strip()
+    if not key:
+        raise RuntimeError(
+            "Codex auth missing: no $CODEX_HOME/auth.json and OPENAI_API_KEY is "
+            "unset/empty. Set the OPENAI_API_KEY Actions secret and run "
+            "`printenv OPENAI_API_KEY | codex login --with-api-key`, or sign in "
+            "locally with `codex login`."
+        )
+
+    codex_home.mkdir(parents=True, exist_ok=True)
+    env = dict(os.environ)
+    env["CODEX_HOME"] = str(codex_home)
+    try:
+        proc = subprocess.run(
+            ["codex", "login", "--with-api-key"],
+            input=key,
+            text=True,
+            capture_output=True,
+            timeout=60,
+            env=env,
+            check=False,
+        )
+    except FileNotFoundError as exc:
+        raise RuntimeError("codex CLI not found on PATH") from exc
+
+    if proc.returncode != 0 or not (auth_path.is_file() and auth_path.stat().st_size > 0):
+        # Do not embed raw CLI stdout/stderr — it can land in Langfuse / results JSON.
+        raise RuntimeError(
+            f"codex login --with-api-key failed (exit {proc.returncode})"
+        )
+    return auth_path
+
+
 def build_codex_command(
     prompt: str,
     *,
@@ -156,8 +200,20 @@ def run_codex(
         settings.traces_dir / f"codex-home-{run_id}",
         settings,
     )
-
+    codex_home = real_home / ".codex"
     user_prompt = wrap_user_prompt_with_skill(prompt, runtime="codex")
+
+    try:
+        ensure_codex_api_auth(codex_home)
+    except RuntimeError as exc:
+        return NormalizedTrace(
+            runtime="codex",
+            model=model,
+            effort=effort,
+            prompt=user_prompt,
+            error=str(exc),
+        )
+
     cmd = build_codex_command(
         prompt,
         settings=settings,
@@ -179,7 +235,7 @@ def run_codex(
     env["PATH"] = path
     # Isolate skill + memory discovery; keep real Codex auth directory.
     env["HOME"] = str(isolated_home)
-    env["CODEX_HOME"] = str(real_home / ".codex")
+    env["CODEX_HOME"] = str(codex_home)
 
     try:
         with out_path.open("w", encoding="utf-8") as fh:

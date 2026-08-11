@@ -32,21 +32,93 @@ def _score(name: str, value: bool, comment: str | None = None) -> Evaluation:
     )
 
 
+# Codex/Claude infra sentinels that must never count as product tool use.
+# A prior bug treated tools_called=["error"] (auth/CLI failure) as first-turn "act".
+_INFRA_TOOL_SENTINELS = frozenset({"error"})
+
+_AUTH_FAILURE_MARKERS = (
+    "401",
+    "unauthorized",
+    "missing bearer",
+    "authentication",
+    "codex auth missing",
+    "openai_api_key",
+)
+
+
+def _called_tools(trace: NormalizedTrace) -> list[str]:
+    return [
+        str(t)
+        for t in (trace.tool_names or trace.tools_called or [])
+        if t and str(t) not in _INFRA_TOOL_SENTINELS
+    ]
+
+
+def _product_tools(called: list[str]) -> list[str]:
+    return [t for t in called if t != "ask_questions"]
+
+
+def _response_text(trace: NormalizedTrace) -> str:
+    return (trace.final_response or trace.response or "").strip()
+
+
+def _is_auth_or_infra_failure(trace: NormalizedTrace) -> bool:
+    """True for hard auth/CLI failures that must not enter score denominators."""
+    err = str(getattr(trace, "error", None) or "").strip()
+    if not err:
+        return False
+    err_l = err.lower()
+    if any(marker in err_l for marker in _AUTH_FAILURE_MARKERS):
+        return True
+    # Sentinel-only "tools" with an error and no real agent work.
+    called = _called_tools(trace)
+    product = _product_tools(called)
+    skills = list(trace.triggered_skills or [])
+    response = _response_text(trace)
+    response_is_error_echo = bool(
+        response
+        and (
+            response in err
+            or err in response
+            or any(marker in response.lower() for marker in _AUTH_FAILURE_MARKERS)
+        )
+    )
+    if not product and not skills and (not response or response_is_error_echo):
+        return True
+    return False
+
+
 def _empty(trace: NormalizedTrace | None) -> bool:
     """True only when there is nothing scorable (hard infra fail, no signals)."""
     if trace is None:
+        return True
+    if _is_auth_or_infra_failure(trace):
         return True
     err = getattr(trace, "error", None)
     if not err:
         return False
     # Soft/partial errors still carry signals — score them.
     if str(err).startswith("partial:"):
-        return False
+        # But only when there is real product signal (not auth wrapped as partial).
+        called = _called_tools(trace)
+        has_real = bool(
+            (trace.triggered_skills or [])
+            or _product_tools(called)
+            or (
+                _response_text(trace)
+                and not any(
+                    marker in _response_text(trace).lower()
+                    for marker in _AUTH_FAILURE_MARKERS
+                )
+            )
+        )
+        return not has_real
     # Timeout/partial runs can still have skill/tool/response signals — score them.
+    called = _called_tools(trace)
     has_signal = bool(
         (trace.triggered_skills or [])
-        or (trace.tools_called or [])
-        or (trace.final_response or trace.response or "").strip()
+        or _product_tools(called)
+        or _response_text(trace)
     )
     return not has_signal
 
@@ -68,15 +140,18 @@ def _scorable(expected: dict[str, Any], name: str) -> bool:
 
 
 def _observed_first_turn(trace: NormalizedTrace) -> str:
-    called = list(trace.tool_names or trace.tools_called or [])
-    product = [t for t in called if t != "ask_questions"]
+    called = _called_tools(trace)
+    product = _product_tools(called)
     if "ask_questions" in called and not product:
         return "clarify"
-    if product or (trace.triggered_skills and product):
+    if product:
         return "act"
     if any(t.startswith("nimble ") for t in called):
         return "act"
-    response = (trace.final_response or trace.response or "").strip()
+    response = _response_text(trace)
+    # Never treat an auth/CLI error blob as a deliberate agent "respond".
+    if response and any(marker in response.lower() for marker in _AUTH_FAILURE_MARKERS):
+        return "none"
     if len(response) > 10:
         return "respond"
     return "none"
