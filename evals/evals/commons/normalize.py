@@ -183,6 +183,8 @@ def parse_codex_jsonl(
             "message",
             "command_execution",
             "web_search",
+            # Infra / transport failures — never a product tool for scorers.
+            "error",
         }:
             # MCP / apply_patch / other Codex tools — keep the type name.
             if item_type not in tools:
