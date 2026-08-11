@@ -127,19 +127,20 @@ jobs:
           test -s "${HOME}/.codex/auth.json"
           codex login status
           # Fail fast if the key cannot call the Responses API.
-          reply="$(
-            codex exec \
-              --skip-git-repo-check \
-              --ignore-user-config \
-              --ephemeral \
-              --dangerously-bypass-approvals-and-sandbox \
-              -C "${RUNNER_TEMP:-/tmp}" \
-              -- 'reply with exactly OK' \
-              | tee /tmp/codex-auth-probe.txt \
-              | tail -n 20
-          )"
-          if ! grep -q 'OK' /tmp/codex-auth-probe.txt; then
-            echo "::error::Codex auth probe failed (expected reply OK). OPENAI_API_KEY may be invalid."
+          # Capture status without aborting under set -e so diagnostics always run.
+          set +e
+          codex exec \
+            --skip-git-repo-check \
+            --ignore-user-config \
+            --ephemeral \
+            --dangerously-bypass-approvals-and-sandbox \
+            -C "${RUNNER_TEMP:-/tmp}" \
+            -- 'reply with exactly OK' \
+            > /tmp/codex-auth-probe.txt 2>&1
+          probe_rc=$?
+          set -e
+          if [[ "${probe_rc}" -ne 0 ]] || ! grep -q 'OK' /tmp/codex-auth-probe.txt; then
+            echo "::error::Codex auth probe failed (exit ${probe_rc}; expected reply OK). OPENAI_API_KEY may be invalid."
             sed -n '1,40p' /tmp/codex-auth-probe.txt
             exit 1
           fi

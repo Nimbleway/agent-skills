@@ -136,8 +136,10 @@ def ensure_codex_api_auth(codex_home: Path) -> Path:
         raise RuntimeError("codex CLI not found on PATH") from exc
 
     if proc.returncode != 0 or not (auth_path.is_file() and auth_path.stat().st_size > 0):
-        detail = (proc.stderr or proc.stdout or "").strip() or f"exit {proc.returncode}"
-        raise RuntimeError(f"codex login --with-api-key failed: {detail}")
+        # Do not embed raw CLI stdout/stderr — it can land in Langfuse / results JSON.
+        raise RuntimeError(
+            f"codex login --with-api-key failed (exit {proc.returncode})"
+        )
     return auth_path
 
 

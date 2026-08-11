@@ -108,7 +108,10 @@ def test_ensure_codex_api_auth_reuses_existing_auth_json(tmp_path: Path) -> None
     home = tmp_path / ".codex"
     home.mkdir()
     auth = home / "auth.json"
-    auth.write_text('{"auth_mode":"apikey","OPENAI_API_KEY":"sk-test"}', encoding="utf-8")
+    auth.write_text(
+        '{"auth_mode":"apikey","OPENAI_API_KEY":"test-openai-key-not-a-secret"}',
+        encoding="utf-8",
+    )
     with patch("evals.backends.codex.subprocess.run") as run:
         assert ensure_codex_api_auth(home) == auth
         run.assert_not_called()
@@ -116,12 +119,13 @@ def test_ensure_codex_api_auth_reuses_existing_auth_json(tmp_path: Path) -> None
 
 def test_ensure_codex_api_auth_logs_in_from_env(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
     home = tmp_path / ".codex"
-    monkeypatch.setenv("OPENAI_API_KEY", "sk-from-env")
+    fake_key = "test-openai-key-from-env-not-a-secret"
+    monkeypatch.setenv("OPENAI_API_KEY", fake_key)
 
     def fake_run(*_args, **_kwargs):  # noqa: ANN002, ANN003
         home.mkdir(parents=True, exist_ok=True)
         (home / "auth.json").write_text(
-            '{"auth_mode":"apikey","OPENAI_API_KEY":"sk-from-env"}',
+            f'{{"auth_mode":"apikey","OPENAI_API_KEY":"{fake_key}"}}',
             encoding="utf-8",
         )
         return MagicMock(returncode=0, stdout="ok", stderr="")
@@ -131,7 +135,7 @@ def test_ensure_codex_api_auth_logs_in_from_env(tmp_path: Path, monkeypatch: pyt
         assert path.is_file()
         run.assert_called_once()
         assert run.call_args.args[0] == ["codex", "login", "--with-api-key"]
-        assert run.call_args.kwargs["input"] == "sk-from-env"
+        assert run.call_args.kwargs["input"] == fake_key
 
 
 def test_ensure_codex_api_auth_errors_without_key_or_file(
@@ -140,6 +144,23 @@ def test_ensure_codex_api_auth_errors_without_key_or_file(
     monkeypatch.delenv("OPENAI_API_KEY", raising=False)
     with pytest.raises(RuntimeError, match="OPENAI_API_KEY"):
         ensure_codex_api_auth(tmp_path / ".codex")
+
+
+def test_ensure_codex_api_auth_failure_omits_cli_output(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    monkeypatch.setenv("OPENAI_API_KEY", "test-openai-key-not-a-secret")
+    proc = MagicMock(
+        returncode=1,
+        stdout="SECRET_SHOULD_NOT_LEAK",
+        stderr="also-secret-path=/tmp/x",
+    )
+    with patch("evals.backends.codex.subprocess.run", return_value=proc):
+        with pytest.raises(RuntimeError, match=r"exit 1") as excinfo:
+            ensure_codex_api_auth(tmp_path / ".codex")
+    msg = str(excinfo.value)
+    assert "SECRET_SHOULD_NOT_LEAK" not in msg
+    assert "also-secret-path" not in msg
 
 
 def test_codex_command_uses_slash_skill_prompt_and_workdir(tmp_path: Path) -> None:
