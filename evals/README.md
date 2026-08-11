@@ -16,8 +16,16 @@ cp .env.example .env
 Prerequisites on the machine:
 
 - `claude` CLI (Claude Code) signed in
-- `codex` CLI signed in (for `--runtime codex|both`)
+- `codex` CLI signed in (for `--runtime codex|both`) —
+  `printenv OPENAI_API_KEY | codex login --with-api-key` (Codex does **not**
+  read `OPENAI_API_KEY` from the process env on `exec`; it needs
+  `$CODEX_HOME/auth.json`)
 - Optional for live tool scoring: `npm i -g @nimble-way/nimble-cli` + `NIMBLE_API_KEY`
+
+GitHub Actions (`skills-evals.yml`) fails fast if required secrets are empty,
+and for Codex runs `codex login --with-api-key` plus a tiny auth probe before
+the eval. Required: `LANGFUSE_*`, `NIMBLE_API_KEY`, plus `OPENAI_API_KEY`
+(codex/both) or `ANTHROPIC_API_KEY` / `CLAUDE_CODE_OAUTH_TOKEN` (claude/both).
 
 Codex runs with an isolated `$HOME` (only `nimble-web-expert` under
 `.agents/skills/`, empty memory tree) plus a per-run `workdir/.agents/skills/`
