@@ -32,14 +32,28 @@ import xml.etree.ElementTree as ET
 REPO_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 CODEX = ".codex-plugin/plugin.json"
+CURSOR = ".cursor-plugin/plugin.json"
 GROK = ".grok-plugin/plugin.json"
 ALL_MANIFESTS = [
     ".claude-plugin/plugin.json",
-    ".cursor-plugin/plugin.json",
+    CURSOR,
     ".claude-plugin/marketplace.json",
     CODEX,
     GROK,
 ]
+
+# Cursor component fields that take a path or a list of paths
+# (cursor.com/docs/reference/plugins). The value is what a declared entry must be on
+# disk: "dir" for skills (each entry is a directory of skill folders), "any" for
+# component types where a single file and a directory are both valid declarations.
+# hooks/mcpServers/logo also accept a path but allow inline non-path forms, so they
+# are handled separately below rather than forced through this table.
+CURSOR_COMPONENT_FIELDS = {
+    "skills": "dir",
+    "rules": "any",
+    "agents": "any",
+    "commands": "any",
+}
 MCP_CONFIG = ".mcp.json"
 
 # The portable Agent Plugins MCP config, at the spec's canonical root path. Distinct
@@ -560,6 +574,95 @@ def main() -> int:
     if len(problems) == pp_problems_before and isinstance(pp, dict):
         print(f"  ok       schema, name, and {len(set(pp) - {'$schema'})} "
               f"declared field(s) valid")
+
+    # -- the Cursor manifest's declared component paths ----------------------
+    #
+    # Cursor types skills/rules/agents/commands as a path or a list of paths, and a
+    # declared path REPLACES auto-discovery (cursor.com/docs/reference/plugins). The
+    # docs do not define what a missing declared directory does, so a dangling
+    # declaration either ships that component surface empty or fails at review —
+    # both invisible to a JSON parse. This is not hypothetical: rules/ was deleted
+    # in 89cfd2a while the manifest kept declaring "./rules/" for five months.
+    # Every declared local path must exist and have the right shape.
+    print(f"\nCursor manifest ({CURSOR}), declared component paths:")
+    cursor = manifests.get(CURSOR)
+    cursor_problems_before = len(problems)
+    cursor_declared = 0
+    if cursor is not None:
+        def cursor_path_ok(field: str, entry: str) -> str | None:
+            """Common gates for one declared path. Returns the on-disk path, or
+            None when a gate failed and shape checks should not run."""
+            if not check("cursor_component_path_wrong_type", isinstance(entry, str),
+                         f"{field} entries must be strings, got {type(entry).__name__}"):
+                return None
+            if not check("cursor_component_path_unsafe",
+                         not os.path.isabs(entry) and ".." not in entry.split("/"),
+                         f"{field} -> {entry!r} must be a relative path inside the plugin"):
+                return None
+            # rel("./") is "" — a declared plugin root resolves to the checkout root,
+            # not to a path os.path.exists() rejects.
+            target = rel(entry) or "."
+            if not check("cursor_component_path_missing", os.path.exists(target),
+                         f"{field} -> {entry!r} does not exist — a declared path "
+                         f"replaces auto-discovery, so this ships the surface empty"):
+                return None
+            return target
+
+        for field, expects in CURSOR_COMPONENT_FIELDS.items():
+            value = cursor.get(field)
+            if value is None:
+                continue
+            if not check("cursor_component_field_wrong_type",
+                         isinstance(value, (str, list)),
+                         f"{field} must be a string path or an array of paths, "
+                         f"got {type(value).__name__}"):
+                continue
+            for entry in value if isinstance(value, list) else [value]:
+                cursor_declared += 1
+                target = cursor_path_ok(field, entry)
+                if target is None:
+                    continue
+                if expects == "dir" or (isinstance(entry, str) and entry.endswith("/")):
+                    check("cursor_component_path_not_directory", os.path.isdir(target),
+                          f"{field} -> {entry!r} must be a directory")
+
+        # hooks (string/object) and mcpServers (string/object/array) accept inline
+        # config; only string entries point at the filesystem, so dict forms are
+        # skipped, but a string inside an mcpServers array is still a declared path.
+        for field, allow_list in (("hooks", False), ("mcpServers", True)):
+            value = cursor.get(field)
+            entries = value if allow_list and isinstance(value, list) else [value]
+            for entry in entries:
+                if not isinstance(entry, str):
+                    continue
+                cursor_declared += 1
+                target = cursor_path_ok(field, entry)
+                if target is not None:
+                    check("cursor_component_path_not_file", os.path.isfile(target),
+                          f"{field} -> {entry!r} must be a file")
+
+        # A logo may be an absolute URL instead of a repo path. Schemes are
+        # case-insensitive per RFC 3986, and protocol-relative URLs are URLs too.
+        logo = cursor.get("logo")
+        if isinstance(logo, str) and not (
+            logo.lower().startswith(("http://", "https://")) or logo.startswith("//")
+        ):
+            cursor_declared += 1
+            target = cursor_path_ok("logo", logo)
+            if target is not None:
+                check("cursor_component_path_not_file", os.path.isfile(target),
+                      f"logo -> {logo!r} must be a file")
+    # When cursor is None the file is missing or malformed, and the plugin_manifest_*
+    # checks in the parse loop already said so — same reasoning as the portable
+    # config sections: one underlying problem gets one error, not two.
+
+    if len(problems) == cursor_problems_before and cursor is not None:
+        if cursor_declared:
+            print(f"  ok       {cursor_declared} declared path(s) exist "
+                  f"with the right shape")
+        else:
+            print("  ok       no component paths declared — Cursor auto-discovery "
+                  "applies")
 
     codex = manifests.get(CODEX)
     if codex is None:

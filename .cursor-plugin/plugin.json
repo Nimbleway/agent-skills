@@ -40,6 +40,5 @@
     "company-research",
     "business-intelligence"
   ],
-  "skills": "./skills/",
-  "rules": "./rules/"
+  "skills": "./skills/"
 }
