@@ -120,3 +120,41 @@ approved canonical upstream revision, and pass xAI CI plus code-owner review;
 Cursor-team review; (c) whether xAI catalog acceptance propagates to the Grok
 Bot app's plugin picker (beyond Grok Build) is not established by official
 documentation and remains to be observed after acceptance.
+
+## Grok Bot app marketplace observation under active entitlement (2026-08-19)
+
+With the Cursor/xAI Bot trial active for the operator account and Grok Bot
+onboarding completed (dedicated "Nimble Demo" bot created), the operator
+session observed in the Grok Bot app:
+
+- **Plugins → Marketplace**: searching "Nimble" returned no Nimble entry; the
+  only result was Revyl.
+- **Plugins → Yours**: "No installed plugins match \"Nimble\"" and "No private
+  skills match \"Nimble\"".
+- Bot settings and global settings exposed no private, local, or developer
+  plugin-import control; the File menu offered only Close Window / Close All.
+
+Cross-check against primary sources the same day:
+
+- `revyl` does not appear in xai-org/plugin-marketplace's
+  `.grok-plugin/marketplace.json` at catalog HEAD
+  `e5c73400a2ec55fa0abd1efbc8908a5aa801dcce`. The Bot app's marketplace is
+  therefore not (or not only) the public Grok Build catalog — at least one Bot
+  marketplace entry has no public catalog counterpart.
+- xai-org/plugin-marketplace's README and CONTRIBUTING describe the catalog as
+  what "points Grok Build at your plugin's source"; they never mention the Bot
+  app. Configurable marketplace sources (`[[marketplace.sources]]` in
+  `~/.grok/config.toml`, `known_marketplaces.json`) and local plugin
+  directories (`./.grok/plugins/`, `~/.grok/plugins/`) are documented for Grok
+  Build only. The Grok Bot docs describe a single install surface — "Use
+  Settings → Plugins to discover and install supported connectors and packaged
+  skills" — plus per-Bot enablement of private skills under Plugins → Yours.
+
+Conclusion: the active entitlement removed the access gate only; it does not
+change the technical conclusion. There is currently no native, self-service
+path to install this repository's canonical exact-commit plugin into the Grok
+Bot app. The xai-org catalog PR (gate (a) above) remains the only self-service
+native distribution step, and it is documented to reach Grok Build; inclusion
+in the Bot app's "supported" marketplace appears separately curated by xAI
+with no publicly documented submission path — establishing one requires
+vendor contact, which was not performed.
