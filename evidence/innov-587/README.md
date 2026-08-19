@@ -84,3 +84,39 @@ that would require another live, potentially billable Nimble operation. Secret
 safety is evidenced only by the absence of credentials from manifests, the
 redacted Cursor log excerpt, and screenshots; it is not a claim that every
 external runtime log was audited.
+
+## xAI plugin-marketplace catalog entry — validated candidate, not submitted
+
+[`xai-catalog-entry.json`](xai-catalog-entry.json) is the candidate entry for
+`.grok-plugin/marketplace.json` in
+[xai-org/plugin-marketplace](https://github.com/xai-org/plugin-marketplace),
+pinning this repository at implementation commit
+`8bc9c811f82a3096d07c211ea0543c73203fea01`. It follows that catalog's
+remote-source contract and the brand-scoped keyword/domain rule from its
+CONTRIBUTING.md, matching the style of the existing `exa`, `tavily`, and
+`firecrawl` entries. The `description` is byte-identical to the shared
+description in this repository's plugin manifests.
+
+Validated on 2026-08-19 in a local clone of xai-org/plugin-marketplace at its
+then-HEAD `e5c73400a2ec55fa0abd1efbc8908a5aa801dcce`, with the entry appended
+to `.grok-plugin/marketplace.json`:
+
+```bash
+python3 scripts/validate-catalog.py          # Catalog OK (.grok-plugin/marketplace.json)
+python3 scripts/generate-plugin-index.py     # Wrote .grok-plugin/plugin-index.json
+python3 scripts/generate-plugin-index.py --check  # Plugin index OK
+```
+
+The official index generator fetched this repository at the pinned SHA and
+recorded: version `1.6.1`, 15 skills, 2 agents, 1 command, 1 MCP server. No
+upstream packaging change to this repository was required — the tree indexes
+as-is.
+
+Not performed, by instruction: no fork was pushed, no PR was opened against
+xai-org/plugin-marketplace, and nothing was submitted to xAI or Cursor.
+Remaining vendor gates: (a) open the xAI catalog PR with this entry, pinning the
+approved canonical upstream revision, and pass xAI CI plus code-owner review;
+(b) Cursor Marketplace submission via cursor.com/marketplace/publish and
+Cursor-team review; (c) whether xAI catalog acceptance propagates to the Grok
+Bot app's plugin picker (beyond Grok Build) is not established by official
+documentation and remains to be observed after acceptance.
