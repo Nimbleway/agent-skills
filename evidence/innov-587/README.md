@@ -150,11 +150,51 @@ Cross-check against primary sources the same day:
   Settings → Plugins to discover and install supported connectors and packaged
   skills" — plus per-Bot enablement of private skills under Plugins → Yours.
 
-Conclusion: the active entitlement removed the access gate only; it does not
-change the technical conclusion. There is currently no native, self-service
-path to install this repository's canonical exact-commit plugin into the Grok
-Bot app. The xai-org catalog PR (gate (a) above) remains the only self-service
-native distribution step, and it is documented to reach Grok Build; inclusion
-in the Bot app's "supported" marketplace appears separately curated by xAI
-with no publicly documented submission path — establishing one requires
-vendor contact, which was not performed.
+Conclusion (scoped to the account role tested below): the active entitlement
+removed the access gate only. For a **Member** account there is no native,
+self-service path to install this repository's canonical exact-commit plugin
+into the Grok Bot app. The xai-org catalog PR (gate (a) above) remains the
+only third-party self-service distribution step, documented to reach Grok
+Build; the Bot app's public "supported" marketplace appears separately curated
+by xAI with no publicly documented submission path. The admin-controlled
+Cursor **team marketplace** path below is native, unexhausted, and untested.
+
+## Cursor team marketplace — member-verified limits, admin path untested (2026-08-19)
+
+Verified from the signed-in active Nimble Cursor Team account:
+
+- Cursor dashboard `/dashboard/plugins` reads "Browse the marketplace or
+  import custom plugins".
+- The operator account is listed under `/dashboard/members` as Role=Member,
+  not Admin.
+- On `/dashboard/plugins`, both **Add** and **Add Plugin** open the public
+  marketplace; no repo-URL/import control is exposed to this Member.
+
+Official Cursor docs (cursor.com/docs/plugins) state the import path exists
+but is admin-scoped: team marketplaces are added from **Dashboard → Plugins →
+Team Marketplaces → Add Marketplace**, with "Import from Repo" reading
+`.cursor-plugin/marketplace.json` from a GitHub repository (this repository
+carries that file); Teams plan allows one team marketplace, and "On
+Enterprise plans, only admins can add team marketplaces". Imported plugins
+appear for members in **Customize**, with Default Off / Default On / Required
+install modes.
+
+On propagation to Grok Bot, xAI's own teams documentation
+(docs.x.ai/grok-bot/teams-and-enterprises) states: "Grok Bot follows your
+team's existing Cursor plugin and MCP policy. There are no separate Grok Bot
+plugin controls", "Cursor admins can enable a plugin on the team plugins
+page. Enter any secrets the plugin needs as plugin variables", and members
+see policy-blocked servers "disabled in the Grok Bot Plugins page with the
+message 'Disabled by team admin'". This establishes that Cursor team plugin
+policy governs the Grok Bot Plugins surface. What the documentation does not
+state — and what remains untested — is whether a team-marketplace plugin
+imported from a Git repository becomes visible/installable in the Grok Bot
+app (as opposed to the Cursor IDE's Customize panel only).
+
+Therefore the strongest unexhausted native path, and the likely smallest next
+action, is: a Cursor Team **admin** imports this repository (pinned canonical
+revision) as a team marketplace via Dashboard → Plugins, enables the Nimble
+plugin for the team, and observes whether it appears in the Grok Bot app's
+Plugins page for members. This supersedes any unconditional earlier reading
+that no self-service native path exists — the member-account finding is
+role-scoped, not global.
