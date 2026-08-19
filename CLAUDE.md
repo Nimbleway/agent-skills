@@ -205,7 +205,10 @@ metadata:
   template's `input_schema` before running.
 - WSA reference files must teach discovery strategy, not list known agents. The test:
   if 10 new agents/templates were added tomorrow, would the skill find them automatically?
-- `--search-depth` valid values: `lite`, `fast`, `deep` (not `standard`). Use `lite` for discovery, `deep` for full content.
+- `--search-depth` valid values: `lite`, `fast`, `deep` (not `standard`). The platform now defaults to `fast`
+  when the flag is omitted (`news`/`location`/`coding`/`academic` focus fall back to `lite` instead, since they
+  can't run `fast`). Business skills still pass `--search-depth lite` explicitly for high-volume discovery
+  passes — cheaper and faster than the `fast` default — and reserve `deep` for full content on the winners.
 - All Nimble calls carry `--client-source nimble-agent-skills` (the stable integration attribution).
 - Always verify CLI commands with real data before writing them into SKILL.md — `--help` alone isn't enough.
 
