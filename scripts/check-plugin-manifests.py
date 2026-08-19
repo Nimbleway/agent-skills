@@ -595,6 +595,10 @@ def main() -> int:
             if not check("cursor_component_path_wrong_type", isinstance(entry, str),
                          f"{field} entries must be strings, got {type(entry).__name__}"):
                 return None
+            if not check("cursor_component_path_empty", entry.strip() != "",
+                         f"{field} declares an empty path — omit the key to use "
+                         f"auto-discovery instead"):
+                return None
             if not check("cursor_component_path_unsafe",
                          not os.path.isabs(entry) and ".." not in entry.split("/"),
                          f"{field} -> {entry!r} must be a relative path inside the plugin"):
@@ -606,11 +610,27 @@ def main() -> int:
                          f"{field} -> {entry!r} does not exist — a declared path "
                          f"replaces auto-discovery, so this ships the surface empty"):
                 return None
+            # The lexical '..' gate above cannot see symlinks; resolve the target and
+            # require it to stay inside the checkout, or a link pointing outside the
+            # plugin would validate as a healthy component path.
+            resolved = os.path.realpath(target)
+            root = os.path.realpath(REPO_ROOT)
+            if not check("cursor_component_path_escapes_plugin",
+                         resolved == root or resolved.startswith(root + os.sep),
+                         f"{field} -> {entry!r} resolves to {resolved!r}, outside "
+                         f"the plugin checkout"):
+                return None
             return target
 
         for field, expects in CURSOR_COMPONENT_FIELDS.items():
-            value = cursor.get(field)
-            if value is None:
+            # An absent key means auto-discovery; an explicit null is a declaration
+            # that declares nothing — reject it rather than silently equating the two.
+            if field not in cursor:
+                continue
+            value = cursor[field]
+            if not check("cursor_component_field_null", value is not None,
+                         f"{field} is explicitly null — omit the key to use "
+                         f"auto-discovery instead"):
                 continue
             if not check("cursor_component_field_wrong_type",
                          isinstance(value, (str, list)),
