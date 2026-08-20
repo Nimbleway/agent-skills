@@ -42,6 +42,15 @@ ALL_MANIFESTS = [
     GROK,
 ]
 
+# Required YAML frontmatter keys per Cursor component type, from
+# cursor.com/docs/reference/plugins. rules/commands are the two component types
+# with a documented frontmatter contract; skills/agents have their own
+# conventions checked elsewhere (skill frontmatter by check-plugin-structure.sh).
+CURSOR_FRONTMATTER_REQUIRED = {
+    "rules": {"description", "alwaysApply"},
+    "commands": {"description"},
+}
+
 # Cursor component fields that take a path or a list of paths
 # (cursor.com/docs/reference/plugins). The value is what a declared entry must be on
 # disk: "dir" for skills (each entry is a directory of skill folders), "any" for
@@ -154,6 +163,29 @@ def check(code: str, condition: bool, detail: str) -> bool:
     if not condition:
         problems.append(f"  {code:<40} {detail}")
     return condition
+
+
+# ---------------------------------------------------------------------------
+# Frontmatter key presence — a minimal `--- ... ---` block parser. No YAML
+# dependency: this only needs to know which top-level keys are present, not
+# parse their values, so a line-anchored regex is enough and keeps this
+# script dependency-free like the rest of it.
+# ---------------------------------------------------------------------------
+def frontmatter_keys(path: str) -> set[str] | None:
+    """Top-level keys in the leading `--- ... ---` block, or None if the file
+    has no such block (unreadable / not UTF-8 counts as no block, not a key)."""
+    try:
+        with open(path, encoding="utf-8") as fh:
+            text = fh.read()
+    except (OSError, UnicodeDecodeError):
+        return None
+    if not text.startswith("---\n") and not text.startswith("---\r\n"):
+        return None
+    end = text.find("\n---", 4)
+    if end == -1:
+        return None
+    block = text[4:end]
+    return set(re.findall(r"(?m)^([A-Za-z_][A-Za-z0-9_]*):", block))
 
 
 # ---------------------------------------------------------------------------
@@ -622,6 +654,34 @@ def main() -> int:
                 return None
             return target
 
+        def check_frontmatter(field: str, target: str) -> None:
+            """For a rules/commands declaration, validate every component file's
+            frontmatter — a single declared file, or every matching file in a
+            declared directory. Files with no required keys for this field are
+            skipped (not every file type under a mixed directory need comply)."""
+            required = CURSOR_FRONTMATTER_REQUIRED.get(field)
+            if required is None:
+                return
+            suffix = ".mdc" if field == "rules" else ".md"
+            files = ([target] if os.path.isfile(target) else
+                     sorted(
+                         os.path.join(dp, fn)
+                         for dp, _, fns in os.walk(target)
+                         for fn in fns if fn.endswith(suffix)
+                     ))
+            for f in files:
+                keys = frontmatter_keys(f)
+                display = os.path.relpath(f, REPO_ROOT)
+                if not check("cursor_component_frontmatter_missing",
+                             keys is not None,
+                             f"{field}: {display} has no '--- ... ---' "
+                             f"frontmatter block"):
+                    continue
+                missing = required - keys
+                check("cursor_component_frontmatter_incomplete", not missing,
+                      f"{field}: {display} frontmatter is missing "
+                      f"{sorted(missing)}")
+
         for field, expects in CURSOR_COMPONENT_FIELDS.items():
             # An absent key means auto-discovery; an explicit null is a declaration
             # that declares nothing — reject it rather than silently equating the two.
@@ -645,6 +705,7 @@ def main() -> int:
                 if expects == "dir" or (isinstance(entry, str) and entry.endswith("/")):
                     check("cursor_component_path_not_directory", os.path.isdir(target),
                           f"{field} -> {entry!r} must be a directory")
+                check_frontmatter(field, target)
 
         # hooks (string/object) and mcpServers (string/object/array) accept inline
         # config; only string entries point at the filesystem, so dict forms are

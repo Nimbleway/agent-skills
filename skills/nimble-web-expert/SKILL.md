@@ -61,7 +61,7 @@ allowed-tools:
   - AskUserQuestion
 license: MIT
 metadata:
-  version: 1.6.1
+  version: 1.7.0
   author: Nimbleway
   repository: https://github.com/Nimbleway/agent-skills
   category: web-search-tools
