@@ -1,5 +1,15 @@
 # Changelog
 
+## [1.7.0] - 2026-08-24
+
+### Changed
+- **`nimble-web-expert` treats an access barrier as an outcome to report, not a tier to climb.** Render-tier escalation is triggered by empty or truncated content and by a page shell that never hydrated. A CAPTCHA, a human-verification page, or a sign-in wall returned in place of the target is reported plainly and stops the run; where a supported alternative exists the skill takes it — `--focus social` search for social profiles, public search results for gated articles. Stated in Core principles, in Guardrails, and in the render-tier section of the `nimble extract` reference.
+- **Driver tiers are described by what they do** — fast HTTP, headless browsing, headful browsing, full browser profile — in the `nimble extract` reference. Every driver remains available and the `--driver` values are unchanged.
+- **The known-site table in `error-handling.md` gives the supported path for each scenario**, with `--focus social` documented as the route to LinkedIn and X data.
+- **Browser `fetch` is documented as a same-session request** to the page's own API endpoints, and network capture as returning structured JSON with no HTML parsing needed.
+- **`launch-monitor`'s description covers press, Reddit, LinkedIn, JavaScript-heavy pages, and live community forums.** What the skill monitors is unchanged.
+- **`CLAUDE.md` documents the standard** the changes above follow: an access barrier is an outcome to report, never a trigger to escalate, with the two skills that already handle it correctly named as the model to copy.
+
 ## [1.6.1] - 2026-08-10
 
 ### Changed

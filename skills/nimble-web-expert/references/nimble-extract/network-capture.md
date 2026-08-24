@@ -27,7 +27,7 @@ Two modes for accessing API data:
 
 ## Mode 1 — Network capture with rendering
 
-Intercepts API calls fired by the browser during page load. Returns structured JSON directly — bypasses HTML parsing.
+Intercepts API calls fired by the browser during page load. Returns structured JSON directly — no HTML parsing needed.
 
 **Best for:** SPAs, lazy-loaded data, dynamic content loaded by the page's own JS.
 
