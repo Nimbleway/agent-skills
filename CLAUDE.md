@@ -227,6 +227,27 @@ tools:                        # optional — inherits all if omitted
 
 Skills spawn agents with `mode: "bypassPermissions"` (they don't inherit parent permissions). Max 4 concurrent. Always include a fallback if an agent fails.
 
+### An access barrier is an outcome, never a trigger
+
+**A skill must not name a CAPTCHA, a human-verification page, or a sign-in wall as a
+reason to do anything except report and stop.** Escalate a render tier on empty or
+truncated content — never on an access barrier. Where a supported alternative exists,
+take it: `--focus social` search for social profiles, public search results for gated
+articles.
+
+This is about what a skill *instructs*, not the words it uses. Renaming a driver tier
+while keeping a barrier-triggered escalation instruction changes nothing that matters —
+the instruction is still there for anyone reading the file. Describe drivers by what
+they do (JS rendering, headless and headful browsing) rather than by what they get past,
+and describe a fallback as the supported path rather than as a way around something.
+
+No packaging gate reads a skill body — they check version strings, the shape of the tree,
+and the manifest fields — so this one is on the author. When you touch a skill body, read
+the barrier handling in `talent-sourcing` (keep the search-snippet summary, note what was
+unavailable) and the plain-reporting guidance in `nimble-extract-templates/reference.md`.
+Those two are the model to copy. Naming a barrier in order to rule it out is correct and
+wanted; naming one as a reason to reach for a different driver is not.
+
 ### Output quality
 - Every signal must have a verified event date + clickable source URL.
 - TL;DR first, then structured sections, then "What This Means".

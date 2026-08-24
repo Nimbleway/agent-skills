@@ -12,7 +12,7 @@
       "name": "nimble",
       "source": "./",
       "description": "Live web search for AI agents. Find current pages, read any URL, and run research agents that work across many sources and return findings with citations. Includes reusable Extraction Templates for consistently shaped records from known sites, and Web Search Agents for research, enrichment, and dataset building.",
-      "version": "1.6.1",
+      "version": "1.7.0",
       "category": "development",
       "tags": [
         "web-search",

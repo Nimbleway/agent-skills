@@ -2,7 +2,7 @@
 name: nimble-error-handling-reference
 description: |
   Error codes and troubleshooting guide. Load when a nimble command fails unexpectedly.
-  Contains: HTTP error codes, empty content signals, captcha/blocked responses, known site quirks,
+  Contains: HTTP error codes, empty content signals, non-target responses, known site quirks,
   render tier escalation tips, debug patterns.
 ---
 
@@ -27,11 +27,11 @@ description: |
 
 ## Known site limitations
 
-| Site / Scenario            | Issue                                                       | Workaround                                                                                                                |
+| Site / Scenario            | Issue                                                       | Supported path                                                                                                            |
 | -------------------------- | ----------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------- |
-| **LinkedIn profiles**      | Auth wall — returns redirect/JS, status 999                 | Use `--focus social` search instead — returns LinkedIn data directly via subagents. Never try to `extract` LinkedIn URLs. |
-| **X (Twitter) profiles**   | Auth wall or rate limiting                                  | Use `--focus social` search — returns X data via subagents                                                                |
-| **Sites behind login**     | Extract returns login page, not content                     | No workaround — use search snippets from `--include-answer` instead                                                       |
+| **LinkedIn profiles**      | Profile pages are not available to `extract` — status 999    | Use `--focus social` search — the supported route to LinkedIn data, via subagents. Never `extract` a LinkedIn profile URL. |
+| **X (Twitter) profiles**   | Profile pages are not available to `extract`                | Use `--focus social` search — the supported route to X data, via subagents                                                 |
+| **Sites requiring a sign-in** | Extract returns the site's own sign-in page, not the target | Report it and use public search results instead. Never escalate the render tier at an access barrier.                    |
 | **Heavy SPAs**             | Extract returns empty or minimal HTML                       | Add `--render` to execute JavaScript before extraction                                                                    |
 | **Crawl results**          | Returns raw HTML (60–115KB/page), no markdown option        | Use `map` + `extract  --format markdown` for LLM-friendly output                                                          |
 | **Crawl status**           | May misreport task statuses as "failed" when they succeeded | Always try `nimble tasks results --task-id` before assuming failure                                                       |
