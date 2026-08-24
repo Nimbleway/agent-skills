@@ -239,8 +239,7 @@ This is about what a skill *instructs*, not the words it uses. Renaming a driver
 while keeping a barrier-triggered escalation instruction changes nothing that matters —
 the instruction is still there for anyone reading the file. Describe drivers by what
 they do (JS rendering, headless and headful browsing) rather than by what they get past,
-and describe a fallback as the supported path rather than as a way around something
-(Rule 2 of `.claude/rules/skill-writing-rules.md`).
+and describe a fallback as the supported path rather than as a way around something.
 
 No packaging gate reads a skill body — they check version strings, the shape of the tree,
 and the manifest fields — so this one is on the author. When you touch a skill body, read
