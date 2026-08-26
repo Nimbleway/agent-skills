@@ -16,6 +16,35 @@ Follow the reuse-priority chain in
 `skills/nimble-web-expert/references/nimble-agents/reference.md`: look for an
 existing agent before creating one, then run named create-or-reuse:
 
+If the task restricts domains, build `sources` with the exact Agent API V2
+shape below. This applies to MCP tools and CLI `--sources` payloads alike.
+`allow` and `block` are arrays of source-group objects; never emit bare domain
+or URL strings in either array. `title` and `domains` are required on every
+group, `domains` contains hostnames rather than URLs, and `order` is optional.
+`prioritize` and `avoid` are guidance strings, not arrays.
+
+```json source-guidance-contract
+{
+  "allow": [
+    {"title": "Official Slack", "domains": ["slack.com"], "order": 0},
+    {"title": "Official Microsoft", "domains": ["microsoft.com"], "order": 1}
+  ],
+  "block": [
+    {"title": "Non-official comparison sites", "domains": ["g2.com", "capterra.com"], "order": 0}
+  ],
+  "prioritize": "Prefer current pricing and product documentation.",
+  "avoid": "Avoid search snippets and unsupported secondary summaries."
+}
+```
+
+Before a create or run that includes `sources`, inspect the final payload and
+stop locally if any `allow` or `block` entry is not an object with a non-empty
+string `title` and a non-empty string-array `domains`, or if a domain is not a
+hostname. A source-shape failure must not consume the one allowed create
+attempt. Keep the validated object unchanged and pass its serialized JSON to
+the run as `--sources '<validated-source-guidance-json>'` (or as the MCP
+tool's `sources` object). Never describe a restriction without also passing it.
+
 Before the run, derive a positive integer source budget from the task. Use an
 explicit user-provided limit when present; otherwise use **6**. Append this
 verbatim contract to the run input (substituting the integer for `<N>`):
@@ -31,7 +60,9 @@ verbatim contract to the run input (substituting the integer for `<N>`):
 
 Run exactly once:
 
-`nimble --client-source nimble-agent-skills agents run --agent-name <stable-descriptive-name> --use-case research --input "<task plus source-stop contract>" --effort high`
+`nimble --client-source nimble-agent-skills agents run --agent-name <stable-descriptive-name> --use-case research --input "<task plus source-stop contract>" --sources '<validated-source-guidance-json>' --effort high`
+
+Omit `--sources` only when the task has no source restriction or guidance.
 
 The response carries `web_search_agent_id` and `id` (`interaction_id`) — keep
 both, and pass them as `--agent-id` and `--run-id`; `agents:runs get` and

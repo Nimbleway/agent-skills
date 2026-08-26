@@ -164,9 +164,14 @@ deliverable, and must not trigger an automatic replacement run. The
 }
 ```
 
-- **`allow` / `block`** are arrays of source *groups* — objects with `title` (**required**),
-  `domains`, and an optional `order` that sets priority. A bare domain string is rejected.
+- **`allow` / `block`** are arrays of source *groups* — objects with a non-empty `title` and
+  non-empty `domains` hostname array (**both required**), plus an optional non-negative
+  `order` that sets priority. A bare domain string is rejected.
 - **`prioritize` / `avoid`** are plain guidance **strings**. An array is rejected.
+
+Validate this shape before the single create call. Bare domains, full URL strings, missing
+titles, and non-string domain entries are local payload errors; stop before create rather
+than spending the attempt on an avoidable `422`.
 
 `allow` is a hard whitelist; `prioritize`/`avoid` are soft steering. Prefer a domain already
 covered by an Extraction Template — the agent gets cleaner structured data there.
