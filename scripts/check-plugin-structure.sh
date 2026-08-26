@@ -214,3 +214,7 @@ if [ "$problems" -gt 0 ]; then
 fi
 
 echo "Plugin structure is valid for Claude, Cursor, Codex, and xAI packaging."
+
+# The native research command promises a hard source-stop postcondition. Keep
+# its counter fail-closed under duplicate, over-budget, and malformed fixtures.
+python3 scripts/check-research-source-budget.py --self-test

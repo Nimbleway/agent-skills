@@ -143,6 +143,16 @@ Available on both `agents run` and `agents:runs create`:
 | `--previous-interaction-id` | Continue a prior run as a conversation (pass the earlier run's `interaction_id`)   |
 | `--skill` / `--use-case`    | Per the two sections above                                                         |
 
+There is no run flag for a page or source-count ceiling. When a caller supplies
+a source budget, put a hard source-stop contract in `--input`: define one page
+as one unique canonical HTTP(S) URL that is read, opened, extracted, or cited;
+tell the agent to stop discovering pages at the limit and return partial unknowns
+instead of exceeding it. This is still an agent instruction, so treat the
+terminal result as untrusted until its unique `trust.sources[].url` count is
+audited. An over-budget or unauditable result is a HOLD, not a successful
+deliverable, and must not trigger an automatic replacement run. The
+`/nimble-research` command applies this contract and its executable audit.
+
 ### `--sources` — four fields, two different shapes
 
 ```json
