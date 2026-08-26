@@ -90,7 +90,7 @@ Add `"required": false` to any action to make it optional — the action chain c
 
 ## `fetch` — HTTP request from browser context
 
-`fetch` makes an HTTP request from within the live browser session — cookies, CSRF tokens, and session headers from the page load are automatically included. Use it to replay API calls (form submissions, search requests, etc.) without needing to re-authenticate.
+`fetch` makes an HTTP request from within the live browser session, so it runs in the same session context as the page that loaded it. Use it to call the page's own API endpoints directly — form submissions, search requests — instead of parsing their results back out of the rendered HTML.
 
 **`fetch` uses a different syntax from all other actions** — `"fetch"` is the key, not `"type"`:
 

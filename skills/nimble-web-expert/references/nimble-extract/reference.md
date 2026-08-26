@@ -52,13 +52,13 @@ Fetches a URL and returns its content. The workhorse command — use for any URL
 
 ## Drivers
 
-| Driver     | Description       | Render | Best for                       |
-| ---------- | ----------------- | ------ | ------------------------------ |
-| `vx6`      | Fast HTTP (no JS) | No     | Static HTML, APIs, high volume |
-| `vx8`      | Headless browser  | Yes    | Dynamic sites, SPAs            |
-| `vx8-pro`  | Headful browser   | Yes    | Complex interactions           |
-| `vx10`     | Stealth headless  | Yes    | Bot-protected sites            |
-| `vx10-pro` | Stealth headful   | Yes    | Most protected sites           |
+| Driver     | Description                    | Render | Best for                                      |
+| ---------- | ------------------------------ | ------ | --------------------------------------------- |
+| `vx6`      | Fast HTTP, no JS               | No     | Static HTML, APIs, high volume                |
+| `vx8`      | Headless browser               | Yes    | Dynamic sites, SPAs                           |
+| `vx8-pro`  | Headful browser                | Yes    | Complex interactions                          |
+| `vx10`     | Headless, full browser profile | Yes    | Pages needing a complete browser environment  |
+| `vx10-pro` | Headful, full browser profile  | Yes    | Heaviest client-side rendering                 |
 
 ---
 
@@ -88,14 +88,16 @@ print(resp["data"]["markdown"])
 
 ## Render tiers — escalate on failure
 
-**Failure signals:** status 500 · empty `data.html` / `data.markdown` · "captcha" / "verify you are human" in content · login wall instead of target page
+**Escalate on:** status 500 · empty or truncated `data.html` / `data.markdown` · a page shell that never hydrated
 
-| Tier | CLI                                                                   | When                                            |
-| ---- | --------------------------------------------------------------------- | ----------------------------------------------- |
-| 1    | `extract --url "..."`                                                 | Static pages, docs, news, GitHub, Wikipedia, HN |
-| 2    | `extract --url "..." --render`                                        | SPAs, dynamic content, JS-rendered pages        |
-| 2b   | `--render --render-options '{"render_type":"idle2","timeout":60000}'` | Slow SPAs, wait for network idle                |
-| 3    | `--render --driver vx10-pro`                                          | E-commerce, social, job boards — max stealth    |
+**An access barrier is not an escalation trigger.** A CAPTCHA, a human-verification page, or a sign-in wall returned in place of the target is a real outcome — report it and stop. Where a supported alternative exists, take it instead: `--focus social` search for social profiles, public search results for gated articles.
+
+| Tier | CLI                                                                   | When                                                   |
+| ---- | --------------------------------------------------------------------- | ------------------------------------------------------ |
+| 1    | `extract --url "..."`                                                 | Static pages, docs, news, GitHub, Wikipedia, HN        |
+| 2    | `extract --url "..." --render`                                        | SPAs, dynamic content, JS-rendered pages               |
+| 2b   | `--render --render-options '{"render_type":"idle2","timeout":60000}'` | Slow SPAs, wait for network idle                       |
+| 3    | `--render --driver vx10-pro`                                          | E-commerce, social, job boards — full browser profile  |
 
 ```bash
 # Tier 1 — no render
@@ -104,7 +106,7 @@ nimble --transform "data.markdown" extract --url "https://example.com" --format 
 # Tier 2 — render
 nimble --transform "data.markdown" extract --url "https://example.com" --render --format markdown
 
-# Tier 3 — stealth
+# Tier 3 — full browser profile
 nimble --transform "data.markdown" extract --url "https://example.com" --render --driver vx10-pro --format markdown
 ```
 
@@ -112,7 +114,7 @@ nimble --transform "data.markdown" extract --url "https://example.com" --render 
 # Tier 2 — render
 resp = nimble.extract(url="https://example.com", render=True, formats=["markdown"])
 
-# Tier 3 — stealth
+# Tier 3 — full browser profile
 resp = nimble.extract(url="https://example.com", render=True, driver="vx10-pro", formats=["markdown"])
 ```
 

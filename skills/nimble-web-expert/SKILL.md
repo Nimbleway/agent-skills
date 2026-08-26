@@ -79,7 +79,7 @@ User request: $ARGUMENTS
 - **Web Search Agent runs: pick a run mode before building the command.** Default to named create-or-reuse — `nimble agents run --agent-name <stable-name>` — so a repeat session lands on the same agent. `agents:runs create` is the explicit-agent-ID route only and requires `--agent-id`. `references/nimble-agents/reference.md` has the mode table, `use_case` locking, and the one-time `skill` override.
 - **One command → present results → done.** Run once, show the data immediately as a table. Do NOT experiment, loop, or write Python to parse output.
 - **Multiple inputs → always parallel.** 2+ URLs/keywords/ASINs → `&`+`wait`. 6–20 → `xargs -P`. 20+ → Python asyncio script. See `references/batch-patterns.md`.
-- **Escalate render tiers silently.** Tier 1 → 2 → 3 → … without asking. Surface a decision only when all tiers fail and investigation tools are needed.
+- **Escalate render tiers silently on empty or truncated content.** Tier 1 → 2 → 3 → … without asking. Surface a decision only when all tiers fail and investigation tools are needed. An access barrier is a different outcome, not a tier to climb — see Guardrails.
 - **Never answer from training data.** Live prices, current news, today's listings → always fetch via Nimble. If unavailable, say so.
 - **AskUserQuestion at every meaningful choice.** Header ≤12 chars, 2–4 options, label 1–5 words, recommended option first. Never present choices as numbered prose.
 - **Save all outputs to `.nimble/`.** Never leave extraction results in memory only.
@@ -267,7 +267,8 @@ The skill maintains `~/.claude/skills/nimble-web-expert/learned/examples.json`.
 - **NEVER answer a synthesis deliverable with raw search results.** "Report", "brief", "compare", "best X", "which should I" → Gate B routes to a Web Search Agent. Handing back a list of links and calling it a report is the most common mis-route.
 - **Distinguish Extraction Templates from Web Search Agents.** Never call a template a "WSA"/"legacy WSA," and never route a template use to `agents` by name alone (or the reverse). Building new templates/agents is out of scope — use existing ones.
 - **When a run comes back empty, partial, or clearly wrong, say so plainly** — a domain that returned nothing, a template that matched poorly, a search with no relevant hits are real outcomes, not something to present as success. Suggest an obvious next step (broader source, a different capability) where one exists.
-- **NEVER retry the same render tier.** If a tier returns empty or blocked, escalate — do not re-run.
+- **NEVER retry the same render tier.** If a tier returns empty or truncated content, escalate — do not re-run.
+- **NEVER escalate at an access barrier.** A CAPTCHA, a human-verification page, or a sign-in wall in place of the target is a real outcome — report it plainly and stop. Where a supported alternative exists, take it: `--focus social` search for social profiles, public search results for gated articles.
 - **NEVER substitute WebFetch, WebSearch, curl, or wget for nimble operations.** They're not in `allowed-tools` — if a Nimble transport isn't available, stop and follow the guidance in the no-transport branch of Core principles. Don't try to work around it.
 - **NEVER load reference files speculatively.** Only read a reference when the current task explicitly needs it.
 - **Task agents MUST use `run_in_background=False`.**
