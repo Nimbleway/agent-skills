@@ -122,7 +122,9 @@ cd evals && uv sync
 uv run python -m evals.suites.web_expert \
   --dataset-name=nimble-web-expert-production --runtime claude --max-items 50
 
-# Packaging gates — all three run in CI on every PR
+# Packaging gates — all three run in CI on every PR. Two workflows carry them, and
+# both are required status checks on main: "All version references agree" and
+# "Plugin is packageable on every platform".
 bash scripts/tag-release.sh --check           # all version references agree
 bash scripts/check-plugin-structure.sh        # skills tree is packageable everywhere
 python3 scripts/check-plugin-manifests.py     # manifest fields, assets, brand contrast
