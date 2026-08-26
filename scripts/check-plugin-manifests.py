@@ -32,14 +32,37 @@ import xml.etree.ElementTree as ET
 REPO_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 CODEX = ".codex-plugin/plugin.json"
+CURSOR = ".cursor-plugin/plugin.json"
 GROK = ".grok-plugin/plugin.json"
 ALL_MANIFESTS = [
     ".claude-plugin/plugin.json",
-    ".cursor-plugin/plugin.json",
+    CURSOR,
     ".claude-plugin/marketplace.json",
     CODEX,
     GROK,
 ]
+
+# Required YAML frontmatter keys per Cursor component type, from
+# cursor.com/docs/reference/plugins. Skill frontmatter is validated separately
+# by check-plugin-structure.sh; agents are declared here and validated here.
+CURSOR_FRONTMATTER_REQUIRED = {
+    "rules": {"description", "alwaysApply"},
+    "commands": {"description"},
+    "agents": {"name", "description"},
+}
+
+# Cursor component fields that take a path or a list of paths
+# (cursor.com/docs/reference/plugins). The value is what a declared entry must be on
+# disk: "dir" for skills (each entry is a directory of skill folders), "any" for
+# component types where a single file and a directory are both valid declarations.
+# hooks/mcpServers/logo also accept a path but allow inline non-path forms, so they
+# are handled separately below rather than forced through this table.
+CURSOR_COMPONENT_FIELDS = {
+    "skills": "dir",
+    "rules": "any",
+    "agents": "any",
+    "commands": "any",
+}
 MCP_CONFIG = ".mcp.json"
 
 # The portable Agent Plugins MCP config, at the spec's canonical root path. Distinct
@@ -140,6 +163,42 @@ def check(code: str, condition: bool, detail: str) -> bool:
     if not condition:
         problems.append(f"  {code:<40} {detail}")
     return condition
+
+
+# ---------------------------------------------------------------------------
+# Frontmatter key presence — a minimal `--- ... ---` block parser. No YAML
+# dependency: this only needs to know which top-level keys are present, not
+# parse their values, so a line-anchored regex is enough and keeps this
+# script dependency-free like the rest of it.
+# ---------------------------------------------------------------------------
+def frontmatter_keys(path: str) -> set[str] | None:
+    """Top-level keys in the leading `--- ... ---` block, or None if the file
+    has no such block (unreadable / not UTF-8 counts as no block, not a key)."""
+    try:
+        with open(path, encoding="utf-8") as fh:
+            text = fh.read()
+    except (OSError, UnicodeDecodeError):
+        return None
+    if not text.startswith("---\n") and not text.startswith("---\r\n"):
+        return None
+    lines = text.splitlines()
+    end = next((i for i, line in enumerate(lines[1:], 1) if line == "---"), None)
+    if end is None:
+        return None
+    block_lines = lines[1:end]
+    # A bare horizontal rule in the Markdown body is byte-identical to a YAML
+    # terminator. Reject a harvested block that contains body-shaped,
+    # unindented prose instead of accepting keys from arbitrary later text.
+    for line in block_lines:
+        if not line or line[0].isspace() or line.startswith("-"):
+            continue
+        if not re.match(r"^[A-Za-z_][A-Za-z0-9_-]*:", line):
+            return None
+    return {
+        match.group(1)
+        for line in block_lines
+        if (match := re.match(r"^([A-Za-z_][A-Za-z0-9_-]*):", line))
+    }
 
 
 # ---------------------------------------------------------------------------
@@ -496,6 +555,36 @@ def main() -> int:
         print(f"  ok       {len(portable.get('mcpServers', {}))} server(s), "
               f"schema and transports valid")
 
+    # The portable file is the path Cursor loads. Its vocabulary differs from
+    # .mcp.json, but the server identity and endpoint must remain equivalent.
+    print(f"\nCursor/portable MCP parity ({PORTABLE_MCP} vs {MCP_CONFIG}):")
+    parity_before = len(problems)
+    shared_servers = mcp.get("mcpServers", mcp) if isinstance(mcp, dict) else None
+    portable_servers = portable.get("mcpServers") if isinstance(portable, dict) else None
+    if isinstance(shared_servers, dict) and isinstance(portable_servers, dict):
+        check("cursor_mcp_servers_missing", set(shared_servers) <= set(portable_servers),
+              f"{PORTABLE_MCP} is missing server(s) from {MCP_CONFIG}: "
+              f"{sorted(set(shared_servers) - set(portable_servers))}")
+        check("cursor_mcp_servers_extra", set(portable_servers) <= set(shared_servers),
+              f"{PORTABLE_MCP} has server(s) absent from {MCP_CONFIG}: "
+              f"{sorted(set(portable_servers) - set(shared_servers))}")
+        for name in sorted(set(shared_servers) & set(portable_servers)):
+            shared_cfg = shared_servers[name]
+            portable_cfg = portable_servers[name]
+            if not (isinstance(shared_cfg, dict) and isinstance(portable_cfg, dict)):
+                continue
+            check("cursor_mcp_server_url_drift",
+                  shared_cfg.get("url") == portable_cfg.get("url"),
+                  f"{PORTABLE_MCP} server {name!r} URL does not match {MCP_CONFIG}")
+            check("cursor_mcp_server_transport_drift",
+                  shared_cfg.get("type") == "http"
+                  and portable_cfg.get("type") == "streamable-http",
+                  f"{name!r} must use http in {MCP_CONFIG} and streamable-http "
+                  f"in {PORTABLE_MCP}")
+    if (len(problems) == parity_before and isinstance(shared_servers, dict)
+            and isinstance(portable_servers, dict)):
+        print(f"  ok       {len(shared_servers)} server(s) have matching names and URLs")
+
     # -- the portable Agent Plugins manifest ---------------------------------
     print(f"\nPortable manifest ({PORTABLE_PLUGIN}):")
     pp = manifests.get(PORTABLE_PLUGIN)
@@ -560,6 +649,167 @@ def main() -> int:
     if len(problems) == pp_problems_before and isinstance(pp, dict):
         print(f"  ok       schema, name, and {len(set(pp) - {'$schema'})} "
               f"declared field(s) valid")
+
+    # -- the Cursor manifest's declared component paths ----------------------
+    #
+    # Cursor types skills/rules/agents/commands as a path or a list of paths, and a
+    # declared path REPLACES auto-discovery (cursor.com/docs/reference/plugins). The
+    # docs do not define what a missing declared directory does, so a dangling
+    # declaration either ships that component surface empty or fails at review —
+    # both invisible to a JSON parse. This is not hypothetical: rules/ was deleted
+    # in 89cfd2a while the manifest kept declaring "./rules/" for five months.
+    # Every declared local path must exist and have the right shape.
+    print(f"\nCursor manifest ({CURSOR}), declared component paths:")
+    cursor = manifests.get(CURSOR)
+    cursor_problems_before = len(problems)
+    cursor_declared = 0
+    if cursor is not None:
+        def cursor_path_ok(field: str, entry: str) -> str | None:
+            """Common gates for one declared path. Returns the on-disk path, or
+            None when a gate failed and shape checks should not run."""
+            if not check("cursor_component_path_wrong_type", isinstance(entry, str),
+                         f"{field} entries must be strings, got {type(entry).__name__}"):
+                return None
+            if not check("cursor_component_path_empty", entry.strip() != "",
+                         f"{field} declares an empty path — omit the key to use "
+                         f"auto-discovery instead"):
+                return None
+            if not check("cursor_component_path_unsafe",
+                         not os.path.isabs(entry) and ".." not in entry.split("/"),
+                         f"{field} -> {entry!r} must be a relative path inside the plugin"):
+                return None
+            # rel("./") is "" — a declared plugin root resolves to the checkout root,
+            # not to a path os.path.exists() rejects.
+            target = rel(entry) or "."
+            if not check("cursor_component_path_missing", os.path.exists(target),
+                         f"{field} -> {entry!r} does not exist — a declared path "
+                         f"replaces auto-discovery, so this ships the surface empty"):
+                return None
+            # The lexical '..' gate above cannot see symlinks; resolve the target and
+            # require it to stay inside the checkout, or a link pointing outside the
+            # plugin would validate as a healthy component path.
+            resolved = os.path.realpath(target)
+            root = os.path.realpath(REPO_ROOT)
+            if not check("cursor_component_path_escapes_plugin",
+                         resolved == root or resolved.startswith(root + os.sep),
+                         f"{field} -> {entry!r} resolves to {resolved!r}, outside "
+                         f"the plugin checkout"):
+                return None
+            return target
+
+        def check_frontmatter(field: str, target: str) -> None:
+            """For a rules/commands/agents declaration, validate every component file's
+            frontmatter — a single declared file, or every matching file in a
+            declared directory. Files with no required keys for this field are
+            skipped (not every file type under a mixed directory need comply)."""
+            required = CURSOR_FRONTMATTER_REQUIRED.get(field)
+            if required is None:
+                return
+            suffix = ".mdc" if field == "rules" else ".md"
+            files = ([target] if os.path.isfile(target) else
+                     sorted(
+                         os.path.join(dp, fn)
+                         for dp, _, fns in os.walk(target)
+                         for fn in fns if fn.endswith(suffix)
+                     ))
+            for f in files:
+                keys = frontmatter_keys(f)
+                display = os.path.relpath(f, REPO_ROOT)
+                if not check("cursor_component_frontmatter_missing",
+                             keys is not None,
+                             f"{field}: {display} has no '--- ... ---' "
+                             f"frontmatter block"):
+                    continue
+                missing = required - keys
+                check("cursor_component_frontmatter_incomplete", not missing,
+                      f"{field}: {display} frontmatter is missing "
+                      f"{sorted(missing)}")
+
+        for field, expects in CURSOR_COMPONENT_FIELDS.items():
+            # An absent key means auto-discovery; an explicit null is a declaration
+            # that declares nothing — reject it rather than silently equating the two.
+            if field not in cursor:
+                continue
+            value = cursor[field]
+            if not check("cursor_component_field_null", value is not None,
+                         f"{field} is explicitly null — omit the key to use "
+                         f"auto-discovery instead"):
+                continue
+            if not check("cursor_component_field_wrong_type",
+                         isinstance(value, (str, list)),
+                         f"{field} must be a string path or an array of paths, "
+                         f"got {type(value).__name__}"):
+                continue
+            for entry in value if isinstance(value, list) else [value]:
+                cursor_declared += 1
+                target = cursor_path_ok(field, entry)
+                if target is None:
+                    continue
+                if expects == "dir" or (isinstance(entry, str) and entry.endswith("/")):
+                    check("cursor_component_path_not_directory", os.path.isdir(target),
+                          f"{field} -> {entry!r} must be a directory")
+                check_frontmatter(field, target)
+
+        # hooks (string/object) and mcpServers (string/object/array) accept inline
+        # config; only string entries point at the filesystem, so dict forms are
+        # skipped, but a string inside an mcpServers array is still a declared path.
+        for field, allow_list in (("hooks", False), ("mcpServers", True)):
+            if field not in cursor:
+                continue
+            value = cursor[field]
+            if field == "hooks" and not check(
+                "cursor_hooks_wrong_type", not isinstance(value, list),
+                "hooks must be a string path or inline object, not an array",
+            ):
+                continue
+            # This repository intentionally keeps Cursor on the portable root
+            # config. Inline/object/list forms are valid Cursor schema, but
+            # would create an untracked third copy of the hosted endpoint and
+            # bypass the parity assertion above.
+            if field == "mcpServers" and not check(
+                "cursor_mcp_servers_not_portable_path",
+                isinstance(value, str),
+                f"mcpServers must be the single path './{PORTABLE_MCP}', "
+                "not an inline object or array",
+            ):
+                continue
+            entries = value if allow_list and isinstance(value, list) else [value]
+            for entry in entries:
+                if not isinstance(entry, str):
+                    continue
+                cursor_declared += 1
+                target = cursor_path_ok(field, entry)
+                if target is not None:
+                    check("cursor_component_path_not_file", os.path.isfile(target),
+                          f"{field} -> {entry!r} must be a file")
+                    if field == "mcpServers":
+                        check("cursor_mcp_path_wrong",
+                              os.path.realpath(target)
+                              == os.path.realpath(PORTABLE_MCP),
+                              f"mcpServers must point at {PORTABLE_MCP}, got {entry!r}")
+
+        # A logo may be an absolute URL instead of a repo path. Schemes are
+        # case-insensitive per RFC 3986, and protocol-relative URLs are URLs too.
+        logo = cursor.get("logo")
+        if isinstance(logo, str) and not (
+            logo.lower().startswith(("http://", "https://")) or logo.startswith("//")
+        ):
+            cursor_declared += 1
+            target = cursor_path_ok("logo", logo)
+            if target is not None:
+                check("cursor_component_path_not_file", os.path.isfile(target),
+                      f"logo -> {logo!r} must be a file")
+    # When cursor is None the file is missing or malformed, and the plugin_manifest_*
+    # checks in the parse loop already said so — same reasoning as the portable
+    # config sections: one underlying problem gets one error, not two.
+
+    if len(problems) == cursor_problems_before and cursor is not None:
+        if cursor_declared:
+            print(f"  ok       {cursor_declared} declared path(s) exist "
+                  f"with the right shape")
+        else:
+            print("  ok       no component paths declared — Cursor auto-discovery "
+                  "applies")
 
     codex = manifests.get(CODEX)
     if codex is None:

@@ -41,5 +41,8 @@
     "business-intelligence"
   ],
   "skills": "./skills/",
-  "rules": "./rules/"
+  "agents": "./agents/",
+  "commands": "./commands/",
+  "rules": "./rules/",
+  "mcpServers": "./mcp.json"
 }

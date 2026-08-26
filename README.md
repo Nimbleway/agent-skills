@@ -19,6 +19,7 @@ Unlock the web for your AI agents — search, scrape, extract structured data, a
 | **Human Resources** | [talent-sourcing](skills/talent-sourcing/) | Source and shortlist candidates from live web data. More skills (comp analysis, interview prep, onboarding) planned |
 | **Web Data Toolkit** | [nimble-web-expert](skills/nimble-web-expert/) | Search, scrape, extract, map, and crawl any website — run site-specific Extraction Templates for clean structured data, and Web Search Agents for open-ended research with citations |
 | **Data Platforms** | [nimble-databricks-data-products](skills/nimble-databricks-data-products/) | Turn live web data into Databricks data products — discover Nimble agents, scrape into Delta tables, and build an AI/BI dashboard and/or a deployed Databricks App |
+| **Developer Tools** | [codebase-web-research](skills/codebase-web-research/) | Check repository dependencies and API usage against current release notes, vendor documentation, and security advisories, with every conclusion anchored to both a code location and a dated source |
 
 **Business Research**, **Marketing**, **Productivity**, and **Healthcare** skills are one-command workflows. They spawn parallel sub-agents, gather live web data via Nimble APIs, synthesize findings, and deliver structured reports with dates and source URLs. They learn from previous runs and only surface what's new.
 
