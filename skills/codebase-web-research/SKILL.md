@@ -74,10 +74,9 @@ Run Nimble in parallel across every distinct question from Phase 1 (multiple
 `Bash` calls in one response, per the playbook's parallel-call pattern — never
 one-by-one). Prefer, in order:
 
-1. **Release notes / changelog** for the exact pinned version → latest:
-   `nimble search --query "<package> changelog <pinned-version>..<latest>" --focus coding`
-   or `nimble extract --url "<known changelog URL>" --format markdown` when the
-   URL is already known from the manifest or a prior search.
+1. **Release notes / changelog** for the exact pinned version → latest. Use the
+   Search and Extract commands from `references/nimble-playbook.md`; when a
+   changelog URL is already known, prefer direct extraction.
 2. **Current API docs** for the specific method/endpoint the repo calls, not
    the whole product — search or extract the docs page for that one call.
 3. **Security advisories** — search for `"<package>" CVE OR advisory
@@ -86,8 +85,9 @@ one-by-one). Prefer, in order:
 4. **Migration guides** — when planning an upgrade, search for the vendor's
    own migration/upgrade guide before drafting a plan from general knowledge.
 
-Save extracted pages under `.nimble/` per the playbook rather than returning
-large pages into context; work from the saved file.
+Save extracted pages under `.nimble/` per
+`nimble-web-expert/rules/output.md` rather than returning large pages into
+context; work from the saved file.
 
 ## Phase 3 — Report
 
@@ -102,3 +102,19 @@ undifferentiated summary.
 If Nimble returns a structured failure (rate limit, not-found, auth), report
 it as a failure to the user — do not silently fall back to training knowledge
 and present it as current.
+
+## Persist and continue
+
+Before saving, deduplicate the conclusion against
+`~/.nimble/memory/codebase-web-research/` using the conventions in
+`references/memory-and-distribution.md`. Store the report under
+`~/.nimble/memory/reports/` and update the codebase-research index with links
+to related dependencies, advisories, and migrations rather than duplicating
+an existing finding.
+
+Always offer the distribution choices described in
+`references/memory-and-distribution.md`. When the result suggests broader
+work, offer `nimble-web-expert` for follow-up web investigation and
+`nimble-databricks-data-products` when the repository needs to operationalize
+the resulting dataset; do not invoke a sibling skill without the user's
+request.

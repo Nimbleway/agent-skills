@@ -43,12 +43,12 @@ ALL_MANIFESTS = [
 ]
 
 # Required YAML frontmatter keys per Cursor component type, from
-# cursor.com/docs/reference/plugins. rules/commands are the two component types
-# with a documented frontmatter contract; skills/agents have their own
-# conventions checked elsewhere (skill frontmatter by check-plugin-structure.sh).
+# cursor.com/docs/reference/plugins. Skill frontmatter is validated separately
+# by check-plugin-structure.sh; agents are declared here and validated here.
 CURSOR_FRONTMATTER_REQUIRED = {
     "rules": {"description", "alwaysApply"},
     "commands": {"description"},
+    "agents": {"name", "description"},
 }
 
 # Cursor component fields that take a path or a list of paths
@@ -181,11 +181,24 @@ def frontmatter_keys(path: str) -> set[str] | None:
         return None
     if not text.startswith("---\n") and not text.startswith("---\r\n"):
         return None
-    end = text.find("\n---", 4)
-    if end == -1:
+    lines = text.splitlines()
+    end = next((i for i, line in enumerate(lines[1:], 1) if line == "---"), None)
+    if end is None:
         return None
-    block = text[4:end]
-    return set(re.findall(r"(?m)^([A-Za-z_][A-Za-z0-9_]*):", block))
+    block_lines = lines[1:end]
+    # A bare horizontal rule in the Markdown body is byte-identical to a YAML
+    # terminator. Reject a harvested block that contains body-shaped,
+    # unindented prose instead of accepting keys from arbitrary later text.
+    for line in block_lines:
+        if not line or line[0].isspace() or line.startswith("-"):
+            continue
+        if not re.match(r"^[A-Za-z_][A-Za-z0-9_-]*:", line):
+            return None
+    return {
+        match.group(1)
+        for line in block_lines
+        if (match := re.match(r"^([A-Za-z_][A-Za-z0-9_-]*):", line))
+    }
 
 
 # ---------------------------------------------------------------------------
@@ -542,6 +555,36 @@ def main() -> int:
         print(f"  ok       {len(portable.get('mcpServers', {}))} server(s), "
               f"schema and transports valid")
 
+    # The portable file is the path Cursor loads. Its vocabulary differs from
+    # .mcp.json, but the server identity and endpoint must remain equivalent.
+    print(f"\nCursor/portable MCP parity ({PORTABLE_MCP} vs {MCP_CONFIG}):")
+    parity_before = len(problems)
+    shared_servers = mcp.get("mcpServers", mcp) if isinstance(mcp, dict) else None
+    portable_servers = portable.get("mcpServers") if isinstance(portable, dict) else None
+    if isinstance(shared_servers, dict) and isinstance(portable_servers, dict):
+        check("cursor_mcp_servers_missing", set(shared_servers) <= set(portable_servers),
+              f"{PORTABLE_MCP} is missing server(s) from {MCP_CONFIG}: "
+              f"{sorted(set(shared_servers) - set(portable_servers))}")
+        check("cursor_mcp_servers_extra", set(portable_servers) <= set(shared_servers),
+              f"{PORTABLE_MCP} has server(s) absent from {MCP_CONFIG}: "
+              f"{sorted(set(portable_servers) - set(shared_servers))}")
+        for name in sorted(set(shared_servers) & set(portable_servers)):
+            shared_cfg = shared_servers[name]
+            portable_cfg = portable_servers[name]
+            if not (isinstance(shared_cfg, dict) and isinstance(portable_cfg, dict)):
+                continue
+            check("cursor_mcp_server_url_drift",
+                  shared_cfg.get("url") == portable_cfg.get("url"),
+                  f"{PORTABLE_MCP} server {name!r} URL does not match {MCP_CONFIG}")
+            check("cursor_mcp_server_transport_drift",
+                  shared_cfg.get("type") == "http"
+                  and portable_cfg.get("type") == "streamable-http",
+                  f"{name!r} must use http in {MCP_CONFIG} and streamable-http "
+                  f"in {PORTABLE_MCP}")
+    if (len(problems) == parity_before and isinstance(shared_servers, dict)
+            and isinstance(portable_servers, dict)):
+        print(f"  ok       {len(shared_servers)} server(s) have matching names and URLs")
+
     # -- the portable Agent Plugins manifest ---------------------------------
     print(f"\nPortable manifest ({PORTABLE_PLUGIN}):")
     pp = manifests.get(PORTABLE_PLUGIN)
@@ -655,7 +698,7 @@ def main() -> int:
             return target
 
         def check_frontmatter(field: str, target: str) -> None:
-            """For a rules/commands declaration, validate every component file's
+            """For a rules/commands/agents declaration, validate every component file's
             frontmatter — a single declared file, or every matching file in a
             declared directory. Files with no required keys for this field are
             skipped (not every file type under a mixed directory need comply)."""
@@ -711,7 +754,14 @@ def main() -> int:
         # config; only string entries point at the filesystem, so dict forms are
         # skipped, but a string inside an mcpServers array is still a declared path.
         for field, allow_list in (("hooks", False), ("mcpServers", True)):
-            value = cursor.get(field)
+            if field not in cursor:
+                continue
+            value = cursor[field]
+            if field == "hooks" and not check(
+                "cursor_hooks_wrong_type", not isinstance(value, list),
+                "hooks must be a string path or inline object, not an array",
+            ):
+                continue
             entries = value if allow_list and isinstance(value, list) else [value]
             for entry in entries:
                 if not isinstance(entry, str):
@@ -721,6 +771,11 @@ def main() -> int:
                 if target is not None:
                     check("cursor_component_path_not_file", os.path.isfile(target),
                           f"{field} -> {entry!r} must be a file")
+                    if field == "mcpServers":
+                        check("cursor_mcp_path_wrong",
+                              os.path.realpath(target)
+                              == os.path.realpath(PORTABLE_MCP),
+                              f"mcpServers must point at {PORTABLE_MCP}, got {entry!r}")
 
         # A logo may be an absolute URL instead of a repo path. Schemes are
         # case-insensitive per RFC 3986, and protocol-relative URLs are URLs too.

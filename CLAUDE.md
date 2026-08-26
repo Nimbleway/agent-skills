@@ -27,6 +27,7 @@ skills/
     SKILL.md                     #   Skill definition (frontmatter + instructions)
     references/                  #   On-demand docs, loaded when needed (reference.md, never SKILL.md)
 agents/                          # Shared sub-agent definitions (.md with frontmatter)
+rules/                           # Cursor agent-requested rules (.mdc with frontmatter)
 _shared/                         # Canonical shared references (synced into skills)
 assets/                          # Plugin listing assets (logo, composer icon)
 .claude-plugin/plugin.json       # Claude Code plugin manifest
@@ -97,9 +98,11 @@ Root `mcp.json` is the spec's canonical path and is validated in CI against the 
 the top level, and each server's `type` must be one of `stdio`, `streamable-http`, or `sse`.
 Pasting Claude's `"type": "http"` in there fails with `portable_mcp_transport_invalid`.
 
-Note that Cursor does **not** read this repository's root `mcp.json` — a Cursor user pastes the
-snippet into their own `.cursor/mcp.json`. An earlier changelog entry described root `mcp.json` as
-"preserved for Cursor compatibility"; that was inaccurate.
+Cursor reads this repository's root `mcp.json` because `.cursor-plugin/plugin.json` declares it
+through `mcpServers`. The manifest checker validates both the portable schema and semantic parity
+with `.mcp.json`, while preserving each consumer's required transport vocabulary. A user-level
+`.cursor/mcp.json` remains an alternative manual configuration path, not this plugin's packaged
+path.
 
 ## Commands
 

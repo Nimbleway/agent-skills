@@ -18,10 +18,11 @@ existing agent before creating one, then run named create-or-reuse:
 
 Run: `nimble --client-source nimble-agent-skills agents run --agent-name <stable-descriptive-name> --use-case research --input "$ARGUMENTS" --effort high`
 
-The response carries `agent_id` and `run_id` — keep both; `agents:runs get` and
+The response carries `web_search_agent_id` and `id` (`interaction_id`) — keep
+both, and pass them as `--agent-id` and `--run-id`; `agents:runs get` and
 `agents:runs result` each require both. Poll
-`nimble --client-source nimble-agent-skills agents:runs get --agent-id <agent_id> --run-id <run_id>`
+`nimble --client-source nimble-agent-skills agents:runs get --agent-id <web_search_agent_id> --run-id <id>`
 until finished, then fetch
-`nimble --client-source nimble-agent-skills agents:runs result --agent-id <agent_id> --run-id <run_id>`.
+`nimble --client-source nimble-agent-skills agents:runs result --agent-id <web_search_agent_id> --run-id <id>`.
 Report the terminal result with its per-claim citations and trust metadata
 intact — do not summarize away the sourcing.
