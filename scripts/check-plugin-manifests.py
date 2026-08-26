@@ -762,6 +762,17 @@ def main() -> int:
                 "hooks must be a string path or inline object, not an array",
             ):
                 continue
+            # This repository intentionally keeps Cursor on the portable root
+            # config. Inline/object/list forms are valid Cursor schema, but
+            # would create an untracked third copy of the hosted endpoint and
+            # bypass the parity assertion above.
+            if field == "mcpServers" and not check(
+                "cursor_mcp_servers_not_portable_path",
+                isinstance(value, str),
+                f"mcpServers must be the single path './{PORTABLE_MCP}', "
+                "not an inline object or array",
+            ):
+                continue
             entries = value if allow_list and isinstance(value, list) else [value]
             for entry in entries:
                 if not isinstance(entry, str):
