@@ -222,3 +222,6 @@ python3 scripts/check-research-source-budget.py --self-test
 # Keep Agent API V2 source guidance object-shaped before a billable create.
 # This rejects the exact allow/block string-array failure seen in native Cursor.
 python3 scripts/check-research-source-guidance.py
+
+# Every comparison cell and recommendation reason must map to trust.claims.
+python3 scripts/check-research-claim-grounding.py --self-test
