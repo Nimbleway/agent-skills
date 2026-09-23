@@ -1,7 +1,25 @@
-# Nimble Web Search Skills & Plugin
+<p align="center">
+  <a href="https://nimbleway.com">
+    <img src="assets/nimble-logo.png" width="120" alt="Nimble">
+  </a>
+</p>
+
+<h1 align="center">Nimble Web Search Skills &amp; Plugin</h1>
+<h3 align="center">Live web data for any AI agent, in one plugin</h3>
+
+<div align="center">
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Version](https://img.shields.io/badge/version-1.7.0-green)](https://github.com/Nimbleway/agent-skills)
+[![GitHub stars](https://img.shields.io/github/stars/Nimbleway/agent-skills?style=flat)](https://github.com/Nimbleway/agent-skills/stargazers)
+
+</div>
+
+<p align="center">
+  ⭐ <em>If these skills save you time, star the repo so more developers can find it.</em>
+</p>
+
+<!-- Comparison video (agent with vs. without Nimble) goes here once one exists. -->
 
 Unlock the web for your AI agents — search, scrape, extract structured data, and run business intelligence workflows, all powered by Nimble's web data infrastructure. One plugin for Claude Code, Cursor, and any platform that supports the [Agent Skills spec](https://agentskills.io/specification.md).
 
