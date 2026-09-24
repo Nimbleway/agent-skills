@@ -1,0 +1,125 @@
+{
+  "output": {
+    "type": "text",
+    "content": "# Slack Pro vs Microsoft Teams Essentials — 50-person software company (August 2026)\n\nCited from the six most authoritative official Slack and Microsoft pages reachable in the budget. Cells the cited pages do not disclose are marked **Unknown** (no inference).\n\n| Decision field | **Slack Pro** | **Microsoft Teams Essentials** |\n|---|---|---|\n| **Price / currency / cadence / unit** | $8.75 USD per active user/month (monthly billing) or $7.25 USD per active user/month (annual billing) [1] | $4.00 per user/month, paid yearly (annual subscription, auto-renews) on the US Essentials landing page [2] |\n| **Meeting participant limit** | Unknown — the official Slack plans-and-features page in scope does not state a per-huddle/participant cap for Pro [3] | Unknown — the cited Essentials landing page, QuickStart guide, and Teams service description do not disclose a participant cap for the Essentials SKU [2] [4] [5] |\n| **Meeting duration limit** | Unknown — same Slack plans-and-features page does not state a duration cap for Pro [3] | Unknown — not disclosed on the cited Microsoft Essentials pages [2] [4] [5] |\n| **Guest / external collaboration** | Guest accounts are a paid-plan feature (Pro qualifies). Two roles: **Multi-Channel Guests** (charged as full members, can join unlimited specified channels) and **Single-Channel Guests** (free, one channel each, capped at 5 single-channel guests per paid active member). **Slack Connect** for cross-organization channels. Workspace owners/admins approve invitations and govern access. | Unknown — the cited Microsoft pages describe Essentials as a standalone Teams subscription for meetings/chat/collaboration but do not surface a guest/external policy in scope [2] [4] [5] |\n| **Security / admin controls** | Pro is covered by ISO 27001 and ISO 27018 certifications. Admin/security features referenced on the plans-and-features page include administrators, access logs, approving apps, channel management, and analytics. [1] [3] | Unknown — the cited Essentials and service-description pages do not enumerate an admin/security control set for the standalone Essentials SKU [2] [4] [5] |\n\n## Recommendation — external client collaboration\n\n**Slack Pro is the better-documented fit** purely on what the cited official pages disclose. Its guest model is explicit and granular (paid Multi-Channel Guests, free Single-Channel Guests capped at 5 per paid seat, plus Slack Connect for cross-company channels), all governed by workspace owner/admin approval. The cited Microsoft pages do not surface an equivalent guest/external-collaboration policy for the standalone Teams Essentials SKU within this budget. Teams Essentials' lower per-seat price (~$4 vs $7.25–$8.75) is officially confirmed, so if guest richness is secondary to cost, that would warrant re-checking the Microsoft pages first.\n\n## What remains unconfirmed within the 6-URL budget\n\n- Pro **huddle participant cap** and **duration cap** (Slack plans-and-features page in scope does not state them).\n- Teams Essentials **meeting participant cap**, **duration cap**, and **guest/external policy** (Essentials landing page, QuickStart, and service description snippets in scope do not surface them).\n- **Detailed admin/security** feature matrix for the standalone Teams Essentials SKU (e.g., audit logs, Conditional Access, SCIM) — not enumerated on the cited Microsoft pages.\n\nTo close these gaps without exceeding the budget, a follow-up read of the Teams Premium / Microsoft 365 business comparison page and a deeper read of the Microsoft Teams service description would be the highest-yield next sources.\n\n---\n\nSource index:\n  [1] Pro Plan | Pricing | Slack — https://slack.com/pricing/pro  (official)\n  [2] Microsoft Teams Essentials for Small Businesses | Microsoft Teams — https://microsoft.com/en-us/microsoft-teams/essentials  (official)\n  [3] Slack plans and features | Slack — https://slack.com/help/articles/115003205446-Slack-plans-and-features  (official)\n  [4] Microsoft Teams Essentials QuickStart guide for small businesses ... — https://learn.microsoft.com/en-us/microsoftteams/get-started-with-teams-essentials  (official)\n  [5] Microsoft Teams service description - Service Descriptions | ... — https://learn.microsoft.com/en-us/office365/servicedescriptions/teams-service-description  (official)"
+  },
+  "trust": {
+    "claims": [
+      {
+        "callout": 1,
+        "citations": [
+          {
+            "url": "https://slack.com/pricing/pro",
+            "source_category": "official",
+            "source_intent": "official",
+            "source_type": "primary",
+            "title": "Pro Plan | Pricing | Slack"
+          }
+        ],
+        "confidence": "high",
+        "reasoning": "Backed by a primary source (official)"
+      },
+      {
+        "callout": 2,
+        "citations": [
+          {
+            "url": "https://microsoft.com/en-us/microsoft-teams/essentials",
+            "source_category": "official",
+            "source_intent": "official",
+            "source_type": "primary",
+            "title": "Microsoft Teams Essentials for Small Businesses | Microsoft Teams"
+          }
+        ],
+        "confidence": "high",
+        "reasoning": "Backed by a primary source (official)"
+      },
+      {
+        "callout": 3,
+        "citations": [
+          {
+            "url": "https://slack.com/help/articles/115003205446-Slack-plans-and-features",
+            "source_category": "official",
+            "source_intent": "official",
+            "source_type": "primary",
+            "title": "Slack plans and features | Slack"
+          }
+        ],
+        "confidence": "high",
+        "reasoning": "Backed by a primary source (official)"
+      },
+      {
+        "callout": 4,
+        "citations": [
+          {
+            "url": "https://learn.microsoft.com/en-us/microsoftteams/get-started-with-teams-essentials",
+            "source_category": "official",
+            "source_intent": "official",
+            "source_type": "primary",
+            "title": "Microsoft Teams Essentials QuickStart guide for small businesses ..."
+          }
+        ],
+        "confidence": "high",
+        "reasoning": "Backed by a primary source (official)"
+      },
+      {
+        "callout": 5,
+        "citations": [
+          {
+            "url": "https://learn.microsoft.com/en-us/office365/servicedescriptions/teams-service-description",
+            "source_category": "official",
+            "source_intent": "official",
+            "source_type": "primary",
+            "title": "Microsoft Teams service description - Service Descriptions | ..."
+          }
+        ],
+        "confidence": "high",
+        "reasoning": "Backed by a primary source (official)"
+      }
+    ],
+    "confidence": "high",
+    "reasoning": "All five cited claims are from official Slack or Microsoft pages and are rated high per-claim trust. The important claims—Slack Pro pricing/features, Teams Essentials pricing/features and ties to service description, and plan comparison details—are each backed by primary-source pages, so the run-level confidence is high.",
+    "sources": [
+      {
+        "type": "primary",
+        "url": "https://slack.com/pricing/pro",
+        "source_category": "official",
+        "title": "Pro Plan | Pricing | Slack"
+      },
+      {
+        "type": "primary",
+        "url": "https://microsoft.com/en-us/microsoft-teams/essentials",
+        "source_category": "official",
+        "title": "Microsoft Teams Essentials for Small Businesses | Microsoft Teams"
+      },
+      {
+        "type": "primary",
+        "url": "https://slack.com/help/articles/115003205446-Slack-plans-and-features",
+        "source_category": "official",
+        "title": "Slack plans and features | Slack"
+      },
+      {
+        "type": "primary",
+        "url": "https://learn.microsoft.com/en-us/microsoftteams/get-started-with-teams-essentials",
+        "source_category": "official",
+        "title": "Microsoft Teams Essentials QuickStart guide for small businesses ..."
+      },
+      {
+        "type": "primary",
+        "url": "https://learn.microsoft.com/en-us/office365/servicedescriptions/teams-service-description",
+        "source_category": "official",
+        "title": "Microsoft Teams service description - Service Descriptions | ..."
+      }
+    ]
+  },
+  "run": {
+    "id": "task_run_557e1f2bdc394248a103c00a3a6691d7",
+    "created_at": "2026-08-26T17:55:24.481277Z",
+    "effort": "low",
+    "interaction_id": "task_run_557e1f2bdc394248a103c00a3a6691d7",
+    "is_active": false,
+    "status": "completed",
+    "web_search_agent_id": "wsa_fd36f95973274a60ba3bdf3c1af2a20c",
+    "completed_at": "2026-08-26T17:55:52.505130Z",
+    "started_at": "2026-08-26T17:55:24.562387Z"
+  }
+}

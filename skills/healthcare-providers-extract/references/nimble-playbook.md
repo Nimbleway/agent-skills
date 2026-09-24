@@ -408,8 +408,11 @@ nimble --client-source nimble-agent-skills agents:runs result --agent-id <agent_
 `--previous-interaction-id`, plus `--skill` and `--use-case` per the rules below.
 
 - **`--sources`** has two shapes in one object: `allow` / `block` are arrays of groups
-  (`title` required, `domains`, optional `order` for priority); `prioritize` / `avoid` are
+  (`title` and non-empty `domains` required, optional non-negative `order` for priority); `prioritize` / `avoid` are
   plain guidance strings.
+- Never serialize `allow` / `block` as arrays of domain or URL strings. Validate the final
+  MCP or CLI payload before create; a malformed source group is a local error and must not
+  consume a billable create attempt.
 - **`--input-data`** carries the rows you already have; `--output-schema` describes the shape
   of the answer. Enriching several rows needs an **array** schema — an object schema returns
   one object. Carried-in fields come back with `confidence: "pre_existing"` and no citations;

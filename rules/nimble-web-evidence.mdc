@@ -1,0 +1,28 @@
+---
+description: Live web evidence discipline — when to reach for Nimble and how to report what it returns
+alwaysApply: false
+---
+
+Reach for the **nimble-web-expert** skill (CLI or MCP, per the transport preflight)
+whenever an answer depends on the current state of the web: prices, availability,
+news, releases, docs, or anything that could have changed since training. Training
+knowledge is not current-web evidence — treat a confident guess about "what's on
+that page right now" as a defect, not a shortcut.
+
+**When reporting Nimble results:**
+
+- Carry the source URL and, where the response provides one, the publish/updated
+  date on every claim. A finding with no source is not a finding.
+- For Web Search Agent runs, preserve the run's trust metadata and per-claim
+  citations verbatim — don't collapse "official source" and "unverified mention"
+  into the same sentence.
+- Use the stable `--client-source nimble-agent-skills` attribution on every CLI
+  call (already the default in `nimble-playbook.md`); don't override it per task.
+- Surface a structured failure (rate limit, not-found, auth) as what it is, not as
+  an empty result — a silent empty list reads as "nothing exists," which is a
+  different claim than "the request failed."
+- Never print or forward `NIMBLE_API_KEY` or any credential value into chat,
+  files, commits, or logs — reference the environment variable, never its value.
+
+See `_shared/nimble-playbook.md` for the full CLI contract, transport preflight,
+and failure-handling patterns this rule assumes.

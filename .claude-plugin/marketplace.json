@@ -45,7 +45,8 @@
         "./skills/healthcare-providers-verify",
         "./skills/seo-intel",
         "./skills/talent-sourcing",
-        "./skills/nimble-databricks-data-products"
+        "./skills/nimble-databricks-data-products",
+        "./skills/codebase-web-research"
       ]
     }
   ]
