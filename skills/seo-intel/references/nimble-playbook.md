@@ -414,6 +414,13 @@ nimble --client-source nimble-agent-skills agents:runs result --agent-id <agent_
   of the answer. Enriching several rows needs an **array** schema — an object schema returns
   one object. Carried-in fields come back with `confidence: "pre_existing"` and no citations;
   never present them as sourced findings.
+- **Input limits** are checked at run creation; over one, the run is rejected (`422
+  run_input_limit_exceeded`, `details` = `limit_type`/`limit`/`actual`), never truncated.
+  `enrichment`: ≤ 40 rows, ≤ 40 new columns (schema properties not already in
+  `input_data`), rows × new columns ≤ 200. `dataset_building`: ≤ 40 output columns.
+  `research`: `--input` ≤ 10,000 characters. Count before running; if over, split rows into
+  batches of `min(40, floor(200 / new_columns))`, run them in parallel, and merge. On the
+  422, re-batch from `details` and retry — don't give up.
 
 ### `use_case` locks; `skill` overrides once
 
@@ -483,7 +490,7 @@ Two Web Search Agent controls are CLI-only, each with a documented MCP alternati
 | Mode 3 (no agent identity) | Pass an `agent_name` — `nimble_agents_run` requires `agent_id` or `agent_name` |
 
 Modes 1 and 2, `use_case`, `skill`, `sources`, `output_schema`, `input_data`, and `effort`
-work the same on both transports.
+work the same on both transports, and so do the input limits.
 
 ## Parallel Execution
 

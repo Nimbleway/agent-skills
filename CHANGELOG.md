@@ -1,5 +1,10 @@
 # Changelog
 
+## [1.7.2] - 2026-10-04
+
+### Added
+- **Web Search Agent input limits are documented, with what to do about them.** Enforced at run creation: `enrichment` allows ≤ 40 `input_data` rows, ≤ 40 new columns, and rows × new columns ≤ 200 cells; `dataset_building` ≤ 40 output columns; `research` an `--input` of ≤ 10,000 characters. Over a limit the run is rejected with `422 run_input_limit_exceeded` — never truncated. The skills now teach counting rows and new columns before a run, splitting rows into batches that fit both limits, running the batches in parallel and merging, and re-batching and retrying from the 422's `limit_type`/`limit`/`actual`. Covered in the `nimble-agents` reference (`use_case` section, `--input-data` flag, failure table) and the shared playbook. The other `input_data` 422s — no `output_schema`, a list with an object schema, effort `low` — are listed too.
+
 ## [1.7.0] - 2026-08-24
 
 ### Changed

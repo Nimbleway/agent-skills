@@ -5,8 +5,8 @@ description: |
   research, enrichment, or dataset building — where the source isn't fixed, data is
   scattered, structure is inconsistent, or a synthesized answer is needed.
   Covers: the three run modes, dynamic discovery, the reuse-priority chain, `use_case`
-  locking, run-level `skill` override, run controls, live events vs polling, trust and
-  citations, and safe credentials.
+  locking, input limits and batching, run-level `skill` override, run controls, live
+  events vs polling, trust and citations, and safe credentials.
 ---
 
 # nimble agents — Web Search Agents reference
@@ -109,6 +109,25 @@ existing one.
 - `--output-schema` is required (`output_schema is required when use_case is dataset_building`).
 - Effort must be `high` or above (`dataset_building requires effort 'high' or higher`).
 
+### Input limits — batch, never truncate
+
+Checked when the run is created. Over a limit, the run is **rejected** with `422
+run_input_limit_exceeded`; nothing is truncated.
+
+| `use_case`         | Limit                                                                                     |
+| ------------------ | ----------------------------------------------------------------------------------------- |
+| `enrichment`       | ≤ 40 `--input-data` rows (a single object = 1 row); ≤ 40 new columns; rows × new columns ≤ 200 cells |
+| `dataset_building` | ≤ 40 output columns                                                                       |
+| `research`         | `--input` ≤ 10,000 characters                                                             |
+
+*New columns* = `output_schema` properties that aren't already keys in `input_data`.
+
+Before an enrichment run, count rows and new columns. If over, split the rows into batches of
+at most `min(40, floor(200 / new_columns))` rows (5 new columns → 40, 10 → 20, 20 → 10), run
+the batches in parallel against the same agent, and merge the results. Over 40 columns
+(enrichment or `dataset_building`): split the schema into column groups and merge on a key. Keep a research `--input` under 10,000 characters —
+trim it or split the question across runs.
+
 ---
 
 ## `skill` — a one-time run override
@@ -137,7 +156,7 @@ Available on both `agents run` and `agents:runs create`:
 | `--input`                   | Natural-language task/question for the run (required)                              |
 | `--effort`                  | `low` / `medium` / `high` / `x-high` / `max` (see below)                           |
 | `--output-schema`           | JSON schema (a full mapping) overriding the agent's default structured output      |
-| `--input-data`              | Existing rows to ENRICH — a list or single object mirroring the output_schema shape |
+| `--input-data`              | Existing rows to ENRICH — a list or single object mirroring the output_schema shape; [limits](#input-limits--batch-never-truncate) |
 | `--sources`                 | Source guidance overriding the agent default                                       |
 | `--enable-events`           | Publish live progress; consume with `agents:runs stream-events`                    |
 | `--previous-interaction-id` | Continue a prior run as a conversation (pass the earlier run's `interaction_id`)   |
@@ -171,6 +190,7 @@ Two things to get right:
 
 - **Enriching several rows needs an array `output_schema`.** An object schema returns one
   object no matter how many rows go in.
+- `input_data` needs an `output_schema` and is rejected at effort `low` (`422`).
 - Fields carried in from `input_data` come back in `trust.claims` with
   `confidence: "pre_existing"` and no citations — they were passed through, not verified.
   Don't present them as sourced findings.
@@ -327,7 +347,7 @@ what makes a Web Search Agent's answer verifiable rather than an unsourced summa
 
 Shell-less hosts use the production Nimble MCP server. Run parameters carry over — the run
 tool takes `agent_id`, `agent_name` (create-or-reuse, same semantics as Mode 1), `use_case`,
-`skill`, `sources`, `output_schema`, `input_data`, and `effort`.
+`skill`, `sources`, `output_schema`, `input_data`, and `effort`. The same input limits apply.
 
 **One routing rule to know:** `nimble_agents_run` takes **either** `agent_id` **or**
 `agent_name` — always pass one. Sending neither returns *"Provide either `agent_id` (run an
@@ -358,6 +378,8 @@ anyway: a named agent is reusable next session, which is exactly what Mode 3 giv
 | `422` "Input should be 'research', 'enrichment' or 'dataset_building'" | Invalid enum value                                    | Use one of the three exactly                                   |
 | `422` `output_schema is required when use_case is dataset_building` | Missing schema on a dataset run                          | Supply `--output-schema`                                       |
 | `422` `dataset_building requires effort 'high' or higher`           | Effort too low for a dataset run                         | Raise to `high` or above                                       |
+| `422` `run_input_limit_exceeded`                                    | Over an [input limit](#input-limits--batch-never-truncate); `details` = `limit_type` (`rows`/`columns`/`cells`/`chars`), `limit`, `actual` | Re-batch to fit and retry — never give up or truncate |
+| `422` on `input_data`                                               | No `output_schema`, a list with an object schema, or effort `low` | Add an (array) `output_schema`; raise effort         |
 | `422` on `sources`                                                  | Wrong shape, or a group missing `title`                  | `allow`/`block` = arrays of objects, each with a `title`; `prioritize`/`avoid` = strings |
 | `Required flag "agent-id" not set`                                  | Used `agents:runs create` for a Mode 1 / Mode 3 run      | Switch to `nimble agents run`                                  |
 | Run reaches `failed` / `cancelled`                                  | A real outcome                                           | Report it plainly; suggest broadening sources or raising effort |

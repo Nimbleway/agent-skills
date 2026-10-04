@@ -10,7 +10,7 @@
 <div align="center">
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![Version](https://img.shields.io/badge/version-1.7.0-green)](https://github.com/Nimbleway/agent-skills)
+[![Version](https://img.shields.io/badge/version-1.7.2-green)](https://github.com/Nimbleway/agent-skills)
 [![GitHub stars](https://img.shields.io/github/stars/Nimbleway/agent-skills?style=flat)](https://github.com/Nimbleway/agent-skills/stargazers)
 
 </div>
