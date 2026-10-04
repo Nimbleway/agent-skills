@@ -23,7 +23,7 @@ def test_nimble_tools_detect_global_flags_before_subcommand() -> None:
         "nimble --client-source nimble-agent-skills search --query 'acme'",
         tools,
     )
-    assert "nimble agent create" in tools
+    assert "nimble agents create" in tools
     assert "nimble search" in tools
 
 

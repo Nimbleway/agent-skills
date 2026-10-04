@@ -21,14 +21,16 @@ If you prefer to do it manually:
 5. Test it locally: `claude "run {skill-name} for acme.com"`
 6. For `nimble-web-expert` changes, also run the production CLI eval (see `evals/README.md`)
    and/or the routing eval: `python3 scripts/run-routing-eval.py`
-7. Check the packaging gates: `bash scripts/check-plugin-structure.sh` and, if you touched a
-   manifest, `python3 scripts/check-plugin-manifests.py`
+7. Check the packaging gates: `bash scripts/check-plugin-structure.sh`,
+   `bash scripts/check-terminology.sh`, and, if you touched a manifest,
+   `python3 scripts/check-plugin-manifests.py`
 
 ## Conventions
 
 - **Commits:** conventional commits (`feat:`, `fix:`, `test:`, `docs:`)
 - **Branches:** `{type}/{short-description}` (e.g., `feat/new-skill`)
 - **No secrets:** never commit API keys or credentials, even as examples
+- **Terminology:** name structured data by the command it runs. `extract:templates` is an Extraction Template; `nimble agents` / `agents:runs` is a Web Search Agent (WSA). Never call a template a WSA or an agent.
 
 ## Versions and releases
 

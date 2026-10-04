@@ -203,7 +203,7 @@ before materializing. Note the template `sources` shape differs from the run/age
 it is a flat ordered array of `{title, domains, order}` groups.
 
 ```bash
-# From a pre-built template (copies its fields, goals, sources, output_schema)
+# From a gallery template (copies its fields, goals, sources, output_schema)
 nimble --client-source nimble-agent-skills agents create --template <template_name>
 ```
 

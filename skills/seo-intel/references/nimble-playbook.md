@@ -155,7 +155,7 @@ data files.
 
 **If same-day sibling output exists:**
 - **Skip CLI check and profile load** — they were validated minutes ago
-- **Reuse WSA Layer 1 and Layer 3 inventory** — the catalog hasn't changed. Only
+- **Reuse the Layer 1 and Layer 3 Extraction Template inventory** — the catalog hasn't changed. Only
   re-run Layer 2 if the specialty or context changed.
 - **Use the sibling's structured output directly** — if the upstream skill produced
   data files with domains and page URLs, don't re-search for what's already known.
@@ -384,7 +384,7 @@ and ignores `--agent-name`; use `nimble agents run` for Modes 1 and 3. Mode 3 st
 generated `web_search_agent_id` — keep it, `get` and `result` both need it.
 
 ```bash
-# Discover pre-built agent templates, then inspect one
+# Discover Web Search Agent gallery templates, then inspect one
 nimble --client-source nimble-agent-skills agents:templates list
 nimble --client-source nimble-agent-skills agents:templates get --template-name <template_name>
 
@@ -701,7 +701,7 @@ assume a specific format — detect and adapt.
 
 ## Scaled Execution
 
-When a skill needs to run multiple WSA or API calls, choose the execution tier
+When a skill needs to run multiple Extraction Template or API calls, choose the execution tier
 based on the estimated number of requests. Each skill calculates its own estimate
 from input size and operations per record.
 
@@ -752,7 +752,7 @@ For >1,000 requests, split into multiple batch calls.
 
 **Sub-agents should also batch.** When spawning sub-agents for parallel work, tell
 each agent to use `extract-batch` or `extract:templates batch` for its assigned items
-rather than making individual calls. One batch call per agent is faster and more
+rather than making individual calls. One batch call per sub-agent is faster and more
 reliable than 5-6 sequential calls.
 
 ### Large job confirmation (>1,000)
@@ -760,7 +760,7 @@ reliable than 5-6 sequential calls.
 Before executing, show the estimate and ask the user to confirm:
 
 ```
-Estimated API calls: ~2,400 (120 locations × 3 WSAs per location × ~7 enrichment)
+Estimated API calls: ~2,400 (120 locations × 3 templates per location × ~7 enrichment)
 This is a large job. Proceed? [Y/n]
 ```
 

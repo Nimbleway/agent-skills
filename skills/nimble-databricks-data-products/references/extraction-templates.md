@@ -1,16 +1,19 @@
-# Nimble agents — discover, introspect, ingest
+# Nimble Extraction Templates — discover, introspect, ingest
 
-This is the heart of the skill: find the right agents, learn their exact I/O at runtime, and load
-their output into a Delta table. **Never hardcode an agent's params or output from memory** — read
+The `nimble_agent_list`, `nimble_agent_describe`, and `nimble_agent_run` functions operate on Nimble
+Extraction Templates — fixed, site-specific parsers such as `amazon_serp` or `walmart_serp`.
+
+This is the heart of the skill: find the right templates, learn their exact I/O at runtime, and load
+their output into a Delta table. **Never hardcode a template's params or output from memory** — read
 them live. (Example trap: Amazon search wants `keyword`, not `query`.)
 
-## 1. Discover agents
+## 1. Discover templates
 
-> **Agent names in this file (`amazon_serp`, `walmart_serp`, `zillow_*`, …) are illustrative only.**
+> **Template names in this file (`amazon_serp`, `walmart_serp`, `zillow_*`, …) are illustrative only.**
 > The catalog evolves — always discover the actual names at runtime with `nimble_agent_list()` and
 > introspect with `nimble_agent_describe`. Never depend on a hardcoded name.
 
-`nimble_agent_list()` returns one row per agent: `name, display_name, description, vertical,
+`nimble_agent_list()` returns one row per template: `name, display_name, description, vertical,
 entity_type, domain, managed_by, is_public`. Query it via SQL:
 
 ```sql
@@ -29,9 +32,9 @@ Match the brief's **sources** (amazon, walmart, zillow, instagram, google_maps, 
 For most "analysis on X from <retailers>" briefs, **`*_serp`** is the right call (keyword in →
 many product rows out).
 
-## 2. Introspect the chosen agents — read the INPUTS
+## 2. Introspect the chosen templates — read the INPUTS
 
-Read each chosen agent's input parameters at runtime with `nimble_agent_describe` (one row per
+Read each chosen template's input parameters at runtime with `nimble_agent_describe` (one row per
 param) — never hardcode them:
 ```sql
 SELECT param_name, required, type, is_localization_param, is_pagination_param, default_value, examples_json
@@ -43,11 +46,11 @@ ORDER BY required DESC;
 - **`is_localization_param`** flags the localization input (e.g. `zip_code`) and **`is_pagination_param`**
   the pagination input (e.g. `page`). `default_value` / `examples_json` give sane starting values.
 
-Do this for **every** chosen source — param names differ across agents.
+Do this for **every** chosen source — param names differ across templates.
 
 > **Output fields come from a probe, not from `describe`.** `nimble_agent_describe` returns inputs
 > only (by design — output schemas are large and best seen from a real call). Learn the emitted
-> fields by running the agent once and inspecting the payload — see §2.5 (`to_json(parsing[0])`).
+> fields by running the template once and inspecting the payload — see §2.5 (`to_json(parsing[0])`).
 > Field names differ across retailers even within a vertical (Amazon emits `price`/`rating`, Walmart
 > emits `product_price`/`product_rating`); §4 coalesces the variants into one normalized column.
 
@@ -64,8 +67,8 @@ SELECT status,
 FROM nimble_integration.tools.nimble_agent_run('walmart_serp', to_json(named_struct('keyword','dog food')), true);
 ```
 Decide three things from the probe, per source:
-1. **localization flag** — localization is **per-agent**, not global. If the probe comes back with an
-   empty `parsing`, flip the flag and probe again before concluding the term is empty — agents differ
+1. **localization flag** — localization is **per-template**, not global. If the probe comes back with an
+   empty `parsing`, flip the flag and probe again before concluding the term is empty — templates differ
    on whether they expect `true` or `false`.
 2. **field names** — they vary by source (e.g. `price` vs `product_price`); note them for the
    coalesce in §4.
@@ -83,19 +86,19 @@ demo is set-based, reproducible, and expandable — add a row, re-run, done.
 -- Control table: one row per (source × search term). The single source of truth for what to scrape.
 CREATE OR REPLACE TABLE <schema>.<table>_queries (
   source       STRING,   -- 'amazon' | 'walmart' | …
-  agent        STRING,   -- the Nimble agent name, e.g. 'amazon_serp'
+  template_name STRING,  -- the Nimble Extraction Template name, e.g. 'amazon_serp'
   keyword      STRING,   -- the search term (for labelling/inspection)
-  params_json  STRING,   -- full params for nimble_agent_run, built from the agent's input_properties
+  params_json  STRING,   -- full params for nimble_agent_run, built from the template's input_properties
   localization BOOLEAN,
   enabled      BOOLEAN
 );
 
 INSERT INTO <schema>.<table>_queries VALUES
-  -- localization is PER-AGENT (from the §2.5 probe): amazon_serp=true, walmart_serp=false.
+  -- localization is PER-TEMPLATE (from the §2.5 probe): amazon_serp=true, walmart_serp=false.
   ('amazon','amazon_serp','dog food',  to_json(named_struct('keyword','dog food')),  true,  true),
   ('walmart','walmart_serp','dog food',to_json(named_struct('keyword','dog food')),  false, true),
   ('amazon','amazon_serp','dog toys',  to_json(named_struct('keyword','dog toys')),  true,  true);
-  -- … one row per (source × term). params_json uses each agent's REAL param name.
+  -- … one row per (source × term). params_json uses each template's REAL param name.
 
 -- Results table: unified, with a source column + normalized core + a raw VARIANT catch-all.
 CREATE OR REPLACE TABLE <schema>.<table> (
@@ -112,8 +115,8 @@ the **same vertical** so one normalized schema fits all of them.
 
 ## 4. One set-based ingest (lateral correlated UDTF)
 
-A **single INSERT** runs the agent for every enabled control row and explodes the results — no
-per-keyword files. The agent name and params come from the control-table columns via a correlated
+A **single INSERT** runs the template for every enabled control row and explodes the results — no
+per-keyword files. The template name and params come from the control-table columns via a correlated
 `LATERAL` call (verified working on Databricks):
 
 Two rules make this robust across retailers (learned the hard way — see the gotchas after the SQL):
@@ -140,7 +143,7 @@ SELECT /*+ REPARTITION(8) */   -- ≈ number of enabled rows; keep modest (see n
   v.value AS raw,
   current_timestamp()
 FROM <schema>.<table>_queries q,
-LATERAL nimble_integration.tools.nimble_agent_run(q.agent, q.params_json, q.localization) AS r,
+LATERAL nimble_integration.tools.nimble_agent_run(q.template_name, q.params_json, q.localization) AS r,
 LATERAL variant_explode(r.parsing) AS v
 WHERE q.enabled AND r.status = 'success';
 ```
@@ -148,9 +151,9 @@ Adjust the coalesced field names to whatever §2.5 actually showed for your sour
 examples, not a fixed list.
 
 Key points:
-- **`/*+ REPARTITION(N) */`** spreads the agent calls across N Spark tasks so they run **in
+- **`/*+ REPARTITION(N) */`** spreads the template calls across N Spark tasks so they run **in
   parallel**. Without it, a tiny control table sits in one partition and the calls run serially
-  (N × ~40s). Set **N ≈ the number of enabled rows, and keep it modest** — each task is a live agent
+  (N × ~40s). Set **N ≈ the number of enabled rows, and keep it modest** — each task is a live template
   call, so very high parallelism can trip API rate limits (HTTP 429). A couple dozen is plenty; if
   you have hundreds of terms, batch them across runs rather than firing all at once.
 - It's still **one long-running statement**, so submit it **async and poll** — don't use a 50s
@@ -186,12 +189,12 @@ ORDER BY rows;     -- any 0 = that (source,keyword) landed no items
 ```
 **Diagnostic when one source has 0 rows but another is healthy.** Work through these in order before
 concluding the term itself is empty:
-1. **localization** — the flag is per-agent; flip it for that source and re-run (the §2.5 probe should
+1. **localization** — the flag is per-template; flip it for that source and re-run (the §2.5 probe should
    have settled this up front). This is the most common cause.
 2. **cast failure** — a bare `CAST` on a currency-string price (`"$125.99"`) aborts the INSERT; switch
    to the defensive `try_cast(regexp_replace(...))` from §4.
 3. **field-name mismatch** — the source uses `product_price`/`title` etc.; widen the coalesce.
-4. otherwise — use a sibling agent for that source (e.g. a PDP agent over discovered URLs), or proceed
+4. otherwise — use a sibling template for that source (e.g. a PDP template over discovered URLs), or proceed
    with the sources that returned data and tell the user which one had no coverage for these terms.
 
 Re-run is cheap: fix the control row (e.g. flip localization) or the cast, then re-run the ingest —

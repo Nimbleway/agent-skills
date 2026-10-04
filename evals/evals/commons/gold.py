@@ -26,9 +26,9 @@ RESPOND_ONLY_SOLUTIONS = frozenset(
 
 # Soft expected nimble CLI families (contains-match against tools_called).
 _SOLUTION_TOOLS: dict[str, list[str]] = {
-    "Web Search Agents": ["nimble search", "nimble extract", "nimble agent"],
+    "Web Search Agents": ["nimble search", "nimble extract", "nimble agents"],
     "Extract": ["nimble extract"],
-    "Extraction Templates": ["nimble extract", "nimble agent"],
+    "Extraction Templates": ["nimble extract", "nimble agents"],
     "Search": ["nimble search"],
     # Crawl often starts with map for discovery; either family is acceptable.
     "Crawl": ["nimble crawl", "nimble map"],
@@ -38,9 +38,9 @@ _SOLUTION_TOOLS: dict[str, list[str]] = {
 
 # Assistant forbidden tools → skill-side forbidden command substrings.
 _FORBIDDEN_MAP: dict[str, list[str]] = {
-    "create_wsa": ["nimble agent create", "nimble agents create"],
-    "propose_wsa_scope": ["nimble agent create", "nimble agents create"],
-    "create_job": ["nimble agent create"],
+    "create_wsa": ["nimble agents create"],
+    "propose_wsa_scope": ["nimble agents create"],
+    "create_job": ["nimble agents create"],
 }
 
 

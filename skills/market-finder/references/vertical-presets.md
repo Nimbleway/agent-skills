@@ -2,7 +2,7 @@
 
 Each preset defines query patterns, target domains, and entity types for a
 business vertical. The skill auto-selects the preset based on user input, then
-**discovers available WSAs at runtime** using `nimble extract:templates list` (filtered client-side).
+**discovers available templates at runtime** using `nimble extract:templates list` (filtered client-side).
 
 ---
 
@@ -47,7 +47,7 @@ practice, practitioner
 project management, CRM, ERP, analytics, automation, API, fintech, martech,
 edtech, healthtech, devtools, developer tools, productivity software
 
-**Discovery targets:** None (no map WSAs). Use `nimble search` in two passes:
+**Discovery targets:** None (no map templates). Use `nimble search` in two passes:
 
 **Pass 1 -- Product discovery** (find the players):
 ```
@@ -70,7 +70,7 @@ nimble search --query "{vertical} market landscape players" --max-results 15 --s
 | Domain | Entity type | Purpose |
 |--------|-------------|---------|
 | g2.com | PDP | Structured product data, ratings, pricing tier |
-| capterra.com | PDP | Product comparison data (if WSA available) |
+| capterra.com | PDP | Product comparison data (if template available) |
 | crunchbase.com | Profile | Funding rounds, valuation, team size |
 
 **Query pattern:** No geo-tiling. Search by category/vertical keywords.

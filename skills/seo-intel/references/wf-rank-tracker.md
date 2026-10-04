@@ -87,25 +87,25 @@ Inform the user which mode was selected:
 - "First rank check for **[domain]** — establishing baseline positions."
 - "Last check was **[N days ago]**. Running delta comparison."
 
-### Step 4: WSA Discovery
+### Step 4: Extraction Template Discovery
 
-Discover SERP-related agents in parallel:
+Discover SERP-related templates in parallel:
 
 ```bash
 nimble extract:templates list --limit 100  # then filter items for "serp"
 nimble extract:templates list --limit 100  # then filter items for "google search"
 ```
 
-From the results, look for agents that return structured SERP data (organic results,
+From the results, look for templates that return structured SERP data (organic results,
 positions, SERP features). Validate any candidate with:
 
 ```bash
 nimble extract:templates get --extract-template-name {name}
 ```
 
-Check that the agent accepts keyword/query input and returns ranked organic results.
-If a suitable WSA exists, use it for SERP queries in Step 5 alongside or instead of
-`nimble search`. If no suitable WSA is found, use `nimble search` exclusively — do
+Check that the template accepts keyword/query input and returns ranked organic results.
+If a suitable template exists, use it for SERP queries in Step 5 alongside or instead of
+`nimble search`. If no suitable template is found, use `nimble search` exclusively — do
 not fail.
 
 ### Step 5: SERP Query Execution
@@ -158,7 +158,7 @@ SERP features are detected in the enrichment pass below (full report mode only).
 ```
 
 **For full report mode — SERP feature enrichment:** After lite queries complete,
-identify the top 5 keywords by business priority. Discover a SERP agent at
+identify the top 5 keywords by business priority. Discover a SERP template at
 runtime (do not hardcode template names — see `references/nimble-playbook.md`):
 
 ```bash
@@ -167,17 +167,17 @@ nimble extract:templates list --limit 100  # then filter items for "search engin
 ```
 
 Validate candidates with `nimble extract:templates get --extract-template-name {name}` and cache
-the chosen template as `{serp_agent}`. If no suitable SERP agent is found,
+the chosen template as `{serp_template}`. If no suitable SERP template is found,
 skip enrichment and leave `serp_features` as `[]`.
 
-Run the discovered SERP agent for those keywords to get typed SERP entities:
+Run the discovered SERP template for those keywords to get typed SERP entities:
 
 ```bash
-# {serp_agent} resolved above
-nimble extract:templates run --template "{serp_agent}" --params '{"query": "{keyword}", "num_results": 20, "country": "{cc}", "locale": "{locale}"}'
+# {serp_template} resolved above
+nimble extract:templates run --template "{serp_template}" --params '{"query": "{keyword}", "num_results": 20, "country": "{cc}", "locale": "{locale}"}'
 ```
 
-The discovered SERP agent returns `data.parsing.entities` — a dict keyed by
+The discovered SERP template returns `data.parsing.entities` — a dict keyed by
 entity type. Entity types are **dynamic** — iterate all keys to detect which
 SERP features are present. Common mappings to `serp_features`:
 `AIOverview` → `"ai_overview"`, `RelatedQuestion` → `"people_also_ask"`,
@@ -426,7 +426,7 @@ See `references/nimble-playbook.md` for the standard error table (missing API ke
   expected behavior, not an error. Show as "Not ranked" in the report.
 - **Rate limit (429):** Reduce sub-agent concurrency from 4 to 2. If still hitting
   limits, serialize queries (one at a time). Do not drop keywords.
-- **WSA agent error:** Fall back to `nimble search` for that keyword batch. Log which
-  WSA failed so the user knows.
+- **Template error:** Fall back to `nimble search` for that keyword batch. Log which
+  template failed so the user knows.
 - **Snapshot parse error:** If a previous snapshot JSON is malformed, treat as first
   run (full mode). Warn: "Previous snapshot was corrupted — running fresh baseline."

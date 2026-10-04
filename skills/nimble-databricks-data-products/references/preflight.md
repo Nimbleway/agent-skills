@@ -61,7 +61,7 @@ Use the Statements API and read `.result.data_array`:
 databricks api post /api/2.0/sql/statements --json '{
   "warehouse_id":"'"$WH"'","statement":"<SQL>","wait_timeout":"50s"}'
 ```
-`wait_timeout` max is 50s. For longer work (agent calls), submit async (`"wait_timeout":"0s"`) and
+`wait_timeout` max is 50s. For longer work (template calls), submit async (`"wait_timeout":"0s"`) and
 poll `GET /api/2.0/sql/statements/<id>` — that's what `scripts/ingest.sh` does.
 
 Two environment rules that bite:

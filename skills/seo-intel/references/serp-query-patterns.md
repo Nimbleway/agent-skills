@@ -97,9 +97,9 @@ Example: tracking `example.com`
 If no organic result matches the target domain within the top 20 results, record
 `position: null` and `ranking_url: null`.
 
-### SERP Feature Enrichment via `google_search` Agent
+### SERP Feature Enrichment via the `google_search` Extraction Template
 
-The `google_search` Nimble agent returns **typed SERP entities** — each result has
+The `google_search` Extraction Template returns **typed SERP entities** — each result has
 an `entity_type` field (e.g., `OrganicResult`, `PeopleAlsoAsk`, `FeaturedSnippet`,
 `ShoppingResult`, `SiteLinks`). Use this for SERP feature detection on priority
 keywords after the lite pass:
@@ -116,7 +116,7 @@ UULE), `start` (pagination offset: 0=page1, 10=page2, 20=page3).
 | Source | Cost | Use Case |
 |--------|------|----------|
 | `nimble search --search-depth lite` | 1 credit | Per-keyword position check. Default for all keywords. |
-| `google_search` agent | 1 agent call | SERP feature enrichment on top 5 priority keywords. Full report mode. |
+| `google_search` template | 1 template call | SERP feature enrichment on top 5 priority keywords. Full report mode. |
 
 Never use `--search-depth deep` for rank tracking — it fetches full page content,
 which is unnecessary for position detection and wastes credits.

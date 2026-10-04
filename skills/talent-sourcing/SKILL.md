@@ -2,7 +2,7 @@
 name: talent-sourcing
 description: |
   Finds qualified candidates for a role by searching LinkedIn, Indeed, GitHub,
-  and other professional platforms using Nimble Web Search Agents. Accepts a
+  and other professional platforms using Nimble Extraction Templates. Accepts a
   job description, role title, or freeform request and returns a ranked
   candidate list with profiles, skills, and contact signals.
 
@@ -34,13 +34,13 @@ allowed-tools:
   - AskUserQuestion
 metadata:
   author: Nimbleway
-  version: 1.7.0
+  version: 1.7.1
   category: human-resources
 ---
 
 # Talent Sourcing
 
-Candidate discovery powered by Nimble Web Search Agents.
+Candidate discovery powered by Nimble Extraction Templates.
 
 User request: $ARGUMENTS
 
@@ -91,9 +91,9 @@ Once parameters are clear, confirm with the user using `AskUserQuestion`:
 > - **Start search**
 > - **Adjust parameters first**"
 
-### Step 2: WSA Discovery
+### Step 2: Extraction Template Discovery
 
-Discover available Web Search Agents for candidate-sourcing platforms. Run
+Discover available Extraction Templates for candidate-sourcing platforms. Run
 simultaneously:
 
 ```bash
@@ -104,13 +104,13 @@ nimble extract:templates list --limit 100  # then filter items for "wellfound ta
 ```
 
 Filter results for `entity_type: SERP` or `entity_type: PDP`. Prefer
-`managed_by: "nimble"`. Validate promising agents with:
+`managed_by: "nimble"`. Validate promising templates with:
 
 ```bash
 nimble extract:templates get --extract-template-name {name}
 ```
 
-Cache discovered WSA names and required params. If no WSAs found for a platform,
+Cache discovered template names and required params. If no templates found for a platform,
 fall back to `nimble search` for that platform.
 
 ### Step 3: Parallel Candidate Search (Sub-Agents)
@@ -129,7 +129,7 @@ nimble search --query "[Role] [Location] linkedin profile [Skill1] [Skill2]" \
   --max-results 10 --search-depth fast
 ```
 
-If a LinkedIn WSA was discovered in Step 2, use it instead with the role title,
+If a LinkedIn template was discovered in Step 2, use it instead with the role title,
 location, and skill keywords as inputs.
 
 **Agent 2 — Indeed / Resumes**

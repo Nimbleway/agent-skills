@@ -4,15 +4,15 @@ Reference for querying AI platforms and optimizing content for AI visibility.
 
 ---
 
-## Nimble AI Platform Agent Discovery
+## AI Platform Extraction Template Discovery
 
-Never hardcode agent template names. The catalog changes — new agents appear,
+Never hardcode Extraction Template names. The catalog changes — new templates appear,
 old ones get renamed or deprecated. Discover and validate at runtime using the
 three-layer pattern from `nimble-playbook.md`.
 
 ### Layer 1: Category Discovery
 
-Run broad searches to discover all available AI and SERP agents:
+Run broad searches to discover all available AI and SERP templates:
 
 ```bash
 nimble extract:templates list --limit 100  # then filter items for "ai"
@@ -27,8 +27,8 @@ nimble extract:templates list --limit 100  # then filter items for "search engin
 
 ### Layer 2: Session-Specific Narrowing
 
-From the results, identify agents that match the needed surfaces. For AI
-visibility workflows, look for agents whose description mentions:
+From the results, identify templates that match the needed surfaces. For AI
+visibility workflows, look for templates whose description mentions:
 - Direct platform querying (ChatGPT, Perplexity, Gemini, Grok, Google AI)
 - Structured `answer` + `sources` output
 - SERP entity parsing (for Google Search enrichment)
@@ -44,12 +44,12 @@ nimble extract:templates get --extract-template-name {discovered-name}
 Confirm:
 - **Input param**: typically `prompt` (conversational) or `keyword`/`query` (search)
 - **Output fields**: look for `answer`, `sources`, `links` in the schema
-- **Entity structure**: SERP agents return `data.parsing.entities` as a dict keyed
+- **Entity structure**: SERP templates return `data.parsing.entities` as a dict keyed
   by entity type name (e.g., `AIOverview`, `OrganicResult`, `RelatedQuestion`).
   Entity types are **dynamic** — iterate all keys to detect present features.
 
-Cache discovered template names as variables (`{chatgpt_agent}`,
-`{perplexity_agent}`, `{serp_agent}`, etc.) for the duration of the run.
+Cache discovered template names as variables (`{chatgpt_template}`,
+`{perplexity_template}`, `{serp_template}`, etc.) for the duration of the run.
 
 ### Execution Patterns
 
@@ -57,21 +57,21 @@ After discovery, use the cached template names:
 
 ```bash
 # AI platform query — substitute discovered name
-nimble extract:templates run --template "{chatgpt_agent}" --params '{"prompt": "...", "skip_sources": false}'
+nimble extract:templates run --template "{chatgpt_template}" --params '{"prompt": "...", "skip_sources": false}'
 
 # SERP enrichment — substitute discovered name
-nimble extract:templates run --template "{serp_agent}" --params '{"query": "...", "num_results": 20, "country": "US"}'
+nimble extract:templates run --template "{serp_template}" --params '{"query": "...", "num_results": 20, "country": "US"}'
 
 # Batch queries (6+ per platform)
 nimble extract:templates batch \
-  --template "{chatgpt_agent}" \
+  --template "{chatgpt_template}" \
   --input '{"params": {"prompt": "query 1", "skip_sources": false}}' \
   --input '{"params": {"prompt": "query 2", "skip_sources": false}}'
 ```
 
-### What to Expect from AI Platform Agents
+### What to Expect from AI Platform Templates
 
-AI platform agents send a real prompt to the platform and return structured data:
+AI platform templates send a real prompt to the platform and return structured data:
 - `data.parsing.answer` — the AI-generated answer text
 - `data.parsing.sources` — array of cited sources (URL, title, snippet)
 - `data.parsing.links` — extracted links from the response
@@ -80,29 +80,29 @@ Source arrays vary by platform: some include position fields (`startPosition`,
 `endPosition`) for citation placement; some include `source_domain` for direct
 domain matching. Check the validated schema from `nimble extract:templates get`.
 
-### What to Expect from SERP Agents
+### What to Expect from SERP Templates
 
-SERP agents return `data.parsing.entities` — a **dict keyed by entity type name**.
+SERP templates return `data.parsing.entities` — a **dict keyed by entity type name**.
 Each value is an array of records. Common entity types: `AIOverview`,
 `OrganicResult`, `RelatedQuestion`, `RelatedSearch`, `Ad`. Other types may appear
 (news, images, shopping, local, knowledge panels, featured snippets). Always
 iterate all keys — do not check only known types.
 
-Common SERP agent params: `query`, `country`, `locale`, `location`, `num_results`,
+Common SERP template params: `query`, `country`, `locale`, `location`, `num_results`,
 `start` (pagination), `time` (time range).
 
-**When to use SERP agents:** Feature enrichment on 3-5 priority keywords per run.
+**When to use SERP templates:** Feature enrichment on 3-5 priority keywords per run.
 **When NOT to use:** Bulk position checks — use `nimble search --search-depth lite`
 for all-keyword sweeps (cheaper, faster).
 
-### Agent Tips
+### Template Tips
 
-- Set `skip_sources: false` on agents that support it to get source citations.
+- Set `skip_sources: false` on templates that support it to get source citations.
 - Sources with `startPosition`/`endPosition` show where in the answer the source
   was cited — earlier position = stronger visibility signal.
 - Sources with `source_domain` simplify domain matching without URL parsing.
-- All agent response fields live under `data.parsing.{field}` in the JSON.
-- If an agent fails validation or returns empty, drop that platform for the run
+- All template response fields live under `data.parsing.{field}` in the JSON.
+- If a template fails validation or returns empty, drop that platform for the run
   and note reduced coverage. Do not fabricate data for unreachable platforms.
 
 ---
@@ -131,7 +131,7 @@ study), and ZipTie research.
 - Content with explicit source citations is favored (Perplexity prefers citing
   content that itself cites sources)
 - Position in answer correlates with source quality + freshness
-- `startPosition`/`endPosition` in agent output map to citation placement within
+- `startPosition`/`endPosition` in template output map to citation placement within
   the generated answer — lower startPosition means the source was cited earlier
 - Sources appearing in the first paragraph of Perplexity's answer carry the
   highest visibility value
@@ -151,7 +151,7 @@ study), and ZipTie research.
 - Uses Google's knowledge graph for entity recognition
 - Favors authoritative, well-structured content with clear headings
 - Source citations often mirror Google AI Overview patterns
-- `source_domain` field in agent output enables direct domain matching
+- `source_domain` field in template output enables direct domain matching
 - Structured data signals overlap heavily with Google AI — optimize once, benefit twice
 
 ### Grok
@@ -167,7 +167,7 @@ study), and ZipTie research.
 - Extremely selective about citations — quality over quantity
 - Factual density with specific numbers is the strongest signal
 - Crawl-to-refer ratio: 38,065:1 — most crawled pages never get cited
-- No Nimble agent available; monitor via robots.txt and Brave Search visibility
+- No Nimble Extraction Template available; monitor via robots.txt and Brave Search visibility
 - To estimate Claude visibility, check Brave Search rankings for your target queries
   and look for `ClaudeBot` / `anthropic-ai` access in robots.txt
 
@@ -212,7 +212,7 @@ needing surrounding paragraphs for context.
 When auditing a page for AI visibility optimization:
 
 1. Identify the target query (what question should this page answer?)
-2. Check which AI platforms currently cite the page (run agents above)
+2. Check which AI platforms currently cite the page (run the templates above)
 3. Score the page against the 9 methods — which are present, which are missing?
 4. Prioritize adding the top 3 methods (Citations, Statistics, Quotations) first
 5. Restructure content into appropriately-sized blocks for the target surface

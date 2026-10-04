@@ -13,7 +13,8 @@ Get live web data instantly — fetch any URL, scrape structured data, search th
 | Web search             | "Find recent news about EU AI Act"               |
 | Discover site URLs     | "Map all product pages on example.com"           |
 | Capture XHR/API data   | "Get the JSON this page loads its listings from" |
-| Run pre-built agents   | "Get data for Amazon ASIN B08N5WRWNW"            |
+| Run Extraction Templates | "Get data for Amazon ASIN B08N5WRWNW"          |
+| Run Web Search Agents  | "Build a list of every dental clinic in Austin"  |
 | Browser investigation  | "Find the CSS selectors on this site"            |
 
 ## Requirements
@@ -39,7 +40,8 @@ The skill analyzes your request, picks the right command, runs it, and returns t
 
 | Your request | Command used | What you get back |
 | --- | --- | --- |
-| Name a specific site (Amazon, Yelp…) | `nimble agent` | Structured data — clean dict or array |
+| Name a specific site (Amazon, Yelp…) | `nimble extract:templates` | Structured data — clean dict or array |
+| Open-ended research, enrichment, or dataset building | `nimble agents` / `agents:runs` | Synthesized output with per-claim citations |
 | Give a direct URL to scrape | `nimble extract` | HTML, Markdown, or parsed JSON |
 | Research a topic or search the web | `nimble search` | Structured results (title, URL, description) |
 | Find all URLs / sitemap on a site | `nimble map` | URLs list + metadata |
@@ -49,7 +51,7 @@ Each command supports multiple output formats — see [docs.nimbleway.com](https
 
 **Key rules:**
 
-- Always checks for a pre-built agent before extracting (Amazon, Walmart, Yelp, LinkedIn, and 40+ more)
+- Always checks for an Extraction Template before extracting from a named site (Amazon, Walmart, Yelp, and many more)
 - One command → results → done. No looping or retrying
 - Escalates render tiers silently — only asks when investigation tools are needed
 - Never answers from training data — always fetches live

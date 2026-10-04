@@ -34,7 +34,7 @@ allowed-tools:
   - AskUserQuestion
 metadata:
   author: Nimbleway
-  version: 1.7.0
+  version: 1.7.1
   category: marketing
 ---
 
@@ -114,18 +114,18 @@ This prevents wasted API credits and wall time on competitors the user doesn't c
 about right now. Each competitor costs ~3-5 Nimble API credits (1 map + 3-4 extracts
 + 2-3 searches).
 
-### Step 3: WSA Discovery
+### Step 3: Extraction Template Discovery
 
-For each competitor domain and the user's domain, discover available WSAs:
+For each competitor domain and the user's domain, discover available templates:
 
 ```bash
 nimble extract:templates list --limit 100  # then filter items for "{domain}"
 ```
 
-Run one search per domain simultaneously. Filter for SERP/PDP WSAs, prefer
+Run one search per domain simultaneously. Filter for SERP/PDP templates, prefer
 `managed_by: "nimble"`, validate with `nimble extract:templates get --extract-template-name {name}`.
 Cache discovered names + params. Pass them to competitor agents in Step 5 for
-richer extraction. If no WSAs found, continue with `nimble search/extract/map`.
+richer extraction. If no templates found, continue with `nimble search/extract/map`.
 
 ### Step 4: Capture the User's Own Positioning (baseline)
 
@@ -167,7 +167,7 @@ For each competitor in scope, spawn a **general-purpose** sub-agent with
 `mode: "bypassPermissions"` and inline the prompt from
 `references/positioning-agent-prompt.md`. Customize the prompt with each competitor's
 name, domain, start-date, previous positioning snapshot from memory (loaded in
-Step 0), and any discovered WSA names from Step 3 for richer data access.
+Step 0), and any discovered template names from Step 3 for richer data access.
 
 Do NOT use `agents/nimble-researcher.md` — that agent is scoped for raw data gathering
 and explicitly forbids analysis, but this skill requires interpretive work (identifying
@@ -252,7 +252,7 @@ When analyzing blog content from agent results, look for:
 - Say "no positioning changes detected" rather than padding with fluff.
 - Use verbatim quotes for taglines, CTAs, and value props — don't paraphrase.
 
-**WSA enrichment:** If WSAs were discovered in Step 3, agents should use them
+**Template enrichment:** If templates were discovered in Step 3, agents should use them
 alongside `nimble map`/`nimble extract` for richer page data.
 
 ### Step 7: Save & Update Memory

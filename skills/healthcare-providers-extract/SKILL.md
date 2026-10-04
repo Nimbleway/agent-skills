@@ -36,7 +36,7 @@ allowed-tools:
   - AskUserQuestion
 metadata:
   author: Nimbleway
-  version: 1.7.0
+  version: 1.7.1
   category: healthcare
 ---
 
@@ -54,19 +54,19 @@ constraints (no shell state, no `&`/`wait`, sub-agent permissions, communication
 
 ## Instructions
 
-### Step 0: Preflight + WSA Discovery
+### Step 0: Preflight + Extraction Template Discovery
 
 Follow the transport selection + standard preflight from `references/nimble-playbook.md` — pick CLI or MCP at session start, then run the standard preflight calls (date calc, today, profile, memory index) in parallel.
 
-**Also simultaneously** — run WSA discovery and setup:
+**Also simultaneously** — run template discovery and setup:
 - `mkdir -p ~/.nimble/memory/{reports,healthcare-providers-extract/checkpoints}`
 - `ls ~/.nimble/memory/healthcare-providers-extract/checkpoints/ 2>/dev/null`
-- Run Layer 1 (vertical) and Layer 3 (general tools) WSA discovery from
-  `references/wsa-reference.md`. Layer 2 (session-specific) runs after Step 1 when
+- Run Layer 1 (vertical) and Layer 3 (general tools) template discovery from
+  `references/extract-templates-reference.md`. Layer 2 (session-specific) runs after Step 1 when
   you know the user's specialty.
 
-Classify discovered agents into phases and validate with `nimble extract:templates get` per
-`references/wsa-reference.md`.
+Classify discovered templates into phases and validate with `nimble extract:templates get` per
+`references/extract-templates-reference.md`.
 
 From the preflight results:
 - CLI missing or API key unset -> `references/profile-and-onboarding.md`, stop
@@ -111,18 +111,18 @@ Only if the user provided a specialty + location instead of URLs.
 
 **Two input paths into discovery:**
 
-**Path A — Fresh discovery.** User gave specialty + location. Run Layer 2 WSA
-discovery for session-specific agents:
+**Path A — Fresh discovery.** User gave specialty + location. Run Layer 2 template
+discovery for session-specific templates:
 
 ```bash
 nimble extract:templates list --limit 50  # filter items for "[specialty]"
 nimble extract:templates list --limit 50  # filter items for "[directory-user-mentioned]"
 ```
 
-See `references/wsa-reference.md` for the full discovery strategy, agent evaluation
+See `references/extract-templates-reference.md` for the full discovery strategy, template evaluation
 criteria, and healthcare discovery prioritization.
 
-Run all discovery-phase agents simultaneously. Validate params with
+Run all discovery-phase templates simultaneously. Validate params with
 `nimble extract:templates get` first.
 
 **Path B — Market-finder handoff.** User ran `market-finder` first and wants to
@@ -141,7 +141,7 @@ real website URLs before site mapping.
 > "Found **N practices** for [specialty] in [location] across [M] data sources.
 > Proceeding to extract providers from these sites..."
 
-**Fallback** — if no discovery WSAs were found, or results are sparse (< 3):
+**Fallback** — if no discovery templates were found, or results are sparse (< 3):
 ```bash
 nimble search --query "[specialty] in [location]" --max-results 20 --search-depth lite
 ```
@@ -180,8 +180,8 @@ Save checkpoint: `~/.nimble/memory/healthcare-providers-extract/checkpoints/{slu
 
 ### Step 4: Page Extraction
 
-**WSA shortcuts first:** If WSA discovery found agents that extract provider data
-from healthcare directories, use those for matching practices — structured WSA
+**Template shortcuts first:** If template discovery found templates that extract provider data
+from healthcare directories, use those for matching practices — structured template
 output is higher quality than parsed markdown.
 
 For all other practices, follow the Page Extraction with Retry pattern from
@@ -285,13 +285,13 @@ Slack: TL;DR with provider count and confidence breakdown only.
 - **"Run on more sites"** -> append new practice URLs, extract and merge
 - **"What's missing?"** -> detail the data gaps per provider
 
-**Enrichment from discovered WSAs:** If Step 0 found enrichment-phase agents
+**Enrichment from discovered templates:** If Step 0 found enrichment-phase templates
 (reviews, regulatory, practice details), offer them as immediate follow-ups:
 
-> "I also found [N] WSAs that could enrich this data: [brief list]. Want me to
+> "I also found [N] Extraction Templates that could enrich this data: [brief list]. Want me to
 > run reputation checks or regulatory lookups on these providers/practices?"
 
-See `references/wsa-reference.md` for enrichment phase mapping and fallback chains.
+See `references/extract-templates-reference.md` for enrichment phase mapping and fallback chains.
 
 **Sibling skill suggestions:**
 

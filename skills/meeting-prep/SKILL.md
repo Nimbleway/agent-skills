@@ -33,7 +33,7 @@ allowed-tools:
   - AskUserQuestion
 metadata:
   author: Nimbleway
-  version: 1.7.0
+  version: 1.7.1
   category: productivity
 ---
 
@@ -130,18 +130,18 @@ Value Positioning section (Step 4.5 + Step 6) is generated. Value positioning ac
 for: **sales/discovery, partnership, board/investor**. It is skipped for: **interview,
 internal, general external**.
 
-### Step 2: WSA Discovery
+### Step 2: Extraction Template Discovery
 
-Discover available WSAs for each attendee's company domain:
+Discover available templates for each attendee's company domain:
 
 ```bash
 nimble extract:templates list --limit 100  # then filter items for "{company-domain}"
 ```
 
-Run one search per unique company simultaneously. Filter for SERP/PDP WSAs,
+Run one search per unique company simultaneously. Filter for SERP/PDP templates,
 prefer `managed_by: "nimble"`, validate with `nimble extract:templates get --extract-template-name {name}`.
 Cache discovered names + params. Pass them to attendee agents in Step 3 for richer
-data. If no WSAs found, continue with `nimble search` alone.
+data. If no templates found, continue with `nimble search` alone.
 
 ### Step 3: Per-Attendee Research (sub-agents)
 
@@ -154,7 +154,7 @@ If a profile exists and is < 30 days old, load it as known context and pass it t
 agent so it focuses on what's new. If > 30 days old, run a full refresh.
 
 Spawn `nimble-researcher` agents (`agents/nimble-researcher.md`) with
-`mode: "bypassPermissions"`. One agent per attendee. Pass discovered WSA names
+`mode: "bypassPermissions"`. One agent per attendee. Pass discovered template names
 from Step 2 to each agent for enrichment.
 
 **Important:** The Nimble API has a 10 req/sec rate limit per API key. With each agent
@@ -243,7 +243,7 @@ the user's own business profile to find concrete positioning angles. It works be
 
 **If no profile exists**, skip searches that reference the user's company or competitors
 (searches 2, 4, 5) and rely on generic research (searches 1, 3) for positioning insights.
-Use any WSAs discovered in Step 2 for richer attendee company data.
+Use any templates discovered in Step 2 for richer attendee company data.
 The Value Positioning section will be thinner but still useful — pain-to-solution mapping
 and tech stack discovery work without a profile.
 

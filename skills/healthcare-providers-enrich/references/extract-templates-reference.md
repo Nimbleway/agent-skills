@@ -1,7 +1,7 @@
 # Extraction Template Discovery for Healthcare Providers Enrich
 
 How to find and evaluate Extraction Templates for enriching existing provider records. The Extraction Template catalog
-evolves constantly — this skill discovers relevant agents at runtime rather than
+evolves constantly — this skill discovers relevant templates at runtime rather than
 relying on a static list.
 
 For general Extraction Template execution rules (invocation, parsing, batch, fallback), see
@@ -20,8 +20,8 @@ inventory. Run all searches simultaneously:
 ```bash
 nimble extract:templates list --limit 100  # filter items for "healthcare"
 ```
-Returns all agents tagged with the Healthcare vertical (clinical trials, FDA,
-regulatory, and any newly added healthcare agents).
+Returns all templates tagged with the Healthcare vertical (clinical trials, FDA,
+regulatory, and any newly added healthcare templates).
 
 **Layer 2 — Session-specific search:**
 Search for terms derived from the user's input — their specialty, specific
@@ -49,25 +49,25 @@ nimble extract:templates list --limit 50  # filter items for "bbb"
 nimble extract:templates list --limit 50  # filter items for "review"
 ```
 
-### Evaluating discovered agents
+### Evaluating discovered templates
 
-For each discovered agent, read its `description` and `entity_type` to classify it
+For each discovered template, read its `description` and `entity_type` to classify it
 into an enrichment category:
 
-| If the agent description mentions... | Assign to category |
+| If the template description mentions... | Assign to category |
 |--------------------------------------|-------------------|
 | Reviews, ratings, patient feedback, reputation | **Reputation** — practice/provider ratings |
 | Clinical trials, FDA, regulatory, compliance, licensing | **Regulatory** — credentials and compliance data |
 | Profile, detail page, business info, contact, hours | **Practice details** — supplementary practice info |
 | Search, listings, directory, discovery | **Identity** — finding provider web presence |
 
-Validate each relevant agent's params before using it:
+Validate each relevant template's params before using it:
 ```bash
-nimble extract:templates get --extract-template-name [agent_name]
+nimble extract:templates get --extract-template-name [template_name]
 ```
 
-**Skip agents that don't fit** — not every healthcare-tagged agent is useful for
-enrichment. A drug interaction agent, for example, isn't relevant for filling
+**Skip templates that don't fit** — not every healthcare-tagged template is useful for
+enrichment. A drug interaction template, for example, isn't relevant for filling
 provider contact info.
 
 ---
@@ -87,8 +87,8 @@ this skill focuses on three enrichment categories. Identity search uses
 nimble search --query "[name] [credentials] [location] [specialty]" --max-results 5 --search-depth lite
 ```
 
-**Extraction Template supplement:** If Layer 2 discovery found directory-specific agents (e.g., a
-healthcare provider profile agent), use them for providers listed on that directory
+**Extraction Template supplement:** If Layer 2 discovery found directory-specific templates (e.g., a
+healthcare provider profile template), use them for providers listed on that directory
 to get structured data directly.
 
 ### Reputation enrichment
@@ -97,7 +97,7 @@ to get structured data directly.
 
 **Search terms for discovery:** `review`, `google_maps`, `yelp`, `bbb`
 
-**How to use:** Run discovered review/rating agents with the provider's practice
+**How to use:** Run discovered review/rating templates with the provider's practice
 name + location. Match results back to the provider record.
 
 **Fallback:**
@@ -113,7 +113,7 @@ or accreditation status.
 **Search terms for discovery:** `healthcare` vertical, `clinicaltrials`, `fda`,
 `npi`, `license`, `board`
 
-**How to use:** Run discovered regulatory agents with the provider's name and
+**How to use:** Run discovered regulatory templates with the provider's name and
 credentials. Cross-reference results with existing provider data.
 
 **Fallback:**
@@ -126,7 +126,7 @@ nimble search --query "[provider-name] [credentials] NPI OR license OR board cer
 **When:** User wants hours, insurance accepted, staff count, or other practice-level
 data.
 
-**Search terms for discovery:** Directory-specific agents found in Layer 2.
+**Search terms for discovery:** Directory-specific templates found in Layer 2.
 
 **Fallback:**
 ```bash

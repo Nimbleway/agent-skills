@@ -35,7 +35,7 @@ allowed-tools:
   - AskUserQuestion
 metadata:
   author: Nimbleway
-  version: 1.7.0
+  version: 1.7.1
   category: seo
 ---
 
@@ -120,4 +120,4 @@ All workflows use:
 - **Business profile + onboarding:** `references/profile-and-onboarding.md`
 - **Data persistence:** `references/memory-and-distribution.md`
 - **CLI patterns + constraints:** `references/nimble-playbook.md`
-- **AI platform agent discovery:** `references/ai-platform-profiles.md`
+- **AI platform Extraction Template discovery:** `references/ai-platform-profiles.md`

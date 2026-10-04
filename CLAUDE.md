@@ -122,12 +122,13 @@ cd evals && uv sync
 uv run python -m evals.suites.web_expert \
   --dataset-name=nimble-web-expert-production --runtime claude --max-items 50
 
-# Packaging gates — all three run in CI on every PR. Two workflows carry them, and
+# Packaging gates — all four run in CI on every PR. Two workflows carry them, and
 # both are required status checks on main: "All version references agree" and
 # "Plugin is packageable on every platform".
 bash scripts/tag-release.sh --check           # all version references agree
 bash scripts/check-plugin-structure.sh        # skills tree is packageable everywhere
 python3 scripts/check-plugin-manifests.py     # manifest fields, assets, brand contrast
+bash scripts/check-terminology.sh             # Extraction Template vs WSA naming
 ```
 
 Run the routing eval after any change to `nimble-web-expert`'s Core principles
@@ -205,7 +206,8 @@ metadata:
   client-side (by domain, keyword, entity_type). Web Search Agents follow the
   reuse-priority chain (existing agent → clone a template → from scratch). Validate a
   template's `input_schema` before running.
-- WSA reference files must teach discovery strategy, not list known agents. The test:
+- Extraction Template and Web Search Agent reference files must teach discovery strategy,
+  not list known templates or agents. The test:
   if 10 new agents/templates were added tomorrow, would the skill find them automatically?
 - `--search-depth` valid values: `lite`, `fast`, `deep` (not `standard`). Use `lite` for discovery, `deep` for full content.
 - All Nimble calls carry `--client-source nimble-agent-skills` (the stable integration attribution).
@@ -355,3 +357,6 @@ reading files directly if index is missing.
 - Skills persist data under `~/.nimble/` — never touch user project files
 - Reports: `{skill-name}-{YYYY-MM-DD}.md`
 - Never commit secrets, API keys, or credentials — even as examples
+- Name structured-data calls by the command they run: `extract:templates` is an Extraction
+  Template, `nimble agents` / `agents:runs` is a Web Search Agent (WSA). Reviewers reject
+  "WSA" or "agent" for a template; `bash scripts/check-terminology.sh` catches the common cases.

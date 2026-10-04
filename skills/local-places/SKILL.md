@@ -2,7 +2,7 @@
 name: local-places
 description: |
   Discovers, enriches, and scores local businesses in any neighborhood using
-  Nimble Web Search Agents (WSAs) and web data. Returns a structured, ranked
+  Nimble Extraction Templates and web data. Returns a structured, ranked
   list with confidence scores, reviews, social presence, and an interactive map.
 
   Use this skill when the user asks about local businesses, places, or
@@ -13,7 +13,7 @@ description: |
   near [location]", "build a neighborhood guide", "local place search".
 
   Requires the Nimble CLI (nimble extract:templates run, nimble search, nimble extract)
-  for live web data via WSAs and fallback search.
+  for live web data via Extraction Templates and fallback search.
   Do NOT use for competitor analysis or monitoring (use competitor-intel),
   company research or deep dives (use company-deep-dive), general web search
   or extraction (use nimble-web-expert).
@@ -36,13 +36,13 @@ allowed-tools:
   - AskUserQuestion
 metadata:
   author: Nimbleway
-  version: 1.7.0
+  version: 1.7.1
   category: productivity
 ---
 
 # Local Places
 
-Location intelligence powered by Nimble Web Search Agents and web data APIs.
+Location intelligence powered by Nimble Extraction Templates and web data APIs.
 
 User request: $ARGUMENTS
 
@@ -136,9 +136,9 @@ Check: `cat ~/.nimble/memory/local-places/checkpoints/{slug}/discovery.json 2>/d
   Resume and fill gaps, or start fresh?"
 - **No checkpoint** -> proceed to Step 4
 
-### Step 4: WSA Discovery
+### Step 4: Extraction Template Discovery
 
-Discover available WSAs for all phases before execution. Run these searches
+Discover available templates for all phases before execution. Run these searches
 simultaneously:
 
 ```bash
@@ -160,33 +160,33 @@ nimble extract:templates list --limit 100  # then filter items for "{place-type}
 From the combined results:
 1. Filter by `entity_type`: SERP for discovery, PDP/Profile for enrichment/detail
 2. Prefer `managed_by: "nimble"` over `managed_by: "community"`
-3. Classify into phases -- see `references/wsa-pipeline.md` for classification strategy
+3. Classify into phases -- see `references/extract-templates-pipeline.md` for classification strategy
 4. Validate each with `nimble extract:templates get --extract-template-name {name}` to confirm params
-5. Cache all discovered WSA names + validated params for the rest of the run
+5. Cache all discovered template names + validated params for the rest of the run
 
-If no WSAs found for a phase, that phase falls back to `nimble search`. Log
-which phases had WSA coverage and which are using fallback.
+If no templates found for a phase, that phase falls back to `nimble search`. Log
+which phases had template coverage and which are using fallback.
 
 ### Step 5: Primary Search (Phase 1)
 
-Read `references/wsa-pipeline.md` for category detection logic.
+Read `references/extract-templates-pipeline.md` for category detection logic.
 
-Run discovered maps/location WSAs simultaneously, using the validated params from
+Run discovered maps/location templates simultaneously, using the validated params from
 Step 4:
 
 ```bash
-nimble extract:templates run --template {discovered_maps_wsa} --params '{...validated params...}'
+nimble extract:templates run --template {discovered_maps_template} --params '{...validated params...}'
 ```
 
 ```bash
-nimble extract:templates run --template {discovered_review_site_wsa} --params '{...validated params...}'
+nimble extract:templates run --template {discovered_review_site_template} --params '{...validated params...}'
 ```
 
-**Tertiary (conditional):** Run discovered credibility WSAs only if primary +
+**Tertiary (conditional):** Run discovered credibility templates only if primary +
 secondary return < 10 combined unique results, or if the user asked for
 credibility/trust data.
 
-If any WSA fails or returns empty, fall back to:
+If any template fails or returns empty, fall back to:
 `nimble search --query "[place-type] in [location]" --max-results 20 --search-depth lite`
 
 **After discovery:**
@@ -200,29 +200,29 @@ If any WSA fails or returns empty, fall back to:
 ### Step 6: Social Enrichment (Phase 2)
 
 For each discovered place that has a Facebook page or Instagram handle, run the
-social WSAs discovered in Step 4. Batch max **4 concurrent Bash calls**.
+social templates discovered in Step 4. Batch max **4 concurrent Bash calls**.
 
 ```bash
-nimble extract:templates run --template {discovered_social_wsa} --params '{...validated params...}'
+nimble extract:templates run --template {discovered_social_template} --params '{...validated params...}'
 ```
 
-Run each discovered social WSA for places with matching handles. Skip social
-platforms for which no WSA was discovered. If no social WSAs were found in Step 4,
+Run each discovered social template for places with matching handles. Skip social
+platforms for which no template was discovered. If no social templates were found in Step 4,
 skip this phase entirely.
 
 Save checkpoint: `~/.nimble/memory/local-places/checkpoints/{slug}/social.json`
 
 ### Step 7: Reviews (Phase 3)
 
-For the top places (by source count and data completeness), run the review WSAs
+For the top places (by source count and data completeness), run the review templates
 discovered in Step 4:
 
 ```bash
-nimble extract:templates run --template {discovered_reviews_wsa} --params '{...validated params...}'
+nimble extract:templates run --template {discovered_reviews_template} --params '{...validated params...}'
 ```
 
 Batch max 4 concurrent calls. Focus on places that have a `place_id` or equivalent
-identifier from Phase 1 discovery. If no review WSAs were found in Step 4, fall
+identifier from Phase 1 discovery. If no review templates were found in Step 4, fall
 back to: `nimble search --query "[place-name] reviews" --max-results 5 --search-depth lite`
 
 Save checkpoint:
@@ -231,23 +231,23 @@ Save checkpoint:
 ### Step 8: Food/Drink Bonus (Phase 4)
 
 **Auto-trigger** when the place type category matches food/drink keywords.
-See `references/wsa-pipeline.md` for the category detection logic.
+See `references/extract-templates-pipeline.md` for the category detection logic.
 
-If triggered, run the delivery/food WSAs discovered in Step 4. Discovery first,
+If triggered, run the delivery/food templates discovered in Step 4. Discovery first,
 then detail:
 
 ```bash
-nimble extract:templates run --template {discovered_delivery_serp_wsa} --params '{...validated params...}'
+nimble extract:templates run --template {discovered_delivery_serp_template} --params '{...validated params...}'
 ```
 
 For places found on delivery platforms, fetch full details using discovered
-detail WSAs:
+detail templates:
 
 ```bash
-nimble extract:templates run --template {discovered_delivery_detail_wsa} --params '{...validated params...}'
+nimble extract:templates run --template {discovered_delivery_detail_template} --params '{...validated params...}'
 ```
 
-If no delivery WSAs were found in Step 4, fall back to:
+If no delivery templates were found in Step 4, fall back to:
 `nimble search --query "[place-name] [location] delivery" --max-results 3 --search-depth lite`
 
 Only run for food/drink categories. Skip if category doesn't match.
@@ -319,7 +319,7 @@ rating within each tier.
 **Source links are mandatory.** Every place must have at least one clickable source
 URL (Google Maps link, Yelp listing, website, or social profile). Places without
 any source link should be noted in "What's Missing" but still included if they have
-sufficient data from WSA results.
+sufficient data from template results.
 
 **Drill-down:** After presenting, tell the user:
 > "Want details on any place? Say 'tell me more about #3' or ask for the
@@ -328,14 +328,14 @@ sufficient data from WSA results.
 ### Step 11: Interactive Map (on request or "Deep dive" mode)
 
 Generate an HTML file with Leaflet.js + OpenStreetMap tiles. See
-`references/wsa-pipeline.md` for the full map generation pattern and color scheme.
+`references/extract-templates-pipeline.md` for the full map generation pattern and color scheme.
 
 Save to: `~/.nimble/memory/local-places/{slug}-map-{date}.html`
 
 Open in browser: `open ~/.nimble/memory/local-places/{slug}-map-{date}.html`
 
 Only generate automatically if the user chose "Deep dive with map" in Step 1.
-For map generation details, see `references/wsa-pipeline.md`.
+For map generation details, see `references/extract-templates-pipeline.md`.
 Otherwise, offer it as a follow-up action.
 
 ### Step 12: Save to Memory
@@ -385,18 +385,18 @@ For comprehensive searches (50+ places), use `nimble-researcher` agents
 
 Follow the sub-agent spawning rules from `references/nimble-playbook.md`
 (bypassPermissions, batch max 4, explicit Bash instruction, fallback on failure).
-For WSA calls at scale (11+ entities), tell agents to use `agent run-batch` instead
+For template calls at scale (11+ entities), tell agents to use `extract:templates batch` instead
 of individual calls. See the Scaled Execution pattern in
-`references/nimble-playbook.md` for tier selection. Pass the discovered WSA names
+`references/nimble-playbook.md` for tier selection. Pass the discovered template names
 from Step 4 to each agent so they use the same cached names.
 
 **Spawn pattern:** One agent per batch of 10 places for social enrichment.
-Each agent runs the Phase 2 WSAs for its batch and returns structured results.
+Each agent runs the Phase 2 templates for its batch and returns structured results.
 
 **Single-batch optimization:** If <= 10 places, run enrichment directly from the
 main context instead of spawning agents -- saves overhead.
 
-**Fallback:** If any agent fails, run those WSA calls directly from the main context.
+**Fallback:** If any agent fails, run those template calls directly from the main context.
 
 ---
 
@@ -406,7 +406,7 @@ Check at startup: `echo $CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS`
 
 **Team mode** (flag set): Spawn **teammates** for parallel phases:
 
-- **Discovery teammate**: Runs all Phase 1 WSAs, deduplicates, returns unified list
+- **Discovery teammate**: Runs all Phase 1 templates, deduplicates, returns unified list
 - **Enrichment teammate**: Runs Phases 2-4 for each place batch
 - **Lead** (you): Coordinates, scores, generates output and map
 
@@ -419,12 +419,12 @@ Check at startup: `echo $CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS`
 See `references/nimble-playbook.md` for the standard error table (missing API key, 429,
 401, empty results, extraction garbage). Skill-specific errors:
 
-- **WSA/Search 500:** Retry once with the same params. If still failing, fall back
+- **Template/Search 500:** Retry once with the same params. If still failing, fall back
   to `nimble search` for that place/query. Log the failure but don't skip the place.
-- **WSA/Search timeout:** Retry once, then skip that call and continue — consistent
+- **Template/Search timeout:** Retry once, then skip that call and continue — consistent
   with the playbook's timeout policy.
-- **WSA not found:** If no WSAs are discovered for a phase, skip that phase's WSA
-  calls and fall back to `nimble search`. Log which phases had no WSA coverage.
+- **Template not found:** If no templates are discovered for a phase, skip that phase's template
+  calls and fall back to `nimble search`. Log which phases had no template coverage.
 - **Location not found:** "Couldn't find results for [location]. Could you be more specific?
   Try including city and state (e.g., 'Williamsburg, Brooklyn, NY')."
 - **No results for place type:** "No [place type] found in [location]. Want to try a

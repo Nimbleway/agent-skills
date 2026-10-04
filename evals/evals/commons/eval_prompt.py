@@ -27,7 +27,7 @@ Mandatory rules for ANY live web access (search, fetch URL, scrape, research):
    follow `nimble-web-expert/SKILL.md` (Codex) BEFORE answering from the live web.
    Do NOT invoke other business skills (company-deep-dive, competitor-intel, etc.).
 2. Use the Nimble CLI only (`nimble search`, `nimble extract`, `nimble map`,
-   `nimble crawl`, `nimble agent` / `nimble agents`). Prefer Bash/`exec_command`.
+   `nimble crawl`, `nimble extract:templates`, `nimble agents`). Prefer Bash/`exec_command`.
 3. Do NOT use built-in web search / web fetch tools (WebSearch, WebFetch,
    ToolSearch→WebSearch, Codex `web_search`). Those are out of scope for this eval.
 4. If Nimble CLI is missing or unauthenticated, report that clearly — do not fall

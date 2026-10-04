@@ -5,7 +5,7 @@ description: |
   tracking batch progress, or fetching results.
   Works for ALL async types: extract:templates async, extract:templates batch, extract-async, extract-batch,
   crawl (per-page tasks), search async, map async.
-  CRITICAL: agent tasks use "success"/"error" states; crawl page tasks use "completed"/"failed".
+  CRITICAL: Extraction Template tasks use "success"/"error" states; crawl page tasks use "completed"/"failed".
 ---
 
 # nimble tasks & batches — reference

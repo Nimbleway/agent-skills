@@ -1,8 +1,8 @@
 # Extraction Template Discovery for Healthcare Providers Extract
 
 How to find and evaluate Extraction Templates for each phase of provider extraction. The Extraction Template catalog
-evolves constantly — new agents get added for healthcare directories, review sites,
-and regulatory databases. This skill discovers relevant agents at runtime rather than
+evolves constantly — new templates get added for healthcare directories, review sites,
+and regulatory databases. This skill discovers relevant templates at runtime rather than
 relying on a static list.
 
 For general Extraction Template execution rules (invocation, parsing, batch, fallback), see
@@ -21,8 +21,8 @@ build a session-specific Extraction Template inventory. Run all searches simulta
 ```bash
 nimble extract:templates list --limit 100  # filter items for "healthcare"
 ```
-Returns all agents tagged with the Healthcare vertical (clinicaltrials.gov, FDA,
-and any newly added healthcare agents).
+Returns all templates tagged with the Healthcare vertical (clinicaltrials.gov, FDA,
+and any newly added healthcare templates).
 
 **Layer 2 — Session-specific search:**
 Search for terms derived from the user's input — their specialty, location, or
@@ -50,25 +50,25 @@ nimble extract:templates list --limit 50  # filter items for "bbb"
 nimble extract:templates list --limit 50  # filter items for "review"
 ```
 
-### Evaluating discovered agents
+### Evaluating discovered templates
 
-For each discovered agent, read its `description` and `entity_type` to classify it
+For each discovered template, read its `description` and `entity_type` to classify it
 into a phase:
 
-| If the agent description mentions... | Assign to phase |
+| If the template description mentions... | Assign to phase |
 |--------------------------------------|----------------|
 | Search, listings, directory, discovery, local businesses | **Discovery** — finding practice URLs |
 | Reviews, ratings, patient feedback, reputation | **Enrichment: Reputation** |
 | Clinical trials, FDA, regulatory, compliance, licensing | **Enrichment: Regulatory** |
 | Profile, detail page, business info, contact | **Enrichment: Practice details** |
 
-Validate each relevant agent's params before using it:
+Validate each relevant template's params before using it:
 ```bash
-nimble extract:templates get --extract-template-name [agent_name]
+nimble extract:templates get --extract-template-name [template_name]
 ```
 
-**Skip agents that don't fit** — not every healthcare-tagged agent is useful for
-provider extraction. An FDA drug label agent, for example, isn't relevant unless
+**Skip templates that don't fit** — not every healthcare-tagged template is useful for
+provider extraction. An FDA drug label template, for example, isn't relevant unless
 the user specifically asked about pharmaceuticals.
 
 ### Healthcare discovery prioritization
@@ -104,12 +104,12 @@ lets them suggest additional search terms if something is missing.
 
 **When:** User provided a specialty + location instead of URLs.
 
-**Useful agent types:** Map search, directory search, local business listings.
+**Useful template types:** Map search, directory search, local business listings.
 
 **Search terms to try:** `google_maps`, `yelp`, `bing_maps`, `bbb`, plus any
 healthcare directory the user mentions.
 
-**How to use:** Run discovered search/listing agents with the user's specialty +
+**How to use:** Run discovered search/listing templates with the user's specialty +
 location as query params. Extract practice website URLs from results. Deduplicate
 by domain.
 
@@ -126,9 +126,9 @@ nimble search --query "[specialty] in [location]" --max-results 20 --search-dept
 practice websites. See `provider-extraction-patterns.md` for page scoring and
 field detection.
 
-However, if Layer 2 discovery found a Extraction Template that extracts provider data from a
+However, if Layer 2 discovery found an Extraction Template that extracts provider data from a
 specific healthcare directory (e.g., a future `zocdoc_provider_profile` or
-`healthgrades_doctor_profile` agent), use it for practices listed on that directory
+`healthgrades_doctor_profile` template), use it for practices listed on that directory
 instead of scraping their website directly — structured Extraction Template output is higher quality
 than parsed markdown.
 
@@ -138,17 +138,17 @@ than parsed markdown.
 next steps.
 
 **Reputation — search terms:** `review`, `google_maps_reviews`, `yelp`, `bbb`
-- Use review agents with `place_id` or practice URL from the discovery phase
-- Use BBB agents for business credibility checks
+- Use review templates with `place_id` or practice URL from the discovery phase
+- Use BBB templates for business credibility checks
 
 **Regulatory — search terms:** `healthcare` vertical, `clinicaltrials`, `fda`,
 `npi`, `license`
-- Use any discovered regulatory agents to cross-reference providers or practices
+- Use any discovered regulatory templates to cross-reference providers or practices
 - Particularly valuable for clinical trial involvement, device clearances, drug
   research
 
-**Practice details — search terms:** directory-specific agents found in Layer 2
-- If an agent provides structured practice profiles (hours, insurance, staff count),
+**Practice details — search terms:** directory-specific templates found in Layer 2
+- If a template provides structured practice profiles (hours, insurance, staff count),
   use it to supplement extracted data
 
 ---

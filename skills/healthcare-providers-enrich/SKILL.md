@@ -10,7 +10,7 @@ description: |
 
   Accepts CSV, Google Sheet URL, or pasted data. Searches for each provider's
   practice website, extracts missing fields, and enriches with reviews, clinical
-  trials, and accreditation via WSAs.
+  trials, and accreditation via Extraction Templates.
 
   Do NOT use for extracting providers from practice URLs — use healthcare-providers-extract instead.
   Do NOT use for validating credentials — use healthcare-providers-verify instead.
@@ -35,7 +35,7 @@ allowed-tools:
   - AskUserQuestion
 metadata:
   author: Nimbleway
-  version: 1.7.0
+  version: 1.7.1
   category: healthcare
 ---
 
@@ -53,26 +53,26 @@ constraints (no shell state, no `&`/`wait`, sub-agent permissions, communication
 
 ## Instructions
 
-### Step 0: Preflight + WSA Discovery
+### Step 0: Preflight + Extraction Template Discovery
 
 **Sibling handoff check:** Before running full preflight, check if
 `healthcare-providers-extract` ran earlier in this session by following the Sibling
 Handoff pattern from `references/nimble-playbook.md`. If same-day extract output
-exists, skip CLI check and profile load, and reuse WSA Layer 1/3 inventory. Only
+exists, skip CLI check and profile load, and reuse Layer 1/3 Extraction Template inventory. Only
 re-run Layer 2 if the specialty changed.
 
 **Otherwise, run full preflight** from `references/nimble-playbook.md` (5 simultaneous
 Bash calls: date calc, today, CLI check, profile load, index.md load).
 
-**Also simultaneously** — run WSA discovery and setup:
+**Also simultaneously** — run template discovery and setup:
 - `mkdir -p ~/.nimble/memory/{reports,healthcare-providers-enrich/checkpoints}`
 - `ls ~/.nimble/memory/healthcare-providers-enrich/checkpoints/ 2>/dev/null`
-- Run Layer 1 (vertical) and Layer 3 (general tools) WSA discovery from
-  `references/wsa-reference.md`. Layer 2 (session-specific) runs after Step 1 when
+- Run Layer 1 (vertical) and Layer 3 (general tools) template discovery from
+  `references/extract-templates-reference.md`. Layer 2 (session-specific) runs after Step 1 when
   you know the user's specialty.
 
-Classify discovered agents into phases and validate with `nimble extract:templates get` per
-`references/wsa-reference.md`.
+Classify discovered templates into phases and validate with `nimble extract:templates get` per
+`references/extract-templates-reference.md`.
 
 From the preflight results:
 - CLI missing or API key unset -> `references/profile-and-onboarding.md`, stop
@@ -131,7 +131,7 @@ Parse the input into structured records. For each provider, identify:
   accreditation)
 
 **Early exit — no gaps:** If all providers are already High confidence (5/5 fields),
-skip to Step 5 (WSA enrichment) or report: "All providers already have complete
+skip to Step 5 (template enrichment) or report: "All providers already have complete
 profiles. Want me to add supplementary data (reviews, clinical trials, accreditation)
 instead?"
 
@@ -146,13 +146,13 @@ Build a gap analysis summary:
 >
 > Starting enrichment for **N providers with gaps**..."
 
-Run Layer 2 WSA discovery now that you know the specialty:
+Run Layer 2 template discovery now that you know the specialty:
 ```bash
 nimble extract:templates list --limit 50  # filter items for "[specialty]"
 nimble extract:templates list --limit 50  # filter items for "[directory-user-mentioned]"
 ```
 
-See `references/wsa-reference.md` for session-specific discovery.
+See `references/extract-templates-reference.md` for session-specific discovery.
 
 ### Step 3: Web Search for Provider Identity
 
@@ -202,15 +202,15 @@ contact patterns, education mentions).
 echo '{...}' > ~/.nimble/memory/healthcare-providers-enrich/checkpoints/{slug}/extraction.json
 ```
 
-### Step 5: WSA Enrichment (Optional)
+### Step 5: Extraction Template Enrichment (Optional)
 
 If the user requested reviews, regulatory data, or accreditation — or if the gap
 analysis shows most core fields are already filled and enrichment adds more value:
 
-**Run enrichment-phase WSAs** discovered in Step 0. See `references/wsa-reference.md`
-for the enrichment phase mapping, agent evaluation, and fallback chains.
+**Run enrichment-phase templates** discovered in Step 0. See `references/extract-templates-reference.md`
+for the enrichment phase mapping, template evaluation, and fallback chains.
 
-For each practice or provider, run relevant enrichment agents simultaneously.
+For each practice or provider, run relevant enrichment templates simultaneously.
 Follow the Scaled Execution pattern from `references/nimble-playbook.md` for
 batching.
 
@@ -357,4 +357,4 @@ See `references/nimble-playbook.md` for the standard error table (missing API ke
 - **CSV/Sheet parse error:** "Couldn't parse the input file. Expected columns with
   provider names and at least one identifier (state, specialty, or practice).
   Can you paste the data directly instead?"
-- **No gaps detected:** Handled in Step 2 (early exit to WSA enrichment or report).
+- **No gaps detected:** Handled in Step 2 (early exit to template enrichment or report).

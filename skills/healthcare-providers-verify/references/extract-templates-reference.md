@@ -1,7 +1,7 @@
 # Extraction Template Discovery for Healthcare Providers Verify
 
 How to find and evaluate Extraction Templates for validating practitioner credentials and license
-status. The Extraction Template catalog evolves constantly — this skill discovers relevant agents at
+status. The Extraction Template catalog evolves constantly — this skill discovers relevant templates at
 runtime rather than relying on a static list.
 
 For general Extraction Template execution rules (invocation, parsing, batch, fallback), see
@@ -20,8 +20,8 @@ inventory. Run all searches simultaneously:
 ```bash
 nimble extract:templates list --limit 100  # filter items for "healthcare"
 ```
-Returns all agents tagged with the Healthcare vertical (clinical trials, FDA,
-regulatory, licensing, and any newly added healthcare agents).
+Returns all templates tagged with the Healthcare vertical (clinical trials, FDA,
+regulatory, licensing, and any newly added healthcare templates).
 
 **Layer 2 — Session-specific search:**
 Search for terms derived from the user's input — their specialty, specific
@@ -40,7 +40,7 @@ nimble extract:templates list --limit 50  # filter items for "[state] license lo
 nimble extract:templates list --limit 50  # filter items for "[user's specialty]"
 ```
 Adapt search terms to whatever the user provided. Focus on regulatory and
-verification-related agents.
+verification-related templates.
 
 **Layer 3 — General verification tools:**
 These Extraction Templates are useful across verticals for identity confirmation and practice
@@ -51,25 +51,25 @@ nimble extract:templates list --limit 50  # filter items for "yelp"
 nimble extract:templates list --limit 50  # filter items for "bbb"
 ```
 
-### Evaluating discovered agents
+### Evaluating discovered templates
 
-For each discovered agent, read its `description` and `entity_type` to classify it
+For each discovered template, read its `description` and `entity_type` to classify it
 into a verification category:
 
-| If the agent description mentions... | Assign to category |
+| If the template description mentions... | Assign to category |
 |--------------------------------------|-------------------|
 | NPI, license, credential, certification, registry | **Credential verification** — direct credential checks |
 | Clinical trials, FDA, regulatory, compliance | **Regulatory verification** — regulatory activity confirmation |
 | Reviews, ratings, patient feedback, active practice | **Practice confirmation** — confirms provider is actively practicing |
 | Profile, directory, listing, search | **Identity confirmation** — confirms provider identity and web presence |
 
-Validate each relevant agent's params before using it:
+Validate each relevant template's params before using it:
 ```bash
-nimble extract:templates get --extract-template-name [agent_name]
+nimble extract:templates get --extract-template-name [template_name]
 ```
 
-**Skip agents that don't fit** — not every healthcare-tagged agent is useful for
-verification. A drug interaction agent or a clinical trial search agent adds no
+**Skip templates that don't fit** — not every healthcare-tagged template is useful for
+verification. A drug interaction template or a clinical trial search template adds no
 value to credential validation.
 
 ---
@@ -89,7 +89,7 @@ nimble search --query "[name] [credential] [state] NPI registry" --max-results 5
 ```
 Then extract the NPI result page for structured data.
 
-**Extraction Template supplement:** If Layer 1/2 discovery found NPI or medical board agents, use
+**Extraction Template supplement:** If Layer 1/2 discovery found NPI or medical board templates, use
 them for direct lookups — structured Extraction Template output is higher quality than parsing
 search results.
 
@@ -101,7 +101,7 @@ regulatory compliance beyond basic NPI lookup.
 **Search terms for discovery:** `healthcare` vertical, `clinicaltrials`, `fda`,
 `board`, `license`
 
-**How to use:** Run discovered regulatory agents with the provider's name and
+**How to use:** Run discovered regulatory templates with the provider's name and
 credentials. Cross-reference with NPI data to build a fuller verification picture.
 
 **Fallback:**
@@ -115,7 +115,7 @@ nimble search --query "[provider-name] [credentials] clinical trials OR FDA OR b
 
 **Search terms for discovery:** `google_maps`, `yelp`, `bbb`
 
-**How to use:** Run practice-level agents with the provider's practice name +
+**How to use:** Run practice-level templates with the provider's practice name +
 location. Confirm the practice exists and is active.
 
 **Fallback:**
