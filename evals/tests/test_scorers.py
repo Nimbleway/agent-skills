@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from evals.commons.gold import remap_expected, solution_key
 from evals.commons.nimble_cmd import add_nimble_tools
 from evals.commons.trace import NormalizedTrace
 from evals.scorers.metrics import (
@@ -25,6 +26,13 @@ def test_nimble_tools_detect_global_flags_before_subcommand() -> None:
     )
     assert "nimble agents create" in tools
     assert "nimble search" in tools
+
+
+def test_old_extraction_templates_gold_label_maps_to_extract_templates() -> None:
+    gold = {"solution": "Extraction Templates"}
+    assert remap_expected(gold)["expected_skill"] == "nimble-web-expert"
+    assert remap_expected(gold)["assistant_solution"] == "Extract Templates"
+    assert solution_key({"expected_output": gold}) == "Extract Templates"
 
 
 def _trace(**kwargs) -> NormalizedTrace:

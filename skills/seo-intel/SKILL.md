@@ -120,4 +120,4 @@ All workflows use:
 - **Business profile + onboarding:** `references/profile-and-onboarding.md`
 - **Data persistence:** `references/memory-and-distribution.md`
 - **CLI patterns + constraints:** `references/nimble-playbook.md`
-- **AI platform Extraction Template discovery:** `references/ai-platform-profiles.md`
+- **AI platform Extract Template discovery:** `references/ai-platform-profiles.md`

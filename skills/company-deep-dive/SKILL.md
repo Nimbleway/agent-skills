@@ -87,7 +87,7 @@ Parse the target company from `$ARGUMENTS` or the user's message.
 If they say "quick overview", "brief", or "summary", run a **quick mode** that skips
 the Deep Extraction step and produces a shorter report.
 
-### Step 2: Extraction Template Discovery
+### Step 2: Extract Template Discovery
 
 Discover available templates for the target company's domain. Run both searches
 simultaneously:

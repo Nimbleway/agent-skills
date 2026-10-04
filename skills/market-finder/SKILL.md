@@ -2,7 +2,7 @@
 name: market-finder
 description: |
   Discovers all businesses of a given type in any geography using Nimble
-  Extraction Templates. Two modes: Discovery finds businesses from scratch; Audit compares
+  Extract Templates. Two modes: Discovery finds businesses from scratch; Audit compares
   a user's existing list (Google Sheet, CSV, inline) against fresh
   discovery, categorizing entries as matched, discovered-only, or
   reference-only. Vertical presets (Healthcare, SaaS, Restaurants, Legal,
@@ -41,7 +41,7 @@ metadata:
 
 # Market Finder
 
-Market intelligence powered by Nimble Extraction Templates.
+Market intelligence powered by Nimble Extract Templates.
 
 User request: $ARGUMENTS
 
@@ -171,7 +171,7 @@ Check: `cat ~/.nimble/memory/market-finder/checkpoints/{slug}/discovery.json 2>/
   Resume and fill gaps, or start fresh?"
 - **No checkpoint** -> proceed to Step 5
 
-### Step 5: Extraction Template Discovery & Execution
+### Step 5: Extract Template Discovery & Execution
 
 #### 5a: Discover available templates
 

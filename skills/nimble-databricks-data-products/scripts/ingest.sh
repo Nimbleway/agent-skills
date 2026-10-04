@@ -2,7 +2,7 @@
 # ingest.sh — submit ONE long-running SQL statement asynchronously and poll to completion.
 #
 # Used for the set-based ingest: a single INSERT that calls nimble_agent_run() over every row of the
-# control (queries) table via a correlated LATERAL join (see references/extraction-templates.md). That one
+# control (queries) table via a correlated LATERAL join (see references/extract-templates.md). That one
 # statement fires all the template calls (~30-60s each, parallelised by a REPARTITION hint), so it runs
 # well past the 50s synchronous wait_timeout — hence async submit + poll.
 #
@@ -47,4 +47,4 @@ fi
 err=$(echo "$resp" | jq -r '.status.error.message // ""')
 echo "state=$state ${err:+— $err}"
 [ "$state" = "SUCCEEDED" ] || { echo "Ingest failed."; exit 1; }
-echo "Ingest complete. Now reconcile results against the control table (see extraction-templates.md §6)."
+echo "Ingest complete. Now reconcile results against the control table (see extract-templates.md §6)."

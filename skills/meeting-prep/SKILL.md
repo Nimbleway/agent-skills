@@ -130,7 +130,7 @@ Value Positioning section (Step 4.5 + Step 6) is generated. Value positioning ac
 for: **sales/discovery, partnership, board/investor**. It is skipped for: **interview,
 internal, general external**.
 
-### Step 2: Extraction Template Discovery
+### Step 2: Extract Template Discovery
 
 Discover available templates for each attendee's company domain:
 

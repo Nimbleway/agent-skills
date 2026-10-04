@@ -7,7 +7,7 @@ description: |
   USE FOR:
   - Fetching any URL or reading any webpage
   - Scraping prices, listings, reviews, jobs, stats, docs from any site
-  - Running Extraction Templates — reusable, site-specific structured scrapers
+  - Running Extract Templates — reusable, site-specific structured scrapers
   - Running Web Search Agents — open-ended research, enrichment, and dataset building with citations
   - Discovering URLs on a site before bulk extraction
   - Calling public REST/XHR API endpoints
@@ -75,7 +75,7 @@ User request: $ARGUMENTS
 
 ## Core principles
 
-- **Route by intent first** (see [Analyze & Route](#analyze--route) for the full decision model). Named site with a matching Extraction Template + a direct item to look up → run the template. Site with no template, or a need that requires discovery/reasoning across pages → a Web Search Agent. One-off single URL → `nimble extract`. Raw results to work from ("find pages/articles about…") → `nimble search`; a synthesized deliverable (report, brief, comparison, recommendation) → a Web Search Agent. Discover/crawl URLs → `nimble map` or `nimble crawl`.
+- **Route by intent first** (see [Analyze & Route](#analyze--route) for the full decision model). Named site with a matching Extract Template + a direct item to look up → run the template. Site with no template, or a need that requires discovery/reasoning across pages → a Web Search Agent. One-off single URL → `nimble extract`. Raw results to work from ("find pages/articles about…") → `nimble search`; a synthesized deliverable (report, brief, comparison, recommendation) → a Web Search Agent. Discover/crawl URLs → `nimble map` or `nimble crawl`.
 - **Web Search Agent runs: pick a run mode before building the command.** Default to named create-or-reuse — `nimble agents run --agent-name <stable-name>` — so a repeat session lands on the same agent. `agents:runs create` is the explicit-agent-ID route only and requires `--agent-id`. `references/nimble-agents/reference.md` has the mode table, `use_case` locking, and the one-time `skill` override.
 - **One command → present results → done.** Run once, show the data immediately as a table. Do NOT experiment, loop, or write Python to parse output.
 - **Multiple inputs → always parallel.** 2+ URLs/keywords/ASINs → `&`+`wait`. 6–20 → `xargs -P`. 20+ → Python asyncio script. See `references/batch-patterns.md`.
@@ -95,12 +95,12 @@ One skill, one taxonomy. Use Nimble's own product names precisely — never para
 | ---------------------- | --------------------------------------------------------------------------------- | --------------------------- |
 | **Search**             | Real-time web search — raw results (pages, snippets), 8 focus modes               | `nimble search`             |
 | **Extract**            | Fetch + parse a single known URL (the one-off primitive)                          | `nimble extract`            |
-| **Extraction Template**| Reusable, site-specific structured scraper for a known item (by URL or identifier)| `nimble extract:templates`  |
+| **Extract Template**| Reusable, site-specific structured scraper for a known item (by URL or identifier)| `nimble extract:templates`  |
 | **Web Search Agent**   | Open-ended research / enrichment / dataset building — discovers sources, synthesizes, cites | `nimble agents` / `agents:runs` |
 | **Map**                | Discover the URLs that exist on a site                                            | `nimble map`                |
 | **Crawl**              | Bulk-fetch many pages across a site (one-time, at scale)                          | `nimble crawl`              |
 
-Extraction Templates and Web Search Agents are distinct — an Extraction Template is a fixed, site-specific parser; a Web Search Agent reasons across sources. Never call an Extraction Template a "WSA" or a "legacy WSA," and never route a template use to `agents` (or vice-versa) by name alone. Building new templates/agents is out of scope here — use **existing** ones (point users to the Nimble app to build new).
+Extract Templates and Web Search Agents are distinct — an Extract Template is a fixed, site-specific parser; a Web Search Agent reasons across sources. Never call an Extract Template a "WSA" or a "legacy WSA," and never route a template use to `agents` (or vice-versa) by name alone. Building new templates/agents is out of scope here — use **existing** ones (point users to the Nimble app to build new).
 
 ## Interactive UX
 
@@ -138,21 +138,21 @@ Two gates, in order. **Gate A** asks where the data lives; **Gate B** asks what 
 | User signal                                   | Route                                                                               |
 | --------------------------------------------- | ------------------------------------------------------------------------------------ |
 | Direct single URL to fetch                    | `nimble extract`                                                                     |
-| Named site + a direct item to look up (URL/ID)| **Step 0** — check for an Extraction Template first                                  |
+| Named site + a direct item to look up (URL/ID)| **Step 0** — check for an Extract Template first                                  |
 | "Find URLs / sitemap / all pages"             | `nimble map`                                                                         |
 | "Crawl / archive a whole section"             | `nimble crawl`                                                                       |
 | **No location signal at all**                 | Fall through to **Gate B**                                                           |
 | Named site with **no** template               | Fall through to **Gate B**, carrying the site as a source constraint                 |
 
-**The most common overlap — a site with no Extraction Template.** It looks like a choice between a raw `extract` (which dumps parsing work on the user) or building a template (out of scope). Neither is right: fall through to Gate B, which will land on a **Web Search Agent** — it configures fresh for any site and reasons about structure without a maintained template. This isn't a question to put to the user; when no template fits, the answer is the same every time.
+**The most common overlap — a site with no Extract Template.** It looks like a choice between a raw `extract` (which dumps parsing work on the user) or building a template (out of scope). Neither is right: fall through to Gate B, which will land on a **Web Search Agent** — it configures fresh for any site and reasons about structure without a maintained template. This isn't a question to put to the user; when no template fits, the answer is the same every time.
 
-### Step 0 — Extraction Template check (when a site + direct item is named)
+### Step 0 — Extract Template check (when a site + direct item is named)
 
 Templates return clean structured data with zero selector work. Always check first.
 
 **Always verbalize — never silently:**
 
-1. **Announce:** _"Let me check if there's a Nimble Extraction Template for [site]..."_
+1. **Announce:** _"Let me check if there's a Nimble Extract Template for [site]..."_
 2. **Report:** _"Found `<template_name>` — using it now."_ or _"No template for [site] — using a Web Search Agent instead."_
 
 **Lookup order:**
@@ -265,7 +265,7 @@ The skill maintains `~/.claude/skills/nimble-web-expert/learned/examples.json`.
 - **NEVER answer from training data** for live prices, current news, or real-time data. If Nimble is unavailable, say so.
 - **NEVER skip Step 0 silently.** Even if certain there's no template, announce the check before falling back to a Web Search Agent or extract/search.
 - **NEVER answer a synthesis deliverable with raw search results.** "Report", "brief", "compare", "best X", "which should I" → Gate B routes to a Web Search Agent. Handing back a list of links and calling it a report is the most common mis-route.
-- **Distinguish Extraction Templates from Web Search Agents.** Never call a template a "WSA"/"legacy WSA," and never route a template use to `agents` by name alone (or the reverse). Building new templates/agents is out of scope — use existing ones.
+- **Distinguish Extract Templates from Web Search Agents.** Never call a template a "WSA"/"legacy WSA," and never route a template use to `agents` by name alone (or the reverse). Building new templates/agents is out of scope — use existing ones.
 - **When a run comes back empty, partial, or clearly wrong, say so plainly** — a domain that returned nothing, a template that matched poorly, a search with no relevant hits are real outcomes, not something to present as success. Suggest an obvious next step (broader source, a different capability) where one exists.
 - **NEVER retry the same render tier.** If a tier returns empty or truncated content, escalate — do not re-run.
 - **NEVER escalate at an access barrier.** A CAPTCHA, a human-verification page, or a sign-in wall in place of the target is a real outcome — report it plainly and stop. Where a supported alternative exists, take it: `--focus social` search for social profiles, public search results for gated articles.
@@ -284,7 +284,7 @@ Load only when needed:
 | File                                                 | Load when                                                                     |
 | ---------------------------------------------------- | ----------------------------------------------------------------------------- |
 | `references/recipes.md`                              | Need a proven command for a common site (Amazon, Yelp, LinkedIn…)             |
-| `references/nimble-extract-templates/reference.md`       | Step 0 — discover/inspect/run Extraction Templates for a known site           |
+| `references/nimble-extract-templates/reference.md`       | Step 0 — discover/inspect/run Extract Templates for a known site           |
 | `references/nimble-agents/reference.md`                  | Web Search Agents — discovery, run lifecycle, authoring, trust/citations      |
 | `references/nimble-extract/reference.md`                 | Extract flags, render tiers, browser actions, network capture, parser schemas |
 | `references/nimble-search/reference.md`                  | Search flags, all 8 focus modes                                               |

@@ -1,7 +1,7 @@
 {
   "name": "nimble",
   "version": "1.7.1",
-  "description": "Live web search for AI agents. Find current pages, read any URL, and run research agents that work across many sources and return findings with citations. Includes reusable Extraction Templates for consistently shaped records from known sites, and Web Search Agents for research, enrichment, and dataset building.",
+  "description": "Live web search for AI agents. Find current pages, read any URL, and run research agents that work across many sources and return findings with citations. Includes reusable Extract Templates for consistently shaped records from known sites, and Web Search Agents for research, enrichment, and dataset building.",
   "author": {
     "name": "Nimble",
     "email": "support@nimbleway.com",
@@ -31,13 +31,13 @@
   "interface": {
     "displayName": "Nimble",
     "shortDescription": "Expert web search for agents",
-    "longDescription": "Nimble gives agents governed, accurate access to the public web, at a lower token cost per answer. Search finds current pages with ranked results and snippets. Extract returns clean, structured content from any URL, including pages needing JavaScript or interaction. Extraction Templates give consistently shaped records from known sites. Web Search Agents handle open-ended work across many sources, returning findings with citations, for research, enrichment, and dataset building.\n\nAlso included: ready-made workflows for competitor research, company profiles, meeting prep, market discovery, brand monitoring, SEO, and talent sourcing.",
+    "longDescription": "Nimble gives agents governed, accurate access to the public web, at a lower token cost per answer. Search finds current pages with ranked results and snippets. Extract returns clean, structured content from any URL, including pages needing JavaScript or interaction. Extract Templates give consistently shaped records from known sites. Web Search Agents handle open-ended work across many sources, returning findings with citations, for research, enrichment, and dataset building.\n\nAlso included: ready-made workflows for competitor research, company profiles, meeting prep, market discovery, brand monitoring, SEO, and talent sourcing.",
     "developerName": "Nimble",
     "category": "Developer Tools",
     "capabilities": [
       "Web search",
       "Page extraction",
-      "Extraction Templates",
+      "Extract Templates",
       "Web Search Agents",
       "Site mapping",
       "Bulk crawling"

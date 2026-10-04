@@ -1,11 +1,11 @@
-# Extraction Template Discovery for Healthcare Providers Extract
+# Extract Template Discovery for Healthcare Providers Extract
 
-How to find and evaluate Extraction Templates for each phase of provider extraction. The Extraction Template catalog
+How to find and evaluate Extract Templates for each phase of provider extraction. The Extract Template catalog
 evolves constantly — new templates get added for healthcare directories, review sites,
 and regulatory databases. This skill discovers relevant templates at runtime rather than
 relying on a static list.
 
-For general Extraction Template execution rules (invocation, parsing, batch, fallback), see
+For general Extract Template execution rules (invocation, parsing, batch, fallback), see
 `nimble-playbook.md`.
 
 ---
@@ -15,7 +15,7 @@ For general Extraction Template execution rules (invocation, parsing, batch, fal
 ### Three search layers
 
 Run these searches at the start of the skill (during or right after preflight) to
-build a session-specific Extraction Template inventory. Run all searches simultaneously:
+build a session-specific Extract Template inventory. Run all searches simultaneously:
 
 **Layer 1 — Vertical search:**
 ```bash
@@ -41,7 +41,7 @@ Adapt search terms to whatever the user provided. Include the specialty, common
 directory names for that specialty, and any domains the user mentioned.
 
 **Layer 3 — General discovery tools:**
-These Extraction Templates are useful across verticals for practice discovery, reputation, and
+These Extract Templates are useful across verticals for practice discovery, reputation, and
 verification:
 ```bash
 nimble extract:templates list --limit 50  # filter items for "google_maps"
@@ -75,22 +75,22 @@ the user specifically asked about pharmaceuticals.
 
 Recommended approach for healthcare practice discovery:
 
-- **Google Maps Extraction Template** — Primary source. Rich structured data (name, address, rating,
+- **Google Maps Extract Template** — Primary source. Rich structured data (name, address, rating,
   reviews, phone, place_id, coordinates). Process these results first. Note: the
   `place_url` field links to Maps — resolve practice website URLs in a separate step
   (see SKILL.md Step 2b).
-- **Yelp Extraction Template** — Supplementary source. Run alongside Maps but don't block on it.
+- **Yelp Extract Template** — Supplementary source. Run alongside Maps but don't block on it.
   Filter results by specialty keywords before merging, as Yelp categories are broader
   than medical specialty searches.
-- **BBB Extraction Template** — Best suited for enrichment (accreditation lookup on known practices)
+- **BBB Extract Template** — Best suited for enrichment (accreditation lookup on known practices)
   rather than discovery. For broader BBB-based discovery, use
   `nimble search --query "[specialty] site:bbb.org"` which returns multiple results.
 
-### Building the session Extraction Template plan
+### Building the session Extract Template plan
 
 After discovery, present what you found to the user inline:
 
-> "Found **N relevant Extraction Templates** for this run: [list by phase]. Using these alongside
+> "Found **N relevant Extract Templates** for this run: [list by phase]. Using these alongside
 > direct site extraction."
 
 This transparency helps the user understand what data sources are available and
@@ -122,14 +122,14 @@ nimble search --query "[specialty] in [location]" --max-results 20 --search-dept
 
 **When:** Always — this is the core pipeline.
 
-**No Extraction Template needed.** This phase uses `nimble map` + `nimble extract` directly on
+**No Extract Template needed.** This phase uses `nimble map` + `nimble extract` directly on
 practice websites. See `provider-extraction-patterns.md` for page scoring and
 field detection.
 
-However, if Layer 2 discovery found an Extraction Template that extracts provider data from a
+However, if Layer 2 discovery found an Extract Template that extracts provider data from a
 specific healthcare directory (e.g., a future `zocdoc_provider_profile` or
 `healthgrades_doctor_profile` template), use it for practices listed on that directory
-instead of scraping their website directly — structured Extraction Template output is higher quality
+instead of scraping their website directly — structured Extract Template output is higher quality
 than parsed markdown.
 
 ### Enrichment phase (optional, on request)
@@ -153,7 +153,7 @@ next steps.
 
 ---
 
-## Scaling Extraction Template Calls
+## Scaling Extract Template Calls
 
 Follow the Scaled Execution pattern from `nimble-playbook.md` — it covers
 individual calls, batching, and the confirmation gate for large jobs.
@@ -162,12 +162,12 @@ individual calls, batching, and the confirmation gate for large jobs.
 
 ## Fallback Chain
 
-If Extraction Template discovery returns nothing useful for a phase, fall back to `nimble search`
+If Extract Template discovery returns nothing useful for a phase, fall back to `nimble search`
 + `nimble extract` (the core Nimble tools always work):
 
 1. **Discovery fallback:** `nimble search --query "[specialty] in [location]" --max-results 20 --search-depth lite`
 2. **Enrichment fallback:** `nimble search --query "[practice-name] reviews" --max-results 5 --search-depth lite` + `nimble extract` on results
 3. **Regulatory fallback:** `nimble search --query "[provider-name] [credentials] NPI OR license OR board certification" --max-results 5 --search-depth lite`
 
-The skill always produces results even if zero Extraction Templates are found — Extraction Templates accelerate
+The skill always produces results even if zero Extract Templates are found — Extract Templates accelerate
 and enrich, but are never required.

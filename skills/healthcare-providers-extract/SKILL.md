@@ -54,7 +54,7 @@ constraints (no shell state, no `&`/`wait`, sub-agent permissions, communication
 
 ## Instructions
 
-### Step 0: Preflight + Extraction Template Discovery
+### Step 0: Preflight + Extract Template Discovery
 
 Follow the transport selection + standard preflight from `references/nimble-playbook.md` — pick CLI or MCP at session start, then run the standard preflight calls (date calc, today, profile, memory index) in parallel.
 
@@ -288,7 +288,7 @@ Slack: TL;DR with provider count and confidence breakdown only.
 **Enrichment from discovered templates:** If Step 0 found enrichment-phase templates
 (reviews, regulatory, practice details), offer them as immediate follow-ups:
 
-> "I also found [N] Extraction Templates that could enrich this data: [brief list]. Want me to
+> "I also found [N] Extract Templates that could enrich this data: [brief list]. Want me to
 > run reputation checks or regulatory lookups on these providers/practices?"
 
 See `references/extract-templates-reference.md` for enrichment phase mapping and fallback chains.

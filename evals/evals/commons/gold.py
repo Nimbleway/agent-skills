@@ -8,7 +8,7 @@ LIVE_SOLUTIONS = frozenset(
     {
         "Web Search Agents",
         "Extract",
-        "Extraction Templates",
+        "Extract Templates",
         "Search",
         "Crawl",
         "Map",
@@ -24,11 +24,14 @@ RESPOND_ONLY_SOLUTIONS = frozenset(
     }
 )
 
+# Assistant gold rows written before the rename still carry the old solution label.
+_SOLUTION_ALIASES = {"Extraction Templates": "Extract Templates"}
+
 # Soft expected nimble CLI families (contains-match against tools_called).
 _SOLUTION_TOOLS: dict[str, list[str]] = {
     "Web Search Agents": ["nimble search", "nimble extract", "nimble agents"],
     "Extract": ["nimble extract"],
-    "Extraction Templates": ["nimble extract", "nimble agents"],
+    "Extract Templates": ["nimble extract", "nimble agents"],
     "Search": ["nimble search"],
     # Crawl often starts with map for discovery; either family is acceptable.
     "Crawl": ["nimble crawl", "nimble map"],
@@ -47,7 +50,7 @@ _FORBIDDEN_MAP: dict[str, list[str]] = {
 def remap_expected(expected_output: dict[str, Any] | None) -> dict[str, Any]:
     """Return skill-facing expected_output derived from assistant gold."""
     src = dict(expected_output or {})
-    solution = src.get("solution")
+    solution = _SOLUTION_ALIASES.get(src.get("solution"), src.get("solution"))
     policy = src.get("clarification_policy") or "may_clarify"
     allows_respond = bool(src.get("allows_respond_only"))
     if solution in RESPOND_ONLY_SOLUTIONS:
@@ -83,8 +86,8 @@ def remap_expected(expected_output: dict[str, Any] | None) -> dict[str, Any]:
         # null / unlabeled — dialogue act only unless must_clarify.
         remapped["expected_skill"] = None
 
-    # Extraction Templates: still prefer skill even when allows_respond_only
-    if solution == "Extraction Templates":
+    # Extract Templates: still prefer skill even when allows_respond_only
+    if solution == "Extract Templates":
         remapped["expected_skill"] = "nimble-web-expert"
         if "skill_selection" not in scorable:
             scorable.append("skill_selection")
@@ -115,7 +118,7 @@ def solution_key(item: Any) -> str:
     if expected is None and isinstance(item, dict):
         expected = item.get("expected_output")
     if isinstance(expected, dict) and expected.get("solution"):
-        return str(expected["solution"])
+        return _SOLUTION_ALIASES.get(expected["solution"], str(expected["solution"]))
     if isinstance(expected, dict) and expected.get("assistant_solution"):
         return str(expected["assistant_solution"])
     return "None"

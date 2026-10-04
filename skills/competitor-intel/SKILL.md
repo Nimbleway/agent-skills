@@ -75,7 +75,7 @@ From the results:
   - Skip to Step 2
 - No profile → Step 1
 
-**Note:** Step 2 (Extraction Template Discovery) runs after onboarding but before any research.
+**Note:** Step 2 (Extract Template Discovery) runs after onboarding but before any research.
 
 ### Step 1: First-Run Onboarding (2 prompts max)
 
@@ -108,7 +108,7 @@ user's industry keywords. See `references/profile-and-onboarding.md` for the ful
 profile schema (company, competitors with domains/categories, industry_keywords,
 integrations, preferences).
 
-### Step 2: Extraction Template Discovery
+### Step 2: Extract Template Discovery
 
 For each competitor domain and the user's domain, discover available templates:
 

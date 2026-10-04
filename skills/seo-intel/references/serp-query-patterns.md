@@ -97,9 +97,9 @@ Example: tracking `example.com`
 If no organic result matches the target domain within the top 20 results, record
 `position: null` and `ranking_url: null`.
 
-### SERP Feature Enrichment via the `google_search` Extraction Template
+### SERP Feature Enrichment via the `google_search` Extract Template
 
-The `google_search` Extraction Template returns **typed SERP entities** — each result has
+The `google_search` Extract Template returns **typed SERP entities** — each result has
 an `entity_type` field (e.g., `OrganicResult`, `PeopleAlsoAsk`, `FeaturedSnippet`,
 `ShoppingResult`, `SiteLinks`). Use this for SERP feature detection on priority
 keywords after the lite pass:

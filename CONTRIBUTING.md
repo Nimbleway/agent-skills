@@ -30,7 +30,7 @@ If you prefer to do it manually:
 - **Commits:** conventional commits (`feat:`, `fix:`, `test:`, `docs:`)
 - **Branches:** `{type}/{short-description}` (e.g., `feat/new-skill`)
 - **No secrets:** never commit API keys or credentials, even as examples
-- **Terminology:** name structured data by the command it runs. `extract:templates` is an Extraction Template; `nimble agents` / `agents:runs` is a Web Search Agent (WSA). Never call a template a WSA or an agent.
+- **Terminology:** name structured data by the command it runs. `extract:templates` is an Extract Template; `nimble agents` / `agents:runs` is a Web Search Agent (WSA). Never call a template a WSA or an agent.
 
 ## Versions and releases
 

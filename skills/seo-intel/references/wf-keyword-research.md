@@ -46,9 +46,9 @@ version validation, API key setup) and company setup (Prompt 1: domain verificat
 Capture answers into the profile under `seo_context` and create the profile per
 `references/profile-and-onboarding.md`.
 
-### Step 2: Extraction Template Discovery
+### Step 2: Extract Template Discovery
 
-Never hardcode Extraction Template names — discover dynamically every run and
+Never hardcode Extract Template names — discover dynamically every run and
 validate with `nimble extract:templates get --extract-template-name {name}` before use, per
 `references/nimble-playbook.md`.
 

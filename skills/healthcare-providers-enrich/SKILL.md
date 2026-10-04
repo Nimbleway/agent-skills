@@ -10,7 +10,7 @@ description: |
 
   Accepts CSV, Google Sheet URL, or pasted data. Searches for each provider's
   practice website, extracts missing fields, and enriches with reviews, clinical
-  trials, and accreditation via Extraction Templates.
+  trials, and accreditation via Extract Templates.
 
   Do NOT use for extracting providers from practice URLs — use healthcare-providers-extract instead.
   Do NOT use for validating credentials — use healthcare-providers-verify instead.
@@ -53,12 +53,12 @@ constraints (no shell state, no `&`/`wait`, sub-agent permissions, communication
 
 ## Instructions
 
-### Step 0: Preflight + Extraction Template Discovery
+### Step 0: Preflight + Extract Template Discovery
 
 **Sibling handoff check:** Before running full preflight, check if
 `healthcare-providers-extract` ran earlier in this session by following the Sibling
 Handoff pattern from `references/nimble-playbook.md`. If same-day extract output
-exists, skip CLI check and profile load, and reuse Layer 1/3 Extraction Template inventory. Only
+exists, skip CLI check and profile load, and reuse Layer 1/3 Extract Template inventory. Only
 re-run Layer 2 if the specialty changed.
 
 **Otherwise, run full preflight** from `references/nimble-playbook.md` (5 simultaneous
@@ -202,7 +202,7 @@ contact patterns, education mentions).
 echo '{...}' > ~/.nimble/memory/healthcare-providers-enrich/checkpoints/{slug}/extraction.json
 ```
 
-### Step 5: Extraction Template Enrichment (Optional)
+### Step 5: Extract Template Enrichment (Optional)
 
 If the user requested reviews, regulatory data, or accreditation — or if the gap
 analysis shows most core fields are already filled and enrichment adds more value:

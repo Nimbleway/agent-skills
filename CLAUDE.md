@@ -5,12 +5,12 @@
 **Nimble Web Search Skills** — agent skills that give any AI agent the ability to search, scrape, and extract structured data from any website using the Nimble CLI. Built following the [Agent Skills specification](https://agentskills.io/specification.md), compatible with Claude Code, Codex, Cursor, and any agent platform that supports the spec.
 
 Two layers of skills:
-- **Core data skill** (`skills/nimble-web-expert/`) — the raw capabilities: fetch a URL, run a search, map/crawl a site, run Extraction Templates, and run Web Search Agents
+- **Core data skill** (`skills/nimble-web-expert/`) — the raw capabilities: fetch a URL, run a search, map/crawl a site, run Extract Templates, and run Web Search Agents
 - **Business intelligence skills** (every other skill) — one-command workflows that turn live web data into actionable reports
 
 See `.claude-plugin/marketplace.json` for the full list of published skills.
 
-Business skills are built on top of the core skill — they call `nimble search` / `nimble extract`, run Extraction Templates for structured site data, and run Web Search Agents for open-ended research, under the hood.
+Business skills are built on top of the core skill — they call `nimble search` / `nimble extract`, run Extract Templates for structured site data, and run Web Search Agents for open-ended research, under the hood.
 
 ## Prerequisites
 
@@ -128,7 +128,7 @@ uv run python -m evals.suites.web_expert \
 bash scripts/tag-release.sh --check           # all version references agree
 bash scripts/check-plugin-structure.sh        # skills tree is packageable everywhere
 python3 scripts/check-plugin-manifests.py     # manifest fields, assets, brand contrast
-bash scripts/check-terminology.sh             # Extraction Template vs WSA naming
+bash scripts/check-terminology.sh             # Extract Template vs WSA naming
 ```
 
 Run the routing eval after any change to `nimble-web-expert`'s Core principles
@@ -191,7 +191,7 @@ metadata:
 
 ### Data access
 - Use `nimble search` / `nimble extract` via Bash for web data access.
-- Two structured-data families (CLI 1.2.0+): **Extraction Templates** (`extract:templates
+- Two structured-data families (CLI 1.2.0+): **Extract Templates** (`extract:templates
   list`/`get --extract-template-name`/`run --template`) for site-specific structured
   scrapers, and **Web Search Agents** (`agents:templates`, `agents create`, `agents run`,
   `agents:runs create`/`get`/`result`/`stream-events`) for open-ended research/enrichment
@@ -206,7 +206,7 @@ metadata:
   client-side (by domain, keyword, entity_type). Web Search Agents follow the
   reuse-priority chain (existing agent → clone a template → from scratch). Validate a
   template's `input_schema` before running.
-- Extraction Template and Web Search Agent reference files must teach discovery strategy,
+- Extract Template and Web Search Agent reference files must teach discovery strategy,
   not list known templates or agents. The test:
   if 10 new agents/templates were added tomorrow, would the skill find them automatically?
 - `--search-depth` valid values: `lite`, `fast`, `deep` (not `standard`). Use `lite` for discovery, `deep` for full content.
@@ -357,6 +357,7 @@ reading files directly if index is missing.
 - Skills persist data under `~/.nimble/` — never touch user project files
 - Reports: `{skill-name}-{YYYY-MM-DD}.md`
 - Never commit secrets, API keys, or credentials — even as examples
-- Name structured-data calls by the command they run: `extract:templates` is an Extraction
+- Name structured-data calls by the command they run: `extract:templates` is an Extract
   Template, `nimble agents` / `agents:runs` is a Web Search Agent (WSA). Reviewers reject
-  "WSA" or "agent" for a template; `bash scripts/check-terminology.sh` catches the common cases.
+  "WSA", "agent", or the superseded "Extraction" prefix for an Extract Template;
+  `bash scripts/check-terminology.sh` catches the common cases.

@@ -52,12 +52,12 @@ constraints (no shell state, no `&`/`wait`, sub-agent permissions, communication
 
 ## Instructions
 
-### Step 0: Preflight + Extraction Template Discovery
+### Step 0: Preflight + Extract Template Discovery
 
 **Sibling handoff check:** Before running full preflight, check if
 `healthcare-providers-extract` or `healthcare-providers-enrich` ran earlier in this
 session by following the Sibling Handoff pattern from `references/nimble-playbook.md`.
-If same-day output exists, skip CLI check and profile load, and reuse Layer 1/3 Extraction Template
+If same-day output exists, skip CLI check and profile load, and reuse Layer 1/3 Extract Template
 inventory. Only re-run Layer 2 if the verification focus changed.
 
 **Otherwise, run full preflight** from `references/nimble-playbook.md` (5 simultaneous
@@ -220,7 +220,7 @@ verification logic in `references/npi-verification-patterns.md`:
 See `references/npi-verification-patterns.md` for the detailed criteria for each
 status and the mismatch severity levels (Critical vs Warning).
 
-### Step 5: Extraction Template Supplementary Verification (Optional)
+### Step 5: Extract Template Supplementary Verification (Optional)
 
 If the user requested regulatory verification beyond NPI lookup, or if Step 5
 left practitioners as Unverified that might benefit from additional sources:

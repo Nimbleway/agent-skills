@@ -1,10 +1,10 @@
-# Extraction Template Discovery for Healthcare Providers Enrich
+# Extract Template Discovery for Healthcare Providers Enrich
 
-How to find and evaluate Extraction Templates for enriching existing provider records. The Extraction Template catalog
+How to find and evaluate Extract Templates for enriching existing provider records. The Extract Template catalog
 evolves constantly — this skill discovers relevant templates at runtime rather than
 relying on a static list.
 
-For general Extraction Template execution rules (invocation, parsing, batch, fallback), see
+For general Extract Template execution rules (invocation, parsing, batch, fallback), see
 `nimble-playbook.md`.
 
 ---
@@ -13,7 +13,7 @@ For general Extraction Template execution rules (invocation, parsing, batch, fal
 
 ### Three search layers
 
-Run these searches during preflight (Step 0) to build a session-specific Extraction Template
+Run these searches during preflight (Step 0) to build a session-specific Extract Template
 inventory. Run all searches simultaneously:
 
 **Layer 1 — Vertical search:**
@@ -40,7 +40,7 @@ Adapt search terms to whatever the user provided. Include the specialty, common
 directory names for that specialty, and any data sources the user mentioned.
 
 **Layer 3 — General enrichment tools:**
-These Extraction Templates are useful across verticals for reputation, verification, and practice
+These Extract Templates are useful across verticals for reputation, verification, and practice
 details:
 ```bash
 nimble extract:templates list --limit 50  # filter items for "google_maps"
@@ -76,18 +76,18 @@ provider contact info.
 
 Unlike healthcare-providers-extract (which focuses on discovery and extraction),
 this skill focuses on three enrichment categories. Identity search uses
-`nimble search` directly — Extraction Templates add value in the enrichment phases.
+`nimble search` directly — Extract Templates add value in the enrichment phases.
 
 ### Identity (finding provider web presence)
 
 **When:** Always — this is how you find bio pages for providers in the input list.
 
-**Primary tool:** `nimble search` (not Extraction Template-dependent):
+**Primary tool:** `nimble search` (not Extract Template-dependent):
 ```bash
 nimble search --query "[name] [credentials] [location] [specialty]" --max-results 5 --search-depth lite
 ```
 
-**Extraction Template supplement:** If Layer 2 discovery found directory-specific templates (e.g., a
+**Extract Template supplement:** If Layer 2 discovery found directory-specific templates (e.g., a
 healthcare provider profile template), use them for providers listed on that directory
 to get structured data directly.
 
@@ -136,24 +136,24 @@ Then extract the top result with `nimble extract --url "[url]" --format markdown
 
 ---
 
-## Scaling Extraction Template Calls
+## Scaling Extract Template Calls
 
 Follow the Scaled Execution pattern from `nimble-playbook.md` — it covers
 individual calls, batching, and the confirmation gate for large jobs.
 
 For enrichment, estimate calls as: `[providers] x [enrichment categories requested]`.
-A list of 50 providers with reputation + regulatory = ~100 Extraction Template calls = batch tier.
+A list of 50 providers with reputation + regulatory = ~100 Extract Template calls = batch tier.
 
 ---
 
 ## Fallback Chain
 
-If Extraction Template discovery returns nothing useful for a category, fall back to `nimble search`
+If Extract Template discovery returns nothing useful for a category, fall back to `nimble search`
 + `nimble extract` (the core Nimble tools always work):
 
 1. **Identity fallback:** `nimble search --query "[name] [location] doctor" --max-results 5 --search-depth lite`
 2. **Reputation fallback:** `nimble search --query "[practice-name] reviews" --max-results 5 --search-depth lite` + `nimble extract` on results
 3. **Regulatory fallback:** `nimble search --query "[name] [credentials] NPI OR license OR board certification" --max-results 5 --search-depth lite`
 
-The skill always produces results even if zero Extraction Templates are found — Extraction Templates accelerate
+The skill always produces results even if zero Extract Templates are found — Extract Templates accelerate
 and enrich, but are never required.

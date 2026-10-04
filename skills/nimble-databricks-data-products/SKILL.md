@@ -2,7 +2,7 @@
 name: nimble-databricks-data-products
 description: |
   Builds Databricks data products from live web data, end to end: finds matching Nimble
-  Extraction Templates, scrapes into Delta tables, and produces an AI/BI dashboard and/or a deployed
+  Extract Templates, scrapes into Delta tables, and produces an AI/BI dashboard and/or a deployed
   Databricks App — a table → dashboard → app workflow, for production data products or quick demos.
   Use whenever a request pairs live or scraped web data WITH a Databricks destination — e.g. "scrape
   Amazon/Walmart prices into a Delta table and build a dashboard", "load Zillow/Instagram/Maps/search
@@ -33,7 +33,7 @@ metadata:
 
 Turn a natural-language brief like
 `pricing analysis on dog products from walmart and amazon` into working Databricks data products:
-**discover Extraction Templates → ingest live web search data into Delta → build dashboard and/or app → deliver links.**
+**discover Extract Templates → ingest live web search data into Delta → build dashboard and/or app → deliver links.**
 Equally at home for a quick demo or a real, reusable data product.
 
 You are the orchestrator. Databricks mechanics are delegated to the official `databricks-*`
@@ -42,7 +42,7 @@ skills (see `references/databricks-skills.md`); this skill owns the **Nimble glu
 
 ## Golden rules
 
-- **Discover, don't assume.** The `nimble_agent_*` functions operate on Nimble Extraction Templates.
+- **Discover, don't assume.** The `nimble_agent_*` functions operate on Nimble Extract Templates.
   Read template names via `nimble_agent_list()`, input params via
   `nimble_agent_describe('<template>')`, and output fields by probing one call (`to_json(parsing[0])`) —
   never hardcode from memory (Amazon search takes `keyword`, not `query`).
@@ -84,8 +84,8 @@ Then ask (batch into one AskUserQuestion call):
 
 Keep the brief's intent (the "analysis goal") — it picks the Phase 4 template and the headline.
 
-### Phase 2 — Discover Extraction Templates + map a unified schema
-See `references/extraction-templates.md`.
+### Phase 2 — Discover Extract Templates + map a unified schema
+See `references/extract-templates.md`.
 1. `nimble_agent_list()` via SQL, filter by the source/domain keywords.
 2. For each chosen template: `nimble_agent_describe('<name>')` → read its input params (required ones,
    exact names, localization/pagination flags). Output fields come from the §2.5 probe, not here.
@@ -94,13 +94,13 @@ See `references/extraction-templates.md`.
    chosen templates actually emit. Multi-source comparison hinges on the shared columns.
 
 ### Phase 3 — Ingest (control table + one set-based call)
-See `references/extraction-templates.md` for the full SQL. Drive ingestion from a **control table**, not
+See `references/extract-templates.md` for the full SQL. Drive ingestion from a **control table**, not
 per-keyword files — it's reproducible and expandable (add a row, re-run).
 0. **Probe ONE call per source first (fail fast).** Before fanning out, run a single
    `nimble_agent_run` per source and check: status, the real field names, the localization flag, and
    whether a price casts cleanly. This catches the Walmart-class surprises (localization, currency-
    string prices, `product_price` vs `price`) in ~40s instead of after a wasted full round. Highest-
-   leverage step — see `extraction-templates.md` §2.5.
+   leverage step — see `extract-templates.md` §2.5.
 1. Create a **control (queries) table** `<schema>.<table>_queries` (source, template_name, keyword,
    params_json, localization, enabled) and seed one row per (source × term). `params_json` uses each
    template's **real** param name (from `input_properties`); set **localization per template** (e.g.
@@ -113,10 +113,10 @@ per-keyword files — it's reproducible and expandable (add a row, re-run).
 4. **Reconcile against the control table** (LEFT JOIN): a term that lands no items returns an empty
    result, and a correlated LATERAL drops empty rows — so reconcile to confirm every source is
    covered. If a source shows 0, re-check its localization flag (per-template) and casts before
-   building; see `extraction-templates.md` §6 for the diagnostic order.
+   building; see `extract-templates.md` §6 for the diagnostic order.
 
 ### Phase 4 — Build the deliverable(s)
-Choose a dashboard **template** from the matched Extraction Templates' `vertical`/`entity_type`:
+Choose a dashboard **template** from the matched Extract Templates' `vertical`/`entity_type`:
 
 | Vertical | Dashboard/app shape |
 |----------|---------------------|
@@ -152,7 +152,7 @@ item-level matching wasn't confident.
 - `references/databricks-skills.md` — which official `databricks-*` skill to use per phase.
 - `references/install-nimble-integration.md` — setup when the integration gate fails.
 - `references/preflight.md` — auth, warehouse, writable-schema discovery (exact commands).
-- `references/extraction-templates.md` — discovery, schema mapping, ingestion SQL + gotchas.
+- `references/extract-templates.md` — discovery, schema mapping, ingestion SQL + gotchas.
 - `references/dashboard-cookbook.md` — Lakeview JSON recipes + every gotcha (authoritative).
 - `references/app-cookbook.md` — AppKit demo app glue + gotchas.
 - `references/branding.md` — "Powered by Nimble", logo, colors.

@@ -114,7 +114,7 @@ This prevents wasted API credits and wall time on competitors the user doesn't c
 about right now. Each competitor costs ~3-5 Nimble API credits (1 map + 3-4 extracts
 + 2-3 searches).
 
-### Step 3: Extraction Template Discovery
+### Step 3: Extract Template Discovery
 
 For each competitor domain and the user's domain, discover available templates:
 

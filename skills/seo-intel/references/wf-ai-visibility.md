@@ -71,9 +71,9 @@ selection from the responses.
 category terms. Filter for queries where the brand or competitors surface. Present
 the list for user confirmation. Target 20-40 queries.
 
-### Step 4: Extraction Template Discovery
+### Step 4: Extract Template Discovery
 
-Never hardcode Extraction Template names — discover them dynamically every run
+Never hardcode Extract Template names — discover them dynamically every run
 and validate before use, per `references/nimble-playbook.md`.
 
 Search for relevant templates in parallel. Run separate searches per surface so
@@ -103,12 +103,12 @@ If a platform template is not discovered or fails validation, drop that platform
 from the run (or fall back to `nimble search --include-answer` where useful)
 and note reduced coverage in the report.
 
-### Step 5: AI Platform Querying via Dedicated Extraction Templates
+### Step 5: AI Platform Querying via Dedicated Extract Templates
 
 Read `references/ai-platform-profiles.md` for the full template schemas, per-platform
 ranking factors, and Princeton GEO optimization methods.
 
-Use Nimble's dedicated AI platform Extraction Templates to query **5 platforms** directly. Each
+Use Nimble's dedicated AI platform Extract Templates to query **5 platforms** directly. Each
 template sends a real prompt to the platform and returns structured `answer` text +
 `sources` with URLs. This replaces the previous approach of `--include-answer`
 proxying and flaky Perplexity extraction.

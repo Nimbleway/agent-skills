@@ -43,7 +43,7 @@ for i in items[:10]:
 ```
 
 ### Manual extract (if no template)
-> ⚠ CSS selectors may break on Amazon redesigns. Prefer the `amazon_pdp` Extraction Template when available.
+> ⚠ CSS selectors may break on Amazon redesigns. Prefer the `amazon_pdp` Extract Template when available.
 ```bash
 nimble extract --url "https://www.amazon.com/dp/B0CHWRXH8B" --country US --parse \
   --parser '{
@@ -61,7 +61,7 @@ nimble extract --url "https://www.amazon.com/dp/B0CHWRXH8B" --country US --parse
 
 ## Yelp
 
-### Via Extraction Template
+### Via Extract Template
 ```bash
 nimble extract:templates run --template yelp_serp \
   --params '{"search_query": "italian restaurant", "location": "San Francisco, CA"}' > .nimble/yelp.json
@@ -74,7 +74,7 @@ for i in items[:10]:
 ```
 
 ### Manual extract (v0.5.0+)
-> ⚠ CSS selectors may break on Yelp redesigns. Prefer the `yelp_serp` Extraction Template when available.
+> ⚠ CSS selectors may break on Yelp redesigns. Prefer the `yelp_serp` Extract Template when available.
 ```bash
 nimble extract \
   --url "https://www.yelp.com/search?find_desc=italian+restaurant&find_loc=San+Francisco%2C+CA" \
@@ -99,7 +99,7 @@ nimble extract \
 
 ## Target
 
-> ⚠ CSS selectors may break on Target redesigns. If a Target Extraction Template is available, prefer it.
+> ⚠ CSS selectors may break on Target redesigns. If a Target Extract Template is available, prefer it.
 ```bash
 nimble extract \
   --url "https://www.target.com/p/-/A-88790928" \
@@ -157,7 +157,7 @@ head -100 .nimble/linkedin-jobs.md
 ## Google search & maps
 
 ```bash
-# Google search via Extraction Template
+# Google search via Extract Template
 nimble extract:templates run --template google_search --params '{"query": "OpenAI news 2026"}' | python3 -c "
 import json, sys
 entities = json.load(sys.stdin)['data']['parsing']['entities']

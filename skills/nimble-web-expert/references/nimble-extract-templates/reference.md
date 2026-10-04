@@ -1,7 +1,7 @@
 ---
 name: nimble-extract-templates-reference
 description: |
-  Reference for Nimble Extraction Templates — reusable, site-specific structured scrapers.
+  Reference for Nimble Extract Templates — reusable, site-specific structured scrapers.
   Load for Step 0 when a named site has a direct item to look up (by URL or identifier).
   Covers: discover (list), inspect (get → input_schema/output_schema), run/async/batch,
   response shapes, and the no-template→Web Search Agent routing rule. Existing templates only.
@@ -9,7 +9,7 @@ description: |
 
 # nimble extract:templates — reference
 
-An **Extraction Template** is a reusable, preconfigured parser for one specific site: set up
+An **Extract Template** is a reusable, preconfigured parser for one specific site: set up
 once against that site's structure, then run repeatedly against known items (a URL, an ASIN,
 a business ID) without rediscovering anything. Use a template whenever a matching one exists —
 it returns clean, structured fields with zero selector work.

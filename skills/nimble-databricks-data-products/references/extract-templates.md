@@ -1,7 +1,7 @@
-# Nimble Extraction Templates — discover, introspect, ingest
+# Nimble Extract Templates — discover, introspect, ingest
 
 The `nimble_agent_list`, `nimble_agent_describe`, and `nimble_agent_run` functions operate on Nimble
-Extraction Templates — fixed, site-specific parsers such as `amazon_serp` or `walmart_serp`.
+Extract Templates — fixed, site-specific parsers such as `amazon_serp` or `walmart_serp`.
 
 This is the heart of the skill: find the right templates, learn their exact I/O at runtime, and load
 their output into a Delta table. **Never hardcode a template's params or output from memory** — read
@@ -86,7 +86,7 @@ demo is set-based, reproducible, and expandable — add a row, re-run, done.
 -- Control table: one row per (source × search term). The single source of truth for what to scrape.
 CREATE OR REPLACE TABLE <schema>.<table>_queries (
   source       STRING,   -- 'amazon' | 'walmart' | …
-  template_name STRING,  -- the Nimble Extraction Template name, e.g. 'amazon_serp'
+  template_name STRING,  -- the Nimble Extract Template name, e.g. 'amazon_serp'
   keyword      STRING,   -- the search term (for labelling/inspection)
   params_json  STRING,   -- full params for nimble_agent_run, built from the template's input_properties
   localization BOOLEAN,

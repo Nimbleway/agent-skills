@@ -187,7 +187,7 @@ native HTTP MCP yet, fall back to the stdio shim with an API-key header:
 
 ## Nimble Docs MCP (optional but recommended)
 
-Gives Claude instant access to the full Nimble documentation — CLI flags, Extraction Template and Web Search Agent schemas, API reference.
+Gives Claude instant access to the full Nimble documentation — CLI flags, Extract Template and Web Search Agent schemas, API reference.
 
 **Add with one command:**
 

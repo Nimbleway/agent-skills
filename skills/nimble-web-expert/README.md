@@ -13,7 +13,7 @@ Get live web data instantly — fetch any URL, scrape structured data, search th
 | Web search             | "Find recent news about EU AI Act"               |
 | Discover site URLs     | "Map all product pages on example.com"           |
 | Capture XHR/API data   | "Get the JSON this page loads its listings from" |
-| Run Extraction Templates | "Get data for Amazon ASIN B08N5WRWNW"          |
+| Run Extract Templates | "Get data for Amazon ASIN B08N5WRWNW"          |
 | Run Web Search Agents  | "Build a list of every dental clinic in Austin"  |
 | Browser investigation  | "Find the CSS selectors on this site"            |
 
@@ -51,7 +51,7 @@ Each command supports multiple output formats — see [docs.nimbleway.com](https
 
 **Key rules:**
 
-- Always checks for an Extraction Template before extracting from a named site (Amazon, Walmart, Yelp, and many more)
+- Always checks for an Extract Template before extracting from a named site (Amazon, Walmart, Yelp, and many more)
 - One command → results → done. No looping or retrying
 - Escalates render tiers silently — only asks when investigation tools are needed
 - Never answers from training data — always fetches live
@@ -71,5 +71,5 @@ Each command supports multiple output formats — see [docs.nimbleway.com](https
 | `references/nimble-search/search-focus-modes.md`     | 8 focus modes (news, web, jobs, etc.)                         |
 | `references/nimble-map/reference.md`                     | `nimble map` URL discovery reference                          |
 | `references/nimble-crawl/reference.md`                   | `nimble crawl` bulk extraction reference                      |
-| `references/nimble-extract-templates/reference.md`       | Extraction Templates — discover, inspect, and run site scrapers |
+| `references/nimble-extract-templates/reference.md`       | Extract Templates — discover, inspect, and run site scrapers |
 | `references/nimble-agents/reference.md`                  | Web Search Agents — discovery, run lifecycle, trust/citations  |

@@ -1,11 +1,11 @@
 # Batch Patterns
 
-Patterns for running Extraction Templates, `nimble extract`, and `nimble search` in parallel across multiple inputs — instead of one at a time.
+Patterns for running Extract Templates, `nimble extract`, and `nimble search` in parallel across multiple inputs — instead of one at a time.
 
 ## Table of Contents
 
 - [When to use batch patterns](#when-to-use-batch-patterns)
-- [Parallel Extraction Template runs](#parallel-extraction-template-runs)
+- [Parallel Extract Template runs](#parallel-extraction-template-runs)
 - [Parallel URL extraction](#parallel-url-extraction)
 - [Parallel search queries](#parallel-search-queries)
 - [Large-scale batches — generate a script](#large-scale-batches--generate-a-script)
@@ -28,7 +28,7 @@ Patterns for running Extraction Templates, `nimble extract`, and `nimble search`
 
 ---
 
-## Parallel Extraction Template runs
+## Parallel Extract Template runs
 
 ### 2–5 inputs — parallel bash
 
@@ -165,14 +165,14 @@ nimble --client-source nimble-agent-skills extract:templates batch \
 or interleaving with other work. Shell out to the verified CLI via `asyncio.create_subprocess_exec`
 — no Python SDK dependency:
 
-### Template — parallel Extraction Template runs (CLI subprocess)
+### Template — parallel Extract Template runs (CLI subprocess)
 
 ```python
 # /// script
 # requires-python = ">=3.11"
 # dependencies = []
 # ///
-"""Run a Nimble Extraction Template in parallel across inputs via the CLI."""
+"""Run a Nimble Extract Template in parallel across inputs via the CLI."""
 import asyncio, json, os, pathlib
 
 TEMPLATE = "amazon_serp"

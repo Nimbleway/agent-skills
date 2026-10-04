@@ -35,14 +35,14 @@ Unlock the web for your AI agents — search, scrape, extract structured data, a
 | **Productivity** | [meeting-prep](skills/meeting-prep/) · [local-places](skills/local-places/) | Walk into any meeting fully briefed — attendee backgrounds, company context, talking points, relationship mapping. Discover and score local businesses in any neighborhood with interactive maps |
 | **Healthcare** | [healthcare-providers-extract](skills/healthcare-providers-extract/) · [enrich](skills/healthcare-providers-enrich/) · [verify](skills/healthcare-providers-verify/) | Extract structured practitioner data from practice websites, enrich provider lists with missing fields, and verify credentials against the NPI registry |
 | **Human Resources** | [talent-sourcing](skills/talent-sourcing/) | Source and shortlist candidates from live web data. More skills (comp analysis, interview prep, onboarding) planned |
-| **Web Data Toolkit** | [nimble-web-expert](skills/nimble-web-expert/) | Search, scrape, extract, map, and crawl any website — run site-specific Extraction Templates for clean structured data, and Web Search Agents for open-ended research with citations |
-| **Data Platforms** | [nimble-databricks-data-products](skills/nimble-databricks-data-products/) | Turn live web data into Databricks data products — discover Nimble Extraction Templates, scrape into Delta tables, and build an AI/BI dashboard and/or a deployed Databricks App |
+| **Web Data Toolkit** | [nimble-web-expert](skills/nimble-web-expert/) | Search, scrape, extract, map, and crawl any website — run site-specific Extract Templates for clean structured data, and Web Search Agents for open-ended research with citations |
+| **Data Platforms** | [nimble-databricks-data-products](skills/nimble-databricks-data-products/) | Turn live web data into Databricks data products — discover Nimble Extract Templates, scrape into Delta tables, and build an AI/BI dashboard and/or a deployed Databricks App |
 
 **Business Research**, **Marketing**, **Productivity**, and **Healthcare** skills are one-command workflows. They spawn parallel sub-agents, gather live web data via Nimble APIs, synthesize findings, and deliver structured reports with dates and source URLs. They learn from previous runs and only surface what's new.
 
 Every skill lives directly under `skills/`. The category above is recorded as `metadata.category` in each skill's `SKILL.md` frontmatter — the plugin platforms require a flat skills tree, so categories are metadata rather than folders. See [CLAUDE.md](CLAUDE.md#skills-must-stay-flat).
 
-**Web Data Toolkit** skills expose Nimble's raw capabilities for any web task and power the business skills under the hood — search and extract for raw data, Extraction Templates for reusable site-specific scraping, and Web Search Agents for open-ended research, enrichment, and dataset building.
+**Web Data Toolkit** skills expose Nimble's raw capabilities for any web task and power the business skills under the hood — search and extract for raw data, Extract Templates for reusable site-specific scraping, and Web Search Agents for open-ended research, enrichment, and dataset building.
 
 ## Quick Start
 
@@ -129,7 +129,7 @@ nimble search --query "AI agent frameworks" --max-results 10
 
 Nimble Web Search Skills follow a shared pattern: **preflight** (check CLI, load profile) → **parallel research** (spawn sub-agents for concurrent data gathering) → **analysis** (synthesize findings, deduplicate against previous runs) → **report** (structured output with sources) → **distribute** (offer Notion/Slack delivery).
 
-Core skills expose the Nimble CLI directly — search, extract, map, crawl, run Extraction Templates, and run Web Search Agents.
+Core skills expose the Nimble CLI directly — search, extract, map, crawl, run Extract Templates, and run Web Search Agents.
 
 ### Local Web Knowledge Wiki
 
@@ -195,8 +195,8 @@ never drift apart.
 | `nimble extract --url "<url>" --format markdown` | Extract content from a URL |
 | `nimble map --url "<url>" --limit 20` | Discover URLs on a site |
 | `nimble crawl run --url "<url>" --limit 50` | Crawl a website section |
-| `nimble extract:templates list --limit 100` | Browse Extraction Templates for known sites |
-| `nimble extract:templates run --template <name> --params '{...}'` | Run an Extraction Template |
+| `nimble extract:templates list --limit 100` | Browse Extract Templates for known sites |
+| `nimble extract:templates run --template <name> --params '{...}'` | Run an Extract Template |
 | `nimble agents run --agent-name <name> --input "<task>"` | Start a Web Search Agent run — creates the named agent, or reuses it on repeat calls |
 | `nimble agents:runs create --agent-id <id> --input "<task>"` | Start a run against an agent you already hold the ID for |
 | `nimble agents:runs get / result --agent-id <id> --run-id <id>` | Poll a run to a terminal state, then fetch its output and citations |

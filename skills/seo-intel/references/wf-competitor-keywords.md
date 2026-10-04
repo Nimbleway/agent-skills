@@ -56,7 +56,7 @@ from `business-profile.json` competitor list.
 Parse: list of domains, optional section filter, whether to include user's domain,
 and page cap per domain (50 / 200 / 500).
 
-### Step 3: Extraction Template Discovery
+### Step 3: Extract Template Discovery
 
 Search for relevant templates in parallel:
 

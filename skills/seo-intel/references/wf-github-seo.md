@@ -216,7 +216,7 @@ For each search, record:
 ### Step 7: AI Discoverability (full audit only)
 
 Check if AI coding assistants know about the repo using dedicated AI platform
-Extraction Templates (see `references/ai-platform-profiles.md`). Never hardcode template
+Extract Templates (see `references/ai-platform-profiles.md`). Never hardcode template
 names — discover and validate at runtime per `references/nimble-playbook.md`:
 
 ```bash
@@ -245,7 +245,7 @@ for GitHub URL citations. Check for:
 - Mention of competitor repos instead
 - Context (recommended, compared, or just mentioned)
 
-Also check if Nimble has relevant Extraction Templates that could surface the repo:
+Also check if Nimble has relevant Extract Templates that could surface the repo:
 
 ```bash
 nimble extract:templates list --limit 100  # then filter items for "{category}"

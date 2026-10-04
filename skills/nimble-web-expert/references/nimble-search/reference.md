@@ -27,7 +27,7 @@ Real-time web search with 8 focus modes. Returns results with titles, URLs, and 
 | ------------------------- | --------------- | -------- | ----------------------------------------------------------------------------------------------------------------- |
 | `query`                   | string          | required | Search query                                                                                                      |
 | `search_depth`            | string          | `deep`   | Content depth: `lite` \| `fast` \| `deep` — see depth table below                                                |
-| `focus`                   | string or array | `general`| Focus mode (see table below) or array of specific Extraction Template names e.g. `["amazon_serp", "target_serp"]`               |
+| `focus`                   | string or array | `general`| Focus mode (see table below) or array of specific Extract Template names e.g. `["amazon_serp", "target_serp"]`               |
 | `include_answer`          | bool            | `false`  | AI-synthesized answer (premium — retry without if 402/403)                                                        |
 | `max_results`             | int             | `10`     | Result count (1–100)                                                                                              |
 | `output_format`           | string          | —        | `plain_text` \| `markdown` \| `simplified_html`                                                                   |
@@ -119,7 +119,7 @@ resp = nimble.search(
     include_answer=True,
 )
 
-# Custom focus — explicit Extraction Template array
+# Custom focus — explicit Extract Template array
 resp = nimble.search(
     query="best wireless headphones",
     focus=["amazon_serp", "walmart_serp"],

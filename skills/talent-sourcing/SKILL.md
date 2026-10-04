@@ -2,7 +2,7 @@
 name: talent-sourcing
 description: |
   Finds qualified candidates for a role by searching LinkedIn, Indeed, GitHub,
-  and other professional platforms using Nimble Extraction Templates. Accepts a
+  and other professional platforms using Nimble Extract Templates. Accepts a
   job description, role title, or freeform request and returns a ranked
   candidate list with profiles, skills, and contact signals.
 
@@ -40,7 +40,7 @@ metadata:
 
 # Talent Sourcing
 
-Candidate discovery powered by Nimble Extraction Templates.
+Candidate discovery powered by Nimble Extract Templates.
 
 User request: $ARGUMENTS
 
@@ -91,9 +91,9 @@ Once parameters are clear, confirm with the user using `AskUserQuestion`:
 > - **Start search**
 > - **Adjust parameters first**"
 
-### Step 2: Extraction Template Discovery
+### Step 2: Extract Template Discovery
 
-Discover available Extraction Templates for candidate-sourcing platforms. Run
+Discover available Extract Templates for candidate-sourcing platforms. Run
 simultaneously:
 
 ```bash

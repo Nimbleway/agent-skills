@@ -2,7 +2,7 @@
 name: local-places
 description: |
   Discovers, enriches, and scores local businesses in any neighborhood using
-  Nimble Extraction Templates and web data. Returns a structured, ranked
+  Nimble Extract Templates and web data. Returns a structured, ranked
   list with confidence scores, reviews, social presence, and an interactive map.
 
   Use this skill when the user asks about local businesses, places, or
@@ -13,7 +13,7 @@ description: |
   near [location]", "build a neighborhood guide", "local place search".
 
   Requires the Nimble CLI (nimble extract:templates run, nimble search, nimble extract)
-  for live web data via Extraction Templates and fallback search.
+  for live web data via Extract Templates and fallback search.
   Do NOT use for competitor analysis or monitoring (use competitor-intel),
   company research or deep dives (use company-deep-dive), general web search
   or extraction (use nimble-web-expert).
@@ -42,7 +42,7 @@ metadata:
 
 # Local Places
 
-Location intelligence powered by Nimble Extraction Templates and web data APIs.
+Location intelligence powered by Nimble Extract Templates and web data APIs.
 
 User request: $ARGUMENTS
 
@@ -136,7 +136,7 @@ Check: `cat ~/.nimble/memory/local-places/checkpoints/{slug}/discovery.json 2>/d
   Resume and fill gaps, or start fresh?"
 - **No checkpoint** -> proceed to Step 4
 
-### Step 4: Extraction Template Discovery
+### Step 4: Extract Template Discovery
 
 Discover available templates for all phases before execution. Run these searches
 simultaneously:

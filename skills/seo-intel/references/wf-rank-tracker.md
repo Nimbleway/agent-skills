@@ -87,7 +87,7 @@ Inform the user which mode was selected:
 - "First rank check for **[domain]** — establishing baseline positions."
 - "Last check was **[N days ago]**. Running delta comparison."
 
-### Step 4: Extraction Template Discovery
+### Step 4: Extract Template Discovery
 
 Discover SERP-related templates in parallel:
 

@@ -4,9 +4,9 @@ Reference for querying AI platforms and optimizing content for AI visibility.
 
 ---
 
-## AI Platform Extraction Template Discovery
+## AI Platform Extract Template Discovery
 
-Never hardcode Extraction Template names. The catalog changes — new templates appear,
+Never hardcode Extract Template names. The catalog changes — new templates appear,
 old ones get renamed or deprecated. Discover and validate at runtime using the
 three-layer pattern from `nimble-playbook.md`.
 
@@ -167,7 +167,7 @@ study), and ZipTie research.
 - Extremely selective about citations — quality over quantity
 - Factual density with specific numbers is the strongest signal
 - Crawl-to-refer ratio: 38,065:1 — most crawled pages never get cited
-- No Nimble Extraction Template available; monitor via robots.txt and Brave Search visibility
+- No Nimble Extract Template available; monitor via robots.txt and Brave Search visibility
 - To estimate Claude visibility, check Brave Search rankings for your target queries
   and look for `ClaudeBot` / `anthropic-ai` access in robots.txt
 

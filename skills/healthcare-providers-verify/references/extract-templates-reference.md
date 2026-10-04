@@ -1,10 +1,10 @@
-# Extraction Template Discovery for Healthcare Providers Verify
+# Extract Template Discovery for Healthcare Providers Verify
 
-How to find and evaluate Extraction Templates for validating practitioner credentials and license
-status. The Extraction Template catalog evolves constantly — this skill discovers relevant templates at
+How to find and evaluate Extract Templates for validating practitioner credentials and license
+status. The Extract Template catalog evolves constantly — this skill discovers relevant templates at
 runtime rather than relying on a static list.
 
-For general Extraction Template execution rules (invocation, parsing, batch, fallback), see
+For general Extract Template execution rules (invocation, parsing, batch, fallback), see
 `nimble-playbook.md`.
 
 ---
@@ -13,7 +13,7 @@ For general Extraction Template execution rules (invocation, parsing, batch, fal
 
 ### Three search layers
 
-Run these searches during preflight (Step 0) to build a session-specific Extraction Template
+Run these searches during preflight (Step 0) to build a session-specific Extract Template
 inventory. Run all searches simultaneously:
 
 **Layer 1 — Vertical search:**
@@ -43,7 +43,7 @@ Adapt search terms to whatever the user provided. Focus on regulatory and
 verification-related templates.
 
 **Layer 3 — General verification tools:**
-These Extraction Templates are useful across verticals for identity confirmation and practice
+These Extract Templates are useful across verticals for identity confirmation and practice
 verification:
 ```bash
 nimble extract:templates list --limit 50  # filter items for "google_maps"
@@ -76,21 +76,21 @@ value to credential validation.
 
 ## Verification Phase Mapping
 
-This skill has a narrower Extraction Template focus than extract or enrich — the primary tool is
-`nimble search` + `nimble extract` for NPI lookups. Extraction Templates add value in two areas:
+This skill has a narrower Extract Template focus than extract or enrich — the primary tool is
+`nimble search` + `nimble extract` for NPI lookups. Extract Templates add value in two areas:
 
 ### Credential verification
 
 **When:** Always — this is the core value of the skill.
 
-**Primary tool:** `nimble search` + `nimble extract` (not Extraction Template-dependent):
+**Primary tool:** `nimble search` + `nimble extract` (not Extract Template-dependent):
 ```bash
 nimble search --query "[name] [credential] [state] NPI registry" --max-results 5 --search-depth lite
 ```
 Then extract the NPI result page for structured data.
 
-**Extraction Template supplement:** If Layer 1/2 discovery found NPI or medical board templates, use
-them for direct lookups — structured Extraction Template output is higher quality than parsing
+**Extract Template supplement:** If Layer 1/2 discovery found NPI or medical board templates, use
+them for direct lookups — structured Extract Template output is higher quality than parsing
 search results.
 
 ### Regulatory verification
@@ -125,26 +125,26 @@ nimble search --query "[practice-name] [city] [state]" --max-results 5 --search-
 
 ---
 
-## Scaling Extraction Template Calls
+## Scaling Extract Template Calls
 
 Follow the Scaled Execution pattern from `nimble-playbook.md` — it covers
 individual calls, batching, and the confirmation gate for large jobs.
 
 For verification, the primary bottleneck is NPI lookups (one per practitioner).
-Extraction Template calls add supplementary verification and scale as:
-`[practitioners requesting regulatory/practice verification] x [relevant Extraction Template categories]`.
+Extract Template calls add supplementary verification and scale as:
+`[practitioners requesting regulatory/practice verification] x [relevant Extract Template categories]`.
 
 ---
 
 ## Fallback Chain
 
-If Extraction Template discovery returns nothing useful for a category, fall back to `nimble search`
+If Extract Template discovery returns nothing useful for a category, fall back to `nimble search`
 + `nimble extract` (the core Nimble tools always work):
 
 1. **Credential fallback:** `nimble search --query "[name] [state] NPI" --max-results 5 --search-depth lite` + extract NPI result
 2. **Regulatory fallback:** `nimble search --query "[name] [credentials] clinical trials OR FDA" --max-results 5 --search-depth lite`
 3. **Practice fallback:** `nimble search --query "[practice-name] [city] [state] reviews" --max-results 5 --search-depth lite`
 
-The skill always produces verification results even if zero Extraction Templates are found — Extraction Templates
+The skill always produces verification results even if zero Extract Templates are found — Extract Templates
 accelerate and enrich the verification, but NPI lookup via web search is the
-foundation and never requires Extraction Templates.
+foundation and never requires Extract Templates.
