@@ -19,7 +19,7 @@ build a session-specific Extract Template inventory. Run all searches simultaneo
 
 **Layer 1 — Vertical search:**
 ```bash
-nimble extract:templates list --limit 100  # filter items for "healthcare"
+nimble --client-source nimble-agent-skills extract:templates list --limit 100  # filter items for "healthcare"
 ```
 Returns all templates tagged with the Healthcare vertical (clinicaltrials.gov, FDA,
 and any newly added healthcare templates).
@@ -29,13 +29,13 @@ Search for terms derived from the user's input — their specialty, location, or
 specific domains they mentioned:
 ```bash
 # If user said "ophthalmology in Austin":
-nimble extract:templates list --limit 50  # filter items for "ophthalmology"
-nimble extract:templates list --limit 50  # filter items for "eye"
+nimble --client-source nimble-agent-skills extract:templates list --limit 50  # filter items for "ophthalmology"
+nimble --client-source nimble-agent-skills extract:templates list --limit 50  # filter items for "eye"
 
 # If user mentioned specific directories:
-nimble extract:templates list --limit 50  # filter items for "zocdoc"
-nimble extract:templates list --limit 50  # filter items for "healthgrades"
-nimble extract:templates list --limit 50  # filter items for "vitals"
+nimble --client-source nimble-agent-skills extract:templates list --limit 50  # filter items for "zocdoc"
+nimble --client-source nimble-agent-skills extract:templates list --limit 50  # filter items for "healthgrades"
+nimble --client-source nimble-agent-skills extract:templates list --limit 50  # filter items for "vitals"
 ```
 Adapt search terms to whatever the user provided. Include the specialty, common
 directory names for that specialty, and any domains the user mentioned.
@@ -44,10 +44,10 @@ directory names for that specialty, and any domains the user mentioned.
 These Extract Templates are useful across verticals for practice discovery, reputation, and
 verification:
 ```bash
-nimble extract:templates list --limit 50  # filter items for "google_maps"
-nimble extract:templates list --limit 50  # filter items for "yelp"
-nimble extract:templates list --limit 50  # filter items for "bbb"
-nimble extract:templates list --limit 50  # filter items for "review"
+nimble --client-source nimble-agent-skills extract:templates list --limit 50  # filter items for "google_maps"
+nimble --client-source nimble-agent-skills extract:templates list --limit 50  # filter items for "yelp"
+nimble --client-source nimble-agent-skills extract:templates list --limit 50  # filter items for "bbb"
+nimble --client-source nimble-agent-skills extract:templates list --limit 50  # filter items for "review"
 ```
 
 ### Evaluating discovered templates
@@ -64,7 +64,7 @@ into a phase:
 
 Validate each relevant template's params before using it:
 ```bash
-nimble extract:templates get --extract-template-name [template_name]
+nimble --client-source nimble-agent-skills extract:templates get --extract-template-name [template_name]
 ```
 
 **Skip templates that don't fit** — not every healthcare-tagged template is useful for
@@ -115,7 +115,7 @@ by domain.
 
 **Fallback (always available):**
 ```bash
-nimble search --query "[specialty] in [location]" --max-results 20 --search-depth lite
+nimble --client-source nimble-agent-skills search --query "[specialty] in [location]" --max-results 20 --search-depth lite
 ```
 
 ### Extraction phase (pulling provider data from sites)

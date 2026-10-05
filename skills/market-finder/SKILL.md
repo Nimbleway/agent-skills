@@ -199,10 +199,10 @@ Cache the discovered template names + params for the rest of the run.
 For each metro in the tiling plan, run the discovered templates simultaneously:
 
 ```bash
-nimble extract:templates run --template {maps_template} --params '{...validated params...}'
+nimble --client-source nimble-agent-skills extract:templates run --template {maps_template} --params '{...validated params...}'
 ```
 ```bash
-nimble extract:templates run --template {yelp_template} --params '{...validated params...}'
+nimble --client-source nimble-agent-skills extract:templates run --template {yelp_template} --params '{...validated params...}'
 ```
 
 Run tertiary domain templates only if the preset includes them AND primary + secondary
@@ -242,7 +242,7 @@ target domains. Prioritize entities with the highest source count first. Choose
 execution tier per Scaled Execution in `references/nimble-playbook.md`.
 
 ```bash
-nimble extract:templates run --template {enrichment_template} --params '{...validated params...}'
+nimble --client-source nimble-agent-skills extract:templates run --template {enrichment_template} --params '{...validated params...}'
 ```
 
 Only run enrichment templates that apply to the current vertical's enrichment targets

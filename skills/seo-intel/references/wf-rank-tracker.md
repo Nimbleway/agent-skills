@@ -174,7 +174,7 @@ Run the discovered SERP template for those keywords to get typed SERP entities:
 
 ```bash
 # {serp_template} resolved above
-nimble extract:templates run --template "{serp_template}" --params '{"query": "{keyword}", "num_results": 20, "country": "{cc}", "locale": "{locale}"}'
+nimble --client-source nimble-agent-skills extract:templates run --template "{serp_template}" --params '{"query": "{keyword}", "num_results": 20, "country": "{cc}", "locale": "{locale}"}'
 ```
 
 The discovered SERP template returns `data.parsing.entities` — a dict keyed by

@@ -31,7 +31,7 @@ _SOLUTION_ALIASES = {"Extraction Templates": "Extract Templates"}
 _SOLUTION_TOOLS: dict[str, list[str]] = {
     "Web Search Agents": ["nimble search", "nimble extract", "nimble agents"],
     "Extract": ["nimble extract"],
-    "Extract Templates": ["nimble extract", "nimble agents"],
+    "Extract Templates": ["nimble extract"],
     "Search": ["nimble search"],
     # Crawl often starts with map for discovery; either family is acceptable.
     "Crawl": ["nimble crawl", "nimble map"],

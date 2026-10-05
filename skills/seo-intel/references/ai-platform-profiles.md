@@ -57,10 +57,10 @@ After discovery, use the cached template names:
 
 ```bash
 # AI platform query — substitute discovered name
-nimble extract:templates run --template "{chatgpt_template}" --params '{"prompt": "...", "skip_sources": false}'
+nimble --client-source nimble-agent-skills extract:templates run --template "{chatgpt_template}" --params '{"prompt": "...", "skip_sources": false}'
 
 # SERP enrichment — substitute discovered name
-nimble extract:templates run --template "{serp_template}" --params '{"query": "...", "num_results": 20, "country": "US"}'
+nimble --client-source nimble-agent-skills extract:templates run --template "{serp_template}" --params '{"query": "...", "num_results": 20, "country": "US"}'
 
 # Batch queries (6+ per platform)
 nimble extract:templates batch \

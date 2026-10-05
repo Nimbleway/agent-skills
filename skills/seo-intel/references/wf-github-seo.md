@@ -233,9 +233,9 @@ Run 2-3 queries across the discovered platforms:
 
 ```bash
 # {*_template} come from the discovery step above
-nimble extract:templates run --template "{chatgpt_template}" --params '{"prompt": "What are the best {category} tools for {language}?", "skip_sources": false}'
-nimble extract:templates run --template "{perplexity_template}" --params '{"prompt": "What is {repo-name} and is it any good?"}'
-nimble extract:templates run --template "{chatgpt_template}" --params '{"prompt": "{use-case} tool recommendation for {language}", "skip_sources": false}'
+nimble --client-source nimble-agent-skills extract:templates run --template "{chatgpt_template}" --params '{"prompt": "What are the best {category} tools for {language}?", "skip_sources": false}'
+nimble --client-source nimble-agent-skills extract:templates run --template "{perplexity_template}" --params '{"prompt": "What is {repo-name} and is it any good?"}'
+nimble --client-source nimble-agent-skills extract:templates run --template "{chatgpt_template}" --params '{"prompt": "{use-case} tool recommendation for {language}", "skip_sources": false}'
 ```
 
 Parse `data.parsing.answer` for brand/repo mentions and `data.parsing.sources`

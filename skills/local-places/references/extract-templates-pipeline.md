@@ -52,8 +52,8 @@ serve the same purpose.
 
 For any phase where no Extract Template was discovered:
 ```bash
-nimble search --query "[place-name] [location]" --max-results 5 --search-depth lite
-nimble extract --url "[place-website]" --format markdown
+nimble --client-source nimble-agent-skills search --query "[place-name] [location]" --max-results 5 --search-depth lite
+nimble --client-source nimble-agent-skills extract --url "[place-website]" --format markdown
 ```
 
 Use `nimble extract` on the place's own website to gather hours, menu, services, etc.

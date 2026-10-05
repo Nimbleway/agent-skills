@@ -113,7 +113,7 @@ Featured Snippets, Shopping, Sitelinks):
 
 ```bash
 # {serp_template} resolved at runtime from Step 2
-nimble extract:templates run --template "{serp_template}" --params '{"query": "{keyword}", "num_results": 20, "country": "US", "locale": "en"}'
+nimble --client-source nimble-agent-skills extract:templates run --template "{serp_template}" --params '{"query": "{keyword}", "num_results": 20, "country": "US", "locale": "en"}'
 ```
 
 If no SERP template was discovered, skip this enrichment and continue with

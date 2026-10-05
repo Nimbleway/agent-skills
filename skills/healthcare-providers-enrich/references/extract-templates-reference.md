@@ -18,7 +18,7 @@ inventory. Run all searches simultaneously:
 
 **Layer 1 — Vertical search:**
 ```bash
-nimble extract:templates list --limit 100  # filter items for "healthcare"
+nimble --client-source nimble-agent-skills extract:templates list --limit 100  # filter items for "healthcare"
 ```
 Returns all templates tagged with the Healthcare vertical (clinical trials, FDA,
 regulatory, and any newly added healthcare templates).
@@ -28,13 +28,13 @@ Search for terms derived from the user's input — their specialty, specific
 directories, or data sources they mentioned:
 ```bash
 # If user's list is ophthalmologists:
-nimble extract:templates list --limit 50  # filter items for "ophthalmology"
-nimble extract:templates list --limit 50  # filter items for "eye"
+nimble --client-source nimble-agent-skills extract:templates list --limit 50  # filter items for "ophthalmology"
+nimble --client-source nimble-agent-skills extract:templates list --limit 50  # filter items for "eye"
 
 # If user mentioned specific directories:
-nimble extract:templates list --limit 50  # filter items for "healthgrades"
-nimble extract:templates list --limit 50  # filter items for "zocdoc"
-nimble extract:templates list --limit 50  # filter items for "npi"
+nimble --client-source nimble-agent-skills extract:templates list --limit 50  # filter items for "healthgrades"
+nimble --client-source nimble-agent-skills extract:templates list --limit 50  # filter items for "zocdoc"
+nimble --client-source nimble-agent-skills extract:templates list --limit 50  # filter items for "npi"
 ```
 Adapt search terms to whatever the user provided. Include the specialty, common
 directory names for that specialty, and any data sources the user mentioned.
@@ -43,10 +43,10 @@ directory names for that specialty, and any data sources the user mentioned.
 These Extract Templates are useful across verticals for reputation, verification, and practice
 details:
 ```bash
-nimble extract:templates list --limit 50  # filter items for "google_maps"
-nimble extract:templates list --limit 50  # filter items for "yelp"
-nimble extract:templates list --limit 50  # filter items for "bbb"
-nimble extract:templates list --limit 50  # filter items for "review"
+nimble --client-source nimble-agent-skills extract:templates list --limit 50  # filter items for "google_maps"
+nimble --client-source nimble-agent-skills extract:templates list --limit 50  # filter items for "yelp"
+nimble --client-source nimble-agent-skills extract:templates list --limit 50  # filter items for "bbb"
+nimble --client-source nimble-agent-skills extract:templates list --limit 50  # filter items for "review"
 ```
 
 ### Evaluating discovered templates
@@ -63,7 +63,7 @@ into an enrichment category:
 
 Validate each relevant template's params before using it:
 ```bash
-nimble extract:templates get --extract-template-name [template_name]
+nimble --client-source nimble-agent-skills extract:templates get --extract-template-name [template_name]
 ```
 
 **Skip templates that don't fit** — not every healthcare-tagged template is useful for
@@ -84,7 +84,7 @@ this skill focuses on three enrichment categories. Identity search uses
 
 **Primary tool:** `nimble search` (not Extract Template-dependent):
 ```bash
-nimble search --query "[name] [credentials] [location] [specialty]" --max-results 5 --search-depth lite
+nimble --client-source nimble-agent-skills search --query "[name] [credentials] [location] [specialty]" --max-results 5 --search-depth lite
 ```
 
 **Extract Template supplement:** If Layer 2 discovery found directory-specific templates (e.g., a
@@ -102,7 +102,7 @@ name + location. Match results back to the provider record.
 
 **Fallback:**
 ```bash
-nimble search --query "[practice-name] [city] reviews ratings" --max-results 5 --search-depth lite
+nimble --client-source nimble-agent-skills search --query "[practice-name] [city] reviews ratings" --max-results 5 --search-depth lite
 ```
 
 ### Regulatory enrichment
@@ -118,7 +118,7 @@ credentials. Cross-reference results with existing provider data.
 
 **Fallback:**
 ```bash
-nimble search --query "[provider-name] [credentials] NPI OR license OR board certification" --max-results 5 --search-depth lite
+nimble --client-source nimble-agent-skills search --query "[provider-name] [credentials] NPI OR license OR board certification" --max-results 5 --search-depth lite
 ```
 
 ### Practice details enrichment
@@ -130,7 +130,7 @@ data.
 
 **Fallback:**
 ```bash
-nimble search --query "[practice-name] [city] hours insurance" --max-results 5 --search-depth lite
+nimble --client-source nimble-agent-skills search --query "[practice-name] [city] hours insurance" --max-results 5 --search-depth lite
 ```
 Then extract the top result with `nimble extract --url "[url]" --format markdown`.
 

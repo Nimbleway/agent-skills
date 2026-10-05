@@ -101,12 +101,12 @@ per-keyword files — it's reproducible and expandable (add a row, re-run).
    whether a price casts cleanly. This catches the Walmart-class surprises (localization, currency-
    string prices, `product_price` vs `price`) in ~40s instead of after a wasted full round. Highest-
    leverage step — see `extract-templates.md` §2.5.
-1. Create a **control (queries) table** `<schema>.<table>_queries` (source, template_name, keyword,
+1. Create a **control (queries) table** `<schema>.<table>_queries` (source, agent, keyword,
    params_json, localization, enabled) and seed one row per (source × term). `params_json` uses each
    template's **real** param name (from `input_properties`); set **localization per template** (e.g.
    `amazon_serp` true, `walmart_serp` false).
 2. Create the **unified results table** (`source` column + normalized core + `raw VARIANT`).
-3. Run **one INSERT** that calls `nimble_agent_run(q.template_name, q.params_json, q.localization)` via a
+3. Run **one INSERT** that calls `nimble_agent_run(q.agent, q.params_json, q.localization)` via a
    correlated `LATERAL` join over the control table, with a `/*+ REPARTITION(N) */` hint (N ≈ enabled
    rows, kept modest — high parallelism can trip API rate limits) so the template calls run in parallel.
    It's one long statement → run it async with `bash scripts/ingest.sh <WH> ingest.sql`.

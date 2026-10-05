@@ -86,7 +86,7 @@ demo is set-based, reproducible, and expandable — add a row, re-run, done.
 -- Control table: one row per (source × search term). The single source of truth for what to scrape.
 CREATE OR REPLACE TABLE <schema>.<table>_queries (
   source       STRING,   -- 'amazon' | 'walmart' | …
-  template_name STRING,  -- the Nimble Extract Template name, e.g. 'amazon_serp'
+  agent        STRING,   -- the Extract Template name, e.g. 'amazon_serp' (column name kept for existing tables)
   keyword      STRING,   -- the search term (for labelling/inspection)
   params_json  STRING,   -- full params for nimble_agent_run, built from the template's input_properties
   localization BOOLEAN,
@@ -143,7 +143,7 @@ SELECT /*+ REPARTITION(8) */   -- ≈ number of enabled rows; keep modest (see n
   v.value AS raw,
   current_timestamp()
 FROM <schema>.<table>_queries q,
-LATERAL nimble_integration.tools.nimble_agent_run(q.template_name, q.params_json, q.localization) AS r,
+LATERAL nimble_integration.tools.nimble_agent_run(q.agent, q.params_json, q.localization) AS r,
 LATERAL variant_explode(r.parsing) AS v
 WHERE q.enabled AND r.status = 'success';
 ```

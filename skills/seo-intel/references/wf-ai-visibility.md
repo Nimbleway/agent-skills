@@ -137,11 +137,11 @@ literally:
 
 ```bash
 # Per-query, per-platform — {*_template} come from Step 4 discovery
-nimble extract:templates run --template "{chatgpt_template}" --params '{"prompt": "{query}", "skip_sources": false}'
-nimble extract:templates run --template "{perplexity_template}" --params '{"prompt": "{query}"}'
-nimble extract:templates run --template "{google_ai_template}" --params '{"keyword": "{query}"}'
-nimble extract:templates run --template "{gemini_template}" --params '{"prompt": "{query}", "skip_sources": false}'
-nimble extract:templates run --template "{grok_template}" --params '{"prompt": "{query}"}'
+nimble --client-source nimble-agent-skills extract:templates run --template "{chatgpt_template}" --params '{"prompt": "{query}", "skip_sources": false}'
+nimble --client-source nimble-agent-skills extract:templates run --template "{perplexity_template}" --params '{"prompt": "{query}"}'
+nimble --client-source nimble-agent-skills extract:templates run --template "{google_ai_template}" --params '{"keyword": "{query}"}'
+nimble --client-source nimble-agent-skills extract:templates run --template "{gemini_template}" --params '{"prompt": "{query}", "skip_sources": false}'
+nimble --client-source nimble-agent-skills extract:templates run --template "{grok_template}" --params '{"prompt": "{query}"}'
 ```
 
 For 6+ queries per platform, use `nimble extract:templates batch` with the same

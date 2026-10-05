@@ -91,6 +91,21 @@ def test_tool_selection_passes_soft_nimble_match() -> None:
     assert score is not None and score.value is True
 
 
+def test_tool_selection_rejects_agents_only_trace_for_extract_templates() -> None:
+    trace = _trace(
+        triggered_skills=["nimble-web-expert"],
+        tools_called=["nimble agents"],
+        tool_names=["nimble agents"],
+        final_response="done",
+    )
+    expected = {
+        "solution": "Extract Templates",
+        "clarification_policy": "must_act",
+    }
+    score = tool_selection(output=trace, expected_output=expected)
+    assert score is not None and score.value is False
+
+
 def test_tool_selection_accepts_map_for_crawl() -> None:
     trace = _trace(
         triggered_skills=["nimble-web-expert"],

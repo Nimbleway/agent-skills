@@ -175,11 +175,11 @@ Run discovered maps/location templates simultaneously, using the validated param
 Step 4:
 
 ```bash
-nimble extract:templates run --template {discovered_maps_template} --params '{...validated params...}'
+nimble --client-source nimble-agent-skills extract:templates run --template {discovered_maps_template} --params '{...validated params...}'
 ```
 
 ```bash
-nimble extract:templates run --template {discovered_review_site_template} --params '{...validated params...}'
+nimble --client-source nimble-agent-skills extract:templates run --template {discovered_review_site_template} --params '{...validated params...}'
 ```
 
 **Tertiary (conditional):** Run discovered credibility templates only if primary +
@@ -203,7 +203,7 @@ For each discovered place that has a Facebook page or Instagram handle, run the
 social templates discovered in Step 4. Batch max **4 concurrent Bash calls**.
 
 ```bash
-nimble extract:templates run --template {discovered_social_template} --params '{...validated params...}'
+nimble --client-source nimble-agent-skills extract:templates run --template {discovered_social_template} --params '{...validated params...}'
 ```
 
 Run each discovered social template for places with matching handles. Skip social
@@ -218,7 +218,7 @@ For the top places (by source count and data completeness), run the review templ
 discovered in Step 4:
 
 ```bash
-nimble extract:templates run --template {discovered_reviews_template} --params '{...validated params...}'
+nimble --client-source nimble-agent-skills extract:templates run --template {discovered_reviews_template} --params '{...validated params...}'
 ```
 
 Batch max 4 concurrent calls. Focus on places that have a `place_id` or equivalent
@@ -237,14 +237,14 @@ If triggered, run the delivery/food templates discovered in Step 4. Discovery fi
 then detail:
 
 ```bash
-nimble extract:templates run --template {discovered_delivery_serp_template} --params '{...validated params...}'
+nimble --client-source nimble-agent-skills extract:templates run --template {discovered_delivery_serp_template} --params '{...validated params...}'
 ```
 
 For places found on delivery platforms, fetch full details using discovered
 detail templates:
 
 ```bash
-nimble extract:templates run --template {discovered_delivery_detail_template} --params '{...validated params...}'
+nimble --client-source nimble-agent-skills extract:templates run --template {discovered_delivery_detail_template} --params '{...validated params...}'
 ```
 
 If no delivery templates were found in Step 4, fall back to:
