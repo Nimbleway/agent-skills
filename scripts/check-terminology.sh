@@ -21,9 +21,9 @@ while IFS= read -r f; do
     echo "::error file=$f::Says WSA but only runs extract:templates. Call these Extract Templates."
     fail=1
   fi
-done < <(find skills _shared -name '*.md')
+done < <(find skills _shared \( -name '*.md' -o -name '*.mdc' \))
 
-if grep -rniE 'nimble agent |pre-built agent' skills _shared; then
+if grep -rnE 'nimble agent |[Pp]re-built [Aa]gent' skills _shared; then
   echo "::error::Retired wording above. Use extract:templates for Extract Templates or nimble agents for Web Search Agents."
   fail=1
 fi
