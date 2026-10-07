@@ -71,13 +71,13 @@ selection from the responses.
 category terms. Filter for queries where the brand or competitors surface. Present
 the list for user confirmation. Target 20-40 queries.
 
-### Step 4: WSA Discovery
+### Step 4: Extract Template Discovery
 
-Never hardcode agent template names — discover them dynamically every run
+Never hardcode Extract Template names — discover them dynamically every run
 and validate before use, per `references/nimble-playbook.md`.
 
-Search for relevant agents in parallel. Run separate searches per surface so
-the AI platform agents and the SERP agents can be discovered independently:
+Search for relevant templates in parallel. Run separate searches per surface so
+the AI platform templates and the SERP templates can be discovered independently:
 
 ```bash
 # SERP surfaces
@@ -95,21 +95,21 @@ nimble extract:templates list --limit 100  # then filter items for "grok"
 For each promising match, validate with `nimble extract:templates get --extract-template-name {name}`
 and confirm the expected input param (`prompt` or `keyword`) and output fields
 (`answer`, `sources`). Cache the discovered template names for this run as
-`{chatgpt_agent}`, `{perplexity_agent}`, `{google_ai_agent}`, `{gemini_agent}`,
-`{grok_agent}`, and `{serp_agent}`. Use those variables everywhere in Step 5
+`{chatgpt_template}`, `{perplexity_template}`, `{google_ai_template}`, `{gemini_template}`,
+`{grok_template}`, and `{serp_template}`. Use those variables everywhere in Step 5
 rather than string literals.
 
-If a platform agent is not discovered or fails validation, drop that platform
+If a platform template is not discovered or fails validation, drop that platform
 from the run (or fall back to `nimble search --include-answer` where useful)
 and note reduced coverage in the report.
 
-### Step 5: AI Platform Querying via Dedicated Agents
+### Step 5: AI Platform Querying via Dedicated Extract Templates
 
-Read `references/ai-platform-profiles.md` for the full agent schemas, per-platform
+Read `references/ai-platform-profiles.md` for the full template schemas, per-platform
 ranking factors, and Princeton GEO optimization methods.
 
-Use Nimble's dedicated AI platform agents to query **5 platforms** directly. Each
-agent sends a real prompt to the platform and returns structured `answer` text +
+Use Nimble's dedicated AI platform Extract Templates to query **5 platforms** directly. Each
+template sends a real prompt to the platform and returns structured `answer` text +
 `sources` with URLs. This replaces the previous approach of `--include-answer`
 proxying and flaky Perplexity extraction.
 
@@ -117,16 +117,16 @@ proxying and flaky Perplexity extraction.
 
 | Platform | Resolved variable | Input | Key outputs |
 |----------|-------------------|-------|-------------|
-| ChatGPT | `{chatgpt_agent}` | `prompt` | `answer`, `markdown`, `sources` [{url, title, source, snippet}], `links` |
-| Perplexity | `{perplexity_agent}` | `prompt` | `answer`, `markdown`, `sources` [{url, icon, title, snippet, description, startPosition, endPosition}], `links` |
-| Google AI Mode | `{google_ai_agent}` | `keyword` | `answer`, `sources` [{url, title}] |
-| Gemini | `{gemini_agent}` | `prompt` | `answer`, `markdown`, `answer_html`, `sources` [{icon, title, snippet, description, startPosition, endPosition, source_domain}], `links` |
-| Grok | `{grok_agent}` | `prompt` | `answer`, `answer_html`, `sources` [{url, title}], `links`, `images` |
+| ChatGPT | `{chatgpt_template}` | `prompt` | `answer`, `markdown`, `sources` [{url, title, source, snippet}], `links` |
+| Perplexity | `{perplexity_template}` | `prompt` | `answer`, `markdown`, `sources` [{url, icon, title, snippet, description, startPosition, endPosition}], `links` |
+| Google AI Mode | `{google_ai_template}` | `keyword` | `answer`, `sources` [{url, title}] |
+| Gemini | `{gemini_template}` | `prompt` | `answer`, `markdown`, `answer_html`, `sources` [{icon, title, snippet, description, startPosition, endPosition, source_domain}], `links` |
+| Grok | `{grok_template}` | `prompt` | `answer`, `answer_html`, `sources` [{url, title}], `links`, `images` |
 
 **Query construction:** Phrase queries as natural questions an end-user would ask
 an AI assistant. Example: for keyword "web scraping api", the prompt becomes
 "What is the best web scraping API?" or "Compare the top web scraping APIs."
-For the Google AI agent, use the `keyword` param directly (it's a search query,
+For the Google AI template, use the `keyword` param directly (it's a search query,
 not a conversational prompt).
 
 **Execution:** Spawn `nimble-researcher` sub-agents (max 4, `bypassPermissions`).
@@ -136,12 +136,12 @@ discovered template names from Step 4 — do not use the placeholder strings
 literally:
 
 ```bash
-# Per-query, per-platform — {*_agent} come from Step 4 discovery
-nimble extract:templates run --template "{chatgpt_agent}" --params '{"prompt": "{query}", "skip_sources": false}'
-nimble extract:templates run --template "{perplexity_agent}" --params '{"prompt": "{query}"}'
-nimble extract:templates run --template "{google_ai_agent}" --params '{"keyword": "{query}"}'
-nimble extract:templates run --template "{gemini_agent}" --params '{"prompt": "{query}", "skip_sources": false}'
-nimble extract:templates run --template "{grok_agent}" --params '{"prompt": "{query}"}'
+# Per-query, per-platform — {*_template} come from Step 4 discovery
+nimble --client-source nimble-agent-skills extract:templates run --template "{chatgpt_template}" --params '{"prompt": "{query}", "skip_sources": false}'
+nimble --client-source nimble-agent-skills extract:templates run --template "{perplexity_template}" --params '{"prompt": "{query}"}'
+nimble --client-source nimble-agent-skills extract:templates run --template "{google_ai_template}" --params '{"keyword": "{query}"}'
+nimble --client-source nimble-agent-skills extract:templates run --template "{gemini_template}" --params '{"prompt": "{query}", "skip_sources": false}'
+nimble --client-source nimble-agent-skills extract:templates run --template "{grok_template}" --params '{"prompt": "{query}"}'
 ```
 
 For 6+ queries per platform, use `nimble extract:templates batch` with the same
@@ -149,7 +149,7 @@ discovered template name:
 
 ```bash
 nimble extract:templates batch \
-  --template "{chatgpt_agent}" \
+  --template "{chatgpt_template}" \
   --input '{"params": {"prompt": "query 1", "skip_sources": false}}' \
   --input '{"params": {"prompt": "query 2", "skip_sources": false}}'
 ```
@@ -163,14 +163,14 @@ nimble search --query "{query}" --search-depth deep --country US --max-results 1
 This captures whether the query triggers an AI Overview in standard Google Search
 (distinct from Google AI Mode). Check the response for AI Overview indicators.
 
-**Agent coordination:**
-- 5 platform agents + 1 SERP track = 6 data sources per query
+**Coordination:**
+- 5 platform templates + 1 SERP track = 6 data sources per query
 - Max 4 sub-agents concurrently — cycle through platforms
-- Each agent returns `data.parsing.answer` + `data.parsing.sources`
-- If an agent fails, retry once. If still failing, exclude that platform for
+- Each template returns `data.parsing.answer` + `data.parsing.sources`
+- If a template call fails, retry once. If still failing, exclude that platform for
   that query and note it. Don't fabricate data for unreachable platforms.
 
-**Fallback for agent unavailability:** If any agent is not found during WSA
+**Fallback for template unavailability:** If any template is not found during
 discovery (Step 4), fall back to `nimble search --include-answer` for that
 platform's queries and note reduced data quality in the report.
 
@@ -445,9 +445,9 @@ Recommended follow-ups:
 See `references/nimble-playbook.md` for the standard error table (missing API key,
 429, 401, empty results, extraction garbage). Skill-specific errors:
 
-- **Agent returns error or empty:** Retry once. If still failing, log the platform
+- **Template returns error or empty:** Retry once. If still failing, log the platform
   as "unavailable" for that query and continue with others. Do not abort for a
-  single platform failure. Common agent errors: timeout (the AI platform took too
+  single platform failure. Common template errors: timeout (the AI platform took too
   long), rate limit (too many concurrent requests — reduce batch size).
 
 - **Gemini 500 errors:** Intermittent platform issue. Retry once; if still failing,

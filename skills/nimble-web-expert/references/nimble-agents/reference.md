@@ -20,7 +20,7 @@ Use a Web Search Agent when at least one is true: the source isn't known or vari
 discovered; the data is scattered across sources that may not be specified; page structure is
 inconsistent enough that fixed parsing won't work and the tool needs to reason about what it
 finds; or free-text synthesis is needed (a report or summary, not just raw results). When a
-single known page can be parsed directly, prefer an Extraction Template
+single known page can be parsed directly, prefer an Extract Template
 (`references/nimble-extract-templates/reference.md`); for raw results to work from, use
 `nimble search`.
 
@@ -159,7 +159,7 @@ Available on both `agents run` and `agents:runs create`:
 - **`prioritize` / `avoid`** are plain guidance **strings**. An array is rejected.
 
 `allow` is a hard whitelist; `prioritize`/`avoid` are soft steering. Prefer a domain already
-covered by an Extraction Template — the agent gets cleaner structured data there.
+covered by an Extract Template — the agent gets cleaner structured data there.
 
 ### `--input-data` vs `--output-schema` — they are not the same thing
 
@@ -203,7 +203,7 @@ before materializing. Note the template `sources` shape differs from the run/age
 it is a flat ordered array of `{title, domains, order}` groups.
 
 ```bash
-# From a pre-built template (copies its fields, goals, sources, output_schema)
+# From a gallery template (copies its fields, goals, sources, output_schema)
 nimble --client-source nimble-agent-skills agents create --template <template_name>
 ```
 

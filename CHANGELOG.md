@@ -1,5 +1,19 @@
 # Changelog
 
+## [1.7.1] - 2026-10-04
+
+### Changed
+- **The product name is now "Extract Template" everywhere**, replacing the earlier "Extraction" form. This covers every skill, `_shared/`, the README, `CLAUDE.md`, `CONTRIBUTING.md`, and every plugin manifest's `description`, `longDescription`, and `keywords`. Evals map the old gold `solution` label onto the new name.
+- **Business skills call site-specific scrapers Extract Templates, not WSAs.** `market-finder`, `local-places`, the three `healthcare-providers-*` skills, `competitor-intel`, `competitor-positioning`, `company-deep-dive`, `meeting-prep`, `talent-sourcing`, and the `seo-intel` workflows only ever ran `extract:templates`, yet described those calls as "WSAs", "Web Search Agents", or "agents". "Web Search Agent (WSA)" now refers only to `nimble agents` / `agents:runs`. Command usage is unchanged.
+- **Reference files renamed to match their content.** `healthcare-providers-*/references/wsa-reference.md` is now `extract-templates-reference.md`, `local-places/references/wsa-pipeline.md` is now `extract-templates-pipeline.md`, and `nimble-databricks-data-products/references/nimble-agents.md` is now `extract-templates.md`. Every link is updated.
+- **`nimble-databricks-data-products` describes its UC functions as operating on Extract Templates.** The functions keep their integration names (`nimble_agent_list`, `nimble_agent_describe`, `nimble_agent_run`). The control-table column `agent` is now `template_name`.
+- **`local-places` and `company-deep-dive` point sub-agents at `extract:templates batch`**, replacing the removed `agent run-batch`.
+- **`nimble-web-expert` README** lists Extract Templates (`nimble extract:templates`) and Web Search Agents (`nimble agents`) separately, replacing "pre-built agents" and the retired `nimble agent` command.
+- **Evals normalize Web Search Agent commands to `nimble agents` / `nimble agents create`**, replacing the retired singular label `nimble agent create`.
+
+### Added
+- **`scripts/check-terminology.sh`**, run by the packaging workflow. It fails when a skill doc says "WSA" but only runs `extract:templates`, uses the retired `nimble agent ` group or "pre-built agent" wording, or uses the superseded "Extraction" form of the Extract Template name.
+
 ## [1.7.0] - 2026-08-24
 
 ### Changed

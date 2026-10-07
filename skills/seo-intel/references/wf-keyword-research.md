@@ -46,13 +46,13 @@ version validation, API key setup) and company setup (Prompt 1: domain verificat
 Capture answers into the profile under `seo_context` and create the profile per
 `references/profile-and-onboarding.md`.
 
-### Step 2: WSA Discovery
+### Step 2: Extract Template Discovery
 
-Never hardcode agent template names — discover dynamically every run and
+Never hardcode Extract Template names — discover dynamically every run and
 validate with `nimble extract:templates get --extract-template-name {name}` before use, per
 `references/nimble-playbook.md`.
 
-Discover available WSAs for SEO data. Run searches simultaneously:
+Discover available templates for SEO data. Run searches simultaneously:
 
 ```bash
 nimble extract:templates list --limit 100  # then filter items for "seo"
@@ -61,14 +61,14 @@ nimble extract:templates list --limit 100  # then filter items for "serp"
 nimble extract:templates list --limit 100  # then filter items for "trends"
 ```
 
-From the results, filter for WSAs related to search results, keyword data, or
+From the results, filter for templates related to search results, keyword data, or
 trend analysis. Validate each candidate with `nimble extract:templates get --extract-template-name {name}`
-to confirm input params and output fields. Cache discovered WSA names for this
-run as variables such as `{serp_agent}` (structured SERP entities) and
-`{trends_agent}` (query volume/trend data). Use those variables everywhere
+to confirm input params and output fields. Cache discovered template names for this
+run as variables such as `{serp_template}` (structured SERP entities) and
+`{trends_template}` (query volume/trend data). Use those variables everywhere
 downstream instead of string literals.
 
-If no useful WSAs found, continue with `nimble search` alone — WSAs are an
+If no useful templates found, continue with `nimble search` alone — templates are an
 enrichment layer, not a requirement.
 
 ### Step 3: Seed Expansion
@@ -108,18 +108,18 @@ From each SERP, collect:
 description, position). It does NOT return SERP features.
 
 **SERP feature enrichment** — for 3-5 priority keywords, run the discovered
-SERP agent (`{serp_agent}` cached in Step 2) to get typed SERP entities (PAA,
+SERP template (`{serp_template}` cached in Step 2) to get typed SERP entities (PAA,
 Featured Snippets, Shopping, Sitelinks):
 
 ```bash
-# {serp_agent} resolved at runtime from Step 2
-nimble extract:templates run --template "{serp_agent}" --params '{"query": "{keyword}", "num_results": 20, "country": "US", "locale": "en"}'
+# {serp_template} resolved at runtime from Step 2
+nimble --client-source nimble-agent-skills extract:templates run --template "{serp_template}" --params '{"query": "{keyword}", "num_results": 20, "country": "US", "locale": "en"}'
 ```
 
-If no SERP agent was discovered, skip this enrichment and continue with
+If no SERP template was discovered, skip this enrichment and continue with
 `nimble search` results only.
 
-The discovered SERP agent returns `data.parsing.entities` — a **dict keyed by
+The discovered SERP template returns `data.parsing.entities` — a **dict keyed by
 entity type name**, where each value is an array of records. Entity types are
 dynamic — iterate all keys rather than hardcoding. Commonly observed types:
 
@@ -142,9 +142,9 @@ Parse `data.parsing.entities` to collect:
 - **Related searches** — `entities.RelatedSearch[].query` — free keyword expansion
 - **AI Overview content** — `entities.AIOverview[0].content` — check if brand/competitor is mentioned
 
-Additional SERP-agent params available: `time` (hour/day/week/month/year),
+Additional SERP template params available: `time` (hour/day/week/month/year),
 `location` (city/state string or UULE), `start` (pagination: 0/10/20...).
-See `references/ai-platform-profiles.md` for the full agent schema.
+See `references/ai-platform-profiles.md` for the full template schema.
 
 If a lite search returns < 3 results, broaden the query (remove modifiers, use shorter
 terms) and retry once.

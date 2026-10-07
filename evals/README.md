@@ -81,7 +81,7 @@ uv run python -m evals.suites.web_expert \
   --dataset-name=nimble-web-expert-production \
   --runtime codex --max-items 50
 
-# Extraction Templates only
+# Extract Templates only
 uv run python -m evals.suites.web_expert \
   --dataset-name=nimble-web-expert-production \
   --tag extraction-templates --runtime both
@@ -130,7 +130,7 @@ need shell shape and JSONL structure.
 | `forbidden_tools` | No WSA-create style commands when gold forbids them |
 | `response_non_empty` | Final response longer than 10 chars (not an LLM judge) |
 
-Gold is remapped at runtime from assistant `expected_output` (see `evals/commons/gold.py`). Extraction Templates are first-class.
+Gold is remapped at runtime from assistant `expected_output` (see `evals/commons/gold.py`). Extract Templates are first-class.
 
 ## Related
 

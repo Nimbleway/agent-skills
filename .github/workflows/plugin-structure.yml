@@ -49,3 +49,7 @@ jobs:
       - name: Verify plugin manifest fields
         if: always()
         run: python3 scripts/check-plugin-manifests.py
+
+      - name: Verify Extract Template vs Web Search Agent terminology
+        if: always()
+        run: bash scripts/check-terminology.sh

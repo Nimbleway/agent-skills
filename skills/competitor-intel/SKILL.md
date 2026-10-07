@@ -35,7 +35,7 @@ allowed-tools:
   - AskUserQuestion
 metadata:
   author: Nimbleway
-  version: 1.7.0
+  version: 1.7.1
   category: business-research
 ---
 
@@ -75,7 +75,7 @@ From the results:
   - Skip to Step 2
 - No profile → Step 1
 
-**Note:** Step 2 (WSA Discovery) runs after onboarding but before any research.
+**Note:** Step 2 (Extract Template Discovery) runs after onboarding but before any research.
 
 ### Step 1: First-Run Onboarding (2 prompts max)
 
@@ -108,19 +108,19 @@ user's industry keywords. See `references/profile-and-onboarding.md` for the ful
 profile schema (company, competitors with domains/categories, industry_keywords,
 integrations, preferences).
 
-### Step 2: WSA Discovery
+### Step 2: Extract Template Discovery
 
-For each competitor domain and the user's domain, discover available WSAs:
+For each competitor domain and the user's domain, discover available templates:
 
 ```bash
 nimble extract:templates list --limit 100  # then filter items for "{domain}"
 ```
 
-Run one search per domain simultaneously. From the results, filter for WSAs with
+Run one search per domain simultaneously. From the results, filter for templates with
 `entity_type` matching SERP or PDP, prefer `managed_by: "nimble"`, and validate
-each with `nimble extract:templates get --extract-template-name {name}`. Cache discovered WSA names +
-params for the run. Use discovered WSAs alongside `nimble search` in Steps 3-4
-for richer data. If no WSAs found, continue with `nimble search` alone.
+each with `nimble extract:templates get --extract-template-name {name}`. Cache discovered template names +
+params for the run. Use discovered templates alongside `nimble search` in Steps 3-4
+for richer data. If no templates found, continue with `nimble search` alone.
 
 ### Step 3: Research the User's Company
 
@@ -140,7 +140,7 @@ Follow the sub-agent spawning rules from `references/nimble-playbook.md`
 Spawn `nimble-researcher` agents (`agents/nimble-researcher.md`) with
 `mode: "bypassPermissions"`. Customize the prompt template with each competitor's
 name, domain, start-date, known signals from memory (loaded in Step 0), and any
-discovered WSA names from Step 2 so agents can use them for enrichment.
+discovered template names from Step 2 so agents can use them for enrichment.
 
 **Call estimation & Scaled Execution:** Before launching agents, estimate total API
 calls: ~6 searches per competitor × N competitors + ~2 industry searches + extractions.
@@ -308,7 +308,7 @@ Check at startup: `echo $CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS`
 **Team mode** (flag set): Spawn full **teammates** instead of sub-agents:
 
 - **Lead** (you): Assign competitors, synthesize the final briefing
-- **One teammate per competitor**: Uses `references/competitor-agent-prompt.md` with discovered WSAs —
+- **One teammate per competitor**: Uses `references/competitor-agent-prompt.md` with discovered templates —
   teammates can message each other when they find overlapping signals
 - **Devil's Advocate** (optional): Challenges findings, looks for blind spots
 - Lead synthesizes a **cross-validated** briefing with higher confidence

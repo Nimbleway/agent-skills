@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from evals.commons.gold import remap_expected, solution_key
 from evals.commons.nimble_cmd import add_nimble_tools
 from evals.commons.trace import NormalizedTrace
 from evals.scorers.metrics import (
@@ -23,8 +24,15 @@ def test_nimble_tools_detect_global_flags_before_subcommand() -> None:
         "nimble --client-source nimble-agent-skills search --query 'acme'",
         tools,
     )
-    assert "nimble agent create" in tools
+    assert "nimble agents create" in tools
     assert "nimble search" in tools
+
+
+def test_old_extraction_templates_gold_label_maps_to_extract_templates() -> None:
+    gold = {"solution": "Extraction Templates"}
+    assert remap_expected(gold)["expected_skill"] == "nimble-web-expert"
+    assert remap_expected(gold)["assistant_solution"] == "Extract Templates"
+    assert solution_key({"expected_output": gold}) == "Extract Templates"
 
 
 def _trace(**kwargs) -> NormalizedTrace:
@@ -81,6 +89,21 @@ def test_tool_selection_passes_soft_nimble_match() -> None:
     }
     score = tool_selection(output=trace, expected_output=expected)
     assert score is not None and score.value is True
+
+
+def test_tool_selection_rejects_agents_only_trace_for_extract_templates() -> None:
+    trace = _trace(
+        triggered_skills=["nimble-web-expert"],
+        tools_called=["nimble agents"],
+        tool_names=["nimble agents"],
+        final_response="done",
+    )
+    expected = {
+        "solution": "Extract Templates",
+        "clarification_policy": "must_act",
+    }
+    score = tool_selection(output=trace, expected_output=expected)
+    assert score is not None and score.value is False
 
 
 def test_tool_selection_accepts_map_for_crawl() -> None:

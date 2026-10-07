@@ -75,7 +75,7 @@ def _normalize_family(subcommand: str, argv: list[str]) -> str | None:
     if head.startswith("extract"):
         family = "extract"
     elif head in {"agent", "agents"}:
-        family = "agent"
+        family = "agents"
     elif head in {"task", "tasks"}:
         family = "task"
     elif head in {"search", "map", "crawl"}:
@@ -85,8 +85,8 @@ def _normalize_family(subcommand: str, argv: list[str]) -> str | None:
 
     name = f"nimble {family}"
     # Forbidden-tool scorer looks for create variants.
-    if family == "agent" and any(tok == "create" for tok in argv):
-        return "nimble agent create"
+    if family == "agents" and any(tok == "create" for tok in argv):
+        return "nimble agents create"
     return name
 
 

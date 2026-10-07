@@ -34,7 +34,7 @@ allowed-tools:
   - AskUserQuestion
 metadata:
   author: Nimbleway
-  version: 1.7.0
+  version: 1.7.1
   category: healthcare
 ---
 
@@ -52,26 +52,26 @@ constraints (no shell state, no `&`/`wait`, sub-agent permissions, communication
 
 ## Instructions
 
-### Step 0: Preflight + WSA Discovery
+### Step 0: Preflight + Extract Template Discovery
 
 **Sibling handoff check:** Before running full preflight, check if
 `healthcare-providers-extract` or `healthcare-providers-enrich` ran earlier in this
 session by following the Sibling Handoff pattern from `references/nimble-playbook.md`.
-If same-day output exists, skip CLI check and profile load, and reuse WSA Layer 1/3
+If same-day output exists, skip CLI check and profile load, and reuse Layer 1/3 Extract Template
 inventory. Only re-run Layer 2 if the verification focus changed.
 
 **Otherwise, run full preflight** from `references/nimble-playbook.md` (5 simultaneous
 Bash calls: date calc, today, CLI check, profile load, index.md load).
 
-**Also simultaneously** — run WSA discovery and setup:
+**Also simultaneously** — run template discovery and setup:
 - `mkdir -p ~/.nimble/memory/{reports,healthcare-providers-verify/checkpoints}`
 - `ls ~/.nimble/memory/healthcare-providers-verify/checkpoints/ 2>/dev/null`
-- Run Layer 1 (vertical) and Layer 3 (general tools) WSA discovery from
-  `references/wsa-reference.md`. Layer 2 (session-specific) runs after Step 1 when
+- Run Layer 1 (vertical) and Layer 3 (general tools) template discovery from
+  `references/extract-templates-reference.md`. Layer 2 (session-specific) runs after Step 1 when
   you know the user's specialty and verification focus.
 
-Classify discovered agents into verification categories and validate with
-`nimble extract:templates get` per `references/wsa-reference.md`.
+Classify discovered templates into verification categories and validate with
+`nimble extract:templates get` per `references/extract-templates-reference.md`.
 
 From the preflight results:
 - CLI missing or API key unset -> `references/profile-and-onboarding.md`, stop
@@ -140,13 +140,13 @@ Build a verification plan summary:
 >
 > Starting NPI verification..."
 
-Run Layer 2 WSA discovery now that you know the specialty:
+Run Layer 2 template discovery now that you know the specialty:
 ```bash
 nimble extract:templates list --limit 50  # filter items for "[specialty]"
 nimble extract:templates list --limit 50  # filter items for "[registry-user-mentioned]"
 ```
 
-See `references/wsa-reference.md` for session-specific discovery.
+See `references/extract-templates-reference.md` for session-specific discovery.
 
 ### Step 3: NPI Registry Lookup
 
@@ -220,16 +220,16 @@ verification logic in `references/npi-verification-patterns.md`:
 See `references/npi-verification-patterns.md` for the detailed criteria for each
 status and the mismatch severity levels (Critical vs Warning).
 
-### Step 5: WSA Supplementary Verification (Optional)
+### Step 5: Extract Template Supplementary Verification (Optional)
 
 If the user requested regulatory verification beyond NPI lookup, or if Step 5
 left practitioners as Unverified that might benefit from additional sources:
 
-Run verification-phase WSAs discovered in Step 0. See `references/wsa-reference.md`
-for the verification phase mapping, agent evaluation, and fallback chains.
+Run verification-phase templates discovered in Step 0. See `references/extract-templates-reference.md`
+for the verification phase mapping, template evaluation, and fallback chains.
 
 **Practice confirmation:** For Unverified practitioners, try confirming their
-practice exists via practice-level WSAs or web search:
+practice exists via practice-level templates or web search:
 ```bash
 nimble search --query "[practice-name] [city] [state]" --max-results 5 --search-depth lite
 ```

@@ -5,13 +5,13 @@ alwaysApply: true
 
 For ANY task involving a live website, URL, or current web data — use the Nimble CLI. This is not optional.
 
-> **Scope note:** This rule covers Nimble's data capabilities — Search, Extract, Extraction Templates, Web Search Agents, Map, and Crawl. Extraction Templates and Web Search Agents are distinct: a template is a fixed site-specific parser (`extract:templates`), a Web Search Agent does open-ended research (`agents` / `agents:runs`). Use existing templates and agents — building new ones is out of scope.
+> **Scope note:** This rule covers Nimble's data capabilities — Search, Extract, Extract Templates, Web Search Agents, Map, and Crawl. Extract Templates and Web Search Agents are distinct: a template is a fixed site-specific parser (`extract:templates`), a Web Search Agent does open-ended research (`agents` / `agents:runs`). Use existing templates and agents — building new ones is out of scope.
 
 **Routing — pick the right command:**
 
 | User signal | Command |
 | --- | --- |
-| Named site + a direct item (URL/ID) | Check for an Extraction Template first: `nimble extract:templates list --limit 100` (filter by site) → `nimble extract:templates run --template <name>` |
+| Named site + a direct item (URL/ID) | Check for an Extract Template first: `nimble extract:templates list --limit 100` (filter by site) → `nimble extract:templates run --template <name>` |
 | Site with no template, or needs discovery/synthesis | Web Search Agent: `nimble agents run --agent-name <stable-name> --input "..."` → `agents:runs get` → `agents:runs result` (use `agents:runs create --agent-id <id>` when you already hold an agent ID) |
 | Provides a direct URL | `nimble extract --url "..." --format markdown` |
 | Wants raw material to skim — "find pages/articles about", "look up", latest news | `nimble search` |
@@ -20,7 +20,7 @@ For ANY task involving a live website, URL, or current web data — use the Nimb
 | "Crawl / bulk archive a section" | `nimble crawl run` |
 | Call a public REST/XHR API | `nimble extract --url "..." --is-xhr` |
 
-> `nimble search` and `nimble map` can also be used as intermediate steps to gather URLs or input IDs before running an Extraction Template or extract across multiple pages.
+> `nimble search` and `nimble map` can also be used as intermediate steps to gather URLs or input IDs before running an Extract Template or extract across multiple pages.
 
 **Extract Waterfall** — see `references/nimble-extract/reference.md` for tier details, flags, browser actions, and network capture.
 

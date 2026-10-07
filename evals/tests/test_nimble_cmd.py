@@ -22,10 +22,10 @@ from evals.commons.nimble_cmd import (
         (["nimble", "task", "results", "--id", "t1"], "nimble task"),
         (["nimble", "extract", "run", "--url", "https://x"], "nimble extract"),
         (["nimble", "extract:templates", "list"], "nimble extract"),
-        (["nimble", "agents", "list"], "nimble agent"),
-        (["nimble", "agents:runs", "create", "--agent-id", "x"], "nimble agent create"),
-        (["nimble", "agents", "create", "--agent-name", "x"], "nimble agent create"),
-        (["nimble", "agents:templates", "list"], "nimble agent"),
+        (["nimble", "agents", "list"], "nimble agents"),
+        (["nimble", "agents:runs", "create", "--agent-id", "x"], "nimble agents create"),
+        (["nimble", "agents", "create", "--agent-name", "x"], "nimble agents create"),
+        (["nimble", "agents:templates", "list"], "nimble agents"),
         (
             [
                 "nimble",
@@ -65,7 +65,7 @@ def test_family_from_nimble_argv(argv: list[str], expected: str | None) -> None:
         ("nimble search --query acme", ["nimble search"]),
         (
             "nimble --client-source nimble-agent-skills agents:runs create --agent-id x",
-            ["nimble agent create"],
+            ["nimble agents create"],
         ),
         (
             "nimble --client-source nimble-agent-skills search --query 'acme corp'",
@@ -76,19 +76,19 @@ def test_family_from_nimble_argv(argv: list[str], expected: str | None) -> None:
             ["nimble extract"],
         ),
         ("nimble extract:templates list --limit 100", ["nimble extract"]),
-        ("nimble agents:templates list", ["nimble agent"]),
-        ("nimble agents run --agent-name foo --input 'hi'", ["nimble agent"]),
+        ("nimble agents:templates list", ["nimble agents"]),
+        ("nimble agents run --agent-name foo --input 'hi'", ["nimble agents"]),
         (
             "nimble agents:runs get --agent-id a --run-id r",
-            ["nimble agent"],
+            ["nimble agents"],
         ),
         (
             "nimble agents:runs result --agent-id a --run-id r",
-            ["nimble agent"],
+            ["nimble agents"],
         ),
         (
             "nimble agents:runs stream-events --agent-id a --run-id r",
-            ["nimble agent"],
+            ["nimble agents"],
         ),
         ("nimble crawl status --id abc", ["nimble crawl"]),
         ("nimble crawl run --url https://docs.example.com", ["nimble crawl"]),
@@ -106,7 +106,7 @@ def test_family_from_nimble_argv(argv: list[str], expected: str | None) -> None:
         (
             '/bin/zsh -lc "nimble --client-source nimble-agent-skills agents list '
             '&& nimble --client-source nimble-agent-skills agents:templates list"',
-            ["nimble agent"],
+            ["nimble agents"],
         ),
         # Multi-line script inside -lc
         (
@@ -165,7 +165,7 @@ def test_normalize_wrapper_matches_module() -> None:
         'agents:runs create --agent-id x"',
         tools,
     )
-    assert tools == ["nimble agent create"]
+    assert tools == ["nimble agents create"]
 
 
 @pytest.mark.parametrize(

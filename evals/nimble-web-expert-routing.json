@@ -3,7 +3,7 @@
   "description": "Routing eval — given a user prompt, which Nimble capability does the skill's routing guidance select? Grades the routing instructions in SKILL.md, not a live Nimble run.",
   "routes": {
     "EXTRACT": "nimble extract — fetch one known URL",
-    "TEMPLATE": "Step 0 Extraction Template check for a named site + direct item",
+    "TEMPLATE": "Step 0 Extract Template check for a named site + direct item",
     "SEARCH": "nimble search — raw results to skim",
     "WSA": "Web Search Agent — synthesized, cited deliverable",
     "MAP": "nimble map — discover URLs on a site",
@@ -77,7 +77,7 @@
       "id": 10,
       "prompt": "give me a brief on how gizmotech.io positions itself, their site has no template",
       "expected_route": "WSA",
-      "why": "Two things at once. Routing: a named site with no Extraction Template falls through Gate A to Gate B, where 'brief' lands on a Web Search Agent rather than a raw extract. Fork: a single-site positioning brief is medium effort, below the high+ threshold, so the skill must NOT prompt — this is the guard against fork-offer creep on cheap runs.",
+      "why": "Two things at once. Routing: a named site with no Extract Template falls through Gate A to Gate B, where 'brief' lands on a Web Search Agent rather than a raw extract. Fork: a single-site positioning brief is medium effort, below the high+ threshold, so the skill must NOT prompt — this is the guard against fork-offer creep on cheap runs.",
       "expect_fork_offer": false
     }
   ]

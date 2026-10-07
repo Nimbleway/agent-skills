@@ -2,11 +2,11 @@
 name: market-finder
 description: |
   Discovers all businesses of a given type in any geography using Nimble
-  WSAs. Two modes: Discovery finds businesses from scratch; Audit compares
+  Extract Templates. Two modes: Discovery finds businesses from scratch; Audit compares
   a user's existing list (Google Sheet, CSV, inline) against fresh
   discovery, categorizing entries as matched, discovered-only, or
   reference-only. Vertical presets (Healthcare, SaaS, Restaurants, Legal,
-  Auto/Home) auto-select WSA routing.
+  Auto/Home) auto-select template routing.
 
   Triggers: "find all X in Y", "build a list of", "market sizing",
   "account universe", "how many X in Y", "TAM for", "discover all",
@@ -35,13 +35,13 @@ allowed-tools:
   - AskUserQuestion
 metadata:
   author: Nimbleway
-  version: 1.7.0
+  version: 1.7.1
   category: business-research
 ---
 
 # Market Finder
 
-Market intelligence powered by Nimble Web Search Agents.
+Market intelligence powered by Nimble Extract Templates.
 
 User request: $ARGUMENTS
 
@@ -129,12 +129,12 @@ preset trigger keywords.
 
 | Match | Action |
 |-------|--------|
-| Clear match | Load that preset's WSA routing and query pattern |
+| Clear match | Load that preset's template routing and query pattern |
 | Partial match | Confirm: "This looks like **Healthcare**. Use healthcare presets?" |
 | No match | Use Custom preset with user's keywords |
 | SaaS match | Switch to non-geographic pipeline (no geo-tiling) |
 
-Note which discovery WSAs and enrichment WSAs the preset specifies.
+Note which discovery templates and enrichment templates the preset specifies.
 
 ### Step 3: Geographic Scoping
 
@@ -143,18 +143,18 @@ Note which discovery WSAs and enrichment WSAs the preset specifies.
 | Geography level | Tiling strategy |
 |----------------|-----------------|
 | City | Single query, no tiling |
-| Metro area | Single query per WSA |
+| Metro area | Single query per template |
 | State | Tile by top 5-10 metros in the state |
 | Region | Tile by states, then top metros per state |
 | Nationwide | Tile by all states, then top metros per state |
 
-**Estimate API calls:** `metros * discovery_wsas * (1 + enrichment_ratio)` where
+**Estimate API calls:** `metros * discovery_templates * (1 + enrichment_ratio)` where
 `enrichment_ratio` is ~0.3. Follow the Scaled Execution pattern from
 `references/nimble-playbook.md` to choose execution tier (individual / batch /
 multi-batch / confirmation gate):
 
 ```
-Estimated API calls: ~1,560 (50 states x 8 metros x 3 WSAs + enrichment)
+Estimated API calls: ~1,560 (50 states x 8 metros x 3 templates + enrichment)
 This is a nationwide search. Proceed? [Y/n]
 ```
 
@@ -171,11 +171,11 @@ Check: `cat ~/.nimble/memory/market-finder/checkpoints/{slug}/discovery.json 2>/
   Resume and fill gaps, or start fresh?"
 - **No checkpoint** -> proceed to Step 5
 
-### Step 5: WSA Discovery & Execution
+### Step 5: Extract Template Discovery & Execution
 
-#### 5a: Discover available WSAs
+#### 5a: Discover available templates
 
-For each target domain in the selected vertical preset, discover current WSAs:
+For each target domain in the selected vertical preset, discover current templates:
 
 ```bash
 nimble extract:templates list --limit 100  # then filter items for "{domain}"
@@ -184,28 +184,28 @@ nimble extract:templates list --limit 100  # then filter items for "{domain}"
 Run these searches simultaneously (one per target domain). From the results:
 1. Filter by entity_type (SERP for discovery, PDP/Profile for enrichment)
 2. Prefer `managed_by: "nimble"` over `managed_by: "community"`
-3. If no WSA found for a domain, mark it for `nimble search` fallback
-4. If no WSAs found for ANY domain, fall back entirely to `nimble search` for all metros
+3. If no template found for a domain, mark it for `nimble search` fallback
+4. If no templates found for ANY domain, fall back entirely to `nimble search` for all metros
 
-Then validate each discovered WSA's input params:
+Then validate each discovered template's input params:
 ```bash
 nimble extract:templates get --extract-template-name {discovered_name}
 ```
 
-Cache the discovered WSA names + params for the rest of the run.
+Cache the discovered template names + params for the rest of the run.
 
 #### 5b: Geographic discovery (all except SaaS)
 
-For each metro in the tiling plan, run the discovered WSAs simultaneously:
+For each metro in the tiling plan, run the discovered templates simultaneously:
 
 ```bash
-nimble extract:templates run --template {maps_wsa} --params '{...validated params...}'
+nimble --client-source nimble-agent-skills extract:templates run --template {maps_template} --params '{...validated params...}'
 ```
 ```bash
-nimble extract:templates run --template {yelp_wsa} --params '{...validated params...}'
+nimble --client-source nimble-agent-skills extract:templates run --template {yelp_template} --params '{...validated params...}'
 ```
 
-Run tertiary domain WSAs only if the preset includes them AND primary + secondary
+Run tertiary domain templates only if the preset includes them AND primary + secondary
 return < 10 combined unique results for that metro.
 
 Choose execution tier per the Scaled Execution pattern in
@@ -213,7 +213,7 @@ Choose execution tier per the Scaled Execution pattern in
 
 #### 5c: SaaS discovery (non-geographic)
 
-SaaS skips WSA discovery. Run the two-pass search queries defined in the SaaS
+SaaS skips template discovery. Run the two-pass search queries defined in the SaaS
 preset from `references/vertical-presets.md`:
 - **Pass 1 -- Product discovery:** G2, Capterra, general, ProductHunt, GitHub
 - **Pass 2 -- Financial discovery:** Crunchbase, funding news, market landscape
@@ -223,7 +223,7 @@ traction data will be missing or wrong.
 
 #### 5d: Fallback
 
-If no WSA was found for a target domain, or if a WSA fails for any metro:
+If no template was found for a target domain, or if a template fails for any metro:
 ```bash
 nimble search --query "[type] in [metro]" --max-results 20 --search-depth lite
 ```
@@ -232,22 +232,22 @@ nimble search --query "[type] in [metro]" --max-results 20 --search-depth lite
 1. Parse all results into a unified entity list
 2. Deduplicate following the Entity Deduplication pattern from
    `references/nimble-playbook.md`: place_id -> domain -> fuzzy name + city
-3. Track `source_count` per entity (how many WSAs/sources found it)
+3. Track `source_count` per entity (how many templates/sources found it)
 4. Save checkpoint: `~/.nimble/memory/market-finder/checkpoints/{slug}/discovery.json`
 
 ### Step 6: Enrichment
 
-Run enrichment using the WSAs discovered in Step 5a for the preset's enrichment
+Run enrichment using the templates discovered in Step 5a for the preset's enrichment
 target domains. Prioritize entities with the highest source count first. Choose
 execution tier per Scaled Execution in `references/nimble-playbook.md`.
 
 ```bash
-nimble extract:templates run --template {enrichment_wsa} --params '{...validated params...}'
+nimble --client-source nimble-agent-skills extract:templates run --template {enrichment_template} --params '{...validated params...}'
 ```
 
-Only run enrichment WSAs that apply to the current vertical's enrichment targets
+Only run enrichment templates that apply to the current vertical's enrichment targets
 (see `references/vertical-presets.md`). Skip entities without the required ID/URL
-for the enrichment WSA.
+for the enrichment template.
 
 Save checkpoint: `~/.nimble/memory/market-finder/checkpoints/{slug}/enrichment.json`
 
@@ -430,10 +430,10 @@ Slack: TL;DR with total count + top 10 entities only.
 
 ## Sub-Agent Strategy
 
-For large jobs, `nimble extract:templates batch` handles WSA parallelism server-side (see
+For large jobs, `nimble extract:templates batch` handles template parallelism server-side (see
 Scaled Execution in `references/nimble-playbook.md`). Sub-agents are useful for
 **preparing** batch inputs and **processing** results, not for running individual
-WSA calls.
+template calls.
 
 Use `nimble-researcher` agents (`agents/nimble-researcher.md`) when:
 - Building metro query lists for large geographies (one agent per state)
@@ -450,8 +450,8 @@ Check at startup: `echo $CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS`
 
 **Team mode** (flag set): Spawn **teammates** for parallel phases:
 
-- **Discovery teammate(s):** Run all discovery WSAs across metro batches
-- **Enrichment teammate:** Run enrichment WSAs for top entities
+- **Discovery teammate(s):** Run all discovery templates across metro batches
+- **Enrichment teammate:** Run enrichment templates for top entities
 - **Lead** (you): Coordinate, scope, deduplicate, score, generate output
 
 **Solo mode** (flag not set): Standard sequential flow from Steps 5-8.
@@ -463,8 +463,8 @@ Check at startup: `echo $CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS`
 See `references/nimble-playbook.md` for the standard error table (missing API key,
 429, 401, empty results, extraction garbage). Skill-specific errors:
 
-- **WSA not found:** Skip silently and rely on other discovery sources. Log which
-  WSAs were unavailable.
+- **Template not found:** Skip silently and rely on other discovery sources. Log which
+  templates were unavailable.
 - **Search 500/timeout:** Retry once without `--focus` flag. If still failing,
   retry with a simplified query. Log the failure but don't skip the entire search
   category -- partial data is better than none.

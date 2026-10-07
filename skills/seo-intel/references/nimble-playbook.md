@@ -155,7 +155,7 @@ data files.
 
 **If same-day sibling output exists:**
 - **Skip CLI check and profile load** — they were validated minutes ago
-- **Reuse WSA Layer 1 and Layer 3 inventory** — the catalog hasn't changed. Only
+- **Reuse the Layer 1 and Layer 3 Extract Template inventory** — the catalog hasn't changed. Only
   re-run Layer 2 if the specialty or context changed.
 - **Use the sibling's structured output directly** — if the upstream skill produced
   data files with domains and page URLs, don't re-search for what's already known.
@@ -309,7 +309,7 @@ relevance before extracting.
 Each skill provides its own keyword/weight table in SKILL.md — the pattern here is
 the discover → score → filter → fallback flow.
 
-## Extraction Templates
+## Extract Templates
 
 Reusable, site-specific templates that return structured fields from a known site
 (Amazon products, Reddit threads, Google Maps, etc.) — the right tool when you can point
@@ -356,7 +356,7 @@ AI-driven agents for open-ended web work — **research, data enrichment, and da
 building** — where the source isn't fixed, data is scattered across pages, structure is
 inconsistent, or a synthesized answer is needed. Given a goal, an agent discovers where
 the information lives, navigates to it, and returns structured or written output with
-per-claim citations. This is the right tool when an Extraction Template doesn't fit
+per-claim citations. This is the right tool when an Extract Template doesn't fit
 because there's no single known page to parse (see the routing note above).
 
 **Reuse-priority — check in this order before creating a new agent:**
@@ -384,7 +384,7 @@ and ignores `--agent-name`; use `nimble agents run` for Modes 1 and 3. Mode 3 st
 generated `web_search_agent_id` — keep it, `get` and `result` both need it.
 
 ```bash
-# Discover pre-built agent templates, then inspect one
+# Discover Web Search Agent gallery templates, then inspect one
 nimble --client-source nimble-agent-skills agents:templates list
 nimble --client-source nimble-agent-skills agents:templates get --template-name <template_name>
 
@@ -443,7 +443,7 @@ or calling it failed.
 > Full contract (mode table, source shapes, trust metadata, error table):
 > `skills/nimble-web-expert/references/nimble-agents/reference.md`.
 
-**Fallback rule:** If neither an Extraction Template nor a Web Search Agent fits, fall
+**Fallback rule:** If neither an Extract Template nor a Web Search Agent fits, fall
 back to `nimble search` + `nimble extract`. Don't fail silently — log which domains
 lacked coverage.
 
@@ -464,7 +464,7 @@ nimble tasks list --limit 20                  # list all tasks
 **Workflow:** Always `extract:templates get` (or `agents:templates get`) before running,
 to understand the expected input params and output fields.
 
-> **Out of scope:** Building or publishing new Extraction Templates / Web Search Agents is
+> **Out of scope:** Building or publishing new Extract Templates / Web Search Agents is
 > not part of these skills — use **existing** templates and agents. Point users who need a
 > custom template or agent to the Nimble app.
 
@@ -701,7 +701,7 @@ assume a specific format — detect and adapt.
 
 ## Scaled Execution
 
-When a skill needs to run multiple WSA or API calls, choose the execution tier
+When a skill needs to run multiple Extract Template or API calls, choose the execution tier
 based on the estimated number of requests. Each skill calculates its own estimate
 from input size and operations per record.
 
@@ -752,7 +752,7 @@ For >1,000 requests, split into multiple batch calls.
 
 **Sub-agents should also batch.** When spawning sub-agents for parallel work, tell
 each agent to use `extract-batch` or `extract:templates batch` for its assigned items
-rather than making individual calls. One batch call per agent is faster and more
+rather than making individual calls. One batch call per sub-agent is faster and more
 reliable than 5-6 sequential calls.
 
 ### Large job confirmation (>1,000)
@@ -760,7 +760,7 @@ reliable than 5-6 sequential calls.
 Before executing, show the estimate and ask the user to confirm:
 
 ```
-Estimated API calls: ~2,400 (120 locations × 3 WSAs per location × ~7 enrichment)
+Estimated API calls: ~2,400 (120 locations × 3 templates per location × ~7 enrichment)
 This is a large job. Proceed? [Y/n]
 ```
 

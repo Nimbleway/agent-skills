@@ -56,21 +56,21 @@ from `business-profile.json` competitor list.
 Parse: list of domains, optional section filter, whether to include user's domain,
 and page cap per domain (50 / 200 / 500).
 
-### Step 3: WSA Discovery
+### Step 3: Extract Template Discovery
 
-Search for relevant WSAs in parallel:
+Search for relevant templates in parallel:
 
 ```bash
 nimble extract:templates list --limit 100  # then filter items for "seo"
 nimble extract:templates list --limit 100  # then filter items for "keyword"
 ```
 
-From results, filter for agents relevant to SEO data extraction. Validate any
-promising agents with `nimble extract:templates get --extract-template-name {name}` before using them.
-Cache discovered agent names and parameters.
+From results, filter for templates relevant to SEO data extraction. Validate any
+promising templates with `nimble extract:templates get --extract-template-name {name}` before using them.
+Cache discovered template names and parameters.
 
-**Fall back to `nimble map` + `nimble extract` / `nimble crawl` if no useful WSAs
-are found.** The skill works without WSAs — they are an optimization, not a
+**Fall back to `nimble map` + `nimble extract` / `nimble crawl` if no useful templates
+are found.** The skill works without templates — they are an optimization, not a
 requirement.
 
 ### Step 4: Site Discovery

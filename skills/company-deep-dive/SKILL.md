@@ -33,7 +33,7 @@ allowed-tools:
   - AskUserQuestion
 metadata:
   author: Nimbleway
-  version: 1.7.0
+  version: 1.7.1
   category: business-research
 ---
 
@@ -87,9 +87,9 @@ Parse the target company from `$ARGUMENTS` or the user's message.
 If they say "quick overview", "brief", or "summary", run a **quick mode** that skips
 the Deep Extraction step and produces a shorter report.
 
-### Step 2: WSA Discovery
+### Step 2: Extract Template Discovery
 
-Discover available WSAs for the target company's domain. Run both searches
+Discover available templates for the target company's domain. Run both searches
 simultaneously:
 
 ```bash
@@ -100,11 +100,11 @@ nimble extract:templates list --limit 100  # then filter items for "{company-dom
 nimble extract:templates list --limit 100  # then filter items for "{company-name}"
 ```
 
-From the results, filter for WSAs with `entity_type` matching SERP or PDP, and
+From the results, filter for templates with `entity_type` matching SERP or PDP, and
 prefer `managed_by: "nimble"`. Validate each with
-`nimble extract:templates get --extract-template-name {name}`, then cache discovered WSA names + params
+`nimble extract:templates get --extract-template-name {name}`, then cache discovered template names + params
 for the run. Pass them to dimension agents in Step 3 for enrichment alongside
-`nimble search`. If no WSAs found, continue with `nimble search` alone.
+`nimble search`. If no templates found, continue with `nimble search` alone.
 
 ### Step 3: Parallel Research Across Dimensions (sub-agents)
 
@@ -114,7 +114,7 @@ Follow the sub-agent spawning rules from `references/nimble-playbook.md`
 
 Spawn `nimble-researcher` agents (`agents/nimble-researcher.md`) with
 `mode: "bypassPermissions"`. Each agent researches one dimension of the company.
-Pass discovered WSA names from Step 2 to each agent so they can use them for
+Pass discovered template names from Step 2 to each agent so they can use them for
 enrichment alongside `nimble search`.
 
 **Important:** The Nimble API has a 10 req/sec rate limit per API key. With each agent
@@ -123,7 +123,7 @@ the limit. Run overview searches in their own phase, not alongside agent batches
 
 **Call estimation & Scaled Execution:** Before launching agents, estimate total API
 calls: 2 overview searches + ~5 searches per agent × 5 agents = ~27 calls. Each agent
-should use `extract-batch` or `agent run-batch` for 11+ calls instead of individual
+should use `extract-batch` or `extract:templates batch` for 11+ calls instead of individual
 calls. See the Scaled Execution pattern in `references/nimble-playbook.md` for tier
 selection.
 
@@ -180,7 +180,7 @@ For extraction failures, follow the fallback in `references/nimble-playbook.md`.
 
 **Quick mode:** Skip this step entirely. Report from search snippets only.
 
-**WSA enrichment:** If WSAs were discovered in Step 2, use them here for richer
+**Template enrichment:** If templates were discovered in Step 2, use them here for richer
 extraction on key URLs before falling back to `nimble extract`.
 
 ### Step 5: Synthesize Report

@@ -1,21 +1,21 @@
-# Extraction Template Pipeline for Local Places
+# Extract Template Pipeline for Local Places
 
-Extraction Template discovery strategy, phase classification, category detection, location
-disambiguation, and interactive map generation. For general Extraction Template execution rules
+Extract Template discovery strategy, phase classification, category detection, location
+disambiguation, and interactive map generation. For general Extract Template execution rules
 (invocation, parsing, fallback), see `nimble-playbook.md`.
 
 ---
 
-## Extraction Template Discovery Strategy
+## Extract Template Discovery Strategy
 
-Extraction Template names are dynamic and change frequently. Discover all Extraction Templates at runtime in
-Step 4 using `nimble extract:templates list` (filtered client-side). Never hardcode Extraction Template names.
+Extract Template names are dynamic and change frequently. Discover all Extract Templates at runtime in
+Step 4 using `nimble extract:templates list` (filtered client-side). Never hardcode Extract Template names.
 
 ### Discovery search terms
 
-Run these simultaneously to find Extraction Templates for all phases:
+Run these simultaneously to find Extract Templates for all phases:
 
-| Search term | Finds Extraction Templates for | Phase |
+| Search term | Finds Extract Templates for | Phase |
 |-------------|---------------|-------|
 | `"maps"` | Geo-targeted place discovery (maps, location data) | Phase 1 |
 | `"reviews"` | Review content and ratings | Phase 3 |
@@ -25,7 +25,7 @@ Run these simultaneously to find Extraction Templates for all phases:
 
 ### Classification rules
 
-After discovery, classify each Extraction Template into a phase by its `entity_type` and description:
+After discovery, classify each Extract Template into a phase by its `entity_type` and description:
 
 | Phase | Purpose | entity_type signals | Description signals |
 |-------|---------|-------------------|-------------------|
@@ -34,12 +34,12 @@ After discovery, classify each Extraction Template into a phase by its `entity_t
 | **Phase 3 -- Reviews** | Pull review content | PDP, Profile | "reviews", "ratings", "customer" |
 | **Phase 4 -- Food/Drink** | Delivery platform data | SERP, PDP | "doordash", "ubereats", "delivery", "menu" |
 
-Prefer `managed_by: "nimble"` over `managed_by: "community"` when multiple Extraction Templates
+Prefer `managed_by: "nimble"` over `managed_by: "community"` when multiple Extract Templates
 serve the same purpose.
 
 ### Phase execution
 
-- **Phase 1:** Run primary + secondary discovery Extraction Templates simultaneously. Run tertiary
+- **Phase 1:** Run primary + secondary discovery Extract Templates simultaneously. Run tertiary
   only if < 10 combined unique results.
 - **Phase 2:** Run for places with social handles found in Phase 1. Trigger social
   handle search if not in discovery results:
@@ -50,10 +50,10 @@ serve the same purpose.
 
 ### Fallback
 
-For any phase where no Extraction Template was discovered:
+For any phase where no Extract Template was discovered:
 ```bash
-nimble search --query "[place-name] [location]" --max-results 5 --search-depth lite
-nimble extract --url "[place-website]" --format markdown
+nimble --client-source nimble-agent-skills search --query "[place-name] [location]" --max-results 5 --search-depth lite
+nimble --client-source nimble-agent-skills extract --url "[place-website]" --format markdown
 ```
 
 Use `nimble extract` on the place's own website to gather hours, menu, services, etc.
@@ -63,7 +63,7 @@ Follow the Page Extraction with Retry pattern from `nimble-playbook.md`.
 
 ## Category Detection
 
-Detect the place category from the user's query to determine which Extraction Template phases apply.
+Detect the place category from the user's query to determine which Extract Template phases apply.
 
 | Category | Trigger Keywords | Bonus Phases |
 |----------|-----------------|--------------|

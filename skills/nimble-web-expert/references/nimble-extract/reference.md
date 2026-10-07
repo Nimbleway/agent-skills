@@ -8,7 +8,7 @@ description: |
 
 # nimble extract — reference
 
-Fetches a URL and returns its content. The workhorse command — use for any URL where no agent exists.
+Fetches a URL and returns its content. The workhorse command — use for any URL where no Extract Template exists.
 
 ## Table of Contents
 
