@@ -21,79 +21,90 @@
 
 <!-- Comparison video (agent with vs. without Nimble) goes here once one exists. -->
 
-Unlock the web for your AI agents — search, scrape, extract structured data, and run business intelligence workflows, all powered by Nimble's web data infrastructure. One plugin for Claude Code, Cursor, and any platform that supports the [Agent Skills spec](https://agentskills.io/specification.md).
+Unlock the web for your AI agents: search, scrape, extract structured data, and run business intelligence workflows, all powered by Nimble's web data infrastructure. One plugin for Claude Code, Cursor, and any platform that supports the [Agent Skills spec](https://agentskills.io/specification.md).
 
-**Agent credential protocol:** see [AUTH.md](AUTH.md) — the file agents read to authenticate to the Nimble API. Served live at https://nimbleway.com/auth.md.
+**Agent credential protocol:** see [AUTH.md](AUTH.md), the file agents read to authenticate to the Nimble API. Served live at https://nimbleway.com/auth.md.
 
 ## Skills
 
 | Category | Skills | What you get |
 | -------- | ------ | ------------ |
-| **Business Research** | [competitor-intel](skills/competitor-intel/) · [company-deep-dive](skills/company-deep-dive/) · [market-finder](skills/market-finder/) | Competitor monitoring, 360° company research, and market discovery — find all businesses of a given type in any geography with multi-source verification |
-| **Marketing** | [competitor-positioning](skills/competitor-positioning/) · [brand-mention-monitor](skills/brand-mention-monitor/) · [launch-monitor](skills/launch-monitor/) | Track how competitors position themselves — messaging shifts, pricing changes, content gaps, battlecard inputs |
-| **SEO** | [seo-intel](skills/seo-intel/) | All-in-one SEO intelligence — keyword research, rank tracking, technical site audits with JS rendering, content gap analysis, competitor on-page teardowns, AI visibility across 5 platforms, and GitHub repo SEO. Single entry point with intent-based routing |
-| **Productivity** | [meeting-prep](skills/meeting-prep/) · [local-places](skills/local-places/) | Walk into any meeting fully briefed — attendee backgrounds, company context, talking points, relationship mapping. Discover and score local businesses in any neighborhood with interactive maps |
+| **Business Research** | [competitor-intel](skills/competitor-intel/) · [company-deep-dive](skills/company-deep-dive/) · [market-finder](skills/market-finder/) | Competitor monitoring, 360° company research, and market discovery. Find all businesses of a given type in any geography with multi-source verification |
+| **Marketing** | [competitor-positioning](skills/competitor-positioning/) · [brand-mention-monitor](skills/brand-mention-monitor/) · [launch-monitor](skills/launch-monitor/) | Track how competitors position themselves: messaging shifts, pricing changes, content gaps, battlecard inputs |
+| **SEO** | [seo-intel](skills/seo-intel/) | All-in-one SEO intelligence: keyword research, rank tracking, technical site audits with JS rendering, content gap analysis, competitor on-page teardowns, AI visibility across 5 platforms, and GitHub repo SEO. Single entry point with intent-based routing |
+| **Productivity** | [meeting-prep](skills/meeting-prep/) · [local-places](skills/local-places/) | Walk into any meeting fully briefed: attendee backgrounds, company context, talking points, relationship mapping. Discover and score local businesses in any neighborhood with interactive maps |
 | **Healthcare** | [healthcare-providers-extract](skills/healthcare-providers-extract/) · [enrich](skills/healthcare-providers-enrich/) · [verify](skills/healthcare-providers-verify/) | Extract structured practitioner data from practice websites, enrich provider lists with missing fields, and verify credentials against the NPI registry |
 | **Human Resources** | [talent-sourcing](skills/talent-sourcing/) | Source and shortlist candidates from live web data. More skills (comp analysis, interview prep, onboarding) planned |
-| **Web Data Toolkit** | [nimble-web-expert](skills/nimble-web-expert/) | Search, scrape, extract, map, and crawl any website — run site-specific Extraction Templates for clean structured data, and Web Search Agents for open-ended research with citations |
-| **Data Platforms** | [nimble-databricks-data-products](skills/nimble-databricks-data-products/) | Turn live web data into Databricks data products — discover Nimble agents, scrape into Delta tables, and build an AI/BI dashboard and/or a deployed Databricks App |
+| **Web Data Toolkit** | [nimble-web-expert](skills/nimble-web-expert/) | Search, scrape, extract, map, and crawl any website. Run site-specific Extraction Templates for clean structured data, and Web Search Agents for open-ended research with citations |
+| **Data Platforms** | [nimble-databricks-data-products](skills/nimble-databricks-data-products/) | Turn live web data into Databricks data products: discover Nimble agents, scrape into Delta tables, and build an AI/BI dashboard and/or a deployed Databricks App |
 
 **Business Research**, **Marketing**, **Productivity**, and **Healthcare** skills are one-command workflows. They spawn parallel sub-agents, gather live web data via Nimble APIs, synthesize findings, and deliver structured reports with dates and source URLs. They learn from previous runs and only surface what's new.
 
-Every skill lives directly under `skills/`. The category above is recorded as `metadata.category` in each skill's `SKILL.md` frontmatter — the plugin platforms require a flat skills tree, so categories are metadata rather than folders. See [CLAUDE.md](CLAUDE.md#skills-must-stay-flat).
+Every skill lives directly under `skills/`. The category above is recorded as `metadata.category` in each skill's `SKILL.md` frontmatter. The plugin platforms require a flat skills tree, so categories are metadata rather than folders. See [CLAUDE.md](CLAUDE.md#skills-must-stay-flat).
 
-**Web Data Toolkit** skills expose Nimble's raw capabilities for any web task and power the business skills under the hood — search and extract for raw data, Extraction Templates for reusable site-specific scraping, and Web Search Agents for open-ended research, enrichment, and dataset building.
+**Web Data Toolkit** skills expose Nimble's raw capabilities for any web task and power the business skills under the hood: search and extract for raw data, Extraction Templates for reusable site-specific scraping, and Web Search Agents for open-ended research, enrichment, and dataset building.
 
 ## Quick Start
 
-### 1. Install the Nimble CLI
+### 1. Install
 
 ```bash
 npm i -g @nimble-way/nimble-cli
-```
-
-### 2. Set your API key
-
-[Sign up](https://online.nimbleway.com/signup) and grab your key from Account Settings > API Keys.
-
-```bash
 export NIMBLE_API_KEY="your-api-key-here"
 ```
 
-Or add it permanently to `~/.claude/settings.json`:
+[Sign up](https://online.nimbleway.com/signup) and grab your key from Account Settings > API Keys.
+
+Then add the skills to your agent:
+
+| Agent | Command |
+| ----- | ------- |
+| Claude Code, Claude Cowork, claude.ai | `/plugin install nimble` |
+| Cursor | `/add-plugin nimble` |
+| ChatGPT, Codex app | Open the **Plugins** tab and install [Nimble](https://chatgpt.com/plugins/plugin_asdk_app_6a79de2b746881918127ddf42127ddc4) |
+| Codex CLI | `/plugins`, install **Nimble**, then start a new session |
+| Other MCP clients, npx skills | See [more install options](#more-install-options) |
+
+### 2. Try it
+
+Ask in plain language. The matching skill picks it up.
+
+| Ask your agent | Skill | What you get |
+| -------------- | ----- | ------------ |
+| "Tell me about acme.com" | [company-deep-dive](skills/company-deep-dive/) | A sourced 360° report: funding, leadership, product, and recent news, each with a date and a link |
+| "Prepare me for my meeting with Jane from Acme Corp" | [meeting-prep](skills/meeting-prep/) | Attendee backgrounds, company context, and talking points |
+| "What are my competitors doing this week?" | [competitor-intel](skills/competitor-intel/) | Launches, hiring, and funding signals. The first run asks who your competitors are |
+| "Find all coffee shops in Williamsburg, Brooklyn" | [local-places](skills/local-places/) | A ranked list with reviews, social presence, and an interactive map |
+| "Scrape the pricing page at example.com" | [nimble-web-expert](skills/nimble-web-expert/) | Structured data from any page, ready to use |
+
+Prefer the terminal? The CLI works on its own:
+
+```bash
+nimble search --query "AI agent frameworks" --max-results 10
+```
+
+## More install options
+
+**API key in settings.** Instead of exporting it, add it permanently to `~/.claude/settings.json`:
 
 ```json
 { "env": { "NIMBLE_API_KEY": "your-api-key-here" } }
 ```
 
-### 3. Add the skills
+**Claude plugin details.** The plugin's `.mcp.json` auto-registers as a Connector pointing at the Nimble MCP server over native HTTP with OAuth, so there's no API key header to manage. On first use, run `/mcp` and authenticate `nimble` in your browser.
 
-**Any Claude product (Claude Code, Claude Cowork, claude.ai) — recommended:**
+In claude.ai / Cowork the connector appears under `Customize → Connectors` as **Nimble**. Click **Connect** and complete the browser login to activate it (you can create a Nimble account inline if you don't have one).
 
-```
-/plugin install nimble
-```
+**Cursor from a clone.** Clone the repo and open it in Cursor. The plugin system auto-discovers skills from `.cursor-plugin/plugin.json`.
 
-One command. The plugin's `.mcp.json` auto-registers as a Connector pointing at the Nimble MCP server over native HTTP with OAuth — no API key header to manage. On first use, run `/mcp` and authenticate `nimble` in your browser.
-
-In claude.ai / Cowork the connector appears under `Customize → Connectors` as **Nimble** — click **Connect** and complete the browser login to activate it (you can create a Nimble account inline if you don't have one).
-
-**Cursor:**
-
-```
-/add-plugin nimble
-```
-
-Or clone the repo and open it in Cursor — the plugin system auto-discovers skills from `.cursor-plugin/plugin.json`.
-
-**Manual install (Codex CLI, raw MCP clients, or when you'd rather use an API key):**
+**Manual install (raw MCP clients, or when you'd rather use an API key):**
 
 ```bash
 claude mcp add --transport http nimble https://mcp.nimbleway.com/mcp \
   --header "Authorization: Bearer ${NIMBLE_API_KEY}"
 ```
 
-> Restart Claude Code after running this — MCP servers added mid-session aren't available until the next launch.
+> Restart Claude Code after running this. MCP servers added mid-session aren't available until the next launch.
 
 **npx skills CLI:**
 
@@ -113,35 +124,23 @@ To list available skills:
 npx skills add Nimbleway/agent-skills --list
 ```
 
-### 4. Try it
-
-```bash
-# Business intelligence — ask a question, get a sourced report
-"What are my competitors doing this week?"
-"Prepare me for my meeting with Jane from Acme Corp"
-
-# Web data toolkit — get data from any website
-"Scrape the pricing page at example.com"
-nimble search --query "AI agent frameworks" --max-results 10
-```
-
 ## How It Works
 
 Nimble Web Search Skills follow a shared pattern: **preflight** (check CLI, load profile) → **parallel research** (spawn sub-agents for concurrent data gathering) → **analysis** (synthesize findings, deduplicate against previous runs) → **report** (structured output with sources) → **distribute** (offer Notion/Slack delivery).
 
-Core skills expose the Nimble CLI directly — search, extract, map, crawl, run Extraction Templates, and run Web Search Agents.
+Core skills expose the Nimble CLI directly: search, extract, map, crawl, run Extraction Templates, and run Web Search Agents.
 
 ### Local Web Knowledge Wiki
 
-Skills maintain a local web knowledge wiki at `~/.nimble/memory/` — live web intelligence that compounds across sessions, so your agent never starts from scratch. Inspired by [Karpathy's LLM Wiki](https://gist.github.com/karpathy/442a6bf555914893e9891c11519de94f): an AI-maintained, human-owned knowledge base that gets smarter with every run.
+Skills maintain a local web knowledge wiki at `~/.nimble/memory/`: live web intelligence that compounds across sessions, so your agent never starts from scratch. Inspired by [Karpathy's LLM Wiki](https://gist.github.com/karpathy/442a6bf555914893e9891c11519de94f): an AI-maintained, human-owned knowledge base that gets smarter with every run.
 
-- **Local-first indexes** — per-directory entity catalogs for instant lookup, no vector DB needed
-- **Obsidian-compatible** — `[[wiki links]]` cross-reference people, companies, and competitors. Open `~/.nimble/memory/` in Obsidian to browse your intelligence graph
-- **Cross-entity synthesis** — patterns across competitors, pricing trends, and market signals are surfaced automatically
-- **Ad-hoc insights** — say "remember this" mid-conversation and it compounds into the right entity page
-- **Activity log** — grep-friendly record of what was learned, when, and by which skill
+- **Local-first indexes:** per-directory entity catalogs for instant lookup, no vector DB needed
+- **Obsidian-compatible:** `[[wiki links]]` cross-reference people, companies, and competitors. Open `~/.nimble/memory/` in Obsidian to browse your intelligence graph
+- **Cross-entity synthesis:** patterns across competitors, pricing trends, and market signals are surfaced automatically
+- **Ad-hoc insights:** say "remember this" mid-conversation and it compounds into the right entity page
+- **Activity log:** grep-friendly record of what was learned, when, and by which skill
 
-Every finding carries a verified event date and source URL. Stale signals are dropped, not reported — your context is always current.
+Every finding carries a verified event date and source URL. Stale signals are dropped, not reported, so your context is always current.
 
 ### Platform Compatibility
 
@@ -157,7 +156,7 @@ All platforms read the same `skills/` directory. Platform-specific files coexist
 The repository is also an [Agent Plugins v1.0.0](https://agent-plugins.org/) package, the
 vendor-neutral format used by VS Code, Cursor, GitHub Copilot, Kiro, and ChatGPT & Codex. Root
 `mcp.json` is that format's canonical MCP config. Cursor is listed above as reading the user's own
-`.cursor/mcp.json` because that is where a Cursor user pastes the snippet — Cursor does not load
+`.cursor/mcp.json` because that is where a Cursor user pastes the snippet. Cursor does not load
 this repository's root `mcp.json`.
 
 ### Why there are two MCP config files
@@ -169,7 +168,7 @@ file satisfies every consumer:
 | -------- | --------------------- |
 | Root `mcp.json` (Agent Plugins) | `"type": "streamable-http"` |
 | `.mcp.json` (Claude Code) | `"type": "http"` |
-| Codex | no `type` key — HTTP is inferred from `url` |
+| Codex | no `type` key; HTTP is inferred from `url` |
 
 The portable schema sets `additionalProperties: false` at the root and on every server, so there
 is no room to carry a second vocabulary in one file. `.mcp.json` is the file Claude Code
@@ -178,7 +177,7 @@ auto-registers as a Connector, so the two are kept separate deliberately rather 
 
 Every skill directory is an immediate child of `skills/`, with its vertical recorded as
 `metadata.category` in the frontmatter. Reference documents inside a skill's `references/`
-directory are named `reference.md` — never `SKILL.md`, which would register them as skills on
+directory are named `reference.md`, never `SKILL.md`, which would register them as skills on
 platforms that discover recursively. `bash scripts/check-plugin-structure.sh` enforces both
 rules, and `python3 scripts/check-plugin-manifests.py` validates the per-platform manifests.
 
@@ -197,13 +196,13 @@ never drift apart.
 | `nimble crawl run --url "<url>" --limit 50` | Crawl a website section |
 | `nimble extract:templates list --limit 100` | Browse Extraction Templates for known sites |
 | `nimble extract:templates run --template <name> --params '{...}'` | Run an Extraction Template |
-| `nimble agents run --agent-name <name> --input "<task>"` | Start a Web Search Agent run — creates the named agent, or reuses it on repeat calls |
+| `nimble agents run --agent-name <name> --input "<task>"` | Start a Web Search Agent run: creates the named agent, or reuses it on repeat calls |
 | `nimble agents:runs create --agent-id <id> --input "<task>"` | Start a run against an agent you already hold the ID for |
 | `nimble agents:runs get / result --agent-id <id> --run-id <id>` | Poll a run to a terminal state, then fetch its output and citations |
 
 ## Contributing
 
-Have a web data workflow that should be one command? We'd love new skills — whether it's sales prospecting, lead enrichment, or anything that turns web data into action. See [CONTRIBUTING.md](CONTRIBUTING.md) for how to build and publish your own.
+Have a web data workflow that should be one command? We'd love new skills, whether it's sales prospecting, lead enrichment, or anything that turns web data into action. See [CONTRIBUTING.md](CONTRIBUTING.md) for how to build and publish your own.
 
 ## Links
 
@@ -214,7 +213,7 @@ Have a web data workflow that should be one command? We'd love new skills — wh
 
 ## License
 
-MIT License — see [LICENSE](LICENSE) for details.
+MIT License. See [LICENSE](LICENSE) for details.
 
 The MIT license covers the code, skills, and documentation in this repository. It does not
 grant rights to Nimble's trademarks or brand assets: the Nimble name, the Nimble logo, and
