@@ -26,7 +26,7 @@ Real-time web search with 8 focus modes. Returns results with titles, URLs, and 
 | Parameter                 | Type            | Default  | Description                                                                                                       |
 | ------------------------- | --------------- | -------- | ----------------------------------------------------------------------------------------------------------------- |
 | `query`                   | string          | required | Search query                                                                                                      |
-| `search_depth`            | string          | `deep`   | Content depth: `lite` \| `fast` \| `deep` — see depth table below                                                |
+| `search_depth`            | string          | `fast`   | Content depth: `lite` \| `fast` \| `deep` — see depth table below. `news`/`location`/`coding`/`academic` focus can't run `fast` and default to `lite` instead. |
 | `focus`                   | string or array | `general`| Focus mode (see table below) or array of specific agent names e.g. `["amazon_serp", "target_serp"]`               |
 | `include_answer`          | bool            | `false`  | AI-synthesized answer (premium — retry without if 402/403)                                                        |
 | `max_results`             | int             | `10`     | Result count (1–100)                                                                                              |
@@ -53,7 +53,7 @@ CLI uses hyphens (`--search-depth`, `--include-answer`). SDK uses underscores (`
 | `fast` | Rich cached content              | Fast     | AI agents, RAG, chatbots — quality content without scrape latency |
 | `deep` | Full real-time page content      | Slowest  | Research, due diligence, tasks requiring complete source material |
 
-**Default for AI agent use:** prefer `fast` — richest content-to-latency ratio.
+**Default for AI agent use:** `fast` — richest content-to-latency ratio, and the platform default when `search_depth` is omitted.
 
 ---
 
