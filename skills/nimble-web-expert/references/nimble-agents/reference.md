@@ -135,7 +135,7 @@ Available on both `agents run` and `agents:runs create`:
 | Flag                        | Description                                                                        |
 | --------------------------- | ---------------------------------------------------------------------------------- |
 | `--input`                   | Natural-language task/question for the run (required)                              |
-| `--effort`                  | `low` / `medium` / `high` / `x-high` / `max` (see below)                           |
+| `--effort`                  | `low` / `medium` / `high` / `x-high` (see below; `max` is not available)            |
 | `--output-schema`           | JSON schema (a full mapping) overriding the agent's default structured output      |
 | `--input-data`              | Existing rows to ENRICH — a list or single object mirroring the output_schema shape |
 | `--sources`                 | Source guidance overriding the agent default                                       |
@@ -198,17 +198,17 @@ filter **client-side** on `agent_name` / `template_name` / `description` / `use_
 are dynamic: discover them at runtime, never hardcode them.
 
 Each template carries `template_name`, `display_name`, `description`, `use_case`, a default
-`effort`, a `skill`, `sources`, `goals`, and an `output_schema`. Read these to judge fit
+`effort`, a `skill`, `sources`, and an `output_schema`. Read these to judge fit
 before materializing. Note the template `sources` shape differs from the run/agent shape —
 it is a flat ordered array of `{title, domains, order}` groups.
 
 ```bash
-# From a pre-built template (copies its fields, goals, sources, output_schema)
+# From a pre-built template (copies its fields, sources, output_schema)
 nimble --client-source nimble-agent-skills agents create --template <template_name>
 ```
 
 **Key `agents create` flags:** `--agent-name` (stable name), `--display-name`,
-`--description`, `--goal` (repeatable, ordered), `--sources`, `--output-schema`, `--effort`,
+`--description`, `--sources`, `--output-schema`, `--effort`,
 `--skill`, `--suggested-question` (repeatable), `--use-case`, `--template`, `--is-active`.
 
 ---
@@ -267,18 +267,27 @@ Polling is also the right approach in any host that can't hold a long-lived stre
 
 ## Effort tiers
 
-Set effort to the shape of the task — don't ask the user to pick a number:
+Effort: 'high' is the default. 'low' (~20 s) for one closed fact; 'medium' (~3 min) for a short answer from a few sources; 'high' (~8 min, up to ~17) when several fields need real digging; 'x-high' (~12 min, up to ~28) only for a deep multi-source profile (financials, filings, history) the user explicitly wants exhaustive - measured quality is about the same as 'high'. Never 'max' (not available). dataset_building needs 'medium' or above. Set it yourself; do not ask the user to pick an effort.
 
-| Tier                 | When                                                                    |
-| -------------------- | ----------------------------------------------------------------------- |
-| `low` / `medium`     | Fast, simple asks — a handful of easy-to-find fields                    |
-| `high`               | **Default** once several fields need real digging                       |
-| `x-high` / `max`     | Genuinely complex, multi-faceted profiles (financials, filings, history) |
+| Tier | Typical duration (production p50 / p90) |
+| --- | --- |
+| `low` | ~20 s / ~50 s |
+| `medium` | ~3 min / ~6 min |
+| `high` (default) | ~8 min / ~17 min |
+| `x-high` | ~12 min / ~28 min |
 
-`dataset_building` runs will not accept anything below `high`.
+---
 
-For a quick first look, offer a **preview** run at `low`, then re-run at the recommended tier —
-the user chooses "quick preview" vs "full run" without ever touching the value.
+## Configuring a run well (guidance v2, shared with the Nimble MCP server)
+
+- Effort: 'high' is the default. 'low' (~20 s) for one closed fact; 'medium' (~3 min) for a short answer from a few sources; 'high' (~8 min, up to ~17) when several fields need real digging; 'x-high' (~12 min, up to ~28) only for a deep multi-source profile (financials, filings, history) the user explicitly wants exhaustive - measured quality is about the same as 'high'. Never 'max' (not available). dataset_building needs 'medium' or above. Set it yourself; do not ask the user to pick an effort.
+- One run per request: put all entities in a single run (dataset_building and enrichment take lists; enrichment input_data holds up to 40 rows / 200 cells). Split into more runs only above those limits, and never have more than 3 runs in flight. For research that needs several sources, use one Web Search Agent run instead of many nimble_search / nimble_extract calls.
+- Write a task-specific skill (3-5 sentences), never a generic one: (1) the role, e.g. 'You are a B2B firmographics researcher'; (2) how to resolve the entity (name, domain, ticker; disambiguate same-name entities and say which one you chose); (3) source priority: the official/primary source first for exact or time-sensitive facts (company site, investor relations, regulator, registry), aggregators only to fill gaps; (4) freshness window if the user gave one; (5) output rules: 'Unknown' instead of guessing, cite a source URL for every fact.
+- For any list, table, comparison or 'for each X' ask, pass an output_schema: an array of objects whose property names are the user's own field names verbatim, all strings unless the user asked for numbers.
+- Sources shape: {"allow": [{"title": "Official filings", "domains": ["sec.gov"]}, ...], "block": [{"title": "...", "domains": [...]}], "prioritize": "free text", "avoid": "free text"}. allow/block items are groups with a short title and a list of domains (a plain list of domains is also accepted). An allow list is a hard limit on where the agent searches; use it only when the user restricts sources. Otherwise put source preferences in 'prioritize'.
+- Source priority by kind of task (put the relevant line into 'prioritize' or the skill): companies / lead gen -> company website, LinkedIn company page, official registry; financial figures -> investor relations, SEC/EDGAR or the local regulator before aggregators; people / recruiting -> LinkedIn profile, company team page, official bios; e-commerce / products -> the brand or retailer product page, then marketplaces; real estate -> the listing portal and official property records; healthcare -> official registries (e.g. NPI, clinicaltrials.gov), regulator, provider site; regulatory / legal -> the official gazette, regulator or court site.
+- Ask the user only when the request leaves out something that decides a config field, and map every answer into that field: which entity -> input + skill; which fields/format -> output_schema; time window -> input + skill; sources to trust or avoid -> sources; how long they can wait -> effort; how many items -> use_case/effort. Do not ask anything that would not change the config.
+- After starting a run, keep this turn open: tell the user the expected time, then poll nimble_agents_run_status at the suggested interval until it is terminal, call nimble_agents_run_result, and present the answer with its citations. Do not hand the waiting to a background task or end the turn before the result is shown; a run nobody fetches is wasted.
 
 ---
 
@@ -291,9 +300,7 @@ configuration guidance):
   agent is for this use case; how to handle inputs supplied in more than one format; which
   source to check first for which fact; how to handle data that can't be found (say
   "Unknown," never invent); and whether to return a per-field confidence indicator.
-- **Goals** (`--goal`, repeatable) — one verb phrase per logical group of output fields,
-  ordered most-important first. If there's a way to skip re-fetching data the user already
-  has, make that the first goal.
+- **Goals** — deprecated; do not set them. Put the agent's objectives in the skill and the run input.
 - **Sources** (`--sources`) — priority-ordered groups per the shape above, most important
   first.
 - **Output** (`--output-schema`) — use the user's own field names; use plain strings for
