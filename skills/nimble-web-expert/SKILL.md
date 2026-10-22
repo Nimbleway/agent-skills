@@ -78,7 +78,8 @@ User request: $ARGUMENTS
 - **Route by intent first** (see [Analyze & Route](#analyze--route) for the full decision model). Named site with a matching Extraction Template + a direct item to look up → run the template. Site with no template, or a need that requires discovery/reasoning across pages → a Web Search Agent. One-off single URL → `nimble extract`. Raw results to work from ("find pages/articles about…") → `nimble search`; a synthesized deliverable (report, brief, comparison, recommendation) → a Web Search Agent. Discover/crawl URLs → `nimble map` or `nimble crawl`.
 - **Web Search Agent runs: pick a run mode before building the command.** Default to named create-or-reuse — `nimble agents run --agent-name <stable-name>` — so a repeat session lands on the same agent. `agents:runs create` is the explicit-agent-ID route only and requires `--agent-id`. `references/nimble-agents/reference.md` has the mode table, `use_case` locking, and the one-time `skill` override.
 - **One command → present results → done.** Run once, show the data immediately as a table. Do NOT experiment, loop, or write Python to parse output.
-- **Multiple inputs → always parallel.** 2+ URLs/keywords/ASINs → `&`+`wait`. 6–20 → `xargs -P`. 20+ → Python asyncio script. See `references/batch-patterns.md`.
+- **Multiple known inputs → parallel.** 2+ already-known URLs/ASINs to fetch → `&`+`wait`. 6–20 → `xargs -P`. 20+ → Python asyncio script. See `references/batch-patterns.md`. Research, lists by criteria and fact-checking are not this: they are one Web Search Agent run.
+- **Let the Web Search Agent do the work.** If a request needs more than about 3 searches or pages, several sources, a list/table, or fact-checking across sites, start ONE Web Search Agent run from this conversation right away. Do not research first, do not split the request into several runs, and never start runs or search/extract research from sub-agents (Task/Agent) or background tasks. Put every sub-question in that run's input.
 - **Escalate render tiers silently on empty or truncated content.** Tier 1 → 2 → 3 → … without asking. Surface a decision only when all tiers fail and investigation tools are needed. An access barrier is a different outcome, not a tier to climb — see Guardrails.
 - **Never answer from training data.** Live prices, current news, today's listings → always fetch via Nimble. If unavailable, say so.
 - **AskUserQuestion at every meaningful choice.** Header ≤12 chars, 2–4 options, label 1–5 words, recommended option first. Never present choices as numbered prose.
@@ -106,7 +107,6 @@ Extraction Templates and Web Search Agents are distinct — an Extraction Templa
 
 - Use `AskUserQuestion` at every meaningful choice — never guess, never ask in prose.
 - **Ambiguous request** (no URL, vague topic): ask before running — "What would you like to do?" → Research & report / Search / Fetch URL / Discover URLs
-- **Gate B landed on a Web Search Agent at `high`+ effort**: offer the cost/latency fork — Researched report / Quick scan (see [Analyze & Route](#analyze--route))
 - **Before running a search** (if task maps to a specific focus mode): offer focus mode — General / News / Coding / Shopping / Academic / Social
 - **After all tiers fail**: check investigation tools (`which browser-use`, `python3 -c "from playwright.sync_api..."`) and ask whether to investigate with browser-use, Playwright, or skip.
 - After presenting results, always close with: "Were these results what you needed?" → `Looks great!` / `Mostly good` / `Not quite` / `Skip feedback`
@@ -182,18 +182,9 @@ nimble extract:templates run --template <name> --params '{"key": "value"}'
 
 Structured rows about many entities → Web Search Agent with `enrichment` or `dataset_building`. See `references/nimble-agents/reference.md`.
 
-### Offer the fork when the answer is the expensive one
+When Gate B lands on a Web Search Agent, run it without asking about cost or depth.
 
-A Web Search Agent at `high` effort takes minutes and costs more; a search takes seconds. That's a real trade-off, so surface it — **but only when Gate B lands on a Web Search Agent AND the recommended effort is `high` or above.** One `AskUserQuestion`, recommended option first:
-
-- **Researched report** — Web Search Agent, a few minutes, every claim cited
-- **Quick scan** — `nimble search`, seconds, raw links you skim yourself
-
-Below `high`, don't ask — just run the Web Search Agent. Never ask when Gate A already resolved the route.
-
-**Dataset requests always clear the threshold.** "Build a list of…" → `dataset_building`, which runs at `high` or above by definition, so the fork always applies. Enrichment has no such floor — judge "enrich these rows" on the normal effort rule and skip the prompt when a small, well-specified fill-in lands below `high`.
-
-**Before starting any Web Search Agent run, say how long it will take**, then narrate at phase transitions. On MCP, progress comes from bounded status polling rather than a live stream — poll and report each step, because an un-narrated multi-minute run reads as a hang.
+**Before starting any Web Search Agent run, say how long it will take** (typically ~8 min, up to ~17), then narrate at phase transitions. On MCP, `nimble_agents_run_status` waits up to ~45 s per call and returns the answer once the run completes: call it again right away until then and report progress each time.
 
 ---
 
