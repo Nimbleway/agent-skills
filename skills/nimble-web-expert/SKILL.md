@@ -3,6 +3,8 @@ name: nimble-web-expert
 description: |
   Get web data now — fast, incremental, immediately responsive to what the user needs.
   The only way Claude can access live websites.
+  Research, lists or fact-checking across sites: start ONE Web Search Agent run, not
+  sub-agents (Agent/Task) researching in parallel — the run already works across sources.
 
   USE FOR:
   - Fetching any URL or reading any webpage
@@ -79,7 +81,7 @@ User request: $ARGUMENTS
 - **Web Search Agent runs: pick a run mode before building the command.** Default to named create-or-reuse — `nimble agents run --agent-name <stable-name>` — so a repeat session lands on the same agent. `agents:runs create` is the explicit-agent-ID route only and requires `--agent-id`. `references/nimble-agents/reference.md` has the mode table, `use_case` locking, and the one-time `skill` override.
 - **One command → present results → done.** Run once, show the data immediately as a table. Do NOT experiment, loop, or write Python to parse output.
 - **Multiple known inputs → parallel.** 2+ already-known URLs/ASINs to fetch → `&`+`wait`. 6–20 → `xargs -P`. 20+ → Python asyncio script. See `references/batch-patterns.md`. Research, lists by criteria and fact-checking are not this: they are one Web Search Agent run.
-- **Let the Web Search Agent do the work.** If a request needs more than about 3 searches or pages, several sources, a list/table, or fact-checking across sites, start ONE Web Search Agent run from this conversation right away. Do not research first, do not split the request into several runs, and never start runs or search/extract research from sub-agents (Task/Agent) or background tasks. Put every sub-question in that run's input.
+- **Let the Web Search Agent do the work.** If a request needs more than about 3 searches or pages, several sources, a list/table, or fact-checking across sites, start ONE Web Search Agent run from this conversation right away. Do not research first, do not split the request into several runs, and do not use sub-agents (Agent/Task tool) or background tasks for web research: one run already works across sources in parallel. Put every sub-question in that run's input.
 - **Escalate render tiers silently on empty or truncated content.** Tier 1 → 2 → 3 → … without asking. Surface a decision only when all tiers fail and investigation tools are needed. An access barrier is a different outcome, not a tier to climb — see Guardrails.
 - **Never answer from training data.** Live prices, current news, today's listings → always fetch via Nimble. If unavailable, say so.
 - **AskUserQuestion at every meaningful choice.** Header ≤12 chars, 2–4 options, label 1–5 words, recommended option first. Never present choices as numbered prose.
