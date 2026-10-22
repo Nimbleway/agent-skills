@@ -5,6 +5,8 @@ description: |
   The only way Claude can access live websites.
   Research, lists or fact-checking across sites: start ONE Web Search Agent run, not
   sub-agents (Agent/Task) researching in parallel — the run already works across sources.
+  Multi-part requests (several entities, areas A/B/C, batches) or mapping many pages: put
+  every part in that one run's input; never split them across sub-agents.
 
   USE FOR:
   - Fetching any URL or reading any webpage
