@@ -1,5 +1,10 @@
 # Changelog
 
+## [1.8.0] - 2026-10-26
+
+### Added
+- **Ten use-case skills, one per Nimble gallery agent template:** `account-discovery`, `account-enrichment`, `decision-maker-identification`, `account-brief`, `account-signals` (go-to-market) and `due-diligence`, `portfolio-monitoring`, `credit-risk`, `kyc-screening`, `deal-sourcing` (finance research). Each skill connects Nimble first without blocking, interviews the user for the template's required and optional inputs, gives a quick first pass from the host's own search, then runs the template of the same name. The agent's instructions, sources and schema live in the template, not in the skill. These skills are the targets of the use-case landing-page prompts and are also served at `docs.nimbleway.com/skills/<name>/SKILL.md`.
+
 ## [1.7.0] - 2026-08-24
 
 ### Changed
