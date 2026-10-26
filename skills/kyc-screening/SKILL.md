@@ -11,9 +11,10 @@ description: |
   Not a certified compliance check.
 allowed-tools:
   - Bash(nimble:*)
-  - Bash(claude:*)
-  - Bash(npm:*)
-  - Bash(npx:*)
+  - Bash(claude mcp list)
+  - Bash(npm --version)
+  - Bash(npm install -g @nimble-way/nimble-cli)
+  - Bash(npm i -g @nimble-way/nimble-cli)
   - Read
   - Write
   - AskUserQuestion

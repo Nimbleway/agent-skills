@@ -11,9 +11,10 @@ description: |
   account-discovery) or to research one company (use due-diligence).
 allowed-tools:
   - Bash(nimble:*)
-  - Bash(claude:*)
-  - Bash(npm:*)
-  - Bash(npx:*)
+  - Bash(claude mcp list)
+  - Bash(npm --version)
+  - Bash(npm install -g @nimble-way/nimble-cli)
+  - Bash(npm i -g @nimble-way/nimble-cli)
   - Read
   - Write
   - AskUserQuestion

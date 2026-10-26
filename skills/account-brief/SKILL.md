@@ -12,9 +12,10 @@ description: |
   for a list of changes since a date (use account-signals).
 allowed-tools:
   - Bash(nimble:*)
-  - Bash(claude:*)
-  - Bash(npm:*)
-  - Bash(npx:*)
+  - Bash(claude mcp list)
+  - Bash(npm --version)
+  - Bash(npm install -g @nimble-way/nimble-cli)
+  - Bash(npm i -g @nimble-way/nimble-cli)
   - Read
   - Write
   - AskUserQuestion
