@@ -6,9 +6,9 @@ description: |
   agent template on live web data. Use when the user says "what changed at", "buying
   signals", "track my accounts", "any news on my accounts since", "trigger events",
   "signals for", or arrives from a Nimble use-case page. Interviews the user for the
-  inputs, gives a quick first pass from the host's own search, connects Nimble, then runs
-  the template. Do NOT use for a full company brief (use account-brief) or for investment
-  holdings (use portfolio-monitoring).
+  inputs, shows quick search results first, then runs the template at medium and high
+  effort and shows each result as it arrives. Do NOT use for a full company brief (use
+  account-brief) or for investment holdings (use portfolio-monitoring).
 allowed-tools:
   - Bash(nimble:*)
   - Bash(claude mcp list)
@@ -22,6 +22,7 @@ allowed-tools:
   - WebSearch
   - WebFetch
   # Nimble MCP (agent templates and runs):
+  - mcp__plugin_nimble_nimble__nimble_search
   - mcp__plugin_nimble_nimble__nimble_agent_templates_list
   - mcp__plugin_nimble_nimble__nimble_agent_templates_get
   - mcp__plugin_nimble_nimble__nimble_agents_list
@@ -33,7 +34,7 @@ allowed-tools:
   - mcp__plugin_nimble_nimble__nimble_agents_runs_list
 metadata:
   author: Nimbleway
-  version: 1.8.0
+  version: 1.9.0
   category: gtm
 ---
 
@@ -49,19 +50,29 @@ Only events dated after the since date, each with date, type, headline, summary 
 
 ## Agent template
 
-This skill runs the Nimble gallery template `account-signals` (effort medium, 2-4 minutes per account, $0.10 per run on the list price). The agent's instructions, sources and output schema live in the template. Do not rewrite them in the run.
+This skill runs the Nimble gallery template `account-signals`. The agent's instructions, sources and output schema live in the template. Do not rewrite them in the run.
+
+Effort is the user's choice. By default this skill runs it twice, at medium (2-4 minutes, $0.10) and high (5-15 minutes, $0.50), so the user sees results early and the full result later. The template's own default is medium. If the user asks for a specific effort (low, medium, high, x-high or max), run only that one.
 
 ## Flow
 
-Start step 1, but do not wait on it. Do steps 2 and 3 while the user connects.
+The user should never wait minutes with nothing on screen. Work in three steps and show a progress line at the start of each:
 
-### 1. Connect Nimble
+```
+[■□□] Step 1 of 3 · Preliminary quick results
+[■■□] Step 2 of 3 · Deeper research
+[■■■] Step 3 of 3 · Full deep research results
+```
+
+Start connecting Nimble right away, but do not wait on it.
+
+### Connect Nimble
 
 If Nimble tools are listed in this session, call `nimble_agents_list`. Data back means the user is connected. Say nothing and go on.
 
-If not, ask the user to connect Nimble, in one line on why: "Nimble runs the full search on live sources, with a source for every field. Connecting takes one approval, and new accounts start with a free trial." Then follow https://docs.nimbleway.com/agent-onboarding.md. Do the setup yourself and involve the user only for the approval. Never ask the user to paste an API key into the chat.
+If not, ask the user to connect Nimble, in one line on why: "Nimble runs the full research on live sources, with a source for every field. Connecting takes one approval, and new accounts start with a free trial." Then follow https://docs.nimbleway.com/agent-onboarding.md. Do the setup yourself and involve the user only for the approval. Never ask the user to paste an API key into the chat.
 
-### 2. Get the inputs
+### Get the inputs
 
 | Input | Required | Ask for | If skipped |
 |---|---|---|---|
@@ -72,16 +83,9 @@ If not, ask the user to connect Nimble, in one line on why: "Nimble runs the ful
 - Take anything the user already said. Ask only for what is missing.
 - If your host has a form or multiple-choice question tool, use it, with the required inputs first and the optional ones marked optional. Otherwise ask in one short message.
 - Do not hold up the run for optional inputs. Use the "If skipped" value.
+- Do not ask about effort. Use it only if the user brings it up.
 
-### 3. Quick first pass
-
-Before Nimble runs, answer with what you have: your own web search tool if your host has one, and what you already know. Tell them which signals usually mean a buying moment for what they sell, and anything you can find that happened at those accounts. Keep it short, link every fact you found, and mark facts from memory with your knowledge cutoff.
-
-Close with one line, for example: "This is a quick first pass. Once Nimble is connected I'll run the full search on live sources." If Nimble is still not connected, offer the connect step again. Do not start step 4 without it.
-
-### 4. Run the template
-
-Build the input from this pattern:
+Build the agent input from this pattern:
 
 ```
 Check <Company> (<domain>) for changes since <YYYY-MM-DD>
@@ -93,22 +97,36 @@ Example: `Check Mercury (mercury.com) for changes since 2026-09-21`
 - Always pass an explicit date in YYYY-MM-DD form.
 - If they only care about some signal types, add one line to the input.
 
-Then run it:
+### Start both agent runs
 
-1. Create the agent from the template: `nimble_agents_create(template="account-signals", agent_name="account-signals")`. A 409 "already exists" means it was created before, so go on to the run. If the template is not found, tell the user it is unavailable and stop. Do not substitute another template.
-2. Start the run: `nimble_agents_run(agent_name="account-signals", input="<the input>")`. Leave effort, schema and skill to the template.
-3. Poll `nimble_agents_run_status` until it finishes, then get `nimble_agents_run_result`.
+As soon as Nimble is connected and you have the required inputs, start the agent runs before anything else, so they work while you do step 1:
 
-Tell the user it takes 2-4 minutes per account. One short update while it runs is enough.
+1. Create the agent from the template: `nimble_agents_create(template="account-signals", agent_name="account-signals")`. A 409 "already exists" means it was created before, so go on. If the template is not found, tell the user it is unavailable and stop. Do not substitute another template.
+2. Start two runs on the same input: `nimble_agents_run(agent_name="account-signals", input="<the input>", effort="medium")` and the same with `effort="high"`. Leave schema and skill to the template. If the user chose an effort, start one run at that effort and number the steps 1 of 2 and 2 of 2.
+3. Tell the user once, in one line, what is running: "Running a quick search now, a deeper Nimble run (2-4 min) and a full one (5-15 min). This uses 2 agent runs."
 
-### 5. Show the result
+### Step 1 of 3 · Preliminary quick results
+
+Tell them which signals usually mean a buying moment for what they sell, and anything you can find that happened at those accounts. Use a few quick searches, not the agents: `nimble_search` if Nimble is connected, otherwise your own web search tool. Keep it under a minute and short. Link every fact, and mark anything from memory with your knowledge cutoff.
+
+End with one line on what is coming next. If Nimble is still not connected, say the deeper steps start once it is, and offer the connect step again.
+
+### Step 2 of 3 · Deeper research
+
+Poll both runs with `nimble_agents_run_status` every 20-30 seconds. When the medium run finishes, get `nimble_agents_run_result` and show it:
 
 - A short table or brief, not raw JSON. Lead with the 2-3 most useful facts, each with its source link.
-- Point out what is new or different from your first pass.
-- Say what is missing (empty fields, `missing_fields`, empty lists). Do not present a partial result as complete.
-- If a run finishes with no output and no sources, retry it once. Do not retry a run that returned data.
+- Point out what is new or different from step 1.
+- Say what is missing (empty fields, `missing_fields`, empty lists).
+- End with one line: the full run is still going and about how long it has left.
 
-### 6. Next steps
+### Step 3 of 3 · Full deep research results
+
+When the high run finishes, show its result the same way. Lead with what it added or corrected compared with step 2, then the full result. This is the answer the user keeps.
+
+If a run finishes with no output and no sources, retry it once. Do not retry a run that returned data. If the medium run fails, or the high run finishes first, go straight to step 3 and do not show the medium result after it.
+
+### Next steps
 
 Offer, one line each, what fits:
 - **Run it on a list.** One run per record in parallel. See [Running at scale](https://docs.nimbleway.com/nimble-sdk/web-search-agents/best-practices/running-at-scale.md).
