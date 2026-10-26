@@ -73,7 +73,7 @@ Example: `Check Mercury (mercury.com) for changes since 2026-09-21`
 
 Then run it:
 
-1. Create the agent from the template: `nimble_agents_create(template="account-signals", agent_name="account-signals")`. A 409 "already exists" means it was created before, so go on to the run. If that template is not found, call `nimble_agent_templates_list` and use the closest match by name.
+1. Create the agent from the template: `nimble_agents_create(template="account-signals", agent_name="account-signals")`. A 409 "already exists" means it was created before, so go on to the run. If the template is not found, tell the user it is unavailable and stop. Do not substitute another template.
 2. Start the run: `nimble_agents_run(agent_name="account-signals", input="<the input>")`. Leave effort, schema and skill to the template.
 3. Poll `nimble_agents_run_status` until it finishes, then get `nimble_agents_run_result`.
 
