@@ -72,7 +72,7 @@ Example: `Find bootstrapped European vertical SaaS companies for logistics or fr
 
 Then run it:
 
-1. If `nimble_agents_list` has no agent named `deal-sourcing`, create it from the template: `nimble_agents_create(template="deal-sourcing", agent_name="deal-sourcing")`. If that template is not found, call `nimble_agent_templates_list` and use the closest match by name.
+1. Create the agent from the template: `nimble_agents_create(template="deal-sourcing", agent_name="deal-sourcing")`. A 409 "already exists" means it was created before, so go on to the run. If that template is not found, call `nimble_agent_templates_list` and use the closest match by name.
 2. Start the run: `nimble_agents_run(agent_name="deal-sourcing", input="<the input>")`. Leave effort, schema and skill to the template.
 3. Poll `nimble_agents_run_status` until it finishes, then get `nimble_agents_run_result`.
 
