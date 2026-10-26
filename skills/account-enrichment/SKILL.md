@@ -9,6 +9,27 @@ description: |
   the user for the inputs, gives a quick first pass from the host's own search, connects
   Nimble, then runs the template. Do NOT use to find who holds a specific role (use
   decision-maker-identification) or for a meeting brief (use account-brief).
+allowed-tools:
+  - Bash(nimble:*)
+  - Bash(claude:*)
+  - Bash(npm:*)
+  - Bash(npx:*)
+  - Read
+  - Write
+  - AskUserQuestion
+  # Quick first pass with the host's own search, and reading the hosted docs:
+  - WebSearch
+  - WebFetch
+  # Nimble MCP (agent templates and runs):
+  - mcp__plugin_nimble_nimble__nimble_agent_templates_list
+  - mcp__plugin_nimble_nimble__nimble_agent_templates_get
+  - mcp__plugin_nimble_nimble__nimble_agents_list
+  - mcp__plugin_nimble_nimble__nimble_agents_get
+  - mcp__plugin_nimble_nimble__nimble_agents_create
+  - mcp__plugin_nimble_nimble__nimble_agents_run
+  - mcp__plugin_nimble_nimble__nimble_agents_run_status
+  - mcp__plugin_nimble_nimble__nimble_agents_run_result
+  - mcp__plugin_nimble_nimble__nimble_agents_runs_list
 metadata:
   author: Nimbleway
   version: 1.8.0
