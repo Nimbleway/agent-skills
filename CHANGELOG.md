@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.9.0] - 2026-10-26
+
+### Changed
+- **The ten use-case skills show results in three steps instead of one long wait.** Step 1 of 3 shows quick search results (not agent runs) in about a minute. The skill starts the template at medium and high effort together as soon as Nimble is connected; step 2 of 3 shows the medium result and step 3 of 3 the high result, each as it arrives, with a progress line at the start of each step. If the high run finishes first, the skill goes straight to step 3.
+- **Effort is the user's choice.** The skills no longer leave effort to the template. By default they run medium and high; if the user asks for a specific effort, they run only that one.
+- **`nimble_search` added to the skills' `allowed-tools`** for the quick results step.
+
 ## [1.8.0] - 2026-10-26
 
 ### Added
