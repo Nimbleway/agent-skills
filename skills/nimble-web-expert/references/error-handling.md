@@ -104,7 +104,7 @@ If all 3 attempts timeout, move to Tier 3 (browser-use investigation → browser
 
 | Cause                               | Fix                                                                                 |
 | ----------------------------------- | ----------------------------------------------------------------------------------- |
-| Using default search depth          | Add `--search-depth lite` or `fast` — default `deep` is slowest                    |
+| Explicitly requesting `--search-depth deep` | Only use when full page content is required — the platform default is `fast`; add `--search-depth lite` for high-volume/metadata-only needs |
 | Too many results                    | Reduce `--max-results` (start with 5–10)                                            |
 | `shopping`/`social`/`location` mode | These use subagents — slightly slower by design; reduce `--max-subagents` if needed |
 | Rendering JS                        | `--render` adds 3–5s — only use when content is actually dynamic                    |
