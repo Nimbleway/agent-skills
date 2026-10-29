@@ -1,5 +1,17 @@
 # Changelog
 
+## [1.9.0] - 2026-10-26
+
+### Changed
+- **The ten use-case skills show results in three steps instead of one long wait.** Step 1 of 3 shows quick search results (not agent runs) in about a minute. The skill starts the template at medium and high effort together as soon as Nimble is connected; step 2 of 3 shows the medium result and step 3 of 3 the high result, each as it arrives, with a progress line at the start of each step. If the high run finishes first, the skill goes straight to step 3.
+- **Effort is the user's choice.** The skills no longer leave effort to the template. By default they run medium and high; if the user asks for a specific effort, they run only that one.
+- **`nimble_search` added to the skills' `allowed-tools`** for the quick results step.
+
+## [1.8.0] - 2026-10-26
+
+### Added
+- **Ten use-case skills, one per Nimble gallery agent template:** `account-discovery`, `account-enrichment`, `decision-maker-identification`, `account-brief`, `account-signals` (go-to-market) and `due-diligence`, `portfolio-monitoring`, `credit-risk`, `kyc-screening`, `deal-sourcing` (finance research). Each skill connects Nimble first without blocking, interviews the user for the template's required and optional inputs, gives a quick first pass from the host's own search, then runs the template of the same name. The agent's instructions, sources and schema live in the template, not in the skill. These skills are the targets of the use-case landing-page prompts and are also served at `docs.nimbleway.com/skills/<name>/SKILL.md`.
+
 ## [1.7.0] - 2026-08-24
 
 ### Changed
