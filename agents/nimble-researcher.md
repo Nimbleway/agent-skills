@@ -1,11 +1,10 @@
 ---
 name: nimble-researcher
 description: |
-  Fast data gathering agent for Nimble business skills. Use proactively when a
-  skill needs to search the web, find news, or gather raw data about companies,
-  competitors, or people. Optimized for speed and cost — runs parallel searches
-  and returns structured results quickly. Does not write files or produce analysis;
-  returns findings to the parent context for synthesis.
+  Fast data gathering agent for the data-gathering steps of Nimble business skills
+  (competitor-intel, meeting-prep, company-deep-dive) only. Not for open research, list or
+  fact-checking requests: those are one Web Search Agent run from the main conversation.
+  Runs parallel searches and returns structured results; does not write files or produce analysis.
 model: haiku
 tools:
   - Read
