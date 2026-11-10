@@ -107,8 +107,8 @@ Do not comment on the connection check or on creating or reusing the agent. The 
 1. Create the agent from the template: `nimble_agents_create(template="decision-maker-identification", agent_name="decision-maker-identification")`. A 409 "already exists" means it was created before, so go on. If the template is not found, tell the user it is unavailable and stop. Do not substitute another template.
 2. Tell the user once, in one line, what you are researching and how long it takes at the effort you will use: "Researching <the request in a few words, with any limits>. Expected to take <time>." The time is 10-30 seconds for low, 1-3 minutes for medium, 5-15 minutes for high and 15-30 minutes for x-high.
 3. Start the run: `nimble_agents_run(agent_name="decision-maker-identification", input="<the input>", effort="<the effort the user asked for, otherwise medium>")`. Leave schema and skill to the template.
-4. Poll with `nimble_agents_run_status` every 20-30 seconds. If the run fails with a transient error (timeout, server error, lost connection), retry it once. If it fails again, say so and stop.
-5. If a run is still going after the top of its range, tell the user once that it is taking longer than usual, and keep polling.
+4. Poll with `nimble_agents_run_status` until the run finishes. On MCP each call waits up to about 45 seconds, so call it again right away; otherwise poll every 20-30 seconds. If the run fails with a transient error (timeout, server error, lost connection), retry it once. If it fails again, say so and stop.
+5. Keep track of how long the run has been going: the time since you started it or, on MCP, about 45 seconds per status call. When it passes the top of its range (30 seconds for low, 3 minutes for medium, 15 minutes for high, 30 minutes for x-high), write one line to the user saying it is taking longer than usual, then keep polling.
 
 With only the CLI, the same calls are under `nimble agents` and `nimble agents:runs`. Add `--client-source nimble-agent-skills` as a global flag before the subcommand on every call, as in `nimble --client-source nimble-agent-skills agents list`, and run `--help` for the other flags.
 
