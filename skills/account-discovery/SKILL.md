@@ -87,7 +87,7 @@ Example: `Find US-based vertical SaaS companies for dental practices, 50-500 emp
 
 - Turn each criterion into a clear test. "Mid-market" is not a test. "200-2,000 employees" is.
 - Do not ask for a number of rows. The agent returns every company it can verify.
-- Leave out any part of the pattern the user skipped.
+- Leave out any part of the pattern the user skipped: leaving it out is the default.
 
 ### Connect Nimble
 
@@ -95,13 +95,14 @@ Do this after the interview. Until the questions are done, say nothing about con
 
 If a Nimble tool is listed in this session, call `nimble_agents_list`. With only the CLI, run `nimble --client-source nimble-agent-skills agents list` instead. A normal response, even an empty list, means the user is connected: say nothing and go on.
 
-If no Nimble tool is listed, or it returns an auth error or an authorization link, connect it in this order. Your message is only these steps: no summary of what the user told you, no mention of the skill, the template or the workflow, and no plan for what happens after connecting (that belongs in the run notice).
+If no Nimble tool is listed, or it returns an auth error or an authorization link, connect it in these steps. Your message is only these steps: no summary of what the user told you, no mention of the skill, the template or the workflow, and no plan for what happens after connecting (that belongs in the run notice).
 
 1. Tell the user, in two short sentences at most: "Nimble searches the live web and links where every answer came from. Connecting takes one approval, and if you're new to Nimble you start with a free trial."
-2. Show the host's card to connect or install Nimble from nimbleway.com: the Connect card for the connector in Claude, the install card for the plugin in ChatGPT.
-3. If you can't show a card but can run commands, follow https://docs.nimbleway.com/agent-onboarding.md and involve the user only for the sign-up and the approval. That page is written for you: never link it or its steps to the user.
-4. If you can do neither, tell the user how to find Nimble in this app, with the clicks: in ChatGPT, open Plugins in the sidebar, search for Nimble, pick the one described as "Expert web search for agents" and install it; in Claude, open Customize, then Connectors, then Nimble, then Connect. Never send the user to nimbleway.com for this.
-5. Ask with the question tool, with the options "I've connected Nimble" and "Not now". If the host has no question tool, end the message by asking them to reply "connected", and add nothing after that.
+2. Connect it in the first of these ways that works, and stop at the first one that does:
+   - Show the host's card to connect or install Nimble from nimbleway.com: the Connect card for the connector in Claude, the install card for the plugin in ChatGPT.
+   - If you can't show a card but can run commands, follow https://docs.nimbleway.com/agent-onboarding.md and involve the user only for the sign-up and the approval. That page is written for you: never link it or its steps to the user.
+   - If you can do neither, tell the user how to find Nimble in this app, with the clicks: in ChatGPT, open Plugins in the sidebar, search for Nimble, pick the one described as "Expert web search for agents" and install it; in Claude, open Customize, then Connectors, then Nimble, then Connect. Never send the user to nimbleway.com for this.
+3. Ask with the question tool, with the options "I've connected Nimble" and "Not now". If the host has no question tool, end the message by asking them to reply "connected", and add nothing after that.
 
 Never ask the user to paste an API key into the chat. When they confirm, check the connection again and go on without comment. If it is still not connected, say so in one line and ask again. If they pick "Not now", say the skill needs Nimble and stop. Show no research until Nimble is connected, not from your own search and not from memory.
 
@@ -112,7 +113,7 @@ Do not comment on the connection check or on creating or reusing the agent. The 
 1. Create the agent from the template: `nimble_agents_create(template="account-discovery", agent_name="account-discovery")`. A 409 "already exists" means it was created before, so go on. If the template is not found, tell the user it is unavailable and stop. Do not substitute another template.
 2. Tell the user once, in one line, what you are researching and how long it takes at the effort you will use: "Researching <the request in a few words, with any limits>. Expected to take <time>." The time is 10-30 seconds for low, 1-3 minutes for medium, 5-15 minutes for high and 15-30 minutes for x-high.
 3. Start the run: `nimble_agents_run(agent_name="account-discovery", input="<the input>", effort="<the effort the user asked for, otherwise medium>")`. Leave schema and skill to the template.
-4. Poll with `nimble_agents_run_status` until the run finishes. On MCP each call waits up to about 45 seconds, so call it again right away; otherwise poll every 20-30 seconds. If the run fails with a transient error (timeout, server error, lost connection), retry it once. If it fails again, say so and stop.
+4. Poll with `nimble_agents_run_status` until the run finishes. On MCP each call waits up to about 45 seconds and returns "still running" if the run is not done: that is not an error, so call it again right away. Otherwise poll every 20-30 seconds. If a call fails with a transient error (timeout, server error, lost connection), retry only that call, once, and never send `nimble_agents_run` again. If starting the run fails with a transient error, check `nimble_agents_runs_list` for a run you already started before starting another. If a call fails again, say so and stop.
 5. Keep track of how long the run has been going: the time since you started it or, on MCP, about 45 seconds per status call. When it passes the top of its range (30 seconds for low, 3 minutes for medium, 15 minutes for high, 30 minutes for x-high), write one line to the user saying it is taking longer than usual, but that this is OK and you are still waiting for the result, then keep polling.
 
 With only the CLI, the same calls are under `nimble agents` and `nimble agents:runs`. Add `--client-source nimble-agent-skills` as a global flag before the subcommand on every call, as in `nimble --client-source nimble-agent-skills agents list`, and run `--help` for the other flags.
