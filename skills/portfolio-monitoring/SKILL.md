@@ -85,7 +85,7 @@ Example: `Check Boeing for material events since 2026-09-21`
 
 - One holding at a time. If the user names several, run the first and offer the rest next.
 - Use whichever identifier the user gave: a ticker, or the domain for a private holding.
-- Always pass an explicit date in YYYY-MM-DD form. A skipped Since means the date 30 days before today.
+- Always pass an explicit date in YYYY-MM-DD form. A skipped Since means the date 30 days before today. Take today's date from the host or by running `date`, and if you have neither, ask the user for the date.
 - If they have their own materiality rule, add one line to the input.
 
 ### Connect Nimble

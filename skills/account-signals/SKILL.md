@@ -84,7 +84,7 @@ Check <Company> (<domain>) for changes since <YYYY-MM-DD>
 Example: `Check Mercury (mercury.com) for changes since 2026-09-21`
 
 - One account at a time. If the user names several, run the first and offer the rest next.
-- Always pass an explicit date in YYYY-MM-DD form. A skipped Since means the date 30 days before today.
+- Always pass an explicit date in YYYY-MM-DD form. A skipped Since means the date 30 days before today. Take today's date from the host or by running `date`, and if you have neither, ask the user for the date.
 - If they only care about some signal types, add one line to the input.
 
 ### Connect Nimble
