@@ -104,7 +104,7 @@ Show no research until Nimble is connected, not from your own search and not fro
 Do not comment on the connection check or on creating or reusing the agent. The first thing the user hears is step 2.
 
 1. Create the agent from the template: `nimble_agents_create(template="credit-risk", agent_name="credit-risk")`. A 409 "already exists" means it was created before, so go on. If the template is not found, tell the user it is unavailable and stop. Do not substitute another template.
-2. Tell the user once, in one line, what you are researching and how long it takes at the effort you will use: "Researching <the request in a few words, with any limits>. About <time>." The time is 10-30 seconds for low, 1-3 minutes for medium, 5-15 minutes for high and 15-30 minutes for x-high.
+2. Tell the user once, in one line, what you are researching and how long it takes at the effort you will use: "Researching <the request in a few words, with any limits>. Expected to take <time>." The time is 10-30 seconds for low, 1-3 minutes for medium, 5-15 minutes for high and 15-30 minutes for x-high.
 3. Start the run: `nimble_agents_run(agent_name="credit-risk", input="<the input>", effort="<the effort the user asked for, otherwise medium>")`. Leave schema and skill to the template.
 4. Poll with `nimble_agents_run_status` every 20-30 seconds. If the run fails with a transient error (timeout, server error, lost connection), retry it once. If it fails again, say so and stop.
 5. If a run is still going after the top of its range, tell the user once that it is taking longer than usual, and keep polling.
@@ -127,7 +127,7 @@ If it finishes with an empty result, say so, show the sources it checked, and do
 
 Write the result first, then, in the same turn, ask what to do next with the host's question tool:
 
-- **Go deeper.** A high-effort run reads more sources and fills more fields. It takes about 5-15 minutes. Offer it only if the last run was below high, and start it only on a yes: `nimble_agents_run(agent_name="credit-risk", input="<the same input>", effort="high")`. When it finishes, lead with what it added or corrected, then give the full result.
+- **Go deeper.** A high-effort run reads more sources and fills more fields. It is expected to take 5-15 minutes. Offer it only if the last run was below high, and start it only on a yes: `nimble_agents_run(agent_name="credit-risk", input="<the same input>", effort="high")`. When it finishes, lead with what it added or corrected, then give the full result.
 - **Assess another company.** Ask the questions again, and keep the answers the user does not want to change.
 - **Make it recurring.** As a scheduled task in the host, or as code that calls Nimble. For a scheduled task, pass the last run date as the new since date where the input has one. For code, the agent is saved as `credit-risk`: give a short Python or TypeScript snippet that runs it by name.
 
