@@ -46,7 +46,7 @@ Only material events after the since date, each dated and cited, with why it mat
 
 This skill runs the Nimble gallery template `portfolio-monitoring`. The agent's instructions, sources and output schema live in the template. Do not rewrite them in the run.
 
-Effort: this skill runs the template at medium effort (about 1-3 minutes), even when the template's default effort is different. That is on purpose. If the user asks for a specific effort (low, medium, high, x-high or max), run that one instead.
+Effort: this skill runs the template at medium effort (about 1-3 minutes), even when the template's default effort is different. That is on purpose. If the user asks for a specific effort (low, medium, high or x-high), run that one instead.
 
 ## Flow
 
