@@ -5,10 +5,8 @@ description: |
   payment behaviour, distress signals and ownership, with a risk call and its reasons,
   using the Nimble `credit-risk` agent template on live web data. Use when the user says
   "credit risk of", "counterparty check", "can they pay", "is this supplier at risk",
-  "credit picture for", "distress signals", or arrives from a Nimble use-case page.
-  Interviews the user for the inputs, shows quick search results first, then runs the
-  template at medium and high effort and shows each result as it arrives. Do NOT use for a
-  compliance screen (use kyc-screening) or an investment memo (use due-diligence).
+  "credit picture for", or "distress signals". Do NOT use for a compliance screen (use
+  kyc-screening) or an investment memo (use due-diligence).
 allowed-tools:
   - Bash(nimble:*)
   - Bash(claude mcp list)
@@ -18,11 +16,9 @@ allowed-tools:
   - Read
   - Write
   - AskUserQuestion
-  # Quick first pass with the host's own search, and reading the hosted docs:
-  - WebSearch
+  # Reading the hosted docs:
   - WebFetch
   # Nimble MCP (agent templates and runs):
-  - mcp__plugin_nimble_nimble__nimble_search
   - mcp__plugin_nimble_nimble__nimble_agent_templates_list
   - mcp__plugin_nimble_nimble__nimble_agent_templates_get
   - mcp__plugin_nimble_nimble__nimble_agents_list
@@ -34,15 +30,13 @@ allowed-tools:
   - mcp__plugin_nimble_nimble__nimble_agents_runs_list
 metadata:
   author: Nimbleway
-  version: 1.9.0
+  version: 1.10.0
   category: finance-research
 ---
 
 # Credit risk
 
 Builds a dated, sourced credit picture of a company: financials, ratings, debt events, payment behaviour, distress signals and ownership, with a risk call and its reasons.
-
-User request: $ARGUMENTS
 
 ## What the user gets
 
@@ -52,25 +46,16 @@ Financials with periods, ratings, debt events, payment behaviour, distress signa
 
 This skill runs the Nimble gallery template `credit-risk`. The agent's instructions, sources and output schema live in the template. Do not rewrite them in the run.
 
-Effort is the user's choice. By default this skill runs it twice, at medium (2-4 minutes, $0.10) and high (5-15 minutes, $0.50), so the user sees results early and the full result later. The template's own default is high. If the user asks for a specific effort (low, medium, high, x-high or max), run only that one.
+Effort: this skill runs the template at medium effort (about 1-3 minutes), even when the template's default effort is different. That is on purpose. If the user asks for a specific effort (low, medium, high, x-high or max), run that one instead.
 
 ## Flow
 
-The user should never wait minutes with nothing on screen. Work in three steps and show a progress line at the start of each:
+1. Interview the user.
+2. Connect Nimble if it is not connected already.
+3. Run the agent and show the result.
+4. Offer next steps.
 
-```
-[■□□] Step 1 of 3 · Preliminary quick results
-[■■□] Step 2 of 3 · Deeper research
-[■■■] Step 3 of 3 · Full deep research results
-```
-
-Start connecting Nimble right away, but do not wait on it.
-
-### Connect Nimble
-
-If Nimble tools are listed in this session, call `nimble_agents_list`. Data back means the user is connected. Say nothing and go on.
-
-If not, ask the user to connect Nimble, in one line on why: "Nimble runs the full research on live sources, with a source for every field. Connecting takes one approval, and new accounts start with a free trial." Then follow https://docs.nimbleway.com/agent-onboarding.md. Do the setup yourself and involve the user only for the approval. Never ask the user to paste an API key into the chat.
+Ask every question with the host's question UI, never as plain text: `AskUserQuestion` in Claude Code, ChatGPT's interactive question form (clickable choices and a Submit button) in ChatGPT.
 
 ### Get the inputs
 
@@ -78,62 +63,73 @@ If not, ask the user to connect Nimble, in one line on why: "Nimble runs the ful
 |---|---|---|---|
 | Company | yes | The exact legal entity if it is a subsidiary, with a domain or ticker | - |
 | Purpose | no | Lending, trade credit or a supplier check. It sets what the reasons stress | general |
+| Country of registration | no | For a private company, where it is registered. Its filings come from that registry | none |
 
-- Take anything the user already said. Ask only for what is missing.
-- If your host has a form or multiple-choice question tool, use it, with the required inputs first and the optional ones marked optional. Otherwise ask in one short message.
-- Do not hold up the run for optional inputs. Use the "If skipped" value.
-- Do not ask about effort. Use it only if the user brings it up.
+- Skip anything the user already said in this conversation or in their request, and ask only for what is missing. Do not fill in answers from earlier conversations, with one exception: a stable fact about the user, such as what they sell, may be offered as the first option, labeled "(from before)". Never carry over the subject of the request, dates or rules from an earlier conversation.
+- Ask the required inputs first, in table order, one question at a time. Then ask the optional ones together, in one question-tool call, as many as the tool takes per call (a second call for the rest).
+- Put the whole question in the question tool, once. Never restate or introduce a question in text. Between questions, acknowledge the answer in a few words, and before the first question, at most a short friendly opener of a few words, such as "Happy to help." Talk in plain, friendly words: never say "input", "required" or "optional", and use no field names. Use plain text only if the host has no question tool, in one short line.
+- Write 2-3 likely answers as options, based on what the user has already said. Fixed examples in the table are a guide to what the answer contains, not a list to copy. Offer only answers Nimble can act on with public web data, never ones that need the user's own data, such as their customers or CRM.
+- If you cannot guess likely answers, such as a company name or an industry, still use the tool and offer two or three examples as options, written as answers the user could really give. If the user picks one, use it as their answer.
+- Every question must let the user type their own answer, optional ones too: if the tool does not add an "Other" choice itself, add "Other" as the last option, opening a text field with a placeholder where the host allows it. Keep Skip and Other even if you must drop an answer to fit the option limit.
+- Use single-select only. For a range, such as a size or a date, offer a few options that do not overlap.
+- Optional questions can be skipped, and a skipped answer uses the "If skipped" value. For an optional question, include a Skip option and state the default in its label, for example "Skip (anywhere)", not in the question. Do not offer a "skip all" option. If the user asks to skip the remaining questions, use the "If skipped" values for all of them.
+- Do not ask about effort.
 
 Build the agent input from this pattern:
 
 ```
-Assess the credit and counterparty risk of <Company> (<domain or ticker>). Purpose: <purpose>.
+Assess the credit and counterparty risk of <Company> (<domain or ticker>). Purpose: <purpose>. Registered in <country>.
 ```
 
 Example: `Assess the credit and counterparty risk of Rite Aid Corporation`
 
-- One company per run.
+- One company at a time. If the user names several, run the first and offer the rest next.
 - For a subsidiary, name the exact legal entity. The agent will not use the parent's numbers.
+- Leave out any part of the pattern the user skipped.
 
-### Start both agent runs
+### Connect Nimble
 
-As soon as Nimble is connected and you have the required inputs, start the agent runs before anything else, so they work while you do step 1:
+Do this after the interview. Until the questions are done, say nothing about connecting Nimble.
+
+If a Nimble tool is listed in this session, call `nimble_agents_list`. With only the CLI, run `nimble agents list` instead. A normal response, even an empty list, means the user is connected: say nothing and go on.
+
+If no Nimble tool is listed, or it returns an auth error or an authorization link, ask the user to sign up and connect Nimble, in two short sentences at most: "Nimble searches the live web and links where every answer came from. Connecting takes one approval, and if you're new to Nimble you start with a free trial." Then follow https://docs.nimbleway.com/agent-onboarding.md. Do the setup yourself and involve the user only for the sign-up and the approval. Never ask the user to paste an API key into the chat.
+
+Then ask with the question tool, with the options "I've connected Nimble" and "Not now". Do not recap their answers or say what you will do once it is connected. That belongs in the run notice. If the host has no question tool, end the message by asking them to reply "connected", and add nothing after that. When they confirm, check the connection again and go on without comment. If it is still not connected, say so in one line and ask again. If they pick "Not now", say the skill needs Nimble and stop.
+
+Show no research until Nimble is connected, not from your own search and not from memory.
+
+### Run the agent
+
+Do not comment on the connection check or on creating or reusing the agent. The first thing the user hears is step 2.
 
 1. Create the agent from the template: `nimble_agents_create(template="credit-risk", agent_name="credit-risk")`. A 409 "already exists" means it was created before, so go on. If the template is not found, tell the user it is unavailable and stop. Do not substitute another template.
-2. Start two runs on the same input: `nimble_agents_run(agent_name="credit-risk", input="<the input>", effort="medium")` and the same with `effort="high"`. Leave schema and skill to the template. If the user chose an effort, start one run at that effort and number the steps 1 of 2 and 2 of 2.
-3. Tell the user once, in one line, what is running: "Running a quick search now, a deeper Nimble run (2-4 min) and a full one (5-15 min). This uses 2 agent runs."
+2. Tell the user once, in one line, what you are researching and how long it takes: "Researching <the request in a few words, with any limits>. About 1-3 minutes."
+3. Start the run: `nimble_agents_run(agent_name="credit-risk", input="<the input>", effort="medium")`. Leave schema and skill to the template.
+4. Poll with `nimble_agents_run_status` every 20-30 seconds. If the run fails with a transient error (timeout, server error, lost connection), retry it once. If it fails again, say so and stop.
+5. If a run is still going after the top of its range (3 minutes for medium, 15 for high), tell the user once that it is taking longer than usual, and keep polling.
 
-### Step 1 of 3 · Preliminary quick results
+With only the CLI, the same calls are under `nimble agents` and `nimble agents:runs`. Run them with `--help` for the flags.
 
-Tell them what you already know about its debt, ratings and ownership, and what to check. Use a few quick searches, not the agents: `nimble_search` if Nimble is connected, otherwise your own web search tool. Keep it under a minute and short. Link every fact, and mark anything from memory with your knowledge cutoff.
+### Show the result
 
-End with one line on what is coming next. If Nimble is still not connected, say the deeper steps start once it is, and offer the connect step again.
+When the run finishes, get `nimble_agents_run_result` and write the result out in your message. The user cannot see tool output, so copy what matters into the chat. Do this even when the result is one row or empty: a short result is still a result. Never go straight to the next question.
 
-### Step 2 of 3 · Deeper research
+- Start with one line saying what was found, for example the count or the risk call.
+- Then the result in the shape that fits: a table for lists, people and events, one row each; short sections for briefs and memos; a field, value and source table for a single record. Show the whole list.
+- Put each source next to the claim it supports, as a link.
+- Use the agent's wording and numbers. Add nothing from your own knowledge, and show no raw JSON or field names.
+- End with one line on what a deeper run may be able to find, such as empty fields or thin areas. If the run was already high, say what the sources did not cover.
 
-Poll both runs with `nimble_agents_run_status` every 20-30 seconds. When the medium run finishes, get `nimble_agents_run_result` and show it:
-
-- A short table or brief, not raw JSON. Lead with the 2-3 most useful facts, each with its source link.
-- Point out what is new or different from step 1.
-- Say what is missing (empty fields, `missing_fields`, empty lists).
-- End with one line: the full run is still going and about how long it has left.
-
-### Step 3 of 3 · Full deep research results
-
-When the high run finishes, show its result the same way. Lead with what it added or corrected compared with step 2, then the full result. This is the answer the user keeps.
-
-If a run finishes with no output and no sources, retry it once. Do not retry a run that returned data. If the medium run fails, or the high run finishes first, go straight to step 3 and do not show the medium result after it.
+If it finishes with an empty result, say so, show the sources it checked, and do not retry.
 
 ### Next steps
 
-Offer, one line each, what fits:
-- **Run it on a list.** One run per record in parallel. See [Running at scale](https://docs.nimbleway.com/nimble-sdk/web-search-agents/best-practices/running-at-scale.md).
-- **Schedule it.** Use the host's scheduler or a cron job, and pass the last run date as the new since date where the input has one.
-- **Use it from code.** The agent is saved as `credit-risk`. Give a short Python or TypeScript snippet that runs it by name.
+Write the result first, then, in the same turn, ask what to do next with the host's question tool:
 
-## Using Nimble well
-
-Read the page you need, when you need it: [writing the task](https://docs.nimbleway.com/nimble-sdk/web-search-agents/best-practices/writing-the-task.md), [sources](https://docs.nimbleway.com/nimble-sdk/web-search-agents/best-practices/sources.md), [effort and cost](https://docs.nimbleway.com/nimble-sdk/web-search-agents/best-practices/effort-and-cost.md), [evaluating results](https://docs.nimbleway.com/nimble-sdk/web-search-agents/best-practices/evaluating-results.md), [running at scale](https://docs.nimbleway.com/nimble-sdk/web-search-agents/best-practices/running-at-scale.md), [common mistakes](https://docs.nimbleway.com/nimble-sdk/web-search-agents/best-practices/common-mistakes.md).
+- **Go deeper.** A high-effort run reads more sources and fills more fields. It takes about 5-15 minutes. Offer it only if the last run was below high, and start it only on a yes: `nimble_agents_run(agent_name="credit-risk", input="<the same input>", effort="high")`. When it finishes, lead with what it added or corrected, then give the full result.
+- **Assess another company.** Ask the questions again, and keep the answers the user does not want to change.
+- **Make it recurring.** As a scheduled task in the host, or as code that calls Nimble. For a scheduled task, pass the last run date as the new since date where the input has one. For code, the agent is saved as `credit-risk`: give a short Python or TypeScript snippet that runs it by name.
 
 ## Pitfalls
 
