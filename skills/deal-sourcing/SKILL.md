@@ -64,8 +64,8 @@ Ask every question with the host's question UI, never as plain text: `AskUserQue
 | Sector | yes | What the companies do, for example the industry or product | - |
 | Geography | yes | Country, region or state | - |
 | Ownership | yes | For example founder-owned, family-owned or PE-backed | - |
-| Size | no | Employee or revenue range | any |
-| Exclusions | no | For example "no PE-backed", or names or domains to leave out | none |
+| Size | no | Employee or revenue range | any size |
+| Exclusions | no | For example "no PE-backed", or names or domains to leave out | no exclusions |
 
 - Skip anything the user already said in this conversation or in their request, and ask only for what is missing. Do not fill in answers from earlier conversations, with one exception: a stable fact about the user, such as what they sell, may be offered as the first option, labeled "(from before)". Never carry over the subject of the request, dates or rules from an earlier conversation.
 - Ask the required inputs first, in table order, one question at a time. Then ask the optional ones together, in one question-tool call, as many as the tool takes per call (a second call for the rest).
@@ -74,7 +74,7 @@ Ask every question with the host's question UI, never as plain text: `AskUserQue
 - If you cannot guess likely answers, such as a company name or an industry, still use the tool and offer two or three examples as options, written as answers the user could really give. If the user picks one, use it as their answer.
 - Every question must let the user type their own answer, optional ones too. If the tool already offers a free-text choice, whatever it is called ("Other", "Something else"), do not add another. Otherwise add "Other" as the last option, opening a text field with a placeholder where the host allows it. Keep Skip and Other, when you add them, even if you must drop an answer to fit the option limit.
 - Use single-select only. For a range, such as a size or a date, offer a few options that do not overlap.
-- Optional questions can be skipped, and a skipped answer uses the "If skipped" value. If the host has its own skip control, use it and add no Skip option. Otherwise include a Skip option that states the default in its label, for example "Skip (anywhere)", not in the question. When you acknowledge a skipped question, say the default you will use, for example "Anywhere.", not that it was skipped. Do not offer a "skip all" option. If the user asks to skip the remaining questions, use the "If skipped" values for all of them.
+- Optional questions can be skipped, and a skipped answer uses the "If skipped" value. If the host has its own skip control, use it and add no Skip option. Otherwise include a Skip option that states the default in its label, for example "Skip (any location)", not in the question. When you acknowledge a skipped question, say the default you will use, for example "Any location.", not that it was skipped. Do not offer a "skip all" option. If the user asks to skip the remaining questions, use the "If skipped" values for all of them.
 - Do not ask about effort.
 
 Build the agent input from this pattern:
