@@ -93,7 +93,7 @@ Example: `Prepare me for a meeting with Attio (attio.com)`
 
 Do this after the interview. Until the questions are done, say nothing about connecting Nimble.
 
-If a Nimble tool is listed in this session, call `nimble_agents_list`. With only the CLI, run `nimble agents list` instead. A normal response, even an empty list, means the user is connected: say nothing and go on.
+If a Nimble tool is listed in this session, call `nimble_agents_list`. With only the CLI, run `nimble --client-source nimble-agent-skills agents list` instead. A normal response, even an empty list, means the user is connected: say nothing and go on.
 
 If no Nimble tool is listed, or it returns an auth error or an authorization link, ask the user to sign up and connect Nimble, in two short sentences at most: "Nimble searches the live web and links where every answer came from. Connecting takes one approval, and if you're new to Nimble you start with a free trial." Then follow https://docs.nimbleway.com/agent-onboarding.md. Do the setup yourself and involve the user only for the sign-up and the approval. Never ask the user to paste an API key into the chat.
 
@@ -106,12 +106,12 @@ Show no research until Nimble is connected, not from your own search and not fro
 Do not comment on the connection check or on creating or reusing the agent. The first thing the user hears is step 2.
 
 1. Create the agent from the template: `nimble_agents_create(template="account-brief", agent_name="account-brief")`. A 409 "already exists" means it was created before, so go on. If the template is not found, tell the user it is unavailable and stop. Do not substitute another template.
-2. Tell the user once, in one line, what you are researching and how long it takes: "Researching <the request in a few words, with any limits>. About 1-3 minutes."
-3. Start the run: `nimble_agents_run(agent_name="account-brief", input="<the input>", effort="medium")`. Leave schema and skill to the template.
+2. Tell the user once, in one line, what you are researching and how long it takes at the effort you will use: "Researching <the request in a few words, with any limits>. About <time>." The time is 10-30 seconds for low, 1-3 minutes for medium, 5-15 minutes for high and 15-30 minutes for x-high.
+3. Start the run: `nimble_agents_run(agent_name="account-brief", input="<the input>", effort="<the effort the user asked for, otherwise medium>")`. Leave schema and skill to the template.
 4. Poll with `nimble_agents_run_status` every 20-30 seconds. If the run fails with a transient error (timeout, server error, lost connection), retry it once. If it fails again, say so and stop.
-5. If a run is still going after the top of its range (3 minutes for medium, 15 for high), tell the user once that it is taking longer than usual, and keep polling.
+5. If a run is still going after the top of its range, tell the user once that it is taking longer than usual, and keep polling.
 
-With only the CLI, the same calls are under `nimble agents` and `nimble agents:runs`. Run them with `--help` for the flags.
+With only the CLI, the same calls are under `nimble agents` and `nimble agents:runs`. Add `--client-source nimble-agent-skills` as a global flag before the subcommand on every call, as in `nimble --client-source nimble-agent-skills agents list`, and run `--help` for the other flags.
 
 ### Show the result
 
