@@ -1,0 +1,500 @@
+{
+  "template_name": "hf-deal-terms",
+  "agent_name": "hf-deal-terms",
+  "display_name": "Deal terms",
+  "description": "Read a merger agreement for a merger arbitrage desk: consideration, outside date, break fees, regulatory covenants, conditions and antitrust overlaps, from the contract itself.",
+  "use_case": "research",
+  "effort": "high",
+  "suggested_questions": [
+    "Read the deal terms for Union Pacific's (UNP) acquisition of Norfolk Southern (NSC), announced 2025-07-29.",
+    "Read the deal terms for Patrick Industries' (PATK) acquisition of LCI Industries (LCII), announced 2026-06-30.",
+    "Read the deal terms for Curium's acquisition of Lantheus Holdings (LNTH)."
+  ],
+  "skill": "Where merger terms live:\n- The merger agreement, filed as exhibit 2.1 to the 8-K announcing the deal; the proxy (PREM14A, DEFM14A), S-4 or\n  F-4 for stock deals; Schedule TO and 14D-9 for tender offers; the announcement release and investor presentation.\n  For UK deals, the Rule 2.7 announcement and the scheme document. The agreement itself governs fees, dates and\n  covenants; a press summary does not.\n- Antitrust overlap: the parties' 10-K business sections and investor presentations, trade press for the industry,\n  and regulators' statements on this deal or earlier deals in the same market.\n\nWhat terms mean:\n- Consideration: cash per share, exchange ratio, collar, contingent value rights (trigger and maximum), election and\n  proration, ticking fee, dividends permitted before closing, the implied value the parties stated.\n- Outside date: the date after which either party can walk; extensions usually trigger on pending regulatory approval.\n- Target termination fee: paid by the target, e.g. on a superior proposal. Reverse termination fee: paid by the buyer;\n  a regulatory reverse fee applies only when the deal fails on antitrust or foreign investment grounds.\n- Efforts standard: the regulatory covenant in the agreement's own words. \"Reasonable best efforts\" alone says\n  little; the limits matter: a divestiture cap (by revenue, assets or named businesses), whether the buyer must\n  litigate, how a burdensome condition is defined, who controls regulatory strategy. Hell-or-high-water means no cap.\n- Conditions: customary ones (accuracy of representations, no injunction, shareholder approval, HSR expiry) versus\n  deal-specific ones (named foreign approvals, financing, a minimum condition).\n- Other terms: no-shop or go-shop and its end date, matching rights, voting and support agreements with the percentage\n  committed, MAE carve-outs, appraisal rights.\n\nWhere the alpha is: the spread is priced on these terms; desks that read the covenant and fee triggers themselves\nprice regulatory risk better than those reading the press summary.\n\nCitations and evidence:\n- source_url is one full public https URL: the exact page the value was read on. Never a search results page, an index\n  page, an internal file path or a source id. A value from two pages is two values.\n- Dates are the date the event happened or the source printed, as YYYY-MM-DD, not today's date.\n- Public pages only. Paywalled, logged-in or leaked material, expert-network transcripts and anything marked\n  confidential carry MNPI risk and are out of bounds. When only a paywalled article's headline and first lines are\n  public, those lines can be used, marked \"Headline only:\".\n- Evidence grades: primary_record (regulator, court, filing, government database, lender schedule, or the live or\n  archived page being measured), company_statement, original_press, repeated_press, third_party_tracker. When a page\n  repeats a filing, a release or another outlet, the original is the better citation.\n- A value nobody published is null. Not an estimate from memory. Analyst opinions, estimates, price targets and\n  ratings are views, not evidence.\n- Entity drift is the most common error: a namesake, a parent, a subsidiary, a lender or a sister company. Match on\n  legal name, ticker, SEC CIK or domain before using a page.",
+  "output_schema": {
+    "type": "object",
+    "description": "Contract terms of one announced merger or acquisition.",
+    "properties": {
+      "deal": {
+        "type": "object",
+        "description": "Deal identity.",
+        "properties": {
+          "target": {
+            "type": "string",
+            "description": "Target legal name."
+          },
+          "target_ticker": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Target ticker."
+          },
+          "acquirer": {
+            "type": "string",
+            "description": "Acquirer legal name."
+          },
+          "acquirer_ticker": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Acquirer ticker."
+          },
+          "announced_date": {
+            "type": "string",
+            "description": "Date as YYYY-MM-DD."
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "pending",
+              "closed",
+              "terminated"
+            ],
+            "description": "Status today."
+          },
+          "structure": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Merger, tender offer, scheme of arrangement..."
+          },
+          "agreement_url": {
+            "type": "string",
+            "description": "Full URL of the merger agreement exhibit."
+          }
+        },
+        "required": [
+          "target",
+          "acquirer",
+          "announced_date",
+          "status",
+          "agreement_url"
+        ]
+      },
+      "consideration": {
+        "type": "object",
+        "description": "What target holders receive.",
+        "properties": {
+          "cash_per_share": {
+            "type": [
+              "number",
+              "null"
+            ],
+            "description": "Cash per target share."
+          },
+          "exchange_ratio": {
+            "type": [
+              "number",
+              "null"
+            ],
+            "description": "Acquirer shares per target share."
+          },
+          "currency": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Currency."
+          },
+          "cvr_and_other": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Collar, CVR with trigger and maximum, election or proration, ticking fee."
+          },
+          "implied_value_stated": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Implied value per share or equity value the parties stated."
+          },
+          "source_url": {
+            "type": "string",
+            "description": "Full public https URL of the exact page that states this row. Never a search results page, an index page or an internal source id."
+          }
+        },
+        "required": [
+          "source_url"
+        ]
+      },
+      "dates_and_fees": {
+        "type": "object",
+        "description": "Deadlines and termination fees.",
+        "properties": {
+          "outside_date": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Date as YYYY-MM-DD."
+          },
+          "extensions": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Each extension and its trigger."
+          },
+          "target_termination_fee": {
+            "type": [
+              "number",
+              "null"
+            ],
+            "description": "Fee the target pays, plain number."
+          },
+          "target_fee_triggers": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Events that trigger it."
+          },
+          "reverse_termination_fee": {
+            "type": [
+              "number",
+              "null"
+            ],
+            "description": "Fee the buyer pays, plain number."
+          },
+          "reverse_fee_triggers": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Events that trigger it, separating a regulatory reverse fee."
+          },
+          "fee_unit": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Currency and scale of the fees."
+          },
+          "source_url": {
+            "type": "string",
+            "description": "Full public https URL of the exact page that states this row. Never a search results page, an index page or an internal source id."
+          }
+        },
+        "required": [
+          "source_url"
+        ]
+      },
+      "regulatory_covenant": {
+        "type": "object",
+        "description": "How hard the buyer must fight for approval, in the agreement's words.",
+        "properties": {
+          "efforts_standard": {
+            "type": "string",
+            "description": "Efforts standard as written."
+          },
+          "divestiture_limit": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Cap on remedies the buyer must accept."
+          },
+          "litigation_obligation": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Whether the buyer must litigate."
+          },
+          "quote": {
+            "type": "string",
+            "description": "Exact words of the covenant's key sentence."
+          },
+          "source_url": {
+            "type": "string",
+            "description": "Full public https URL of the exact page that states this row. Never a search results page, an index page or an internal source id."
+          }
+        },
+        "required": [
+          "efforts_standard",
+          "quote",
+          "source_url"
+        ]
+      },
+      "conditions": {
+        "type": "array",
+        "description": "Closing conditions.",
+        "items": {
+          "type": "object",
+          "description": "Closing conditions.",
+          "properties": {
+            "condition": {
+              "type": "string",
+              "description": "Condition."
+            },
+            "kind": {
+              "type": "string",
+              "enum": [
+                "customary",
+                "regulatory",
+                "shareholder",
+                "financing",
+                "other"
+              ],
+              "description": "Kind."
+            }
+          },
+          "required": [
+            "condition",
+            "kind"
+          ]
+        }
+      },
+      "approvals_required": {
+        "type": "array",
+        "description": "Antitrust, foreign investment and sector approvals.",
+        "items": {
+          "type": "object",
+          "description": "Antitrust, foreign investment and sector approvals.",
+          "properties": {
+            "jurisdiction": {
+              "type": "string",
+              "description": "Country or bloc."
+            },
+            "authority": {
+              "type": "string",
+              "description": "Authority."
+            },
+            "review_type": {
+              "type": "string",
+              "description": "Antitrust, foreign investment, sector..."
+            },
+            "is_closing_condition": {
+              "type": [
+                "boolean",
+                "null"
+              ],
+              "description": "Whether it is a closing condition."
+            },
+            "source_url": {
+              "type": "string",
+              "description": "Full public https URL of the exact page that states this row. Never a search results page, an index page or an internal source id."
+            }
+          },
+          "required": [
+            "jurisdiction",
+            "authority",
+            "review_type",
+            "source_url"
+          ]
+        }
+      },
+      "antitrust_issues": {
+        "type": "array",
+        "description": "Markets a regulator will examine.",
+        "items": {
+          "type": "object",
+          "description": "Markets a regulator will examine.",
+          "properties": {
+            "market": {
+              "type": "string",
+              "description": "Product or geographic market."
+            },
+            "overlap": {
+              "type": "string",
+              "description": "Horizontal overlap or vertical supply relationship and what is known about it."
+            },
+            "combined_share_stated": {
+              "type": [
+                "string",
+                "null"
+              ],
+              "description": "Combined share where a page states one."
+            },
+            "raised_by": {
+              "type": [
+                "string",
+                "null"
+              ],
+              "description": "Who raised it and their words."
+            },
+            "remedy_discussed": {
+              "type": [
+                "string",
+                "null"
+              ],
+              "description": "Remedy discussed or offered."
+            },
+            "source_url": {
+              "type": "string",
+              "description": "Full public https URL of the exact page that states this row. Never a search results page, an index page or an internal source id."
+            }
+          },
+          "required": [
+            "market",
+            "overlap",
+            "source_url"
+          ]
+        }
+      },
+      "other_terms": {
+        "type": "array",
+        "description": "No-shop or go-shop, matching rights, support agreements, MAE carve-outs, appraisal.",
+        "items": {
+          "type": "object",
+          "description": "No-shop or go-shop, matching rights, support agreements, MAE carve-outs, appraisal.",
+          "properties": {
+            "term": {
+              "type": "string",
+              "description": "Term."
+            },
+            "detail": {
+              "type": "string",
+              "description": "Detail as written."
+            },
+            "source_url": {
+              "type": "string",
+              "description": "Full public https URL of the exact page that states this row. Never a search results page, an index page or an internal source id."
+            }
+          },
+          "required": [
+            "term",
+            "detail",
+            "source_url"
+          ]
+        }
+      },
+      "financing": {
+        "type": "array",
+        "description": "Debt and equity commitments.",
+        "items": {
+          "type": "object",
+          "description": "Debt and equity commitments.",
+          "properties": {
+            "instrument": {
+              "type": "string",
+              "description": "Instrument."
+            },
+            "amount": {
+              "type": [
+                "number",
+                "null"
+              ],
+              "description": "Amount, plain number."
+            },
+            "unit": {
+              "type": [
+                "string",
+                "null"
+              ],
+              "description": "Currency and scale."
+            },
+            "provider": {
+              "type": [
+                "string",
+                "null"
+              ],
+              "description": "Provider."
+            },
+            "status": {
+              "type": "string",
+              "enum": [
+                "committed",
+                "raised",
+                "proposed",
+                "cannot_verify"
+              ],
+              "description": "Status."
+            },
+            "source_url": {
+              "type": "string",
+              "description": "Full public https URL of the exact page that states this row. Never a search results page, an index page or an internal source id."
+            }
+          },
+          "required": [
+            "instrument",
+            "status",
+            "source_url"
+          ]
+        }
+      },
+      "votes": {
+        "type": "array",
+        "description": "Shareholder votes.",
+        "items": {
+          "type": "object",
+          "description": "Shareholder votes.",
+          "properties": {
+            "party": {
+              "type": "string",
+              "description": "Whose holders vote."
+            },
+            "threshold": {
+              "type": [
+                "string",
+                "null"
+              ],
+              "description": "Approval threshold."
+            },
+            "meeting_date": {
+              "type": [
+                "string",
+                "null"
+              ],
+              "description": "Date as YYYY-MM-DD."
+            },
+            "committed_by_agreement": {
+              "type": [
+                "string",
+                "null"
+              ],
+              "description": "Shares or percentage committed by support agreements."
+            },
+            "source_url": {
+              "type": "string",
+              "description": "Full public https URL of the exact page that states this row. Never a search results page, an index page or an internal source id."
+            }
+          },
+          "required": [
+            "party",
+            "source_url"
+          ]
+        }
+      },
+      "checked_no_finding": {
+        "type": "array",
+        "description": "Searches that came back empty, so a gap is a verified absence rather than a skipped check.",
+        "items": {
+          "type": "object",
+          "description": "Searches that came back empty, so a gap is a verified absence rather than a skipped check.",
+          "properties": {
+            "looked_for": {
+              "type": "string",
+              "description": "What was searched for."
+            },
+            "where_checked": {
+              "type": "string",
+              "description": "Sources or registers searched."
+            },
+            "result": {
+              "type": "string",
+              "description": "What came back, e.g. no filing found, register shows no case."
+            }
+          },
+          "required": [
+            "looked_for",
+            "where_checked",
+            "result"
+          ]
+        }
+      }
+    },
+    "required": [
+      "deal",
+      "consideration",
+      "dates_and_fees",
+      "regulatory_covenant",
+      "approvals_required"
+    ]
+  }
+}

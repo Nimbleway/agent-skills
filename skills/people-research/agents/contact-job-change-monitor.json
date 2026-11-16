@@ -1,0 +1,87 @@
+{
+  "template_name": "contact-job-change-monitor",
+  "agent_name": "contact-job-change-monitor",
+  "display_name": "Contact job change monitor",
+  "description": "Check a list of contacts for job changes: still at the company, new title, or moved to a new employer, with the date and a source. For champion tracking and CRM hygiene.",
+  "use_case": "enrichment",
+  "effort": "high",
+  "suggested_questions": [
+    "Check whether these contacts are still in the same role: Shane Evans, Chief Revenue Officer at Gong (gong.io).",
+    "For the contacts in input_data, find who changed jobs or titles since 2026-06-01 and where they went.",
+    "Check whether the CFO and the VP of Sales we have on file at Notion (notion.so) are still in those roles."
+  ],
+  "skill": "For each contact (name, company, domain, last known title, optional profile URL), decide whether the person is\nstill at the company in the same role, has a new title there, or has moved to another employer, and when.\n\nHow to check:\n- Read the company's leadership page and newsroom, then search for the person's name with the company and with\n  \"joins\", \"appointed\", \"named\" or \"new role\" in the last 12 months.\n- A public profile shown to logged-out readers, a new employer's press release or team page, and conference speaker\n  pages with a new employer are the best evidence of a move.\n- A move needs a dated source that names the new employer or the new title. Absence from a leadership page alone is\n  not a move: report cannot_verify.\n\nCurrent role:\n- A title is current only when a page dated in the last 12 months shows it, or a profile or company page shows it as the\n  present position. Press releases announcing an appointment are dated history: always check for a later change (a\n  new title, a departure, a new employer) before calling it current.\n- Titles change without a press release: \"Chief Revenue Officer\" can become \"Chief Revenue Architect\", \"President\" or\n  \"Advisor\". Report the title exactly as the newest source states it, with its date.\n\nOutput one row per input row, in input order, carrying the input name and company through unchanged.\n\nCitations and evidence:\n- source_url is one full public https URL: the page the value was read on. Never an internal file path or source id. A\n  value from two pages is two values.\n- as_of is the date the source states or was published, not today's date.\n- A value nobody published is null, listed in missing_fields. Not an estimate from memory.\n- Identity drift is the most common error: another person with the same name, a former employee whose old bio is still\n  indexed, or a namesake at a similarly named company. Match on name plus company plus title or location before using a\n  page.\n\nPrivacy:\n- Work-related public information only: role, employer, career history, public talks, posts, articles and quotes.\n- Never collect home address, personal phone, personal email, family, health, age, religion, politics or other\n  sensitive data, and never construct an email or phone number from a pattern. A business email or phone counts only\n  when the person or their company published it on a public page for business contact.",
+  "output_schema": {
+    "type": "array",
+    "description": "One row per input row, in input order.",
+    "items": {
+      "type": "object",
+      "properties": {
+        "full_name": {
+          "type": "string",
+          "description": "Carried through from input_data unchanged"
+        },
+        "company": {
+          "type": "string",
+          "description": "Carried through from input_data unchanged"
+        },
+        "status": {
+          "type": "string",
+          "enum": [
+            "same_role",
+            "new_title_same_company",
+            "moved_company",
+            "left_no_new_employer_found",
+            "cannot_verify"
+          ]
+        },
+        "current_title": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "Title as the newest source states it"
+        },
+        "current_company": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "Employer now, if it changed"
+        },
+        "current_company_domain": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "Bare hostname"
+        },
+        "change_date": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "YYYY-MM or YYYY-MM-DD of the change, if any"
+        },
+        "as_of": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "YYYY-MM-DD of the newest source"
+        },
+        "source_url": {
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      },
+      "required": [
+        "full_name",
+        "company",
+        "status"
+      ]
+    }
+  }
+}

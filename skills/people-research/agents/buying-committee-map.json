@@ -1,0 +1,111 @@
+{
+  "template_name": "buying-committee-map",
+  "agent_name": "buying-committee-map",
+  "display_name": "Buying committee map",
+  "description": "Map the people at one account who are likely to buy, champion, evaluate or block a purchase in a product category, each with current title, why they matter and a source.",
+  "use_case": "research",
+  "effort": "high",
+  "suggested_questions": [
+    "Map the buying committee at Datadog (datadoghq.com) for a sales engagement platform: economic buyer, champions, evaluators and blockers.",
+    "Map who at Brex (brex.com) would buy and evaluate a web data API for their AI agents.",
+    "Map the buying committee at Rippling (rippling.com) for a security awareness training product."
+  ],
+  "skill": "A buying committee is the set of people who decide, influence, evaluate or can block a purchase. For a product\ncategory at one account, find who holds each part of it today.\n\nRoles to map:\n- Economic buyer: the executive who owns the budget for the category (often the C-level or VP who owns the function).\n- Champions: managers and leaders who own the problem day to day and have spoken or hired around it.\n- Technical evaluators: engineering, data, security or operations leaders who would test or approve the product.\n- Blockers and gatekeepers: procurement, security, legal or IT leaders, when the category usually needs them.\n- Users: the team lead of the people who would use it daily.\n\nEvidence that a person belongs on the map:\n- Their title and remit on the company's leadership page, a press release, a speaker page or a current public profile.\n- They spoke, wrote or posted about the problem the category solves (cite it).\n- They are hiring for the team that would use the product (a job post in their org).\n- They were recently appointed (new leaders review vendors; give the start date).\n\nCurrent role:\n- A title is current only when a page dated in the last 12 months shows it, or a profile or company page shows it as the\n  present position. Press releases announcing an appointment are dated history: always check for a later change (a\n  new title, a departure, a new employer) before calling it current.\n- Titles change without a press release: \"Chief Revenue Officer\" can become \"Chief Revenue Architect\", \"President\" or\n  \"Advisor\". Report the title exactly as the newest source states it, with its date.\n\nPitfalls:\n- Org charts are not public. Report reporting lines only when a source states them.\n- Do not pad the map. A role you cannot fill from a page is listed in missing_roles.\n- Large companies have the same title in several business units or regions: say which one the person covers.\n\nCitations and evidence:\n- source_url is one full public https URL: the page the value was read on. Never an internal file path or source id. A\n  value from two pages is two values.\n- as_of is the date the source states or was published, not today's date.\n- A value nobody published is null, listed in missing_fields. Not an estimate from memory.\n- Identity drift is the most common error: another person with the same name, a former employee whose old bio is still\n  indexed, or a namesake at a similarly named company. Match on name plus company plus title or location before using a\n  page.\n\nPrivacy:\n- Work-related public information only: role, employer, career history, public talks, posts, articles and quotes.\n- Never collect home address, personal phone, personal email, family, health, age, religion, politics or other\n  sensitive data, and never construct an email or phone number from a pattern. A business email or phone counts only\n  when the person or their company published it on a public page for business contact.",
+  "output_schema": {
+    "type": "object",
+    "required": [
+      "company",
+      "category",
+      "people",
+      "missing_roles"
+    ],
+    "properties": {
+      "company": {
+        "type": "string"
+      },
+      "category": {
+        "type": "string"
+      },
+      "people": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "required": [
+            "full_name",
+            "title",
+            "committee_role",
+            "source_url"
+          ],
+          "properties": {
+            "full_name": {
+              "type": "string"
+            },
+            "title": {
+              "type": "string"
+            },
+            "committee_role": {
+              "type": "string",
+              "enum": [
+                "economic_buyer",
+                "champion",
+                "technical_evaluator",
+                "blocker",
+                "user_lead",
+                "other"
+              ]
+            },
+            "why_they_matter": {
+              "type": [
+                "string",
+                "null"
+              ],
+              "description": "One sentence tied to the evidence"
+            },
+            "started_role": {
+              "type": [
+                "string",
+                "null"
+              ],
+              "description": "Month and year, or null"
+            },
+            "evidence": {
+              "type": [
+                "string",
+                "null"
+              ],
+              "description": "What the source shows: a talk, a post, a hiring push, an appointment"
+            },
+            "as_of": {
+              "type": [
+                "string",
+                "null"
+              ],
+              "description": "YYYY-MM-DD"
+            },
+            "source_url": {
+              "type": "string"
+            },
+            "profile_url": {
+              "type": [
+                "string",
+                "null"
+              ]
+            }
+          }
+        }
+      },
+      "missing_roles": {
+        "type": "array",
+        "items": {
+          "type": "string"
+        }
+      },
+      "checked_sources": {
+        "type": "array",
+        "items": {
+          "type": "string"
+        }
+      }
+    }
+  }
+}

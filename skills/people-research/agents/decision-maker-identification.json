@@ -1,0 +1,125 @@
+{
+  "template_name": "decision-maker-identification",
+  "agent_name": "decision-maker-identification",
+  "display_name": "Decision-maker identification",
+  "description": "Give a company and the roles you need. Get who holds each role now, with title, past roles and public profiles.",
+  "use_case": "enrichment",
+  "effort": "medium",
+  "suggested_questions": [
+    "At Gong, find the current CTO, CMO, head of revenue operations and CFO",
+    "At Brex, find the current head of data, VP engineering, head of revenue operations and CFO",
+    "At Notion, find the current CTO, head of data, chief revenue officer and head of marketing"
+  ],
+  "skill": "Where to find who holds a role:\n- The company's leadership or team page, press releases announcing appointments, conference speaker bios,\n  podcast and webinar pages, and LinkedIn profiles.\n- Titles vary by company: \"Head of\", \"VP\", \"Director\" and \"Chief\" can be the same job at different company sizes.\n  Revenue, sales and growth leaders often share scope. When the exact title does not exist, the closest role is the\n  one with the same scope.\n- Current means a dated source in the last year, or a profile whose current position is this company.\n\nPitfalls:\n- People with the same name at other companies. Confirm with company, location or photo context on the page.\n- Former employees whose old bio pages are still indexed.\n- Emails and phone numbers are not on public pages for most people. Do not construct them from patterns.\n\nCitations and evidence:\n- source_url is one full public https URL: the page the value was read on. Never an internal file path or source id. A\n  value from two pages is two values.\n- as_of is the date the source states or was published, not today's date.\n- A value nobody published is null, listed in missing_fields. Not an estimate from memory.\n- Entity drift is the most common error: a namesake, a parent, a subsidiary or a similarly named company. Match on domain,\n  registry number, HQ city or ticker before using a page.",
+  "output_schema": {
+    "type": "object",
+    "properties": {
+      "people": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "properties": {
+            "as_of": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "title": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "full_name": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "match_note": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "source_url": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "target_role": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "linkedin_url": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "started_role": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "career_history": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "title": {
+                    "type": [
+                      "string",
+                      "null"
+                    ]
+                  },
+                  "years": {
+                    "type": [
+                      "string",
+                      "null"
+                    ]
+                  },
+                  "company": {
+                    "type": [
+                      "string",
+                      "null"
+                    ]
+                  }
+                }
+              }
+            },
+            "public_profiles": {
+              "type": "array",
+              "items": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              }
+            }
+          }
+        }
+      },
+      "company": {
+        "type": [
+          "string",
+          "null"
+        ]
+      },
+      "missing_roles": {
+        "type": "array",
+        "items": {
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,378 @@
+{
+  "template_name": "hf-channel-check",
+  "agent_name": "hf-channel-check",
+  "display_name": "Channel check",
+  "description": "Answer one analyst question with what prices, stores, job posts and public databases show today versus a past date, for alpha before the company reports.",
+  "use_case": "research",
+  "effort": "high",
+  "suggested_questions": [
+    "Channel check on Tesla (TSLA): has Tesla increased US incentives, financing offers or inventory discounts on Model Y and Model 3 since 2026-09-30?",
+    "Channel check on Chipotle Mexican Grill (CMG): is Chipotle discounting more and raising menu prices less than it was on 2026-08-01?",
+    "Channel check on Lululemon (LULU): are markdowns deeper and new-product launches fewer in the US than on 2026-06-01?"
+  ],
+  "skill": "What a channel check is: evidence on how a business is doing from outside its own disclosures, compared with an\nearlier date (often the last earnings date). The alpha is in knowing the direction before the company reports it.\n\nMeasures that answer common questions, by sector:\n- Restaurants and retail: prices of the same items in several cities, promotion depth and frequency, loyalty offers,\n  delivery fees, store openings and closures, hours, app rank and rating.\n- Consumer internet and subscription: plan prices and inclusions, trial length, win-back discounts, new fees,\n  availability by country.\n- Software: every row of the pricing page, new and removed plans, open roles by function and region on the careers\n  page, status page incidents, marketplace and partner listings.\n- Autos and industrials: incentives, financing rates and lease terms by model, dealer new and used inventory, quoted\n  delivery times, distributor prices, NHTSA recalls and complaints, plant and permit notices.\n- Healthcare and devices: FDA recalls, warning letters, adverse event reports, inspection results, trial registry\n  changes, coverage decisions.\n- Semiconductors and hardware: distributor stock and lead times, distributor and retailer prices, FCC equipment\n  authorisations.\n- Public databases: NHTSA, CPSC, FDA, CFPB complaints, OSHA, EPA, building permits, state WARN notices, USPTO patent\n  and trademark filings, FCC, USAspending awards, US import records. A complaint count is a reporting count, compared\n  with the same company's earlier periods.\n\nMeasuring change:\n- The earlier value comes from an archived copy of the same page at web.archive.org, the database's own history, or\n  a dated earlier page that printed the value. Like-for-like (same page, product, place and unit on two dates) beats\n  anything else.\n- One observation is one number with its unit, product and geography.\n- reads_as is relative to the restated question: supports means the observation points to yes, contradicts to no.\n  A direction needs the earlier state on record (an earlier value, or the item's absence on the earlier page);\n  without one, reads_as is cannot_verify.\n- The company's earnings releases, transcripts and filings are never observations, including when a news site repeats\n  them. They are what the company said.\n- Confidence is high only when several first-hand like-for-like comparisons agree.\n\nBaselines:\n- For each measure, open the web.archive.org copy nearest the since date (or the database's own history) before\n  reading the live page.\n- Give as many valid like-for-like comparisons as exist, and never invent or approximate a baseline to fill the\n  list. When too few exist, evidence_direction is insufficient and the answer says how much of the evidence lacks\n  a baseline.\n- A year-over-year figure is not a comparison with the since date: prior_date shows the real earlier date and the\n  caveat says so.\n- Promotions the company announces itself (holiday giveaways, launches) belong in company_said unless a live page\n  shows terms that can be compared with an earlier page.\n\nWhat was not found:\n- checked_no_finding names the exact registers, dockets or pages searched and the period they cover, and says what\n  was not checked. A tracker's leaderboard or a news search that did not reach the register itself is not evidence\n  that nothing exists; the result says so.\n\nCaveats that apply: list prices are not transaction prices; job posts are reposted and left open; reviews over-sample\nunhappy customers; promotions and hiring are seasonal; one store is one store.\n\nCitations and evidence:\n- source_url is one full public https URL: the exact page the value was read on. Never a search results page, an index\n  page, an internal file path or a source id. A value from two pages is two values.\n- Dates are the date the event happened or the source printed, as YYYY-MM-DD, not today's date.\n- Public pages only. Paywalled, logged-in or leaked material, expert-network transcripts and anything marked\n  confidential carry MNPI risk and are out of bounds. When only a paywalled article's headline and first lines are\n  public, those lines can be used, marked \"Headline only:\".\n- Text fields carry the words themselves. Internal references such as quote:/pages/..., .md#L line markers, file\n  paths or source ids never appear inside a field.\n- A paywalled page is never the only source for a value.\n- Evidence grades: primary_record (regulator, court, filing, government database, lender schedule, or the live or\n  archived page being measured), company_statement, original_press, repeated_press, third_party_tracker. When a page\n  repeats a filing, a release or another outlet, the original is the better citation.\n- A value nobody published is null. Not an estimate from memory. Analyst opinions, estimates, price targets and\n  ratings are views, not evidence.\n- Entity drift is the most common error: a namesake, a parent, a subsidiary, a lender or a sister company. Match on\n  legal name, ticker, SEC CIK or domain before using a page.",
+  "output_schema": {
+    "type": "object",
+    "description": "Channel check answering one question about one listed company.",
+    "properties": {
+      "bottom_line": {
+        "type": "object",
+        "description": "The conclusion first: what the rows below add up to.",
+        "properties": {
+          "summary": {
+            "type": "string",
+            "description": "Two or three sentences with the conclusion an analyst needs first, in plain words."
+          },
+          "key_risk": {
+            "type": "string",
+            "description": "The single biggest risk to the position, with the key of the row that shows it."
+          },
+          "next_catalyst": {
+            "type": "string",
+            "description": "The next dated event that could move the position."
+          },
+          "next_catalyst_date": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Date as YYYY-MM-DD when exact; null when the source gives only a window."
+          }
+        },
+        "required": [
+          "summary",
+          "key_risk",
+          "next_catalyst"
+        ]
+      },
+      "question": {
+        "type": "object",
+        "description": "The question as understood.",
+        "properties": {
+          "company": {
+            "type": "string",
+            "description": "Company legal name."
+          },
+          "ticker": {
+            "type": "string",
+            "description": "Ticker."
+          },
+          "restated": {
+            "type": "string",
+            "description": "The question restated as a yes/no question the observations can answer."
+          },
+          "measures": {
+            "type": "string",
+            "description": "The observable measures chosen to answer it, comma-separated."
+          },
+          "since": {
+            "type": "string",
+            "description": "Comparison date, YYYY-MM-DD."
+          }
+        },
+        "required": [
+          "company",
+          "ticker",
+          "restated",
+          "measures",
+          "since"
+        ]
+      },
+      "observations": {
+        "type": "array",
+        "description": "One number per row, with the earlier value for comparison.",
+        "items": {
+          "type": "object",
+          "description": "One number per row, with the earlier value for comparison.",
+          "properties": {
+            "key": {
+              "type": "string",
+              "description": "Stable lowercase identifier for this item, built from fixed parts joined by underscores (e.g. us_doj_hsr, first_lien_term_loan_2031, q3_2026_earnings). The same item gets the same key in every run."
+            },
+            "measure_type": {
+              "type": "string",
+              "enum": [
+                "pricing_offer",
+                "footprint",
+                "supply",
+                "hiring",
+                "customer",
+                "public_record"
+              ],
+              "description": "Kind of measure."
+            },
+            "measure": {
+              "type": "string",
+              "description": "What was measured, e.g. Model Y lease APR, open engineering roles."
+            },
+            "product": {
+              "type": [
+                "string",
+                "null"
+              ],
+              "description": "Product or item measured."
+            },
+            "geography": {
+              "type": [
+                "string",
+                "null"
+              ],
+              "description": "Place measured."
+            },
+            "observed_date": {
+              "type": "string",
+              "description": "Date as YYYY-MM-DD."
+            },
+            "value_number": {
+              "type": [
+                "number",
+                "null"
+              ],
+              "description": "Current value as a plain number."
+            },
+            "value_text": {
+              "type": "string",
+              "description": "The current reading as the page prints it, e.g. '2.49% APR for 72 months'. Required: a row without a current reading is not an observation."
+            },
+            "unit": {
+              "type": [
+                "string",
+                "null"
+              ],
+              "description": "Unit, e.g. USD, percent APR, open roles, stores."
+            },
+            "prior_value_number": {
+              "type": [
+                "number",
+                "null"
+              ],
+              "description": "Earlier value near the since date."
+            },
+            "prior_date": {
+              "type": [
+                "string",
+                "null"
+              ],
+              "description": "Date of the earlier value, YYYY-MM-DD."
+            },
+            "prior_source_url": {
+              "type": [
+                "string",
+                "null"
+              ],
+              "description": "Full URL of the earlier page, e.g. a web.archive.org copy."
+            },
+            "reads_as": {
+              "type": "string",
+              "enum": [
+                "supports",
+                "contradicts",
+                "neutral",
+                "cannot_verify"
+              ],
+              "description": "Direction relative to the restated question. supports or contradicts only when prior_date and prior_source_url show the earlier state; cannot_verify when no earlier state was found."
+            },
+            "caveat": {
+              "type": [
+                "string",
+                "null"
+              ],
+              "description": "Caveat that applies, e.g. list price not transaction price."
+            },
+            "source_url": {
+              "type": "string",
+              "description": "Full public https URL of the exact page that states this row. Never a search results page, an index page or an internal source id."
+            }
+          },
+          "required": [
+            "key",
+            "measure_type",
+            "measure",
+            "observed_date",
+            "value_text",
+            "reads_as",
+            "source_url"
+          ]
+        }
+      },
+      "competitor_observations": {
+        "type": "array",
+        "description": "Same measures at the closest competitors, when the question is relative.",
+        "items": {
+          "type": "object",
+          "description": "Same measures at the closest competitors, when the question is relative.",
+          "properties": {
+            "competitor": {
+              "type": "string",
+              "description": "Competitor name."
+            },
+            "measure": {
+              "type": "string",
+              "description": "Measure."
+            },
+            "observed_date": {
+              "type": "string",
+              "description": "Date as YYYY-MM-DD."
+            },
+            "value_text": {
+              "type": "string",
+              "description": "The competitor's current reading as the page prints it. Required: a row without a current reading is not an observation."
+            },
+            "value_number": {
+              "type": [
+                "number",
+                "null"
+              ],
+              "description": "Current value."
+            },
+            "prior_value_number": {
+              "type": [
+                "number",
+                "null"
+              ],
+              "description": "Earlier value."
+            },
+            "unit": {
+              "type": [
+                "string",
+                "null"
+              ],
+              "description": "Unit."
+            },
+            "versus_company": {
+              "type": "string",
+              "enum": [
+                "more_aggressive",
+                "less_aggressive",
+                "similar",
+                "cannot_verify"
+              ],
+              "description": "Competitor compared with the company on this measure."
+            },
+            "source_url": {
+              "type": "string",
+              "description": "Full public https URL of the exact page that states this row. Never a search results page, an index page or an internal source id."
+            }
+          },
+          "required": [
+            "competitor",
+            "measure",
+            "observed_date",
+            "value_text",
+            "versus_company",
+            "source_url"
+          ]
+        }
+      },
+      "company_said": {
+        "type": "array",
+        "description": "What management last said on the question, for contrast. Up to three quotes.",
+        "items": {
+          "type": "object",
+          "description": "What management last said on the question, for contrast. Up to three quotes.",
+          "properties": {
+            "date": {
+              "type": "string",
+              "description": "Date as YYYY-MM-DD."
+            },
+            "speaker": {
+              "type": "string",
+              "description": "Speaker and title."
+            },
+            "quote": {
+              "type": "string",
+              "description": "Exact words."
+            },
+            "source_url": {
+              "type": "string",
+              "description": "Full public https URL of the exact page that states this row. Never a search results page, an index page or an internal source id."
+            }
+          },
+          "required": [
+            "date",
+            "speaker",
+            "quote",
+            "source_url"
+          ]
+        }
+      },
+      "answer": {
+        "type": "object",
+        "description": "Where the evidence points.",
+        "properties": {
+          "evidence_direction": {
+            "type": "string",
+            "enum": [
+              "yes",
+              "no",
+              "mixed",
+              "insufficient"
+            ],
+            "description": "Direction of the observations on the restated question."
+          },
+          "confidence": {
+            "type": "string",
+            "enum": [
+              "high",
+              "medium",
+              "low"
+            ],
+            "description": "high only when several like-for-like comparisons agree."
+          },
+          "strongest_evidence": {
+            "type": "string",
+            "description": "Key of the strongest observation and why."
+          },
+          "weakest_point": {
+            "type": "string",
+            "description": "The weakest link in the evidence."
+          },
+          "what_would_settle_it": {
+            "type": "string",
+            "description": "The missing measure that would settle the question."
+          }
+        },
+        "required": [
+          "evidence_direction",
+          "confidence",
+          "strongest_evidence",
+          "weakest_point",
+          "what_would_settle_it"
+        ]
+      },
+      "checked_no_finding": {
+        "type": "array",
+        "description": "Searches that came back empty, so a gap is a verified absence rather than a skipped check.",
+        "items": {
+          "type": "object",
+          "description": "Searches that came back empty, so a gap is a verified absence rather than a skipped check.",
+          "properties": {
+            "looked_for": {
+              "type": "string",
+              "description": "What was searched for."
+            },
+            "where_checked": {
+              "type": "string",
+              "description": "Sources or registers searched."
+            },
+            "result": {
+              "type": "string",
+              "description": "What came back, e.g. no filing found, register shows no case."
+            }
+          },
+          "required": [
+            "looked_for",
+            "where_checked",
+            "result"
+          ]
+        }
+      }
+    },
+    "required": [
+      "bottom_line",
+      "question",
+      "observations",
+      "answer"
+    ]
+  }
+}

@@ -1,0 +1,65 @@
+{
+  "template_name": "business-discovery",
+  "agent_name": "business-discovery",
+  "display_name": "Business Discovery",
+  "description": "Build structured datasets of local businesses or service providers — with contact details, ratings, and availability — from Google Maps, Yelp, Healthgrades, and Zocdoc.",
+  "use_case": "dataset_building",
+  "effort": "high",
+  "suggested_questions": [
+    "Find at least 10 spas and salons in New York City with real addresses, phone numbers, websites, ratings, and review counts from Google Maps, Yelp, or the business's own website."
+  ],
+  "skill": "You are a local market research analyst producing accurate, structured business listings for a requested category and geography. Treat Google Maps, Yelp, Healthgrades, Zocdoc, and a verified website owned by the business as official listing sources: set source_intent=official and cite the exact listing or official page for every fact from them. Start with Google Maps, then use Yelp or healthcare directories to broaden coverage; use the business website to verify contact details or resolve conflicts. Return null with its citation when an optional fact is absent or cannot be verified, never an empty string, guessed value, or an inferred healthcare status. Return one deduplicated row per business.\n\nGoals:\n- Return at least 10 distinct businesses matching the requested category and full geography\n- Treat Google Maps, Yelp, Healthgrades, Zocdoc, and each business's verified own website as official listing sources; use source_intent=official for facts from them\n- For every business, return its real address and the cited listing or official website URL\n- Capture phone number, website, rating, review count, and category only when the selected official listing or business website supports them\n- For healthcare providers, return supported absence as null with a citation; never infer accepts-new-patients or telehealth status\n- Deduplicate businesses across listings and prefer the business's own website when it confirms a conflicting fact",
+  "output_schema": {
+    "type": "array",
+    "items": {
+      "type": "object",
+      "required": [
+        "business_name",
+        "address",
+        "source_url"
+      ],
+      "properties": {
+        "rating": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "address": {
+          "type": "string"
+        },
+        "website": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "category": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "source_url": {
+          "type": "string"
+        },
+        "phone_number": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "review_count": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "business_name": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false
+    }
+  }
+}

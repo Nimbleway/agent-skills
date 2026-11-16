@@ -1,0 +1,333 @@
+{
+  "template_name": "account-enrichment",
+  "agent_name": "account-enrichment",
+  "display_name": "Account enrichment",
+  "description": "Give a company domain. Get firmographics, current leaders, tech stack and funding, each with a source.",
+  "use_case": "enrichment",
+  "effort": "medium",
+  "suggested_questions": [
+    "Enrich the company at attio.com",
+    "Enrich the company at ramp.com",
+    "Enrich the company at irhythmtech.com"
+  ],
+  "skill": "Where firmographics live:\n- Legal name, HQ, founded year: the site's about, legal, imprint or terms pages; registries (Companies House, SEC EDGAR,\n  state registries).\n- Employee count: LinkedIn company page range, or a dated statement from the company. Give the range as shown.\n- Ownership types: public (with ticker), private, PE-backed (name the firm), VC-backed, subsidiary of X.\n- Leadership: the company's team or leadership page, press releases announcing hires, LinkedIn profiles. A title is\n  current only if a recent page shows it; people move roles often, so a source older than two years needs confirmation.\n- Tech stack means tools the company uses, not tools it sells. Good evidence: job posts that list required tools,\n  integrations pages, customer case studies published by the vendor.\n- Funding: press releases, Crunchbase, investor portfolio pages. \"Total raised\" is whatever a source states; do not add up\n  rounds yourself unless the rounds are all cited.\n\nCitations and evidence:\n- source_url is one full public https URL: the page the value was read on. Never an internal file path or source id. A\n  value from two pages is two values.\n- as_of is the date the source states or was published, not today's date.\n- A value nobody published is null, listed in missing_fields. Not an estimate from memory.\n- Entity drift is the most common error: a namesake, a parent, a subsidiary or a similarly named company. Match on domain,\n  registry number, HQ city or ticker before using a page.",
+  "output_schema": {
+    "type": "object",
+    "properties": {
+      "domain": {
+        "type": [
+          "string",
+          "null"
+        ]
+      },
+      "hq_city": {
+        "type": "object",
+        "properties": {
+          "as_of": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "value": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "source_url": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        }
+      },
+      "industry": {
+        "type": "object",
+        "properties": {
+          "as_of": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "value": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "source_url": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        }
+      },
+      "ownership": {
+        "type": "object",
+        "properties": {
+          "as_of": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "value": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "source_url": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        }
+      },
+      "hq_country": {
+        "type": "object",
+        "properties": {
+          "as_of": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "value": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "source_url": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        }
+      },
+      "last_round": {
+        "type": "object",
+        "properties": {
+          "date": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "round": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "amount": {
+            "type": [
+              "number",
+              "null"
+            ]
+          },
+          "currency": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "source_url": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "lead_investors": {
+            "type": "array",
+            "items": {
+              "type": [
+                "string",
+                "null"
+              ]
+            }
+          }
+        }
+      },
+      "leadership": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "properties": {
+            "name": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "role": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "as_of": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "title": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "source_url": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "linkedin_url": {
+              "type": [
+                "string",
+                "null"
+              ]
+            }
+          }
+        }
+      },
+      "legal_name": {
+        "type": "object",
+        "properties": {
+          "as_of": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "value": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "source_url": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        }
+      },
+      "tech_stack": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "properties": {
+            "tool": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "category": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "evidence_url": {
+              "type": [
+                "string",
+                "null"
+              ]
+            }
+          }
+        }
+      },
+      "founded_year": {
+        "type": "object",
+        "properties": {
+          "as_of": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "value": {
+            "type": [
+              "number",
+              "null"
+            ]
+          },
+          "source_url": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        }
+      },
+      "total_funding": {
+        "type": "object",
+        "properties": {
+          "as_of": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "value": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "source_url": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        }
+      },
+      "employee_count": {
+        "type": "object",
+        "properties": {
+          "as_of": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "value": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "source_url": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        }
+      },
+      "missing_fields": {
+        "type": "array",
+        "items": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "description": "fields you could not verify from a page you opened"
+      }
+    }
+  }
+}

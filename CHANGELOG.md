@@ -1,5 +1,10 @@
 # Changelog
 
+## [Unreleased]
+
+### Added
+- **GTM research and investment research skills moved in.** The six skills from `Nimbleway/nimble-for-gtm-research` (`onboard-your-gtm-agent`, `account-fast-search`, `account-deep-research`, `account-lists-and-enrichment`, `people-research`, `gtm-data-at-scale`) and the five from `Nimbleway/nimble-for-company-investment-research` (`onboard-your-agent`, `company-fast-search`, `company-deep-research`, `filings-media-pdfs`, `alt-data-at-scale`) now live directly under `skills/`, with their bundled agent specs, references and onboarding assets. Each repo's benchmark summary is now `references/benchmark.md` in its onboarding skill, and install commands and spec URLs point at this repo.
+
 ## [1.10.0] - 2026-11-10
 
 ### Changed

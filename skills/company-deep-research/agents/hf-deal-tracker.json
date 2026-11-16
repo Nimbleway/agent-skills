@@ -1,0 +1,521 @@
+{
+  "template_name": "hf-deal-tracker",
+  "agent_name": "hf-deal-tracker",
+  "display_name": "Deal approval tracker",
+  "description": "Track a pending merger's path to closing from each regulator's and court's own record: approvals, lawsuits, votes, rival bids and next dates. Merger arbitrage alpha.",
+  "use_case": "research",
+  "effort": "high",
+  "suggested_questions": [
+    "Track the approval status of Union Pacific's (UNP) acquisition of Norfolk Southern (NSC), announced 2025-07-29.",
+    "Track the approval status of Patrick Industries' (PATK) acquisition of LCI Industries (LCII), announced 2026-06-30.",
+    "Track the approval status of Curium's acquisition of Lantheus Holdings (LNTH)."
+  ],
+  "skill": "Where approval status lives (the authority's own register beats any summary):\n- US: FTC press releases, early termination notices and Part 3 docket; DOJ Antitrust Division press releases; state\n  attorneys general; sector dockets at the FCC (ECFS), FERC (eLibrary), state utility and insurance commissions, the\n  Federal Reserve, OCC and FDIC, NRC, DOT and the Surface Transportation Board.\n- EU: European Commission competition case search (case M.xxxxx) and Foreign Subsidies Regulation cases. UK: CMA case\n  pages and National Security and Investment final orders. China SAMR notices (in Chinese). Japan JFTC, Korea KFTC,\n  Brazil CADE (in Portuguese), India CCI, Canada Competition Bureau and Investment Canada, Australia ACCC register and\n  FIRB, Germany Bundeskartellamt. Non-English registers are read in the original language.\n- No public register: HSR filings, second requests, timing agreements, CFIUS, UK national security reviews before a\n  final order, German foreign investment reviews and in-progress KFTC cases. Their status comes from the parties'\n  filings; public_record says what the authority publishes.\n- The proxy's \"Regulatory approvals\" section lists what is needed; it is a checklist, not the status.\n- Litigation: agency complaints and injunction motions, state AG actions, fiduciary and disclosure suits, appraisal,\n  suits between the parties (Delaware Court of Chancery, federal dockets on CourtListener).\n\nStatutory timelines (dates computed from them are statutory_estimate):\n- HSR 30 days (15 for a cash tender); after a second request, 30 days from substantial compliance (10 for a cash\n  tender), often lengthened by a timing agreement; pull-and-refile restarts the clock.\n- EC Phase 1 is 25 working days (35 with commitments); Phase 2 is 90 working days (105 with late commitments, 125\n  with an agreed extension). FSR 25 then 90 working days. CMA Phase 1 40 working days, Phase 2 24 weeks plus 8.\n  SAMR 30, then 90, then 60 days. CFIUS 45, 45, then 15 for the President. JFTC and KFTC 30 then 90 days. CADE up\n  to 240 days plus 90. CCI 30 days, 150 in total. Canada 30 days, then 30 after supplementary information. ACCC 30\n  then 90 business days. Bundeskartellamt 1 month, 5 months in total.\n\nWhat terms mean:\n- reads_as on a development: toward_closing, away_from_closing, delays_only, competing_interest (a rival bid or holder\n  pushing for a higher price, which can raise the payout) or neutral.\n- authority_page_opened is true only when that register or case page was itself opened.\n- Deal terms (price, fees, covenant) belong to the deal terms agent.\n\nHow to read the record:\n- reads_as is about what changed on the record. A party's statement of confidence, a forecast or an advocacy letter\n  is neutral; a quote about timing also goes to timing_statements.\n- A procedural ruling (denying a motion to dismiss or for summary denial, adopting a schedule) is read for its\n  procedural effect only, and what_happened says it is procedural and not a ruling on the merits.\n- litigation holds court cases and formal proceedings with a docket or case number, including contested motions\n  inside the review docket. Letters, comments and public statements go to developments.\n- timing_statements holds only statements about when the deal or an approval will happen.\n- The outside date (end date) and its extension terms come from the merger agreement (8-K Exhibit 2.1, or the\n  proxy's termination section), updated by any amendment. outside_date_current is null only after that check, with\n  a checked_no_finding row.\n- A window is not a date. \"Third or fourth quarter of 2027\" keeps date null, puts the window in date_text and sets\n  date_precision; a day is never invented from a window.\n\nWhat was not found:\n- checked_no_finding names the exact registers, dockets or pages searched and the period they cover, and says what\n  was not checked. A tracker's leaderboard or a news search that did not reach the register itself is not evidence\n  that nothing exists; the result says so.\n\nWhere the alpha is: registers update before the press writes it up, and statutory clocks give dates the market does\nnot print.\n\nCitations and evidence:\n- source_url is one full public https URL: the exact page the value was read on. Never a search results page, an index\n  page, an internal file path or a source id. A value from two pages is two values.\n- Dates are the date the event happened or the source printed, as YYYY-MM-DD, not today's date.\n- Public pages only. Paywalled, logged-in or leaked material, expert-network transcripts and anything marked\n  confidential carry MNPI risk and are out of bounds. When only a paywalled article's headline and first lines are\n  public, those lines can be used, marked \"Headline only:\".\n- Text fields carry the words themselves. Internal references such as quote:/pages/..., .md#L line markers, file\n  paths or source ids never appear inside a field.\n- A paywalled page is never the only source for a value.\n- Evidence grades: primary_record (regulator, court, filing, government database, lender schedule, or the live or\n  archived page being measured), company_statement, original_press, repeated_press, third_party_tracker. When a page\n  repeats a filing, a release or another outlet, the original is the better citation.\n- A value nobody published is null. Not an estimate from memory. Analyst opinions, estimates, price targets and\n  ratings are views, not evidence.\n- Entity drift is the most common error: a namesake, a parent, a subsidiary, a lender or a sister company. Match on\n  legal name, ticker, SEC CIK or domain before using a page.",
+  "output_schema": {
+    "type": "object",
+    "description": "Path to closing of one announced merger or acquisition.",
+    "properties": {
+      "bottom_line": {
+        "type": "object",
+        "description": "The conclusion first: what the rows below add up to.",
+        "properties": {
+          "summary": {
+            "type": "string",
+            "description": "Two or three sentences with the conclusion an analyst needs first, in plain words."
+          },
+          "key_risk": {
+            "type": "string",
+            "description": "The single biggest risk to the position, with the key of the row that shows it."
+          },
+          "next_catalyst": {
+            "type": "string",
+            "description": "The next dated event that could move the position."
+          },
+          "next_catalyst_date": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Date as YYYY-MM-DD when exact; null when the source gives only a window."
+          }
+        },
+        "required": [
+          "summary",
+          "key_risk",
+          "next_catalyst"
+        ]
+      },
+      "deal": {
+        "type": "object",
+        "description": "Deal status.",
+        "properties": {
+          "target": {
+            "type": "string",
+            "description": "Target legal name."
+          },
+          "target_ticker": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Target ticker."
+          },
+          "acquirer": {
+            "type": "string",
+            "description": "Acquirer legal name."
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "pending",
+              "closed",
+              "terminated"
+            ],
+            "description": "Status today."
+          },
+          "status_date": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Date as YYYY-MM-DD."
+          },
+          "expected_close_latest": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Latest expected close the parties stated."
+          },
+          "outside_date_current": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Date as YYYY-MM-DD."
+          },
+          "outside_date_basis": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Agreement section or filing that sets the outside date, with any extension terms."
+          }
+        },
+        "required": [
+          "target",
+          "acquirer",
+          "status"
+        ]
+      },
+      "approvals": {
+        "type": "array",
+        "description": "One row per authority.",
+        "items": {
+          "type": "object",
+          "description": "One row per authority.",
+          "properties": {
+            "key": {
+              "type": "string",
+              "description": "Stable lowercase identifier for this item, built from fixed parts joined by underscores (e.g. us_doj_hsr, first_lien_term_loan_2031, q3_2026_earnings). The same item gets the same key in every run."
+            },
+            "jurisdiction": {
+              "type": "string",
+              "description": "Country or bloc."
+            },
+            "authority": {
+              "type": "string",
+              "description": "Authority."
+            },
+            "status": {
+              "type": "string",
+              "enum": [
+                "not_filed",
+                "filed",
+                "under_review",
+                "phase_2",
+                "cleared",
+                "cleared_with_remedies",
+                "blocked",
+                "withdrawn",
+                "cannot_verify"
+              ],
+              "description": "Status."
+            },
+            "case_number": {
+              "type": [
+                "string",
+                "null"
+              ],
+              "description": "Case or docket number."
+            },
+            "last_event": {
+              "type": [
+                "string",
+                "null"
+              ],
+              "description": "Last event on the record."
+            },
+            "last_event_date": {
+              "type": [
+                "string",
+                "null"
+              ],
+              "description": "Date as YYYY-MM-DD."
+            },
+            "deadline_date": {
+              "type": [
+                "string",
+                "null"
+              ],
+              "description": "Date as YYYY-MM-DD."
+            },
+            "deadline_basis": {
+              "type": [
+                "string",
+                "null"
+              ],
+              "description": "Page or named rule fixing the deadline; statutory_estimate when computed."
+            },
+            "public_record": {
+              "type": [
+                "string",
+                "null"
+              ],
+              "description": "What the authority publishes and what it does not."
+            },
+            "authority_page_opened": {
+              "type": [
+                "boolean",
+                "null"
+              ],
+              "description": "True only when the authority's register or case page was opened."
+            },
+            "source_url": {
+              "type": "string",
+              "description": "Full public https URL of the exact page that states this row. Never a search results page, an index page or an internal source id."
+            }
+          },
+          "required": [
+            "key",
+            "jurisdiction",
+            "authority",
+            "status",
+            "source_url"
+          ]
+        }
+      },
+      "litigation": {
+        "type": "array",
+        "description": "Suits that can block, delay or re-price the deal.",
+        "items": {
+          "type": "object",
+          "description": "Suits that can block, delay or re-price the deal.",
+          "properties": {
+            "court": {
+              "type": "string",
+              "description": "Court or agency."
+            },
+            "case_number": {
+              "type": [
+                "string",
+                "null"
+              ],
+              "description": "Case number."
+            },
+            "plaintiff": {
+              "type": "string",
+              "description": "Plaintiff."
+            },
+            "kind": {
+              "type": "string",
+              "description": "Agency challenge, AG action, fiduciary suit, appraisal..."
+            },
+            "last_event": {
+              "type": [
+                "string",
+                "null"
+              ],
+              "description": "Last docket event and date."
+            },
+            "next_date": {
+              "type": [
+                "string",
+                "null"
+              ],
+              "description": "Date as YYYY-MM-DD."
+            },
+            "source_url": {
+              "type": "string",
+              "description": "Full public https URL of the exact page that states this row. Never a search results page, an index page or an internal source id."
+            }
+          },
+          "required": [
+            "court",
+            "plaintiff",
+            "kind",
+            "source_url"
+          ]
+        }
+      },
+      "votes_and_tenders": {
+        "type": "array",
+        "description": "Meetings, results, tender expiries.",
+        "items": {
+          "type": "object",
+          "description": "Meetings, results, tender expiries.",
+          "properties": {
+            "item": {
+              "type": "string",
+              "description": "Vote or tender."
+            },
+            "date": {
+              "type": [
+                "string",
+                "null"
+              ],
+              "description": "Date as YYYY-MM-DD."
+            },
+            "status": {
+              "type": "string",
+              "description": "Scheduled, approved, extended..."
+            },
+            "source_url": {
+              "type": "string",
+              "description": "Full public https URL of the exact page that states this row. Never a search results page, an index page or an internal source id."
+            }
+          },
+          "required": [
+            "item",
+            "status",
+            "source_url"
+          ]
+        }
+      },
+      "competing_interest": {
+        "type": "array",
+        "description": "Rival bids, unsolicited proposals, holders opposing the price.",
+        "items": {
+          "type": "object",
+          "description": "Rival bids, unsolicited proposals, holders opposing the price.",
+          "properties": {
+            "party": {
+              "type": "string",
+              "description": "Who."
+            },
+            "date": {
+              "type": "string",
+              "description": "Date as YYYY-MM-DD."
+            },
+            "proposal": {
+              "type": "string",
+              "description": "Terms or demand."
+            },
+            "board_response": {
+              "type": [
+                "string",
+                "null"
+              ],
+              "description": "Board response."
+            },
+            "source_url": {
+              "type": "string",
+              "description": "Full public https URL of the exact page that states this row. Never a search results page, an index page or an internal source id."
+            }
+          },
+          "required": [
+            "party",
+            "date",
+            "proposal",
+            "source_url"
+          ]
+        }
+      },
+      "timing_statements": {
+        "type": "array",
+        "description": "Parties' dated statements on timing, oldest first.",
+        "items": {
+          "type": "object",
+          "description": "Parties' dated statements on timing, oldest first.",
+          "properties": {
+            "date_said": {
+              "type": "string",
+              "description": "Date as YYYY-MM-DD."
+            },
+            "speaker": {
+              "type": "string",
+              "description": "Who."
+            },
+            "quote": {
+              "type": "string",
+              "description": "Exact words."
+            },
+            "changed_from_prior": {
+              "type": [
+                "boolean",
+                "null"
+              ],
+              "description": "True when it changed from the prior statement."
+            },
+            "source_url": {
+              "type": "string",
+              "description": "Full public https URL of the exact page that states this row. Never a search results page, an index page or an internal source id."
+            }
+          },
+          "required": [
+            "date_said",
+            "speaker",
+            "quote",
+            "source_url"
+          ]
+        }
+      },
+      "developments": {
+        "type": "array",
+        "description": "Events that changed the path to closing, newest first.",
+        "items": {
+          "type": "object",
+          "description": "Events that changed the path to closing, newest first.",
+          "properties": {
+            "date": {
+              "type": "string",
+              "description": "Date as YYYY-MM-DD."
+            },
+            "what_happened": {
+              "type": "string",
+              "description": "Event."
+            },
+            "reads_as": {
+              "type": "string",
+              "enum": [
+                "toward_closing",
+                "away_from_closing",
+                "delays_only",
+                "competing_interest",
+                "neutral"
+              ],
+              "description": "Effect on closing."
+            },
+            "evidence": {
+              "type": "string",
+              "enum": [
+                "primary_record",
+                "company_statement",
+                "original_press",
+                "repeated_press",
+                "third_party_tracker"
+              ],
+              "description": "Evidence grade of the source: primary_record (regulator, court, filing, government database, lender schedule, or the live or archived page being measured), company_statement (the company describing itself), original_press (an outlet's own reporting), repeated_press (a page repeating another outlet), third_party_tracker (a site compiling data from elsewhere)."
+            },
+            "source_url": {
+              "type": "string",
+              "description": "Full public https URL of the exact page that states this row. Never a search results page, an index page or an internal source id."
+            }
+          },
+          "required": [
+            "date",
+            "what_happened",
+            "reads_as",
+            "evidence",
+            "source_url"
+          ]
+        }
+      },
+      "next_dates": {
+        "type": "array",
+        "description": "Every dated event ahead.",
+        "items": {
+          "type": "object",
+          "description": "Every dated event ahead.",
+          "properties": {
+            "date": {
+              "type": [
+                "string",
+                "null"
+              ],
+              "description": "Date as YYYY-MM-DD."
+            },
+            "date_text": {
+              "type": [
+                "string",
+                "null"
+              ],
+              "description": "The date as the source states it when it is a window or approximate, e.g. 'third or fourth quarter of 2027'."
+            },
+            "date_precision": {
+              "type": "string",
+              "enum": [
+                "exact",
+                "month",
+                "quarter",
+                "half_year",
+                "year",
+                "range",
+                "unknown"
+              ],
+              "description": "How exact the date is. Anything but exact keeps date null unless the source names a day."
+            },
+            "event": {
+              "type": "string",
+              "description": "Event; an open approval with no public date says so."
+            },
+            "certainty": {
+              "type": "string",
+              "enum": [
+                "confirmed",
+                "statutory_estimate",
+                "company_guided",
+                "not_public"
+              ],
+              "description": "How firm."
+            },
+            "source_url": {
+              "type": "string",
+              "description": "Full public https URL of the exact page that states this row. Never a search results page, an index page or an internal source id."
+            }
+          },
+          "required": [
+            "event",
+            "date_precision",
+            "certainty",
+            "source_url"
+          ]
+        }
+      },
+      "checked_no_finding": {
+        "type": "array",
+        "description": "Searches that came back empty, so a gap is a verified absence rather than a skipped check.",
+        "items": {
+          "type": "object",
+          "description": "Searches that came back empty, so a gap is a verified absence rather than a skipped check.",
+          "properties": {
+            "looked_for": {
+              "type": "string",
+              "description": "What was searched for."
+            },
+            "where_checked": {
+              "type": "string",
+              "description": "Sources or registers searched."
+            },
+            "result": {
+              "type": "string",
+              "description": "What came back, e.g. no filing found, register shows no case."
+            }
+          },
+          "required": [
+            "looked_for",
+            "where_checked",
+            "result"
+          ]
+        }
+      }
+    },
+    "required": [
+      "bottom_line",
+      "deal",
+      "approvals",
+      "developments",
+      "next_dates"
+    ]
+  }
+}

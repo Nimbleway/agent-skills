@@ -1,0 +1,102 @@
+{
+  "template_name": "hf-customer-supplier-map",
+  "agent_name": "hf-customer-supplier-map",
+  "display_name": "Customer and supplier map",
+  "description": "Map who a company sells to and buys from, with evidence from filings, counterparties' own releases, contracts and import records. Supply-chain alpha.",
+  "use_case": "dataset_building",
+  "effort": "high",
+  "suggested_questions": [
+    "Map the key customers and suppliers of Credo Technology (CRDO, credosemi.com): up to 25 relationships, each with evidence.",
+    "Map the key customers and suppliers of Vertiv (VRT, vertiv.com): up to 25 relationships, each with evidence.",
+    "Map the key customers and suppliers of Celsius Holdings (CELH, celsius.com): up to 25 relationships, each with evidence."
+  ],
+  "skill": "Where relationships are disclosed:\n- The company's own filings: 10-K customer-concentration notes (customers over 10% of revenue, sometimes unnamed as\n  \"Customer A\"), the business section, risk factors naming suppliers, material contracts filed as exhibits (10.x),\n  segment notes.\n- Counterparties' filings: a customer's 10-K naming the company as a sole or key supplier; a supplier's 10-K naming\n  the company as a major customer. Matching an unnamed \"Customer A\" to a name needs a second source that ties them.\n- Company and counterparty releases: supply agreements, design wins, partnership and distribution announcements,\n  customer case studies and logo pages, investor presentations.\n- Government and trade records: USAspending awards (the government as customer), US import bill-of-lading records\n  (public aggregators such as ImportYeti) showing shipper and consignee, FCC filings naming manufacturers.\n- Trade press and teardown reports naming component suppliers.\n\nWhat terms mean:\n- relationship: customer, supplier, contract_manufacturer, distributor, partner, licensor, licensee.\n- revenue_share_pct is only the percentage a filing prints. It is never estimated.\n- status: active (evidence within the last two years), ended (a source says it ended), announced (agreed, not yet\n  shipping), cannot_verify.\n\nWhere the alpha is: a concentration that the market treats as diversified, a supplier that is the sole source for a\ncritical part, or a customer relationship that ended without an announcement.\n\nPitfalls: a logo on a website can be years old; a partnership announcement is not revenue; a subsidiary or a\ndistributor is not the end customer unless a source says so.\n\nCitations and evidence:\n- source_url is one full public https URL: the exact page the value was read on. Never a search results page, an index\n  page, an internal file path or a source id. A value from two pages is two values.\n- Dates are the date the event happened or the source printed, as YYYY-MM-DD, not today's date.\n- Public pages only. Paywalled, logged-in or leaked material, expert-network transcripts and anything marked\n  confidential carry MNPI risk and are out of bounds. When only a paywalled article's headline and first lines are\n  public, those lines can be used, marked \"Headline only:\".\n- Evidence grades: primary_record (regulator, court, filing, government database, lender schedule, or the live or\n  archived page being measured), company_statement, original_press, repeated_press, third_party_tracker. When a page\n  repeats a filing, a release or another outlet, the original is the better citation.\n- A value nobody published is null. Not an estimate from memory. Analyst opinions, estimates, price targets and\n  ratings are views, not evidence.\n- Entity drift is the most common error: a namesake, a parent, a subsidiary, a lender or a sister company. Match on\n  legal name, ticker, SEC CIK or domain before using a page.",
+  "output_schema": {
+    "type": "array",
+    "description": "One row per customer, supplier or partner relationship.",
+    "items": {
+      "type": "object",
+      "description": "One row per customer, supplier or partner relationship.",
+      "properties": {
+        "counterparty": {
+          "type": "string",
+          "description": "Name of the customer, supplier or partner."
+        },
+        "counterparty_ticker": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "Ticker of the counterparty if listed."
+        },
+        "relationship": {
+          "type": "string",
+          "enum": [
+            "customer",
+            "supplier",
+            "contract_manufacturer",
+            "distributor",
+            "partner",
+            "licensor",
+            "licensee"
+          ],
+          "description": "Role of the counterparty."
+        },
+        "what_flows": {
+          "type": "string",
+          "description": "Product, component or service exchanged."
+        },
+        "revenue_share_pct": {
+          "type": [
+            "number",
+            "null"
+          ],
+          "description": "Share of the company's revenue as printed in a filing, as a plain number. Null if not printed."
+        },
+        "evidence_type": {
+          "type": "string",
+          "enum": [
+            "company_filing",
+            "counterparty_filing",
+            "press_release",
+            "case_study",
+            "government_contract",
+            "import_record",
+            "trade_press",
+            "other"
+          ],
+          "description": "Kind of source establishing the relationship."
+        },
+        "status": {
+          "type": "string",
+          "enum": [
+            "active",
+            "ended",
+            "announced",
+            "cannot_verify"
+          ],
+          "description": "Current status."
+        },
+        "date": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "Date of the evidence, YYYY-MM-DD."
+        },
+        "source_url": {
+          "type": "string",
+          "description": "Full public https URL of the exact page that states this row. Never a search results page, an index page or an internal source id."
+        }
+      },
+      "required": [
+        "counterparty",
+        "relationship",
+        "what_flows",
+        "evidence_type",
+        "status",
+        "source_url"
+      ]
+    }
+  }
+}

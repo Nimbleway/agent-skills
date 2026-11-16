@@ -1,0 +1,114 @@
+{
+  "template_name": "gtm-icp-discovery",
+  "agent_name": "gtm-icp-discovery",
+  "display_name": "ICP account discovery (verified)",
+  "description": "Describe your ideal customer as hard criteria. Get only the companies where every criterion is backed by a cited page, including a live sales job post, plus near-misses with the criterion they failed.",
+  "use_case": "dataset_building",
+  "effort": "high",
+  "suggested_questions": [
+    "Find up to 15 companies that match ALL of these criteria: headquartered in the United States; builds AI software for legal work, sold to law firms or in-house legal teams (not a law firm itself); 50 to 500 employees; most recent priced round is a Series A, B or C closed on or after 2025-04-01; currently hiring at least one US quota-carrying sales role. Treat every criterion as a hard constraint and list near-misses with the criterion they failed.",
+    "Find up to 20 companies that match ALL of these criteria: headquartered in the US or Canada; sells AI agents or copilots to customer support teams; 100 to 1,000 employees; raised a priced round since 2025-01-01; hiring at least one Account Executive. List near-misses with the criterion they failed.",
+    "Find up to 15 European fintech companies with 200 to 2,000 employees that raised a round since 2025-06-01 and are hiring for revenue operations or sales operations. List near-misses with the criterion they failed."
+  ],
+  "skill": "Find companies that match an ideal customer profile (ICP) the request gives as criteria (HQ, product category,\nsize, funding stage and date, hiring, technology). Treat every criterion as a hard constraint.\n\nHow to research it:\n- Broaden, then narrow: find candidates from several angles (funding announcements, investor portfolios, trade press,\n  category lists, conference exhibitors), dedupe them, then verify each criterion on a cited page.\n- Check the cheap firmographic criteria (HQ, product, stage, size) first; check live hiring only for candidates that\n  pass them.\n- Sources to prioritize: company websites, newsrooms and careers pages; ATS boards (Greenhouse, Ashby, Lever, Workable,\n  Gem); funding press releases; the vertical's trade press.\n- Avoid: using SEO listicles or vendor \"top 10\" posts as evidence for a criterion. They can surface candidates only.\n\nRules:\n- Return a company in companies only when every ICP criterion is directly supported by a cited page; if any criterion cannot be verified, put the company in near_misses with failed_criterion 'Unverified: <criterion>' instead.\n- Never add rows to reach the requested count; returning fewer rows is correct when fewer companies qualify.\n- sales_role_url must be a live posting on the company's careers page or ATS board (Greenhouse, Ashby, Lever, Workable, Gem) for a US-located Account Executive, SDR/BDR or sales leadership role.\n- employee_count must come from a dated source (company statement, LinkedIn, Built In, Tracxn, PitchBook); never infer headcount from funding size or number of open jobs.\n- Resolve domain to the bare public hostname and confirm it belongs to the named company.\n- Mix recognizable companies with credible under-the-radar ones found through funding announcements, investor portfolios and legal-tech press.\n\nCitations and evidence:\n- source_url is one full public https URL: the page the value was read on. Never an internal file path or source id. A\n  value from two pages is two values.\n- Dates are the date the event happened or the source states, not the article's publish date and not today's date.\n- A value nobody published is null. Not an estimate from memory, and never padded to reach a requested count.\n- Entity drift is the most common error: a namesake, a parent, a subsidiary or a similarly named company. Resolve every\n  account by its domain before using a page.\n- Only public pages. No logged-in, paywalled or purchased contact data; never construct emails or phone numbers from\n  patterns.",
+  "output_schema": {
+    "type": "object",
+    "properties": {
+      "companies": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "properties": {
+            "company": {
+              "type": "string"
+            },
+            "domain": {
+              "type": "string",
+              "description": "Bare hostname, no protocol"
+            },
+            "hq": {
+              "type": "string",
+              "description": "City, State"
+            },
+            "customer_segment": {
+              "type": "string"
+            },
+            "employee_count": {
+              "type": "string",
+              "description": "Number or band with source and as-of date"
+            },
+            "latest_round": {
+              "type": "string",
+              "description": "Series, amount, month and year, lead investor"
+            },
+            "sales_role": {
+              "type": "string",
+              "description": "Title and US location of one open sales role"
+            },
+            "sales_role_url": {
+              "type": "string"
+            },
+            "recognizability": {
+              "type": "string",
+              "enum": [
+                "Well-known",
+                "Under-the-radar"
+              ]
+            },
+            "why_it_fits": {
+              "type": "string"
+            },
+            "evidence_urls": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
+          },
+          "required": [
+            "company",
+            "domain",
+            "hq",
+            "employee_count",
+            "latest_round",
+            "sales_role",
+            "sales_role_url"
+          ]
+        }
+      },
+      "near_misses": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "properties": {
+            "company": {
+              "type": "string"
+            },
+            "domain": {
+              "type": [
+                "string",
+                "null"
+              ],
+              "description": "Bare hostname, or null if not verified"
+            },
+            "failed_criterion": {
+              "type": "string"
+            },
+            "reason": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "company",
+            "failed_criterion",
+            "reason"
+          ]
+        }
+      }
+    },
+    "required": [
+      "companies",
+      "near_misses"
+    ]
+  }
+}

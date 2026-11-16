@@ -1,0 +1,93 @@
+{
+  "template_name": "hf-competitor-momentum",
+  "agent_name": "hf-competitor-momentum",
+  "display_name": "Competitor momentum scan",
+  "description": "Find which rivals, public or private, are gaining ground on a company: launches, pricing, hiring, funding and customer wins, each dated and sourced. Alpha on share shifts.",
+  "use_case": "dataset_building",
+  "effort": "high",
+  "suggested_questions": [
+    "Which competitors are gaining ground on Hims & Hers Health (HIMS) in telehealth weight loss since 2026-03-01? Return up to 25 dated signals.",
+    "Which competitors, including private ones, are gaining ground on Figma (FIG) since 2026-05-01? Return up to 25 dated signals.",
+    "Which competitors are gaining ground on Snowflake (SNOW) since 2026-04-01? Return up to 25 dated signals."
+  ],
+  "skill": "Where competitor momentum shows:\n- Product and pricing: competitors' product pages, changelogs, release notes, pricing pages and their archived copies\n  at web.archive.org.\n- Hiring: careers pages and ATS boards (Greenhouse, Lever, Ashby, Workday) with open-role counts by function and\n  region; a count compared with an earlier archived count is a growth signal.\n- Funding and deals: company press releases, SEC Form D filings for private raises, investor announcements, funding\n  news in trade and business press.\n- Customers: customer case studies and logo pages, customers' own announcements, public-sector awards on USAspending,\n  app store rank and review counts.\n- Expansion: new office, region or country pages, local registry filings, partnership and marketplace listings.\n- Public competitors: their earnings releases and filings for segment growth they report.\n\nWhat terms mean:\n- threat_to_company: rising (the signal points to the competitor taking customers, pricing room or talent from the\n  company in the request), falling, neutral, cannot_verify.\n- metric_value is the number the page prints, with its unit; growth rates are only those the page states.\n\nWhere the alpha is: private competitors leave no earnings report, so their hiring, pricing and customer pages are the\nonly early read on share shifts the public company will report later.\n\nPitfalls: job posts are reposted and left open; a funding headline is not traction; a launch announcement is not\navailability; an aggregator's headcount is not a careers page count.\n\nCitations and evidence:\n- source_url is one full public https URL: the exact page the value was read on. Never a search results page, an index\n  page, an internal file path or a source id. A value from two pages is two values.\n- Dates are the date the event happened or the source printed, as YYYY-MM-DD, not today's date.\n- Public pages only. Paywalled, logged-in or leaked material, expert-network transcripts and anything marked\n  confidential carry MNPI risk and are out of bounds. When only a paywalled article's headline and first lines are\n  public, those lines can be used, marked \"Headline only:\".\n- Evidence grades: primary_record (regulator, court, filing, government database, lender schedule, or the live or\n  archived page being measured), company_statement, original_press, repeated_press, third_party_tracker. When a page\n  repeats a filing, a release or another outlet, the original is the better citation.\n- A value nobody published is null. Not an estimate from memory. Analyst opinions, estimates, price targets and\n  ratings are views, not evidence.\n- Entity drift is the most common error: a namesake, a parent, a subsidiary, a lender or a sister company. Match on\n  legal name, ticker, SEC CIK or domain before using a page.",
+  "output_schema": {
+    "type": "array",
+    "description": "One row per dated competitor signal.",
+    "items": {
+      "type": "object",
+      "description": "One row per dated competitor signal.",
+      "properties": {
+        "competitor": {
+          "type": "string",
+          "description": "Competitor name."
+        },
+        "competitor_status": {
+          "type": "string",
+          "description": "Ticker if listed, otherwise private."
+        },
+        "signal_type": {
+          "type": "string",
+          "enum": [
+            "product_launch",
+            "pricing_change",
+            "funding",
+            "hiring",
+            "customer_win",
+            "partnership",
+            "expansion",
+            "executive_hire",
+            "reported_growth",
+            "other"
+          ],
+          "description": "Kind of signal."
+        },
+        "observation": {
+          "type": "string",
+          "description": "What was observed."
+        },
+        "metric_value": {
+          "type": [
+            "number",
+            "null"
+          ],
+          "description": "Number the page prints, as a plain number. Null if none."
+        },
+        "metric_unit": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "Unit of metric_value, e.g. open roles, USD millions."
+        },
+        "date": {
+          "type": "string",
+          "description": "Date as YYYY-MM-DD."
+        },
+        "threat_to_company": {
+          "type": "string",
+          "enum": [
+            "rising",
+            "falling",
+            "neutral",
+            "cannot_verify"
+          ],
+          "description": "Direction for the company in the request."
+        },
+        "source_url": {
+          "type": "string",
+          "description": "Full public https URL of the exact page that states this row. Never a search results page, an index page or an internal source id."
+        }
+      },
+      "required": [
+        "competitor",
+        "competitor_status",
+        "signal_type",
+        "observation",
+        "date",
+        "threat_to_company",
+        "source_url"
+      ]
+    }
+  }
+}
