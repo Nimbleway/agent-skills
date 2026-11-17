@@ -25,7 +25,7 @@ The benchmark chart and the five tiles are prebuilt in `assets/`, next to this f
 | - | - |
 | Render HTML inline in the chat (for example the Claude apps' inline visual or widget tool, an inline HTML block) | Read `assets/onboarding-inline.html` and pass it verbatim: chart and all five tiles in one static fragment (no doctype, no scripts, no libraries, about 6 KB) |
 | Render visuals inline only from SVG | Read `assets/benchmark-chart.svg` and pass it verbatim (3 KB of static SVG), then the markdown tiles below in your reply |
-| Show an image in the chat | `![Deep research task comparison for finance](https://raw.githubusercontent.com/Nimbleway/nimble-for-company-investment-research/main/skills/onboard-your-agent/assets/onboarding.png)` (chart and tiles in one image), then the integrations link below as text so it is clickable |
+| Show an image in the chat | `![Deep research task comparison for finance](https://raw.githubusercontent.com/Nimbleway/agent-skills/main/skills/onboard-your-agent/assets/onboarding.png)` (chart and tiles in one image), then the integrations link below as text so it is clickable |
 | None of these (plain terminal) | The benchmark table below under its title, with Nimble's row in bold, then the markdown tiles below |
 
 `assets/onboarding.html` is the same screen as a full standalone page, for hosts that can only preview files; if that is all you can do, also put the markdown tiles in your reply so the user sees them in the chat.
@@ -100,7 +100,7 @@ Default to the MCP server: it uses OAuth, so no API key is created, pasted or st
 
 | Host | How |
 | - | - |
-| Claude Code | If the `nimble-investment-research` plugin is installed, the Nimble MCP server is bundled: run `/mcp`, pick **nimble** and authorize. If the skills were installed with `npx skills add`, run `claude mcp add --transport http --scope user nimble https://mcp.nimbleway.com/mcp` in a terminal (or run it for the user if you can run shell commands), then `/mcp` to authorize |
+| Claude Code | If the `nimble` plugin (`nimble@nimble-plugin-marketplace`) is installed, the Nimble MCP server is bundled: run `/mcp`, pick **nimble** and authorize. If the skills were installed with `npx skills add`, run `claude mcp add --transport http --scope user nimble https://mcp.nimbleway.com/mcp` in a terminal (or run it for the user if you can run shell commands), then `/mcp` to authorize |
 | Claude.ai / Claude Desktop / Cowork | Install **Nimble** from the plugin directory, or add a custom connector at `https://mcp.nimbleway.com/mcp` under **Customize → Connectors**, then **Connect** |
 | ChatGPT | Settings → Apps & Connectors → add a custom connector with URL `https://mcp.nimbleway.com/mcp` (requires developer mode on some plans), then sign in |
 | Cursor, VS Code, other MCP clients | Add `{"mcpServers": {"nimble": {"type": "http", "url": "https://mcp.nimbleway.com/mcp"}}}`; the first tool call starts OAuth |
