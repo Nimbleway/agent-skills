@@ -21,13 +21,22 @@
       ],
       "properties": {
         "likes": {
-          "type": "string"
+          "type": [
+            "integer",
+            "null"
+          ]
         },
         "reposts": {
-          "type": "string"
+          "type": [
+            "integer",
+            "null"
+          ]
         },
         "comments": {
-          "type": "string"
+          "type": [
+            "integer",
+            "null"
+          ]
         },
         "platform": {
           "type": "string"
