@@ -7,6 +7,8 @@ description: |
   these domains", "fill my CRM", "firmographics for", "enrich this account list", "what
   tech stack does", or "company data for". Do NOT use to find who holds a specific role
   (use decision-maker-identification) or for a meeting brief (use account-brief).
+  Do NOT use for a whole CSV or CRM export with write-back rules — use
+  account-lists-and-enrichment instead.
 allowed-tools:
   - Bash(nimble:*)
   - Bash(claude mcp list)

@@ -7,6 +7,8 @@ description: |
   "credit risk of", "counterparty check", "can they pay", "is this supplier at risk",
   "credit picture for", or "distress signals". Do NOT use for a compliance screen (use
   kyc-screening) or an investment memo (use due-diligence).
+  Do NOT use for catalysts, filing diffs or channel checks — use company-deep-research
+  instead.
 allowed-tools:
   - Bash(nimble:*)
   - Bash(claude mcp list)

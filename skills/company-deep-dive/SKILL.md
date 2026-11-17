@@ -15,6 +15,8 @@ description: |
 
   Do NOT use for multi-company competitor monitoring (use competitor-intel)
   or meeting prep with attendees (use meeting-prep).
+  Do NOT use for hedge fund outputs such as catalyst calendars, filing diffs, forensic
+  screens or channel checks — use company-deep-research instead.
 allowed-tools:
   - Bash(nimble:*)
   - Bash(date:*)

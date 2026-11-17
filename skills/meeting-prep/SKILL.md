@@ -15,6 +15,7 @@ description: |
   Requires the Nimble CLI (nimble search, nimble extract) for live web data.
   Do NOT use for multi-company competitor monitoring (use competitor-intel)
   or single-company deep dives without attendees (use company-deep-dive).
+  Do NOT use for ICP people lists or job-change checks — use people-research instead.
 allowed-tools:
   - Bash(nimble:*)
   - Bash(date:*)

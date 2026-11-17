@@ -1,6 +1,6 @@
 ---
 name: alt-data-at-scale
-description: Collect large alternative datasets from the web for hedge fund research with Nimble Extract Templates, using batch runs, async delivery, scheduled Extract Jobs, and template generation for unsupported sites. Use for consumer and product data at volume, such as SKU prices and promotions, in-stock rates, bestseller ranks, product reviews and ratings, restaurant menus and delivery listings, job postings, store locations, app and social metrics, travel and ticket pricing, real estate listings, and AI-answer visibility, tracked over time and mapped to tickers. Do NOT use for a one-off lookup (use company-fast-search) or a cited research brief (use company-deep-research).
+description: "Collect large alternative datasets from the web for hedge fund research with Nimble Extract Templates, using batch runs, async delivery, scheduled Extract Jobs, and template generation for unsupported sites. Use for consumer and product data at volume, such as SKU prices and promotions, in-stock rates, bestseller ranks, product reviews and ratings, restaurant menus and delivery listings, job postings, store locations, app and social metrics, travel and ticket pricing, real estate listings, and AI-answer visibility, tracked over time and mapped to tickers. Do NOT use for a one-off lookup — use company-fast-search instead. Do NOT use for a cited research brief — use company-deep-research instead."
 metadata:
   author: Nimbleway
   version: 1.10.0

@@ -7,6 +7,8 @@ description: |
   head of X at", "find the buying committee", "decision makers at", "who runs RevOps at",
   or "find contacts at". Do NOT use to fill company-level fields (use account-enrichment).
   It never returns emails or phone numbers.
+  Do NOT use for ICP people lists, job-change checks or decision makers across many
+  accounts — use people-research instead.
 allowed-tools:
   - Bash(nimble:*)
   - Bash(claude mcp list)
