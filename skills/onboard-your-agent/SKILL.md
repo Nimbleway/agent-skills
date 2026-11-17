@@ -139,7 +139,8 @@ Once Nimble is connected, say so in one line and route the user's answer from St
 | A name to underwrite, a thesis to test, a short idea, management credibility | `company-deep-research` | `hf-fundamental-deep-dive`, `hf-forensic-red-flags` or `hf-management-track-record` |
 | What's coming up, what changed | `company-deep-research` | `hf-catalyst-calendar`, `hf-filing-changes` |
 | A pending merger (merger arb) | `company-deep-research` | `hf-deal-terms`, then `hf-deal-tracker` |
-| A borrower, a loan, a bond, distress | `company-deep-research` | `hf-credit-profile`, then `hf-credit-early-warning` |
+| A borrower's credit file (capital structure, loans, bonds), stress signals since the last review | `company-deep-research` | `hf-credit-profile`, then `hf-credit-early-warning` |
+| A quick credit view or counterparty check on one company ("can they pay") | `credit-risk` | The `credit-risk` agent |
 | Customers, suppliers, competitors, government revenue | `company-deep-research` | `hf-customer-supplier-map`, `hf-competitor-momentum`, `hf-government-contracts` |
 | "What does the web show today versus last quarter" for one question | `company-deep-research` | `hf-channel-check` |
 | Anything else that needs many sources | `company-deep-research` | Build a custom Web Search Agent (section 5 of that skill) |

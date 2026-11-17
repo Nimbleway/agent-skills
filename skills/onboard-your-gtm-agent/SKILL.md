@@ -1,6 +1,6 @@
 ---
 name: onboard-your-gtm-agent
-description: "Onboard a personal AI agent (Claude, ChatGPT, Cursor, Codex and others) to Nimble for go-to-market (GTM) research by sales, SDR/BDR, RevOps, marketing and founder-led sales teams. Use when the user first loads the GTM research skills, asks how to get started with Nimble for GTM, sales or account research, or wants a free trial, a Nimble connection or a skill recommendation for that work. Shows a benchmark chart and six tiles (five use cases to test Nimble's APIs in the user's AI, plus integrating the APIs into their stack), gets the user onto a free Nimble trial and connected, then routes their request to account-deep-research, account-fast-search, people-research, account-lists-and-enrichment or gtm-data-at-scale. Do NOT use for investment or hedge fund research onboarding — use onboard-your-agent instead."
+description: "Onboard a personal AI agent (Claude, ChatGPT, Cursor, Codex and others) to Nimble for go-to-market (GTM) research by sales, SDR/BDR, RevOps, marketing and founder-led sales teams. Use when the user first loads the GTM research skills, asks how to get started with Nimble for GTM, sales or account research, or wants a free trial, a Nimble connection or a skill recommendation for that work. Shows a benchmark chart and six tiles (five use cases to test Nimble's APIs in the user's AI, plus integrating the APIs into their stack), gets the user onto a free Nimble trial and connected, then routes their request to account-brief, account-deep-research, account-fast-search, decision-maker-identification, people-research, account-lists-and-enrichment or gtm-data-at-scale. Do NOT use for investment or hedge fund research onboarding — use onboard-your-agent instead."
 metadata:
   author: Nimbleway
   version: 1.10.0
@@ -139,10 +139,10 @@ Once Nimble is connected, say so in one line and route the user's answer from St
 | What the user said | Skill | First move |
 | - | - | - |
 | A single fact about an account ("did they raise", "are they hiring AEs", "what's on their pricing page") | `account-fast-search` | One scoped Search, then Extract the primary page |
-| A meeting or call with an account, "brief me on", "prep me for" | `account-deep-research` | `account-brief` |
+| A meeting or call with one account, "brief me on", "prep me for" | `account-brief` | The `account-brief` agent |
 | What changed at an account, buying triggers, a watchlist | `account-deep-research` | `account-signals` (one account) or `gtm-buying-trigger-monitor` (a watchlist) |
-| Who holds a role, one person's title or background ("who is their CRO", "is she still there") | `people-research` | Fast path: one scoped Search, then a date-scoped check that the title is current |
-| Who to talk to: named roles, a person brief, a buying committee, job changes on a contact list | `people-research` | `decision-maker-identification`, `person-brief`, `buying-committee-map`, `contact-job-change-monitor` |
+| Who holds a role at one company ("who is their CRO", "who runs RevOps at") | `decision-maker-identification` | The `decision-maker-identification` agent, with the current title proved by a dated source |
+| Who to talk to: a person brief, a buying committee, decision makers across many accounts, job changes on a contact list | `people-research` | `person-brief`, `buying-committee-map`, `decision-maker-identification` per account, `contact-job-change-monitor` |
 | A list of people who match an ICP (roles, seniority, company criteria) | `people-research` | `people-discovery` |
 | Competitors, battlecards, pricing comparisons | `account-deep-research` | `competitive-intelligence` |
 | What people say about a brand or product; what an influencer or exec posted | `account-deep-research` | `brand-intelligence`, `social-media-monitor` |
@@ -156,7 +156,7 @@ If the answer spans more than one (common), start with the fastest piece that un
 
 By motion, the usual starting points:
 
-- **AE preparing for a meeting:** account brief → person brief on each attendee → buying committee map → competitive intelligence if a rival is in the deal.
+- **AE preparing for a meeting:** account brief (`account-brief`) → person brief on each attendee and a buying committee map (`people-research`) → competitive intelligence if a rival is in the deal (`account-deep-research`).
 - **SDR/BDR prospecting:** ICP discovery → enrichment of the list → buying triggers on the list weekly → decision makers for the accounts that trigger → job-change checks on past champions monthly.
 - **RevOps / data:** enrichment of the CRM in batches with precedence rules → Extract Jobs for hiring and review signals into the warehouse.
 - **Product and competitive marketing:** competitive intelligence → brand intelligence → AI-answer visibility panels (`chatgpt`, `perplexity`, `google_ai`, `gemini` templates).
