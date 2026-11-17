@@ -80,7 +80,7 @@ All six are templates in the **Go-to-market** section of the Nimble Web Search A
 ```
 nimble_agents_run(agent_id=<id>,
   input="Brief me on Shane Evans at Gong (gong.io) before a call next week. I sell data infrastructure to revenue teams.")
-→ nimble_agents_run_status(run_id)   # waits ~45 s per call; call again until it completes
+→ nimble_agents_run_status(run_id=<run_id>, agent_id=<agent_id>) # waits ~45 s per call; call again until it completes
 ```
 
 Put the name, company **and domain**, the roles, and the seller's context ("I sell X to Y") in the input. For `contact-job-change-monitor`, pass the contacts as `input_data` rows (`full_name`, `company`, `domain`, `last_known_title`, optional `profile_url`), about 5 rows per run at `high`. REST: `POST /v2/agents/{agent_id}/runs` with `{"input": ..., "input_data": ...}`, poll `GET /v2/agents/{agent_id}/runs/{run_id}` while `is_active`, then `GET .../runs/{run_id}/result`.

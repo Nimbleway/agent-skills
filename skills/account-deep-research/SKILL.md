@@ -88,7 +88,7 @@ Write `input` in the shape of the agent's suggested questions: the company's **n
 ```
 nimble_agents_run(agent_id=<id>,
   input="Prepare me for a meeting with Gong (gong.io). I sell data infrastructure to revenue teams; the meeting is with their VP of RevOps.")
-→ nimble_agents_run_status(run_id)   # waits ~45 s per call; call again until it completes
+→ nimble_agents_run_status(run_id=<run_id>, agent_id=<agent_id>) # waits ~45 s per call; call again until it completes
 ```
 
 REST: `POST /v2/agents/{agent_id}/runs` with `{"input": ...}` (enrichment agents also take `input_data`: the CRM record with the fields to fill set to null), poll `GET /v2/agents/{agent_id}/runs/{run_id}` while `is_active`, then `GET .../runs/{run_id}/result`. Set `trust_mode: "full_trust"` (MCP) when the user wants per-claim confidence and citations, for example before writing to a CRM.

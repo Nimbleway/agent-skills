@@ -84,7 +84,7 @@ Write `input` in the shape of the agent's suggested questions: the company's **l
 ```
 nimble_agents_run(agent_id=<id>,
   input="Build a catalyst calendar for Rocket Lab (RKLB, rocketlabusa.com) for the next 12 months.")
-→ nimble_agents_run_status(run_id)   # waits ~45 s per call; call again until it completes
+→ nimble_agents_run_status(run_id=<run_id>, agent_id=<agent_id>) # waits ~45 s per call; call again until it completes
 ```
 
 REST: `POST /v2/agents/{agent_id}/runs` with `{"input": ...}`, poll `GET /v2/agents/{agent_id}/runs/{run_id}` while `is_active`, then `GET .../runs/{run_id}/result`. Set `trust_mode: "full_trust"` (MCP) when the user wants per-claim confidence and citations.
