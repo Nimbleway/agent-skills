@@ -132,4 +132,4 @@ Example: "Map every data center campus Vertiv's top customers announced in 2026"
 - **Primary sources win.** Filings, regulators, courts, government databases and the company's own statements beat press, and press beats aggregators.
 - **Point in time.** Every value carries the date it was published or happened, so the user can tell what the market knew and when. A window is not a date, and a cured problem is not a live one.
 - **No paywalled-only values.** A paywalled page is never the only source for a value.
-- Nimble Web Search Agents cannot read login-walled sites (LinkedIn, Glassdoor, X, Facebook and Instagram feeds). Use `alt-data-at-scale` for sites that have a Nimble Extract Template.
+- Web Search Agents read public pages. For LinkedIn, Glassdoor or social feeds, use `alt-data-at-scale` (Extract Templates) or `--focus social` search.

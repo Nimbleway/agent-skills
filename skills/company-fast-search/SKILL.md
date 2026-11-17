@@ -59,7 +59,7 @@ For a single closed fact, set `include_answer: true` (Nimble Answer) and still c
 ## Reading pages with Extract
 
 - Pass the exact URL. Default output is markdown, which is what an agent should read.
-- If the page comes back empty or truncated, retry with a rendering driver (`vx8`) or a stealth driver (`vx10`) before giving up; add `wait` (ms) for pages that load data late.
+- If the page comes back empty or truncated, retry with a JS-rendering driver (`vx8`) or a full-browser driver (`vx10`) before giving up; add `wait` (ms) for pages that load data late.
 - Use `country` (and `locale`) for region-specific prices and availability.
 - For PDFs, spreadsheets and decks, use `filings-media-pdfs` (Extract with `file_parsing_options`).
 - On sites Nimble maintains a template for, use the template: it returns stable fields instead of page text. Find it with `nimble_extract_templates_list(query="<site>")`, inspect params with `nimble_extract_templates_get`, run with `nimble_extract_templates_run`. Prefer templates `managed_by: "nimble"`; community templates vary in quality.

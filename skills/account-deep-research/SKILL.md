@@ -136,4 +136,4 @@ Example: "Which of Gong's customers named on its site are hiring RevOps leaders?
 - **First-party sources win** for what a company says about itself (product, pricing, leadership, open roles): its own site, newsroom, careers page and filings. Reputable press beats aggregators; aggregators are for discovery and corroboration.
 - **Point in time.** Every value carries the date it was published or happened. A headcount, a title or a price without a date is a lead, not a fact.
 - **No padding.** Fewer, verified rows beat a list filled to the requested count.
-- Nimble Web Search Agents read public pages; login-walled pages (LinkedIn and X feeds, Glassdoor reviews past the first page) come back partially or not at all. Use `gtm-data-at-scale` for sites that have a Nimble Extract Template.
+- Web Search Agents read public pages. For LinkedIn, Glassdoor or social feeds, use `gtm-data-at-scale` (Extract Templates) or `--focus social` search.
