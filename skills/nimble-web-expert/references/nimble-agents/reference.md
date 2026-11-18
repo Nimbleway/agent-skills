@@ -37,7 +37,6 @@ params, or output.
 - [Discovery and the reuse-priority chain](#discovery-and-the-reuse-priority-chain)
 - [Run lifecycle: create → status → result](#run-lifecycle-create--status--result)
 - [Live progress: events, and polling as the fallback](#live-progress-events-and-polling-as-the-fallback)
-- [Effort tiers](#effort-tiers)
 - [Authoring a from-scratch agent](#authoring-a-from-scratch-agent)
 - [Trust & citations](#trust--citations)
 - [MCP fallback — transport differences](#mcp-fallback-and-its-gaps)
@@ -68,7 +67,7 @@ repeat session lands on the same agent instead of littering the account with nea
 keep it, because `agents:runs get` and `agents:runs result` both need it.
 
 Every mode returns the same run envelope: `id` (= `interaction_id`), `status`,
-`web_search_agent_id`, `effort`, `prompt`.
+`web_search_agent_id`, `prompt`.
 
 ```bash
 # Mode 1 — named create-or-reuse
@@ -107,7 +106,6 @@ existing one.
 **`dataset_building` carries two extra requirements**, both enforced server-side:
 
 - `--output-schema` is required (`output_schema is required when use_case is dataset_building`).
-- Effort must be `high` or above (`dataset_building requires effort 'high' or higher`).
 
 ---
 
@@ -135,7 +133,6 @@ Available on both `agents run` and `agents:runs create`:
 | Flag                        | Description                                                                        |
 | --------------------------- | ---------------------------------------------------------------------------------- |
 | `--input`                   | Natural-language task/question for the run (required)                              |
-| `--effort`                  | `low` / `medium` / `high` / `x-high` / `max` (see below)                           |
 | `--output-schema`           | JSON schema (a full mapping) overriding the agent's default structured output      |
 | `--input-data`              | Existing rows to ENRICH — a list or single object mirroring the output_schema shape |
 | `--sources`                 | Source guidance overriding the agent default                                       |
@@ -198,7 +195,7 @@ filter **client-side** on `agent_name` / `template_name` / `description` / `use_
 are dynamic: discover them at runtime, never hardcode them.
 
 Each template carries `template_name`, `display_name`, `description`, `use_case`, a default
-`effort`, a `skill`, `sources`, `goals`, and an `output_schema`. Read these to judge fit
+a `skill`, `sources`, `goals`, and an `output_schema`. Read these to judge fit
 before materializing. Note the template `sources` shape differs from the run/agent shape —
 it is a flat ordered array of `{title, domains, order}` groups.
 
@@ -208,7 +205,7 @@ nimble --client-source nimble-agent-skills agents create --template <template_na
 ```
 
 **Key `agents create` flags:** `--agent-name` (stable name), `--display-name`,
-`--description`, `--goal` (repeatable, ordered), `--sources`, `--output-schema`, `--effort`,
+`--description`, `--goal` (repeatable, ordered), `--sources`, `--output-schema`,
 `--skill`, `--suggested-question` (repeatable), `--use-case`, `--template`, `--is-active`.
 
 ---
@@ -258,27 +255,9 @@ state — the final `task_run.state` event carries `completed`. `--max-items <n>
 after `n` events instead, leaving the run going. Either way the stream never carries the
 output: fetch `agents:runs result` after it closes.
 
-**On MCP, use bounded status polling instead** — the shell-less transport works on
-request/response, so poll `nimble_agents_run_status` every ~15–30s, cap the total wait, and
-report the run as still active if the cap is hit rather than hanging or declaring failure.
-Polling is also the right approach in any host that can't hold a long-lived stream open.
-
----
-
-## Effort tiers
-
-Set effort to the shape of the task — don't ask the user to pick a number:
-
-| Tier                 | When                                                                    |
-| -------------------- | ----------------------------------------------------------------------- |
-| `low` / `medium`     | Fast, simple asks — a handful of easy-to-find fields                    |
-| `high`               | **Default** once several fields need real digging                       |
-| `x-high` / `max`     | Genuinely complex, multi-faceted profiles (financials, filings, history) |
-
-`dataset_building` runs will not accept anything below `high`.
-
-For a quick first look, offer a **preview** run at `low`, then re-run at the recommended tier —
-the user chooses "quick preview" vs "full run" without ever touching the value.
+**On MCP, call `nimble_agents_run_status` instead** — each call waits up to ~45 s on the server
+and returns the answer once the run completes, so call it again right away until then; no
+sleeping between calls. In other hosts that can't hold a stream open, poll `agents:runs get`.
 
 ---
 
@@ -300,7 +279,6 @@ configuration guidance):
   ranges/estimates ("50 to 200 employees", not an invented number); group related fields into
   nested structures and use lists for anything naturally a list; mark required vs optional.
 - **Use case** (`--use-case`) — pick deliberately; it locks on creation.
-- **Effort** — per the tiers above.
 
 Also draft a recommended starting prompt for the first run based on the conversation.
 
@@ -327,7 +305,7 @@ what makes a Web Search Agent's answer verifiable rather than an unsourced summa
 
 Shell-less hosts use the production Nimble MCP server. Run parameters carry over — the run
 tool takes `agent_id`, `agent_name` (create-or-reuse, same semantics as Mode 1), `use_case`,
-`skill`, `sources`, `output_schema`, `input_data`, and `effort`.
+`skill`, `sources`, `output_schema`, and `input_data`.
 
 **One routing rule to know:** `nimble_agents_run` takes **either** `agent_id` **or**
 `agent_name` — always pass one. Sending neither returns *"Provide either `agent_id` (run an
@@ -357,13 +335,12 @@ anyway: a named agent is reusable next session, which is exactly what Mode 3 giv
 | `422` `use_case cannot be changed for an existing agent`            | Locked `use_case` mismatch                               | Omit `--use-case`, match it, or use a different agent          |
 | `422` "Input should be 'research', 'enrichment' or 'dataset_building'" | Invalid enum value                                    | Use one of the three exactly                                   |
 | `422` `output_schema is required when use_case is dataset_building` | Missing schema on a dataset run                          | Supply `--output-schema`                                       |
-| `422` `dataset_building requires effort 'high' or higher`           | Effort too low for a dataset run                         | Raise to `high` or above                                       |
 | `422` on `sources`                                                  | Wrong shape, or a group missing `title`                  | `allow`/`block` = arrays of objects, each with a `title`; `prioritize`/`avoid` = strings |
 | `Required flag "agent-id" not set`                                  | Used `agents:runs create` for a Mode 1 / Mode 3 run      | Switch to `nimble agents run`                                  |
-| Run reaches `failed` / `cancelled`                                  | A real outcome                                           | Report it plainly; suggest broadening sources or raising effort |
+| Run reaches `failed` / `cancelled`                                  | A real outcome                                           | Report it plainly; suggest broadening sources |
 
 - Poll `agents:runs get` until a terminal state; don't fetch `result` before `completed`.
 - `failed` / `cancelled` are real outcomes — report them plainly, don't present a partial or
-  empty result as success. Suggest an obvious next step (broaden sources, raise effort, or a
+  empty result as success. Suggest an obvious next step (broaden sources, or a
   different capability) where one exists.
 - Never work around a missing/blocked transport with WebFetch, WebSearch, or curl.
