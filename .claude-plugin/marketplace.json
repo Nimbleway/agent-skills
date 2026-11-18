@@ -55,18 +55,7 @@
         "./skills/portfolio-monitoring",
         "./skills/credit-risk",
         "./skills/kyc-screening",
-        "./skills/deal-sourcing",
-        "./skills/account-deep-research",
-        "./skills/account-fast-search",
-        "./skills/account-lists-and-enrichment",
-        "./skills/gtm-data-at-scale",
-        "./skills/onboard-your-gtm-agent",
-        "./skills/people-research",
-        "./skills/alt-data-at-scale",
-        "./skills/company-deep-research",
-        "./skills/company-fast-search",
-        "./skills/filings-media-pdfs",
-        "./skills/onboard-your-agent"
+        "./skills/deal-sourcing"
       ]
     }
   ]
