@@ -4,9 +4,11 @@ description: |
   Finds the people who hold given roles at a company today, with current title, career
   history and the source that proves it, using the Nimble `decision-maker-identification`
   agent template on live web data. Use when the user says "who is the CFO at", "find the
-  head of X at", "find the buying committee", "decision makers at", "who runs RevOps at",
+  head of X at", "decision makers at", "who runs RevOps at",
   or "find contacts at". Do NOT use to fill company-level fields (use account-enrichment).
   It never returns emails or phone numbers.
+  Do NOT use for buying committee maps, ICP people lists, job-change checks or decision
+  makers across many accounts — use people-research instead.
 allowed-tools:
   - Bash(nimble:*)
   - Bash(claude mcp list)

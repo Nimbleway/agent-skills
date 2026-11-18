@@ -1,0 +1,201 @@
+{
+  "template_name": "gtm-account-enrichment",
+  "agent_name": "gtm-account-enrichment",
+  "display_name": "CRM account enrichment",
+  "description": "Turn a CRM account into a current company profile from its domain: products, customers, HQ, headcount, funding and investors, leadership, hiring and recent signals, with conflicting values from different sources kept side by side.",
+  "use_case": "enrichment",
+  "effort": "high",
+  "suggested_questions": [
+    "Enrich the CRM account Eve (eve.legal). Resolve it from the domain: several unrelated companies are called Eve.",
+    "Enrich the CRM account Supio (supio.com).",
+    "Enrich the CRM account Attio (attio.com)."
+  ],
+  "skill": "Enrich a CRM account into a current company profile. The request gives the company name and domain, and may pass\nthe CRM record with the fields to fill set to null.\n\nHow to research it:\n- Resolve the company from its domain, not its name: many unrelated companies share a name.\n- Use the company's own website, newsroom and careers or ATS pages (Greenhouse, Ashby, Lever, Workable) first for\n  identity, products, headquarters, leadership and hiring.\n- Use press releases and reputable business or trade press for funding and recent announcements.\n- Treat data aggregators (Crunchbase, Tracxn, PitchBook, GetLatka, CB Insights) as secondary corroboration only. They\n  are often stale: a headcount of 1-10 for a company that states 1,200 customers is a conflict, not a fact.\n- When sources disagree on a field, pick the best-supported value and record the disagreement in data_conflicts with\n  every value found, its source and date. For headcount, customer count and open roles, the most recent dated value\n  wins; for everything else, the most authoritative source wins.\n- Leave a field null rather than guess.\n\nCitations and evidence:\n- source_url is one full public https URL: the page the value was read on. Never an internal file path or source id. A\n  value from two pages is two values.\n- Dates are the date the event happened or the source states, not the article's publish date and not today's date.\n- A value nobody published is null. Not an estimate from memory, and never padded to reach a requested count.\n- Entity drift is the most common error: a namesake, a parent, a subsidiary or a similarly named company. Resolve every\n  account by its domain before using a page.\n- Only public pages. No logged-in, paywalled or purchased contact data; never construct emails or phone numbers from\n  patterns.",
+  "output_schema": {
+    "type": "object",
+    "properties": {
+      "company_name": {
+        "type": "string"
+      },
+      "domain": {
+        "type": "string",
+        "description": "Bare hostname, no protocol"
+      },
+      "description": {
+        "type": [
+          "string",
+          "null"
+        ],
+        "description": "One or two sentences on what the company sells and to whom"
+      },
+      "vertical": {
+        "type": [
+          "string",
+          "null"
+        ]
+      },
+      "products": {
+        "type": [
+          "array",
+          "null"
+        ],
+        "items": {
+          "type": "string"
+        }
+      },
+      "target_customer": {
+        "type": [
+          "string",
+          "null"
+        ]
+      },
+      "headquarters": {
+        "type": [
+          "string",
+          "null"
+        ],
+        "description": "City, State, Country"
+      },
+      "founded_year": {
+        "type": [
+          "integer",
+          "null"
+        ]
+      },
+      "employee_count": {
+        "type": [
+          "string",
+          "null"
+        ],
+        "description": "Best current estimate with as-of date and source type"
+      },
+      "funding_stage": {
+        "type": [
+          "string",
+          "null"
+        ]
+      },
+      "total_funding_usd": {
+        "type": [
+          "number",
+          "null"
+        ]
+      },
+      "last_round": {
+        "type": [
+          "string",
+          "null"
+        ],
+        "description": "Round, amount, date, lead investor"
+      },
+      "investors": {
+        "type": [
+          "array",
+          "null"
+        ],
+        "items": {
+          "type": "string"
+        }
+      },
+      "leadership": {
+        "type": [
+          "array",
+          "null"
+        ],
+        "items": {
+          "type": "object",
+          "properties": {
+            "name": {
+              "type": "string"
+            },
+            "title": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "name",
+            "title"
+          ]
+        }
+      },
+      "customer_count": {
+        "type": [
+          "string",
+          "null"
+        ],
+        "description": "Most recent publicly stated customer count with date"
+      },
+      "currently_hiring": {
+        "type": [
+          "string",
+          "null"
+        ],
+        "enum": [
+          "Yes",
+          "No",
+          null
+        ]
+      },
+      "open_roles_summary": {
+        "type": [
+          "string",
+          "null"
+        ],
+        "description": "Approximate number of open roles and which functions they are in"
+      },
+      "recent_signals": {
+        "type": [
+          "array",
+          "null"
+        ],
+        "items": {
+          "type": "object",
+          "properties": {
+            "date": {
+              "type": "string"
+            },
+            "signal": {
+              "type": "string"
+            },
+            "source_url": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "date",
+            "signal"
+          ]
+        }
+      },
+      "data_conflicts": {
+        "type": [
+          "array",
+          "null"
+        ],
+        "items": {
+          "type": "object",
+          "properties": {
+            "field": {
+              "type": "string"
+            },
+            "values_found": {
+              "type": "string"
+            },
+            "resolution": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "field",
+            "values_found",
+            "resolution"
+          ]
+        }
+      }
+    },
+    "required": [
+      "company_name",
+      "domain"
+    ]
+  }
+}

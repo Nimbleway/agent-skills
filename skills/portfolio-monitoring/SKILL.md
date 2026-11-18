@@ -7,6 +7,7 @@ description: |
   happened at [holding]", "monitor my portfolio", "material events", "check my holdings
   since", or "portfolio news". Do NOT use for sales accounts (use account-signals) or a
   full credit view (use credit-risk).
+  Do NOT use for a deep dive on one holding — use company-deep-research instead.
 allowed-tools:
   - Bash(nimble:*)
   - Bash(claude mcp list)

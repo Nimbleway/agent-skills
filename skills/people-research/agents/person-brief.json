@@ -1,0 +1,207 @@
+{
+  "template_name": "person-brief",
+  "agent_name": "person-brief",
+  "display_name": "Person brief",
+  "description": "Brief a seller on one named person before a meeting or outreach: current role verified with its date, career history, what they have said publicly recently, what they care about and talking points, each with a source.",
+  "use_case": "research",
+  "effort": "high",
+  "suggested_questions": [
+    "Brief me on Shane Evans at Gong (gong.io) before a call next week. I sell data infrastructure to revenue teams.",
+    "Brief me on the CFO of Ramp (ramp.com) before an intro meeting. Focus on what they have said publicly about finance automation this year.",
+    "Research the Chief Marketing Officer of Datadog (datadoghq.com) before a partnership pitch."
+  ],
+  "skill": "What helps a seller before talking to a person:\n- Who they are now: current title, team and remit at the named company, and when they started the role.\n- Where they came from: past employers and roles, with years. Shared history with the seller (a past employer, a\n  customer they ran) is often the best opener, but only the user can confirm it.\n- What they say in public: posts and articles they wrote, podcast and webinar appearances, conference talks, quotes in\n  press and in the company's own releases and blog. Recent (last 12 months) beats old.\n- What they care about: priorities and problems they stated themselves, initiatives they own, teams they are hiring for\n  (job posts that name them as the hiring manager or that sit in their org).\n\nWhere to look:\n- The company's leadership page, newsroom, blog author pages and event pages.\n- Press releases announcing the appointment, and later releases that quote them.\n- Podcast episode pages, webinar and conference speaker pages (the page with the date, not a re-upload).\n- Public profile pages (LinkedIn and others) as shown to logged-out readers, personal blogs, newsletters.\n\nCurrent role:\n- A title is current only when a page dated in the last 12 months shows it, or a profile or company page shows it as the\n  present position. Press releases announcing an appointment are dated history: always check for a later change (a\n  new title, a departure, a new employer) before calling it current.\n- Titles change without a press release: \"Chief Revenue Officer\" can become \"Chief Revenue Architect\", \"President\" or\n  \"Advisor\". Report the title exactly as the newest source states it, with its date.\n\nPitfalls:\n- Do not infer priorities from the job title. A priority counts only when the person or their company said it.\n- Do not use social posts by someone else with the same name. Confirm the employer on the page.\n- An undated speaker bio is not evidence of a current title.\n\nCitations and evidence:\n- source_url is one full public https URL: the page the value was read on. Never an internal file path or source id. A\n  value from two pages is two values.\n- as_of is the date the source states or was published, not today's date.\n- A value nobody published is null, listed in missing_fields. Not an estimate from memory.\n- Identity drift is the most common error: another person with the same name, a former employee whose old bio is still\n  indexed, or a namesake at a similarly named company. Match on name plus company plus title or location before using a\n  page.\n\nPrivacy:\n- Work-related public information only: role, employer, career history, public talks, posts, articles and quotes.\n- Never collect home address, personal phone, personal email, family, health, age, religion, politics or other\n  sensitive data, and never construct an email or phone number from a pattern. A business email or phone counts only\n  when the person or their company published it on a public page for business contact.",
+  "output_schema": {
+    "type": "object",
+    "required": [
+      "bottom_line",
+      "person",
+      "company",
+      "current_role"
+    ],
+    "properties": {
+      "bottom_line": {
+        "type": "object",
+        "required": [
+          "summary"
+        ],
+        "properties": {
+          "summary": {
+            "type": "string",
+            "description": "Two sentences a seller reads first: who this is now and the best angle"
+          },
+          "best_opener": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "One opener built only from facts below"
+          }
+        }
+      },
+      "person": {
+        "type": "string"
+      },
+      "company": {
+        "type": "string"
+      },
+      "current_role": {
+        "type": "object",
+        "required": [
+          "title",
+          "source_url"
+        ],
+        "properties": {
+          "title": {
+            "type": "string",
+            "description": "Title exactly as the newest source states it"
+          },
+          "started": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Month and year, or null"
+          },
+          "remit": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "What the role owns, as a source states it"
+          },
+          "as_of": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "YYYY-MM-DD"
+          },
+          "source_url": {
+            "type": "string"
+          }
+        }
+      },
+      "career_history": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "required": [
+            "company",
+            "title"
+          ],
+          "properties": {
+            "company": {
+              "type": "string"
+            },
+            "title": {
+              "type": "string"
+            },
+            "years": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "source_url": {
+              "type": [
+                "string",
+                "null"
+              ]
+            }
+          }
+        }
+      },
+      "public_activity": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "required": [
+            "title",
+            "source_url"
+          ],
+          "properties": {
+            "date": {
+              "type": [
+                "string",
+                "null"
+              ],
+              "description": "YYYY-MM-DD"
+            },
+            "type": {
+              "type": [
+                "string",
+                "null"
+              ],
+              "description": "post, article, podcast, talk, webinar, interview, quote"
+            },
+            "title": {
+              "type": "string"
+            },
+            "takeaway": {
+              "type": [
+                "string",
+                "null"
+              ],
+              "description": "What they said, one or two sentences"
+            },
+            "source_url": {
+              "type": "string"
+            }
+          }
+        },
+        "description": "Posts, articles, talks, podcasts, interviews and quotes, newest first"
+      },
+      "stated_priorities": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "required": [
+            "priority",
+            "source_url"
+          ],
+          "properties": {
+            "priority": {
+              "type": "string"
+            },
+            "evidence": {
+              "type": [
+                "string",
+                "null"
+              ],
+              "description": "Their words or the company's, paraphrased"
+            },
+            "date": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "source_url": {
+              "type": "string"
+            }
+          }
+        }
+      },
+      "talking_points": {
+        "type": "array",
+        "items": {
+          "type": "string"
+        }
+      },
+      "public_profiles": {
+        "type": "array",
+        "items": {
+          "type": "string"
+        }
+      },
+      "missing_fields": {
+        "type": "array",
+        "items": {
+          "type": "string"
+        },
+        "description": "Fields you could not verify from a page you opened"
+      }
+    }
+  }
+}

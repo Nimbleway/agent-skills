@@ -1,0 +1,201 @@
+{
+  "template_name": "account-brief",
+  "agent_name": "account-brief",
+  "display_name": "Account brief",
+  "description": "Get a short brief on a company before a call: what it does, its priorities and challenges, recent changes and key people.",
+  "use_case": "research",
+  "effort": "medium",
+  "suggested_questions": [
+    "Prepare me for a meeting with Attio (attio.com)",
+    "Prepare me for a meeting with Datadog (datadoghq.com)",
+    "Prepare me for a meeting with Gong (gong.io)"
+  ],
+  "skill": "What helps a seller before a meeting:\n- What the company does, in its own words: homepage, about page, product pages.\n- What it is investing in: recent launches, job posts (which teams are hiring), executive interviews and posts,\n  earnings calls and investor letters for public companies, engineering and product blogs.\n- What it is struggling with: layoffs, public customer complaints and review sites (G2, Trustpilot), competitive\n  pressure covered by press, regulatory actions, missed targets in earnings. Only what a source shows; pains are easy\n  to invent.\n- Recent changes: funding, leadership moves, launches, M&A, partnerships. The newsroom and business press are the best\n  sources; dates matter more than volume.\n- People: leaders whose remit touches the seller's product, and what they said or did recently (posts, talks, quotes).\n\nCitations and evidence:\n- source_url is one full public https URL: the page the value was read on. Never an internal file path or source id. A\n  value from two pages is two values.\n- as_of is the date the source states or was published, not today's date.\n- A value nobody published is null, listed in missing_fields. Not an estimate from memory.\n- Entity drift is the most common error: a namesake, a parent, a subsidiary or a similarly named company. Match on domain,\n  registry number, HQ city or ticker before using a page.",
+  "output_schema": {
+    "type": "object",
+    "properties": {
+      "company": {
+        "type": [
+          "string",
+          "null"
+        ]
+      },
+      "challenges": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "properties": {
+            "date": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "evidence": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "challenge": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "source_url": {
+              "type": [
+                "string",
+                "null"
+              ]
+            }
+          }
+        }
+      },
+      "key_people": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "properties": {
+            "name": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "title": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "recent": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "source_url": {
+              "type": [
+                "string",
+                "null"
+              ]
+            }
+          }
+        }
+      },
+      "priorities": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "properties": {
+            "date": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "evidence": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "priority": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "source_url": {
+              "type": [
+                "string",
+                "null"
+              ]
+            }
+          }
+        }
+      },
+      "what_they_do": {
+        "type": "object",
+        "properties": {
+          "as_of": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "value": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "source_url": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        }
+      },
+      "missing_fields": {
+        "type": "array",
+        "items": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "description": "fields you could not verify from a page you opened"
+      },
+      "recent_changes": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "properties": {
+            "date": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "type": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "summary": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "headline": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "source_url": {
+              "type": [
+                "string",
+                "null"
+              ]
+            }
+          }
+        }
+      },
+      "talking_points": {
+        "type": "array",
+        "items": {
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      }
+    }
+  }
+}

@@ -7,6 +7,8 @@ description: |
   the user says "due diligence on", "DD memo", "investment memo on", "diligence this
   company", "red flags for", or "should we invest in". Do NOT use for a sales meeting
   brief (use account-brief) or a credit view (use credit-risk).
+  Do NOT use for public-company catalysts, filing diffs or channel checks — use
+  company-deep-research instead.
 allowed-tools:
   - Bash(nimble:*)
   - Bash(claude mcp list)

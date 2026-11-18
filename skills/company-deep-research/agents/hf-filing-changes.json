@@ -1,0 +1,213 @@
+{
+  "template_name": "hf-filing-changes",
+  "agent_name": "hf-filing-changes",
+  "display_name": "Filing change detector",
+  "description": "Find what changed in a company's latest 10-K or 10-Q against the prior filing: new risks, dropped language, moved numbers. Alpha the summary articles miss.",
+  "use_case": "research",
+  "effort": "high",
+  "suggested_questions": [
+    "What changed in Intel's (INTC) latest 10-K compared with the prior year's 10-K?",
+    "What changed in Boeing's (BA) latest 10-K risk factors, legal proceedings and liquidity disclosures compared with the prior 10-K?",
+    "What changed in Peloton Interactive's (PTON) latest 10-Q compared with the same quarter's 10-Q a year earlier?"
+  ],
+  "skill": "Where filing changes hide:\n- SEC EDGAR holds every 10-K, 10-Q, 20-F and 40-F with exhibits. The filing index page lists the main document and\n  exhibits; the full text sits in the primary document. The same report a year earlier is the like-for-like\n  comparison for a 10-K; for a 10-Q it is the prior quarter or the same quarter a year earlier.\n- Areas that move: Item 1A risk factors (new, removed, reworded or reordered), Item 1 business (segments, customers,\n  products dropped), Item 7 MD&A (liquidity, outlook wording, known trends), Item 9A controls (material weakness,\n  remediation), Item 3 and the contingencies note (legal proceedings), the debt note (maturities, covenants,\n  amendments), revenue recognition and critical accounting estimates, the customer-concentration note, related-party\n  transactions, segment reporting, subsequent events, going-concern language.\n- Wording that matters: \"substantial doubt\", \"material weakness\", \"no longer\", \"we may not be able to\", a hedge added\n  to a previously firm statement, a customer named for the first time or no longer named, a number that is no longer\n  disclosed.\n- Where the alpha is: summary articles repeat the headline numbers. A changed risk factor, a quietly removed metric, a\n  new dependency or a reworded liquidity sentence often reaches the price later.\n\nWhat terms mean:\n- added: text with no counterpart in the prior filing. removed: prior text with no counterpart now. modified: the\n  same disclosure with materially different wording or figures.\n- alpha_relevance high: the change bears on revenue, margins, liquidity, legal exposure or reporting reliability.\n  medium: on strategy or competition. low: housekeeping.\n\nPitfalls: reordering is not a change unless the emphasis moved; a figure restated for a reclassification is a\nmodification to explain; boilerplate refreshed every year is low relevance.\n\nCitations and evidence:\n- source_url is one full public https URL: the exact page the value was read on. Never a search results page, an index\n  page, an internal file path or a source id. A value from two pages is two values.\n- Dates are the date the event happened or the source printed, as YYYY-MM-DD, not today's date.\n- Public pages only. Paywalled, logged-in or leaked material, expert-network transcripts and anything marked\n  confidential carry MNPI risk and are out of bounds. When only a paywalled article's headline and first lines are\n  public, those lines can be used, marked \"Headline only:\".\n- Evidence grades: primary_record (regulator, court, filing, government database, lender schedule, or the live or\n  archived page being measured), company_statement, original_press, repeated_press, third_party_tracker. When a page\n  repeats a filing, a release or another outlet, the original is the better citation.\n- A value nobody published is null. Not an estimate from memory. Analyst opinions, estimates, price targets and\n  ratings are views, not evidence.\n- Entity drift is the most common error: a namesake, a parent, a subsidiary, a lender or a sister company. Match on\n  legal name, ticker, SEC CIK or domain before using a page.",
+  "output_schema": {
+    "type": "object",
+    "description": "Changes between a company's latest periodic filing and the prior comparable one.",
+    "properties": {
+      "filing": {
+        "type": "object",
+        "description": "The two filings compared.",
+        "properties": {
+          "company": {
+            "type": "string",
+            "description": "Legal name as on the filing."
+          },
+          "ticker": {
+            "type": "string",
+            "description": "Ticker."
+          },
+          "form_type": {
+            "type": "string",
+            "description": "Form type of the latest filing, e.g. 10-K."
+          },
+          "period_end": {
+            "type": "string",
+            "description": "Period end of the latest filing, YYYY-MM-DD."
+          },
+          "filed_date": {
+            "type": "string",
+            "description": "Filing date, YYYY-MM-DD."
+          },
+          "filing_url": {
+            "type": "string",
+            "description": "Full EDGAR URL of the latest filing's main document."
+          },
+          "prior_period_end": {
+            "type": "string",
+            "description": "Period end of the prior filing, YYYY-MM-DD."
+          },
+          "prior_filing_url": {
+            "type": "string",
+            "description": "Full EDGAR URL of the prior filing's main document."
+          }
+        },
+        "required": [
+          "company",
+          "ticker",
+          "form_type",
+          "period_end",
+          "filing_url",
+          "prior_period_end",
+          "prior_filing_url"
+        ]
+      },
+      "changes": {
+        "type": "array",
+        "description": "One row per material change, most relevant first.",
+        "items": {
+          "type": "object",
+          "description": "One row per material change, most relevant first.",
+          "properties": {
+            "area": {
+              "type": "string",
+              "enum": [
+                "risk_factors",
+                "business",
+                "mda_outlook",
+                "liquidity_debt",
+                "controls",
+                "legal_proceedings",
+                "accounting",
+                "customer_concentration",
+                "related_parties",
+                "segments",
+                "going_concern",
+                "subsequent_events",
+                "other"
+              ],
+              "description": "Part of the filing."
+            },
+            "change_type": {
+              "type": "string",
+              "enum": [
+                "added",
+                "removed",
+                "modified"
+              ],
+              "description": "Kind of change."
+            },
+            "summary": {
+              "type": "string",
+              "description": "What changed and why it matters, in one or two sentences."
+            },
+            "current_text": {
+              "type": [
+                "string",
+                "null"
+              ],
+              "description": "Short exact quote from the latest filing. Null when removed."
+            },
+            "prior_text": {
+              "type": [
+                "string",
+                "null"
+              ],
+              "description": "Short exact quote from the prior filing. Null when added."
+            },
+            "alpha_relevance": {
+              "type": "string",
+              "enum": [
+                "high",
+                "medium",
+                "low"
+              ],
+              "description": "How much the change could matter to an investment view."
+            },
+            "source_url": {
+              "type": "string",
+              "description": "Full public https URL of the exact page that states this row. Never a search results page, an index page or an internal source id."
+            }
+          },
+          "required": [
+            "area",
+            "change_type",
+            "summary",
+            "alpha_relevance",
+            "source_url"
+          ]
+        }
+      },
+      "figures_moved": {
+        "type": "array",
+        "description": "Disclosed figures that moved between the two filings, raw values as printed.",
+        "items": {
+          "type": "object",
+          "description": "Disclosed figures that moved between the two filings, raw values as printed.",
+          "properties": {
+            "metric": {
+              "type": "string",
+              "description": "Metric as labelled in the filing."
+            },
+            "current_value": {
+              "type": "number",
+              "description": "Value in the latest filing."
+            },
+            "prior_value": {
+              "type": [
+                "number",
+                "null"
+              ],
+              "description": "Value in the prior filing."
+            },
+            "unit": {
+              "type": "string",
+              "description": "Currency and scale as printed."
+            },
+            "source_url": {
+              "type": "string",
+              "description": "Full public https URL of the exact page that states this row. Never a search results page, an index page or an internal source id."
+            }
+          },
+          "required": [
+            "metric",
+            "current_value",
+            "unit",
+            "source_url"
+          ]
+        }
+      },
+      "checked_no_finding": {
+        "type": "array",
+        "description": "Searches that came back empty, so a gap is a verified absence rather than a skipped check.",
+        "items": {
+          "type": "object",
+          "description": "Searches that came back empty, so a gap is a verified absence rather than a skipped check.",
+          "properties": {
+            "looked_for": {
+              "type": "string",
+              "description": "What was searched for."
+            },
+            "where_checked": {
+              "type": "string",
+              "description": "Sources or registers searched."
+            },
+            "result": {
+              "type": "string",
+              "description": "What came back, e.g. no filing found, register shows no case."
+            }
+          },
+          "required": [
+            "looked_for",
+            "where_checked",
+            "result"
+          ]
+        }
+      }
+    },
+    "required": [
+      "filing",
+      "changes"
+    ]
+  }
+}

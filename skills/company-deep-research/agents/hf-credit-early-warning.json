@@ -1,0 +1,456 @@
+{
+  "template_name": "hf-credit-early-warning",
+  "agent_name": "hf-credit-early-warning",
+  "display_name": "Borrower early warning",
+  "description": "Log the stress signals around a borrower since a date: lender actions, debt quotes, lawsuits, liens, layoff notices and adviser hires, each graded by severity. Credit alpha.",
+  "use_case": "research",
+  "effort": "high",
+  "suggested_questions": [
+    "Log early warning signals for Optimum Communications (optimum.com), ticker OPTU, since 2026-05-01.",
+    "Log early warning signals for Brightspeed (brightspeed.com), a private company owned by Apollo, since 2026-05-01.",
+    "Log early warning signals for New Fortress Energy (NFE, newfortressenergy.com) since 2026-05-01."
+  ],
+  "skill": "Where distress shows up before a default:\n- Debt and liquidity: amendments, waivers and forbearance in 8-Ks and lender filings; revolver draws; amend-and-extend;\n  a switch to paid-in-kind interest; distressed exchanges, uptier and drop-down transactions, assets moved to\n  unrestricted subsidiaries; missed or deferred payments; going-concern language; late filings (NT 10-K, NT 10-Q);\n  rating actions published openly.\n- Lender actions: cooperation agreements and ad hoc groups reported in press, non-accrual footnotes and sharp\n  markdowns in BDC schedules of investments, lenders hiring advisers.\n- Market prices: loan and bond quotes printed in public articles, with the earlier quote the same page gives.\n- Legal and liens: suits by vendors, landlords, lenders and customers for non-payment, judgments, tax and mechanics\n  liens on open state or county portals, regulator fines, bankruptcy filings by affiliates. CourtListener, state court\n  portals and claims agent sites (Kroll, Epiq, Stretto, Omni).\n- Operations: state WARN layoff databases in the states with the company's largest sites (state, site, date,\n  headcount), closures, lost contracts, recalls, stoppages, licence losses, cyber incidents.\n- People and advisers: CEO, CFO, treasurer, general counsel or auditor departures; a chief restructuring officer;\n  restructuring directors joining the board; restructuring advisers or counsel hired, and whose side they are on.\n- Counterparties: stretched supplier payments, tightened vendor terms, withdrawn trade credit insurance, a key customer\n  or supplier in distress, landlord action.\n- Names: the parent, borrower and issuer entities and trade names often differ; every source is searched by each.\n\nSeverity:\n- high: a default or an event that usually precedes one by weeks: missed payment, forbearance, going-concern\n  language, restructuring advisers or a CRO hired, lenders organised under a cooperation agreement, loan on\n  non-accrual, distressed exchange, rating at CCC or selective default, debt quoted below 70, a reported plan to file.\n- medium: pressure that usually precedes a default by months: covenant amendment or waiver, revolver fully drawn,\n  switch to PIK, downgrade or negative outlook, debt quoted between 70 and 90, CFO or auditor departure with no named\n  successor, WARN notices covering a site closure, several vendor or landlord suits, late filing, amend-and-extend at a\n  higher spread.\n- low: worth logging and common at healthy companies. Growth financing, routine refinancing at similar terms and\n  ordinary executive hires are not stress.\n- An event at a lender, sponsor or fund is not an event at the borrower unless it concerns this borrower's debt.\n\nStatus and grading:\n- Every signal has a status: active (still in force), cured (resolved: waiver signed, listing compliance regained,\n  default cured, notice withdrawn) or historical (happened in the window with no lasting effect). Before logging a\n  notice, look for its cure in later filings (exchange compliance letters, waiver 8-Ks, the next 10-Q). A cured\n  signal names the curing event and its date in cured_by.\n- Severity follows the definitions above, and severity_reason says which definition applies and why.\n- Going-concern language means the auditor or management states that substantial doubt exists. A risk factor saying\n  doubt may be expressed in future statements is a separate, weaker signal, graded on what else is true.\n- A debt exchange is distressed when it is below par, coercive, or done because the company could not pay or\n  refinance; severity_reason states which. The exchange price alone does not decide it.\n- A price row names the exact instrument (issuer, coupon, maturity, and CUSIP or ISIN when printed), the trade or\n  quote date, and whether it is a last trade or a quote; price_note flags a price older than 30 days or a thin\n  trade. A current, verified price below 70 is also logged as a high-severity market_price signal, and one between\n  70 and 90 as medium.\n- owner_or_sponsor is the controlling shareholder or private equity sponsor only. Lenders go in lenders and\n  capital_structure, never in owner_or_sponsor.\n- capital_structure lists each debt instrument from the latest filing; liquidity takes cash, undrawn facilities\n  and cash burn from the same filing.\n\nWhat was not found:\n- checked_no_finding names the exact registers, dockets or pages searched and the period they cover, and says what\n  was not checked. A tracker's leaderboard or a news search that did not reach the register itself is not evidence\n  that nothing exists; the result says so.\n\nWhere the alpha is: WARN notices, vendor suits and lender footnotes appear weeks before a downgrade or a default\nheadline.\n\nCitations and evidence:\n- source_url is one full public https URL: the exact page the value was read on. Never a search results page, an index\n  page, an internal file path or a source id. A value from two pages is two values.\n- Dates are the date the event happened or the source printed, as YYYY-MM-DD, not today's date.\n- Public pages only. Paywalled, logged-in or leaked material, expert-network transcripts and anything marked\n  confidential carry MNPI risk and are out of bounds. When only a paywalled article's headline and first lines are\n  public, those lines can be used, marked \"Headline only:\".\n- Text fields carry the words themselves. Internal references such as quote:/pages/..., .md#L line markers, file\n  paths or source ids never appear inside a field.\n- A paywalled page is never the only source for a value.\n- Evidence grades: primary_record (regulator, court, filing, government database, lender schedule, or the live or\n  archived page being measured), company_statement, original_press, repeated_press, third_party_tracker. When a page\n  repeats a filing, a release or another outlet, the original is the better citation.\n- A value nobody published is null. Not an estimate from memory. Analyst opinions, estimates, price targets and\n  ratings are views, not evidence.\n- Entity drift is the most common error: a namesake, a parent, a subsidiary, a lender or a sister company. Match on\n  legal name, ticker, SEC CIK or domain before using a page.",
+  "output_schema": {
+    "type": "object",
+    "description": "Stress signals for one borrower since a date.",
+    "properties": {
+      "bottom_line": {
+        "type": "object",
+        "description": "The conclusion first: what the rows below add up to.",
+        "properties": {
+          "summary": {
+            "type": "string",
+            "description": "Two or three sentences with the conclusion an analyst needs first, in plain words."
+          },
+          "stress_level": {
+            "type": "string",
+            "enum": [
+              "low",
+              "medium",
+              "high",
+              "imminent"
+            ],
+            "description": "Overall stress, from the active signals only."
+          },
+          "key_risk": {
+            "type": "string",
+            "description": "The single biggest risk to the position, with the key of the row that shows it."
+          },
+          "next_catalyst": {
+            "type": "string",
+            "description": "The next dated event that could move the position."
+          },
+          "next_catalyst_date": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Date as YYYY-MM-DD when exact; null when the source gives only a window."
+          }
+        },
+        "required": [
+          "summary",
+          "stress_level",
+          "key_risk",
+          "next_catalyst"
+        ]
+      },
+      "borrower": {
+        "type": "object",
+        "description": "Borrower and window.",
+        "properties": {
+          "legal_name": {
+            "type": "string",
+            "description": "Legal name."
+          },
+          "names_searched": {
+            "type": "string",
+            "description": "Entity and trade names searched."
+          },
+          "owner_or_sponsor": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Owner or sponsor."
+          },
+          "since": {
+            "type": "string",
+            "description": "Start of the window, YYYY-MM-DD."
+          },
+          "lenders": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Main lenders or agents of the borrower's debt, as named in filings."
+          }
+        },
+        "required": [
+          "legal_name",
+          "names_searched",
+          "since"
+        ]
+      },
+      "signals": {
+        "type": "array",
+        "description": "One row per stress event on or after the since date, newest first.",
+        "items": {
+          "type": "object",
+          "description": "One row per stress event on or after the since date, newest first.",
+          "properties": {
+            "key": {
+              "type": "string",
+              "description": "Stable lowercase identifier for this item, built from fixed parts joined by underscores (e.g. us_doj_hsr, first_lien_term_loan_2031, q3_2026_earnings). The same item gets the same key in every run."
+            },
+            "category": {
+              "type": "string",
+              "enum": [
+                "debt_liquidity",
+                "lender_action",
+                "market_price",
+                "legal_lien",
+                "operations",
+                "people_advisers",
+                "counterparty",
+                "rating",
+                "refinancing",
+                "other"
+              ],
+              "description": "Kind of signal."
+            },
+            "date": {
+              "type": "string",
+              "description": "Date as YYYY-MM-DD."
+            },
+            "what_happened": {
+              "type": "string",
+              "description": "Event, with names, case numbers and figures as printed."
+            },
+            "party": {
+              "type": [
+                "string",
+                "null"
+              ],
+              "description": "Lender group, court, counterparty, person or firm involved."
+            },
+            "figure": {
+              "type": [
+                "number",
+                "null"
+              ],
+              "description": "Amount, headcount or price, plain number."
+            },
+            "figure_unit": {
+              "type": [
+                "string",
+                "null"
+              ],
+              "description": "Unit of figure."
+            },
+            "severity": {
+              "type": "string",
+              "enum": [
+                "high",
+                "medium",
+                "low"
+              ],
+              "description": "Severity under the definitions in the agent's knowledge."
+            },
+            "severity_reason": {
+              "type": "string",
+              "description": "Which severity definition applies and why, in one sentence."
+            },
+            "status": {
+              "type": "string",
+              "enum": [
+                "active",
+                "cured",
+                "historical"
+              ],
+              "description": "active: still in force. cured: resolved, see cured_by. historical: happened with no lasting effect."
+            },
+            "cured_by": {
+              "type": [
+                "string",
+                "null"
+              ],
+              "description": "The event that resolved it and its date, e.g. 'Nasdaq letter 2026-08-28: compliance regained'."
+            },
+            "evidence": {
+              "type": "string",
+              "enum": [
+                "primary_record",
+                "company_statement",
+                "original_press",
+                "repeated_press",
+                "third_party_tracker"
+              ],
+              "description": "Evidence grade of the source: primary_record (regulator, court, filing, government database, lender schedule, or the live or archived page being measured), company_statement (the company describing itself), original_press (an outlet's own reporting), repeated_press (a page repeating another outlet), third_party_tracker (a site compiling data from elsewhere)."
+            },
+            "source_url": {
+              "type": "string",
+              "description": "Full public https URL of the exact page that states this row. Never a search results page, an index page or an internal source id."
+            }
+          },
+          "required": [
+            "key",
+            "category",
+            "date",
+            "what_happened",
+            "severity",
+            "severity_reason",
+            "status",
+            "evidence",
+            "source_url"
+          ]
+        }
+      },
+      "market_prices": {
+        "type": "array",
+        "description": "Quoted loan and bond prices.",
+        "items": {
+          "type": "object",
+          "description": "Quoted loan and bond prices.",
+          "properties": {
+            "date": {
+              "type": "string",
+              "description": "Date as YYYY-MM-DD."
+            },
+            "instrument": {
+              "type": "string",
+              "description": "Instrument."
+            },
+            "price": {
+              "type": "number",
+              "description": "Price, percent of par."
+            },
+            "prior_price": {
+              "type": [
+                "number",
+                "null"
+              ],
+              "description": "Earlier price the page gives."
+            },
+            "prior_date": {
+              "type": [
+                "string",
+                "null"
+              ],
+              "description": "Date as YYYY-MM-DD."
+            },
+            "source_url": {
+              "type": "string",
+              "description": "Full public https URL of the exact page that states this row. Never a search results page, an index page or an internal source id."
+            },
+            "price_note": {
+              "type": [
+                "string",
+                "null"
+              ],
+              "description": "Last trade or quote, and a flag when the price is stale or from a thin trade."
+            }
+          },
+          "required": [
+            "date",
+            "instrument",
+            "price",
+            "source_url"
+          ]
+        }
+      },
+      "next_dates": {
+        "type": "array",
+        "description": "Dates the events point to.",
+        "items": {
+          "type": "object",
+          "description": "Dates the events point to.",
+          "properties": {
+            "date": {
+              "type": "string",
+              "description": "Date as YYYY-MM-DD."
+            },
+            "event": {
+              "type": "string",
+              "description": "Payment due, grace period end, hearing, reported filing target."
+            },
+            "certainty": {
+              "type": "string",
+              "enum": [
+                "confirmed",
+                "reported",
+                "estimated"
+              ],
+              "description": "How firm."
+            },
+            "source_url": {
+              "type": "string",
+              "description": "Full public https URL of the exact page that states this row. Never a search results page, an index page or an internal source id."
+            }
+          },
+          "required": [
+            "date",
+            "event",
+            "certainty",
+            "source_url"
+          ]
+        }
+      },
+      "checked_no_finding": {
+        "type": "array",
+        "description": "Searches that came back empty, so a gap is a verified absence rather than a skipped check.",
+        "items": {
+          "type": "object",
+          "description": "Searches that came back empty, so a gap is a verified absence rather than a skipped check.",
+          "properties": {
+            "looked_for": {
+              "type": "string",
+              "description": "What was searched for."
+            },
+            "where_checked": {
+              "type": "string",
+              "description": "Sources or registers searched."
+            },
+            "result": {
+              "type": "string",
+              "description": "What came back, e.g. no filing found, register shows no case."
+            }
+          },
+          "required": [
+            "looked_for",
+            "where_checked",
+            "result"
+          ]
+        }
+      },
+      "capital_structure": {
+        "type": "array",
+        "description": "Each debt instrument outstanding, from the latest filing.",
+        "items": {
+          "type": "object",
+          "properties": {
+            "instrument": {
+              "type": "string",
+              "description": "Instrument as the filing names it, e.g. 7.00% Convertible Senior Secured Second Lien PIK Toggle Notes due 2030."
+            },
+            "seniority": {
+              "type": "string",
+              "description": "Secured first lien, secured second lien, senior unsecured, subordinated or convertible, as the filing says."
+            },
+            "amount": {
+              "type": [
+                "number",
+                "null"
+              ],
+              "description": "Principal outstanding, plain number."
+            },
+            "amount_unit": {
+              "type": [
+                "string",
+                "null"
+              ],
+              "description": "Unit of amount, e.g. USD millions."
+            },
+            "maturity": {
+              "type": [
+                "string",
+                "null"
+              ],
+              "description": "Date as YYYY-MM-DD."
+            },
+            "coupon": {
+              "type": [
+                "string",
+                "null"
+              ],
+              "description": "Coupon as printed, e.g. 7.00% PIK toggle."
+            },
+            "latest_price": {
+              "type": [
+                "number",
+                "null"
+              ],
+              "description": "Latest verified price, percent of par."
+            },
+            "latest_price_date": {
+              "type": [
+                "string",
+                "null"
+              ],
+              "description": "Date as YYYY-MM-DD."
+            },
+            "source_url": {
+              "type": "string",
+              "description": "Full public https URL of the exact page that states this row. Never a search results page, an index page or an internal source id."
+            }
+          },
+          "required": [
+            "instrument",
+            "seniority",
+            "source_url"
+          ]
+        }
+      },
+      "liquidity": {
+        "type": "object",
+        "description": "Liquidity from the latest filing.",
+        "properties": {
+          "as_of_date": {
+            "type": "string",
+            "description": "Date as YYYY-MM-DD."
+          },
+          "cash": {
+            "type": [
+              "number",
+              "null"
+            ],
+            "description": "Cash and equivalents, plain number."
+          },
+          "undrawn_facilities": {
+            "type": [
+              "number",
+              "null"
+            ],
+            "description": "Undrawn committed facilities, plain number."
+          },
+          "unit": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Unit of the figures, e.g. USD millions."
+          },
+          "quarterly_cash_burn": {
+            "type": [
+              "number",
+              "null"
+            ],
+            "description": "Operating cash outflow per quarter, plain number."
+          },
+          "runway_note": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Runway as the filing or the figures support it, with the basis."
+          },
+          "source_url": {
+            "type": "string",
+            "description": "Full public https URL of the exact page that states this row. Never a search results page, an index page or an internal source id."
+          }
+        },
+        "required": [
+          "as_of_date",
+          "source_url"
+        ]
+      }
+    },
+    "required": [
+      "bottom_line",
+      "borrower",
+      "signals",
+      "checked_no_finding"
+    ]
+  }
+}

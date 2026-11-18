@@ -1,0 +1,77 @@
+{
+  "template_name": "account-signals",
+  "agent_name": "account-signals",
+  "display_name": "Account signals",
+  "description": "Check a company for new events since a date: funding, hires, launches, layoffs and other changes.",
+  "use_case": "research",
+  "effort": "medium",
+  "suggested_questions": [
+    "Check Mercury (mercury.com) for changes since 2026-09-21",
+    "Check Rippling (rippling.com) for changes since 2026-09-21"
+  ],
+  "skill": "What counts as a signal:\n- Funding rounds, acquisitions (either side), leadership hires and departures, layoffs, new offices or markets,\n  product launches and major releases, pricing changes (new plans, removed free tier), and hiring pushes (many new\n  roles in one function).\n\nWhere to find them:\n- The company newsroom and blog, business press, LinkedIn company posts, the careers page or ATS boards for hiring,\n  and archived versions of the pricing page for pricing changes.\n\nPitfalls:\n- \"Since a date\" means the event date, not the article date. Re-reported old news is the most common false signal.\n- An empty result is a valid answer when nothing changed.\n\nsince is the cutoff date the request gives, as YYYY-MM-DD.\n\nCitations and evidence:\n- source_url is one full public https URL: the page the value was read on. Never an internal file path or source id. A\n  value from two pages is two values.\n- as_of is the date the source states or was published, not today's date.\n- A value nobody published is null, listed in missing_fields. Not an estimate from memory.\n- Entity drift is the most common error: a namesake, a parent, a subsidiary or a similarly named company. Match on domain,\n  registry number, HQ city or ticker before using a page.",
+  "output_schema": {
+    "type": "object",
+    "properties": {
+      "since": {
+        "type": [
+          "string",
+          "null"
+        ]
+      },
+      "events": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "properties": {
+            "date": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "type": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "summary": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "headline": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "source_url": {
+              "type": [
+                "string",
+                "null"
+              ]
+            }
+          }
+        }
+      },
+      "company": {
+        "type": [
+          "string",
+          "null"
+        ]
+      },
+      "checked_sources": {
+        "type": "array",
+        "items": {
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      }
+    }
+  }
+}

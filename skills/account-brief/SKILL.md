@@ -8,6 +8,8 @@ description: |
   call", "account brief", or "what should I know before meeting". Do NOT use for
   researching the people attending (use meeting-prep), for an investment memo (use
   due-diligence), or for a list of changes since a date (use account-signals).
+  Do NOT use for multi-part research across a watchlist or market — use
+  account-deep-research instead.
 allowed-tools:
   - Bash(nimble:*)
   - Bash(claude mcp list)

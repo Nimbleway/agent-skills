@@ -1,0 +1,139 @@
+{
+  "template_name": "gtm-buying-trigger-monitor",
+  "agent_name": "gtm-buying-trigger-monitor",
+  "display_name": "Buying trigger monitor",
+  "description": "Watch a list of accounts for buying triggers in a date window: funding, new executives, expansion, launches, partnerships, acquisitions and customer wins, each dated, graded and cited, with an outreach angle per account.",
+  "use_case": "research",
+  "effort": "high",
+  "suggested_questions": [
+    "Monitor these accounts for buying triggers from 2026-10-01 to 2026-11-10: Cato Networks (catonetworks.com), Mark43 (mark43.com), BlueVoyant (bluevoyant.com), commercetools (commercetools.com). Context: the seller offers revenue and go-to-market software to fast-growing B2B software companies.",
+    "Monitor Ramp (ramp.com), Brex (brex.com) and Mercury (mercury.com) for buying triggers in the last 30 days. Context: the seller offers data infrastructure to fintech engineering teams.",
+    "Monitor Vercel (vercel.com), Supabase (supabase.com) and Clerk (clerk.com) for buying triggers since 2026-09-01. Context: the seller offers developer marketing services."
+  ],
+  "skill": "What a buying trigger is: A buying trigger is a company event that changes the account's go-to-market priorities, budget or team: a funding round, a new executive (especially sales, marketing, revenue or operations leadership), a new office, market or hiring push, a major product launch, a partnership, an acquisition, or a large customer win.\n\nThe request gives a watchlist (company plus domain), a window (start and end date, or \"since <date>\") and usually the\nseller's context. Without a seller context, grade strength for a seller of B2B software to that account.\n\nTrigger types: funding_round, leadership_hire, expansion, product_launch, partnership, acquisition, customer_win, other. Strength: High (directly changes go-to-market priorities, budget or\nthe buying team, such as a new CRO or CMO, a funding round, an acquisition), Medium, Low.\n\nWhere triggers live:\n- Company newsrooms and blogs, press releases (PR Newswire, Business Wire, GlobeNewswire), reputable business and technology press (Bloomberg, Reuters, TechCrunch, CRN, SiliconANGLE, Government Technology).\n- Avoid: Vendor comparison listicles, aggregator pages that re-date old news, and job-board pages as evidence of an event.\n\nRules:\n- Report only events whose own date (not the article's publish date) falls inside the monitoring window; put older events that were republished or re-covered in excluded_events.\n- Resolve each account by its domain and ignore news about other companies with similar names.\n- Return exactly one entry in accounts per watchlist company, with that company's triggers nested inside it.\n- Classify every event into exactly one trigger_type and grade strength by how directly it changes the account's go-to-market priorities or budget.\n- Cite the page that reports the event itself: the company newsroom, blog or press release when one exists; otherwise reputable press.\n- Return one trigger per underlying event, even when many outlets covered it.\n- Write the outreach angle only from facts stated in that account's triggers.\n- Return accounts with no qualifying event with trigger_count 0 instead of padding with weak events.\n\nCitations and evidence:\n- source_url is one full public https URL: the page the value was read on. Never an internal file path or source id. A\n  value from two pages is two values.\n- Dates are the date the event happened or the source states, not the article's publish date and not today's date.\n- A value nobody published is null. Not an estimate from memory, and never padded to reach a requested count.\n- Entity drift is the most common error: a namesake, a parent, a subsidiary or a similarly named company. Resolve every\n  account by its domain before using a page.\n- Only public pages. No logged-in, paywalled or purchased contact data; never construct emails or phone numbers from\n  patterns.",
+  "output_schema": {
+    "type": "object",
+    "required": [
+      "window_start",
+      "window_end",
+      "accounts",
+      "excluded_events"
+    ],
+    "properties": {
+      "window_start": {
+        "type": "string"
+      },
+      "window_end": {
+        "type": "string"
+      },
+      "accounts": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "required": [
+            "company",
+            "domain",
+            "trigger_count",
+            "triggers"
+          ],
+          "properties": {
+            "company": {
+              "type": "string"
+            },
+            "domain": {
+              "type": "string"
+            },
+            "trigger_count": {
+              "type": "integer"
+            },
+            "strongest_trigger": {
+              "type": [
+                "string",
+                "null"
+              ],
+              "description": "Headline of the trigger that most changes the account's go-to-market priorities"
+            },
+            "outreach_angle": {
+              "type": [
+                "string",
+                "null"
+              ],
+              "description": "One sentence a rep could open with, using only facts from this account's triggers"
+            },
+            "triggers": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "required": [
+                  "event_date",
+                  "trigger_type",
+                  "headline",
+                  "strength",
+                  "source_url"
+                ],
+                "properties": {
+                  "event_date": {
+                    "type": "string",
+                    "description": "Date the event happened or was announced, YYYY-MM-DD"
+                  },
+                  "trigger_type": {
+                    "type": "string",
+                    "enum": [
+                      "funding_round",
+                      "leadership_hire",
+                      "expansion",
+                      "product_launch",
+                      "partnership",
+                      "acquisition",
+                      "customer_win",
+                      "other"
+                    ]
+                  },
+                  "headline": {
+                    "type": "string"
+                  },
+                  "why_it_is_a_trigger": {
+                    "type": "string"
+                  },
+                  "strength": {
+                    "type": "string",
+                    "enum": [
+                      "High",
+                      "Medium",
+                      "Low"
+                    ]
+                  },
+                  "source_url": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "excluded_events": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "required": [
+            "company",
+            "headline",
+            "reason"
+          ],
+          "properties": {
+            "company": {
+              "type": "string"
+            },
+            "headline": {
+              "type": "string"
+            },
+            "reason": {
+              "type": "string"
+            }
+          }
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,115 @@
+{
+  "template_name": "people-discovery",
+  "agent_name": "people-discovery",
+  "display_name": "People discovery",
+  "description": "Describe the people you want to reach: roles, seniority and the companies they work at. Get a list of people who hold those roles now, each with why they fit and a source showing the current title.",
+  "use_case": "dataset_building",
+  "effort": "high",
+  "suggested_questions": [
+    "Find up to 15 heads of revenue operations (VP, Director or Head of RevOps) at US-based B2B SaaS companies with 200 to 2,000 employees that raised a round since 2025-01-01. For each, show why they fit and a page that shows their current title.",
+    "Find up to 20 CISOs at US hospitals and health systems with more than 1,000 beds.",
+    "Find up to 15 VPs of Engineering or CTOs at Series B or C developer tools companies in Europe."
+  ],
+  "skill": "People discovery finds individuals who match an ideal customer profile (ICP) for people: a role or function,\na seniority, and criteria for the companies they work at (industry, size, location, funding, technology).\n\nHow to find them:\n- Companies first, then people. Build the candidate companies from the company criteria (funding announcements,\n  category lists, trade press, conference exhibitor and sponsor pages), then find who holds the role at each.\n- Where role holders show up: company leadership and team pages, appointment press releases, conference speaker\n  pages, podcast and webinar guest pages, author pages on company blogs, and public profiles shown to logged-out\n  readers. Search results limited to linkedin.com/in profiles show \"Name - Title at Company\" and are a good lead list.\n- Titles vary by company size: \"Head of\", \"VP\", \"Director\" and \"Chief\" can be the same job. Match on scope, and report\n  the exact title the source shows.\n- Each person needs evidence for the role and for the company criteria. A company that fails a criterion goes to\n  excluded with the reason, not into people.\n- Never pad the list to reach a requested count. Fewer verified people is the correct answer when fewer qualify.\n\nCurrent role:\n- A title is current only when a page dated in the last 12 months shows it, or a profile or company page shows it as the\n  present position. Press releases announcing an appointment are dated history: always check for a later change (a\n  new title, a departure, a new employer) before calling it current.\n- Titles change without a press release: \"Chief Revenue Officer\" can become \"Chief Revenue Architect\", \"President\" or\n  \"Advisor\". Report the title exactly as the newest source states it, with its date.\n\nCitations and evidence:\n- source_url is one full public https URL: the page the value was read on. Never an internal file path or source id. A\n  value from two pages is two values.\n- as_of is the date the source states or was published, not today's date.\n- A value nobody published is null, listed in missing_fields. Not an estimate from memory.\n- Identity drift is the most common error: another person with the same name, a former employee whose old bio is still\n  indexed, or a namesake at a similarly named company. Match on name plus company plus title or location before using a\n  page.\n\nPrivacy:\n- Work-related public information only: role, employer, career history, public talks, posts, articles and quotes.\n- Never collect home address, personal phone, personal email, family, health, age, religion, politics or other\n  sensitive data, and never construct an email or phone number from a pattern. A business email or phone counts only\n  when the person or their company published it on a public page for business contact.",
+  "output_schema": {
+    "type": "object",
+    "required": [
+      "people",
+      "excluded"
+    ],
+    "properties": {
+      "people": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "required": [
+            "full_name",
+            "title",
+            "company",
+            "company_domain",
+            "why_they_fit",
+            "source_url"
+          ],
+          "properties": {
+            "full_name": {
+              "type": "string"
+            },
+            "title": {
+              "type": "string",
+              "description": "Title exactly as the source shows it"
+            },
+            "company": {
+              "type": "string"
+            },
+            "company_domain": {
+              "type": "string",
+              "description": "Bare hostname"
+            },
+            "location": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "seniority": {
+              "type": [
+                "string",
+                "null"
+              ],
+              "description": "C-level, VP, Director, Head, Manager or other"
+            },
+            "why_they_fit": {
+              "type": "string",
+              "description": "One sentence tying the person and the company to the criteria"
+            },
+            "company_evidence_url": {
+              "type": [
+                "string",
+                "null"
+              ],
+              "description": "Page that shows the company meets the company criteria"
+            },
+            "as_of": {
+              "type": [
+                "string",
+                "null"
+              ],
+              "description": "YYYY-MM-DD of the newest source for the title"
+            },
+            "source_url": {
+              "type": "string",
+              "description": "Page that shows the person's current title"
+            },
+            "profile_url": {
+              "type": [
+                "string",
+                "null"
+              ]
+            }
+          }
+        },
+        "description": "People who meet every criterion"
+      },
+      "excluded": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "required": [
+            "name",
+            "reason"
+          ],
+          "properties": {
+            "name": {
+              "type": "string",
+              "description": "Person or company"
+            },
+            "reason": {
+              "type": "string",
+              "description": "The criterion that failed or could not be verified"
+            }
+          }
+        }
+      }
+    }
+  }
+}
