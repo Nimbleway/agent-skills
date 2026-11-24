@@ -3,7 +3,7 @@
 ## [Unreleased]
 
 ### Changed
-- **The Claude and Grok plugins connect to `https://mcp.nimbleway.com/free`** instead of `/mcp`. Search and Extract now work right after install, without signing in, up to a daily free limit; at the limit the server asks the user to sign in once, and every tool then runs on their own account. Users already signed in on `/mcp` sign in once more after updating. Other clients (`mcp.json`, Codex and Cursor plugins) still point at `/mcp`.
+- **The Claude Code, Codex and Grok plugins connect to `https://mcp.nimbleway.com/free`** instead of `/mcp`. Search and Extract now work right after install, without signing in, up to a daily free limit; at the limit the server asks the user to sign in once, and every tool then runs on their own account. Users already signed in on `/mcp` sign in once more after updating. Codex reads the same `.mcp.json` (its manifest's `mcpServers` path), and the Grok manifest's inline copy must match it. The portable `mcp.json` (Cursor and other Agent Plugins hosts) still points at `/mcp`.
 
 ### Added
 - **Web Research Kit for GTM and Web Research Kit for Hedge Funds moved in.** The six skills from `Nimbleway/nimble-for-gtm-research` (`onboard-your-gtm-agent`, `account-fast-search`, `account-deep-research`, `account-lists-and-enrichment`, `people-research`, `gtm-data-at-scale`) and the five from `Nimbleway/nimble-for-company-investment-research` (`onboard-your-agent`, `company-fast-search`, `company-deep-research`, `filings-media-pdfs`, `alt-data-at-scale`) now live directly under `skills/`, with their bundled agent specs, references and onboarding assets. Each repo's benchmark summary is now `references/benchmark.md` in its onboarding skill, and install commands and spec URLs point at this repo.
