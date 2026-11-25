@@ -36,6 +36,7 @@ Stop at the first primary source that answers the question. If after three searc
 - **Scope by domain**: `include_domains: ["sec.gov"]` for filings, the company's IR domain for decks, `["fda.gov","clinicaltrials.gov"]` for biotech, `["courtlistener.com"]` for dockets, `["usaspending.gov","sam.gov"]` for federal contracts. Up to 50 domains; `exclude_domains` drops mirrors, content farms and stock-promo sites.
 - **Scope by time**: `time_range` (`day`, `week`, `month`, `year`) for "latest" questions, or `start_date` / `end_date` (YYYY-MM-DD) for a window such as "since the last earnings call" or "as of the deal announcement". They cannot be combined.
 - **Pick the focus**: `focus: "news"` for what happened this week; `focus: "general"` with `content_type: ["pdf"]` (or `presentations`, `spreadsheets`) for decks, annual reports and statistical releases; `focus: "shopping"` for product pricing across merchants; `focus: "location"` for stores and sites.
+- **Signed out on the free tier** (only `nimble_search` and `nimble_extract` listed): Search ignores `focus`, `search_depth`, `include_answer` and `full_content` without an error, so leave them out. For news, set `time_range` or `start_date`; for a closed fact, read the cited page with Extract. If the question needs a social or shopping focus, give the sign-in line ("Sign in to Nimble for free: in Claude Code run `/mcp`, select `plugin:nimble:nimble`, choose **Authenticate**; in Codex run `codex mcp login nimble`; in claude.ai or Cowork, add the Nimble connector at `https://mcp.nimbleway.com/mcp` (Customize → Connectors) to use Agents, Extract Templates, Map or Crawl.") and wait.
 - **One question per search.** Run independent searches in parallel rather than one long query.
 
 Patterns that travel across most tasks:
@@ -62,7 +63,7 @@ For a single closed fact, set `include_answer: true` (Nimble Answer) and still c
 - If the page comes back empty or truncated, retry with a JS-rendering driver (`vx8`) or a full-browser driver (`vx10`) before giving up; add `wait` (ms) for pages that load data late.
 - Use `country` (and `locale`) for region-specific prices and availability.
 - For PDFs, spreadsheets and decks, use `filings-media-pdfs` (Extract with `file_parsing_options`).
-- On sites Nimble maintains a template for, use the template: it returns stable fields instead of page text. Find it with `nimble_extract_templates_list(query="<site>")`, inspect params with `nimble_extract_templates_get`, run with `nimble_extract_templates_run`. Prefer templates `managed_by: "nimble"`; community templates vary in quality.
+- On sites Nimble maintains a template for, use the template: it returns stable fields instead of page text. Find it with `nimble_extract_templates_list(query="<site>")`, inspect params with `nimble_extract_templates_get`, run with `nimble_extract_templates_run`. Prefer templates `managed_by: "nimble"`; community templates vary in quality. Signed out on the free tier (`nimble_extract_templates_list` not listed), Extract the page instead; never call a tool that isn't listed.
 
 ## Source priority
 

@@ -22,8 +22,10 @@ Pick the path that matches your host:
 ```
 
 The Nimble plugin includes a `.mcp.json` that auto-registers as a Connector
-pointing at `https://mcp.nimbleway.com/mcp` over native HTTP with OAuth. After
-install, run `/mcp` once to authenticate in your browser — no API key needed.
+pointing at `https://mcp.nimbleway.com/free` over native HTTP with OAuth. After
+install, Search and Extract work without signing in, up to a daily free limit. To
+use every tool, sign in for free: run `/mcp`, select the Nimble server
+(`plugin:nimble:nimble`) and choose **Authenticate** — no API key needed.
 
 In claude.ai / Claude Cowork, the connector appears under
 `Customize → Connectors` as **Nimble** — click **Connect** and complete the
@@ -35,18 +37,17 @@ Verify:
 claude mcp list | grep nimble
 ```
 
-Expect: `plugin:nimble:nimble: https://mcp.nimbleway.com/mcp (HTTP) - ✓ Connected`
-once authenticated (or `! Needs authentication` until you run `/mcp`).
+Expect: `plugin:nimble:nimble: https://mcp.nimbleway.com/free (HTTP) - ✓ Connected`.
+Signed out, the server lists only `nimble_search` and `nimble_extract`; after
+signing in it lists every tool.
 
 ### Plugin installed but connector not connected (Cowork / claude.ai)
 
 The most common Cowork / claude.ai state: the plugin is installed
 (`mcp__plugin_nimble_nimble__*` tools are listed) but its connector isn't
-connected, so live data calls fail. **Verify before doing any work** — run one
-read-only `nimble_agents_list` probe: success = connected; an auth/not-connected
-error or a response containing an OAuth authorization URL = not connected.
-
-When not connected, tell the user verbatim and **stop** — never fall back to
+connected, so live data calls fail. Run the call the task needs directly — no
+probe. If a listed tool returns an auth/not-connected error, the connector isn't
+connected: tell the user this verbatim and **stop** — never fall back to
 WebFetch, WebSearch, curl, or any other tool:
 
 > Your Nimble plugin is installed, but its connector isn't connected yet — that's
@@ -62,7 +63,26 @@ WebFetch, WebSearch, curl, or any other tool:
 exactly as given and stop. Do **not** invent a completion step ("paste the URL
 back", "I'll complete the connection") — no such step exists — and do **not**
 claim the tools will activate and then call them in the same turn. Wait for the
-user to authorize, then retry (or run one `nimble_agents_list` probe to confirm).
+user to authorize, then retry the call.
+
+### Signed out on `/free` (only `nimble_search` and `nimble_extract` listed)
+
+Signed out, `/free` lists only Search and Extract, which work up to a daily free
+limit (at the limit the first call returns a sign-up notice, then the server asks
+the user to sign in). When the task needs Web Search Agents, Extraction
+Templates, Crawl or Map and those tools aren't listed, tell the user in one line
+and wait — never call an unlisted tool to trigger sign-in.
+With no interactive user (`claude -p`, scheduled runs), say the step needs sign-in and continue on Search and Extract instead of waiting.
+
+The sign-in line:
+
+> Sign in to Nimble for free: in Claude Code run `/mcp`, select `plugin:nimble:nimble`, choose **Authenticate**; in Codex run `codex mcp login nimble`; in claude.ai or Cowork, add the Nimble connector at `https://mcp.nimbleway.com/mcp` (Customize → Connectors) to use Agents, Extract Templates, Map or Crawl.
+
+At the daily free limit, Search or Extract returns the server's own notice once:
+relay it as given, including its sign-up link, and don't add a second sign-in
+line. A sign-in request after that means the connector is connected: give the
+line above, not the connector steps. After sign-in every tool is listed;
+continue the task.
 
 ---
 

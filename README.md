@@ -93,9 +93,9 @@ nimble search --query "AI agent frameworks" --max-results 10
 { "env": { "NIMBLE_API_KEY": "your-api-key-here" } }
 ```
 
-**Claude plugin details.** The plugin's `.mcp.json` auto-registers as a Connector pointing at the Nimble MCP server over native HTTP with OAuth, so there's no API key header to manage. On first use, run `/mcp` and authenticate `nimble` in your browser.
+**Claude plugin details.** The plugin's `.mcp.json` auto-registers as a Connector pointing at the Nimble MCP server over native HTTP with OAuth, so there's no API key header to manage. Search and Extract work right after install, without signing in; sign in for free for every other tool. Signed in before? Run `/mcp`, select `plugin:nimble:nimble`, choose Authenticate. In Codex, run `codex mcp login nimble`.
 
-In claude.ai / Cowork the connector appears under `Customize → Connectors` as **Nimble**. Click **Connect** and complete the browser login to activate it (you can create a Nimble account inline if you don't have one).
+In claude.ai / Cowork the plugin's server offers no sign-in before the daily free limit. To use Agents, Extract Templates, Map or Crawl there, add the Nimble connector at `https://mcp.nimbleway.com/mcp` under `Customize → Connectors`, click **Connect** and complete the browser login (you can create a Nimble account inline if you don't have one).
 
 **Cursor from a clone.** Clone the repo and open it in Cursor. The plugin system auto-discovers skills from `.cursor-plugin/plugin.json`.
 

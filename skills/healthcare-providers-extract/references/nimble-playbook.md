@@ -26,6 +26,8 @@ session and stick with it; don't re-probe on every command.
 | Check | If it works | What to use |
 |---|---|---|
 | `nimble --version` (>= 1.2.0) and `NIMBLE_API_KEY` is set | CLI is ready | Bash `nimble ...` commands |
+| Any Nimble server lists `nimble_agents_list` (the plugin's `mcp__plugin_nimble_nimble__*` or the claude.ai Nimble connector's) | Signed in. The plugin (`/free`) and the claude.ai connector (`/mcp`) can both be loaded | That server's tools. Check this before the free-tier row |
+| No Nimble server lists `nimble_agents_list`, and the plugin lists only `nimble_search` and `nimble_extract` | Nimble's **free tier, signed out**: Search and Extract work up to a daily free limit | Use them. If the task needs Web Search Agents, Extraction Templates, Crawl or Map, give the user this sign-in line and wait: "Sign in to Nimble for free: in Claude Code run `/mcp`, select `plugin:nimble:nimble`, choose **Authenticate**; in Codex run `codex mcp login nimble`; in claude.ai or Cowork, add the Nimble connector at `https://mcp.nimbleway.com/mcp` (Customize → Connectors) to use Agents, Extract Templates, Map or Crawl." With no interactive user (`claude -p`, scheduled runs), say the step needs sign-in and continue on Search and Extract instead of waiting. Signed out, Search ignores `focus`, `search_depth`, `include_answer` and `full_content` without an error, so a `--focus news` or social search quietly runs as a general one: leave those options out, set `time_range` or `start_date` for news, and read cited pages with Extract for full content or a closed fact. If the task needs a social or shopping focus, give the sign-in line and wait. At the daily free limit, Search or Extract returns the server's own notice once: relay it as given, including its sign-up link, and don't add a second sign-in line. A sign-in request after that means the connector is connected: give the sign-in line, not the connector steps below. Never call a tool that isn't listed |
 | `claude mcp list 2>/dev/null \| grep -q "nimble"` (or first `mcp__plugin_nimble_nimble__*` call succeeds) | Plugin MCP is connected | `mcp__plugin_nimble_nimble__*` tools |
 | `mcp__plugin_nimble_nimble__*` tools are listed, but a read-only `nimble_agents_list` probe returns an auth / not-connected error or an OAuth authorization URL | Plugin is installed but the **connector isn't connected** (typical Cowork / claude.ai state) | **Stop — guide connector connection (below). Never invent an auth-completion flow.** |
 | None of the above | Stop — guide install (below) | — |
@@ -36,9 +38,13 @@ In Cowork / claude.ai the plugin is often installed while its connector is not
 yet connected, so live data calls fail. **Confirming the connection is a required
 preflight step — not an error to react to mid-task.** When
 `mcp__plugin_nimble_nimble__*` tools are listed but you haven't confirmed the
-connector is live, run one read-only probe before any real work:
+connector is live, run one read-only probe before any real work
+(`nimble-web-expert` deliberately skips this probe: it runs Search/Extract
+directly and handles an auth error on that call in its `rules/setup.md`, so a
+free-tier user's first request needs no extra call. Keep the two different):
 
-- A single `nimble_agents_list` call is the cheapest confirmation. Success →
+- If `nimble_agents_list` is listed, a single call is the cheapest confirmation
+  (only Search and Extract listed = free tier, signed out — see the table above). Success →
   connected, proceed. Auth / not-connected error, **or** a response containing an
   OAuth authorization URL → not connected.
 
@@ -65,8 +71,8 @@ then **stop and wait**. Hard rules:
   either is a hallucination.
 - **Never say the tools "will activate" and then call them in the same turn.** Wait
   for the user to confirm they've authorized, then retry.
-- To check whether authorization succeeded, run one read-only `nimble_agents_list`
-  probe — don't assume.
+- To check whether authorization succeeded, retry the call (or, if `nimble_agents_list`
+  is now listed, run it once) — don't assume, and never call a tool that isn't listed.
 
 ### No plugin and no CLI
 
@@ -79,7 +85,7 @@ this hint verbatim and stop:
 > ```
 > /plugin install nimble
 > ```
-> Installs the Nimble plugin. The `.mcp.json` inside the plugin auto-registers as a Connector in `Customize → Connectors`. First tool call triggers the OAuth flow — no API key needed.
+> Installs the Nimble plugin. The `.mcp.json` inside the plugin auto-registers as a Connector in `Customize → Connectors`. Search and Extract work right away; sign in for free for the rest — no API key needed.
 >
 > **Codex CLI or other terminal agents (shell access, no `/plugin`):**
 > ```

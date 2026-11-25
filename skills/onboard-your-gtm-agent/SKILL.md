@@ -74,13 +74,14 @@ Keep the chart, the tiles and the question to one screen. No preamble. Then stop
 
 While the user answers, check silently. This probe is the only Nimble call before the user replies: no Search, Extract or Web Search Agent call on the example prompt or anything else, and no "test" or "verification" call. Either surface working means setup is done; once the user answers, skip to Step 5 and route their request.
 
-- **MCP:** if any Nimble tool is listed, call the read-only `nimble_agents_list`.
+- **MCP:** if `nimble_agents_list` is listed, call it (read-only). Never call a Nimble tool that isn't listed.
 - **CLI:** if you can run shell commands: `command -v nimble && nimble --version && nimble agents list`. The CLI reads `NIMBLE_API_KEY` from the environment.
 
 | Result | Next |
 | - | - |
 | Either probe returns data | Step 5 |
 | A Nimble tool returns an auth error or an authorization URL | Step 4 |
+| `nimble_search` is listed but `nimble_agents_list` is not (Nimble's free tier, signed out) | Step 5. Route first; only if the chosen skill needs Web Search Agents or Extract Templates, give the sign-in line ("Sign in to Nimble for free: in Claude Code run `/mcp`, select `plugin:nimble:nimble`, choose **Authenticate**; in Codex run `codex mcp login nimble`; in claude.ai or Cowork, add the Nimble connector at `https://mcp.nimbleway.com/mcp` (Customize → Connectors) to use Agents, Extract Templates, Map or Crawl.") and wait. A fast-search request runs on Search and Extract with no sign-in |
 | Nothing is installed and the user has no Nimble account | Step 3 |
 | Nothing is installed but the user has an account | Step 4 |
 

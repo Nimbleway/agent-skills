@@ -30,7 +30,7 @@
   "mcpServers": {
     "nimble": {
       "type": "http",
-      "url": "https://mcp.nimbleway.com/mcp"
+      "url": "https://mcp.nimbleway.com/free"
     }
   }
 }
