@@ -93,7 +93,7 @@ nimble search --query "AI agent frameworks" --max-results 10
 { "env": { "NIMBLE_API_KEY": "your-api-key-here" } }
 ```
 
-**Claude plugin details.** The plugin's `.mcp.json` auto-registers as a Connector pointing at the Nimble MCP server over native HTTP with OAuth, so there's no API key header to manage. On first use, run `/mcp` and authenticate `nimble` in your browser.
+**Claude plugin details.** The plugin's `.mcp.json` auto-registers as a Connector pointing at the Nimble MCP server over native HTTP with OAuth, so there's no API key header to manage. Search and Extract work right after install, without signing in; sign in for free for every other tool. Signed in before? Run `/mcp`, select `plugin:nimble:nimble`, choose Authenticate.
 
 In claude.ai / Cowork the connector appears under `Customize → Connectors` as **Nimble**. Click **Connect** and complete the browser login to activate it (you can create a Nimble account inline if you don't have one).
 
