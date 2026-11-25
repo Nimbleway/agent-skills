@@ -28,7 +28,7 @@ session and stick with it; don't re-probe on every command.
 | `nimble --version` (>= 1.2.0) and `NIMBLE_API_KEY` is set | CLI is ready | Bash `nimble ...` commands |
 | `claude mcp list 2>/dev/null \| grep -q "nimble"` (or first `mcp__plugin_nimble_nimble__*` call succeeds) | Plugin MCP is connected | `mcp__plugin_nimble_nimble__*` tools |
 | `mcp__plugin_nimble_nimble__*` tools are listed, but a read-only `nimble_agents_list` probe returns an auth / not-connected error or an OAuth authorization URL | Plugin is installed but the **connector isn't connected** (typical Cowork / claude.ai state) | **Stop — guide connector connection (below). Never invent an auth-completion flow.** |
-| Only `nimble_search` and `nimble_extract` are listed (no `nimble_agents_list`) | Nimble's **free tier, signed out**: Search and Extract work up to a daily free limit | Use them. If the task needs Web Search Agents, Extraction Templates, Crawl or Map, tell the user in one line to sign in for free (Claude Code: `/mcp`, select the Nimble server `plugin:nimble:nimble`, choose **Authenticate**; other hosts: **Connect** or **Sign in** on the Nimble server) and wait. Never call a tool that isn't listed |
+| Only `nimble_search` and `nimble_extract` are listed (no `nimble_agents_list`) | Nimble's **free tier, signed out**: Search and Extract work up to a daily free limit | Use them. If the task needs Web Search Agents, Extraction Templates, Crawl or Map, tell the user in one line to sign in for free (Claude Code: `/mcp`, select the Nimble server `plugin:nimble:nimble`, choose **Authenticate**; other hosts: **Connect** or **Sign in** on the Nimble server) and wait. If Search or Extract hits the daily free limit (a sign-up notice, then a sign-in request), give the same sign-in line: the connector is connected, so don't use the connector steps below. Never call a tool that isn't listed |
 | None of the above | Stop — guide install (below) | — |
 
 ### Connector not connected (Cowork / claude.ai) — verify BEFORE working
@@ -67,8 +67,8 @@ then **stop and wait**. Hard rules:
   either is a hallucination.
 - **Never say the tools "will activate" and then call them in the same turn.** Wait
   for the user to confirm they've authorized, then retry.
-- To check whether authorization succeeded, run one read-only `nimble_agents_list`
-  probe — don't assume.
+- To check whether authorization succeeded, retry the call (or, if `nimble_agents_list`
+  is now listed, run it once) — don't assume, and never call a tool that isn't listed.
 
 ### No plugin and no CLI
 
