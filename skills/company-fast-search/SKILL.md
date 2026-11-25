@@ -3,7 +3,7 @@ name: company-fast-search
 description: "Fast, cited web lookups for company investment research with Nimble Search, Extract and Extract Templates. Use for quick questions an analyst or PM asks about a public or private company — a filing pointer, a date, an executive, a deal term, the latest 8-K, today's price or promotion on a retailer page, a recent news check, an IR deck link — where one to a few searches or known pages answer it in seconds. Covers query writing, source priority, date scoping, entity disambiguation and MNPI-safe sourcing. Do NOT use for a full company overview — use company-deep-dive instead. Do NOT use for a question that needs many sources or a structured multi-part answer — use company-deep-research instead."
 metadata:
   author: Nimbleway
-  version: 1.10.0
+  version: 1.11.0
   category: finance-research
 ---
 

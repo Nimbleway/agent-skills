@@ -3,7 +3,7 @@ name: onboard-your-gtm-agent
 description: "Onboard a personal AI agent (Claude, ChatGPT, Cursor, Codex and others) to Nimble for go-to-market (GTM) research by sales, SDR/BDR, RevOps, marketing and founder-led sales teams. Use when the user first loads the GTM research skills, asks how to get started with Nimble for GTM, sales or account research, or wants a free trial, a Nimble connection or a skill recommendation for that work. Shows a benchmark chart and six tiles (five use cases to test Nimble's APIs in the user's AI, plus integrating the APIs into their stack), gets the user onto a free Nimble trial and connected, then routes their request to account-brief, account-deep-research, account-fast-search, decision-maker-identification, people-research, account-lists-and-enrichment or gtm-data-at-scale. Do NOT use for investment or hedge fund research onboarding — use onboard-your-agent instead."
 metadata:
   author: Nimbleway
-  version: 1.10.0
+  version: 1.11.0
   category: gtm
 ---
 

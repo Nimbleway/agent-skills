@@ -3,7 +3,7 @@ name: gtm-data-at-scale
 description: "Collect large GTM datasets from the web with Nimble Extract Templates, using batch runs, async delivery, scheduled Extract Jobs, and template generation for unsupported sites. Use for signal and market data at volume, tracked over time, such as job postings and sales-team hiring across hundreds of accounts, software and employee reviews, local business listings and ratings for SMB prospecting, competitor ads and search rankings, executive and brand social activity, AI-answer visibility (how ChatGPT, Perplexity, Google AI Mode and Gemini describe your brand and competitors), and marketplace data for sellers to ecommerce brands, delivered to files, S3, Databricks or a warehouse for scoring and routing. Do NOT use for a one-off lookup — use account-fast-search instead. Do NOT use for a cited brief on one account — use account-deep-research instead. Do NOT use for building and enriching an account list — use account-lists-and-enrichment instead."
 metadata:
   author: Nimbleway
-  version: 1.10.0
+  version: 1.11.0
   category: gtm
 ---
 

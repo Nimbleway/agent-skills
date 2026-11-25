@@ -3,7 +3,7 @@ name: account-deep-research
 description: "Deep, cited research on an account, a watchlist or a market for sales, SDR/BDR, RevOps and marketing teams, run by Nimble Web Search Agents. Use when a GTM question needs several agents, many sources or a custom structured output, such as buying triggers across a watchlist, a competitive landscape with pricing, brand sentiment, executive or influencer social posts, or a plan that combines brief, signals and contacts. Also use when the request fits no single-template skill: the skill shows how to create and run a custom Web Search Agent. Do NOT use for a pre-meeting brief on one company — use account-brief instead. Do NOT use for who holds a role at one company — use decision-maker-identification instead. Do NOT use for account lists of tens to thousands of rows (ICP, TAM, local businesses) or for enriching domains or a CSV — use account-lists-and-enrichment instead. Do NOT use for a single fact — use account-fast-search instead. Do NOT use for people research — use people-research instead."
 metadata:
   author: Nimbleway
-  version: 1.10.0
+  version: 1.11.0
   category: gtm
 ---
 

@@ -3,7 +3,7 @@ name: onboard-your-agent
 description: "Onboard a personal AI agent (Claude, ChatGPT, Cursor, Codex and others) to Nimble for company investment research at hedge funds. Use when the user first loads the investment research skills, asks how to get started with Nimble for investment or hedge fund research, or wants a free trial, a Nimble connection or a skill recommendation for that research. Shows a benchmark chart and five tiles (four use cases to test Nimble's APIs in the user's AI, plus integrating the APIs into their stack), gets the user onto a free Nimble trial and connected, then routes their research request to company-deep-research, company-fast-search, filings-media-pdfs or alt-data-at-scale. Do NOT use for sales, GTM or account research onboarding — use onboard-your-gtm-agent instead."
 metadata:
   author: Nimbleway
-  version: 1.10.0
+  version: 1.11.0
   category: finance-research
 ---
 

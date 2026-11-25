@@ -3,7 +3,7 @@ name: company-deep-research
 description: "Deep, cited research on a company for hedge fund and investment teams, run by Nimble Web Search Agents. Use when a question needs many sources or a structured, sourced output, such as a fundamental deep dive, catalyst calendar, filing-change diff, forensic red-flag screen, management track record, channel check, customer and supplier map, competitor momentum, government contracts, a borrower credit file, a credit early-warning log, merger deal terms or deal approval tracking. Also covers custom Web Search Agents for requests that fit none of those. Do NOT use for a general company overview — use company-deep-dive instead. Do NOT use for a private-company DD memo — use due-diligence instead. Do NOT use for a quick credit view or counterparty check — use credit-risk instead. Do NOT use for material events at holdings since a date — use portfolio-monitoring instead. Do NOT use for a single fact — use company-fast-search instead. Do NOT use for filings and decks — use filings-media-pdfs instead."
 metadata:
   author: Nimbleway
-  version: 1.10.0
+  version: 1.11.0
   category: finance-research
 ---
 

@@ -3,7 +3,7 @@ name: people-research
 description: "Research people for sales and GTM with Nimble: fast, cited answers with the Search API and deeper research with people-focused Web Search Agents. Use when the user wants a list of people who match an ICP (roles, seniority and company criteria), wants to know what someone said or posted recently, wants to check whether contacts or champions changed jobs, needs decision makers found across a list of accounts, wants the buying committee at an account mapped, or wants a person researched before outreach. Covers person disambiguation, verifying that a title is current, query patterns, privacy rules and answer format. Do NOT use for one current title lookup at one company — use decision-maker-identification instead. Do NOT use for researching meeting attendees — use meeting-prep instead. Do NOT use for company-level research — use account-deep-research or account-fast-search instead. Do NOT use for bulk job-posting, review or social panels — use gtm-data-at-scale instead."
 metadata:
   author: Nimbleway
-  version: 1.10.0
+  version: 1.11.0
   category: gtm
 ---
 
