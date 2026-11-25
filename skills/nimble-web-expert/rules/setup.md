@@ -42,9 +42,14 @@ once authenticated (or `! Needs authentication` until you run `/mcp`).
 
 The most common Cowork / claude.ai state: the plugin is installed
 (`mcp__plugin_nimble_nimble__*` tools are listed) but its connector isn't
-connected, so live data calls fail. **Verify before doing any work** — run one
-read-only `nimble_agents_list` probe: success = connected; an auth/not-connected
-error or a response containing an OAuth authorization URL = not connected.
+connected, so live data calls fail. Listed tools are not a sign-in check: on
+`/free`, signed-out users see every tool, and Search/Extract work without
+signing in. So run the Search/Extract call the task needs directly — no probe.
+If that call returns an auth/not-connected error, the connector isn't connected.
+Call `nimble_agents_list` only when the task needs Web Search Agents, Extraction
+Templates, Crawl or Map; a sign-in challenge there (auth error or OAuth
+authorization URL) means the user must sign in, not that the connector is
+missing — present the link as below.
 
 When not connected, tell the user verbatim and **stop** — never fall back to
 WebFetch, WebSearch, curl, or any other tool:
@@ -62,7 +67,7 @@ WebFetch, WebSearch, curl, or any other tool:
 exactly as given and stop. Do **not** invent a completion step ("paste the URL
 back", "I'll complete the connection") — no such step exists — and do **not**
 claim the tools will activate and then call them in the same turn. Wait for the
-user to authorize, then retry (or run one `nimble_agents_list` probe to confirm).
+user to authorize, then retry the call.
 
 ---
 
