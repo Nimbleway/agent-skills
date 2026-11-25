@@ -35,7 +35,7 @@ Pilot on 20 to 50 inputs, check the fields, then scale.
 
 ## 2. Find the template
 
-**Signed out on the free tier** (`nimble_search` is listed but `nimble_extract_templates_list` is not): Extract Templates come with a free sign-in. Tell the user in one line: "Sign in to Nimble for free to run this: in Claude Code, run `/mcp`, select the Nimble server (`plugin:nimble:nimble`) and choose **Authenticate**; in other apps, open the Nimble server and choose **Connect** or **Sign in**." Wait for them to confirm. Never call a Nimble tool that isn't listed.
+**Signed out on the free tier.** If `NIMBLE_API_KEY` is not set and `nimble_search` is listed but `nimble_extract_templates_list` is not, Extract Templates come with a free sign-in. Tell the user in one line: "Sign in to Nimble for free to run this: in Claude Code, run `/mcp`, select the Nimble server (`plugin:nimble:nimble`) and choose **Authenticate**; in other apps, open the Nimble server and choose **Connect** or **Sign in**." Wait for them to confirm. Never call a Nimble tool that isn't listed.
 
 1. **List**: `nimble_extract_templates_list(query="walmart")` or `GET /v2/extract/templates?limit=200&offset=0` (paginate through about 850). Each item has `name`, `managed_by` (`nimble` or `community`), and `metadata` (vertical, entity type, description).
 2. **Inspect**: `nimble_extract_templates_get(template_name=...)` or `GET /v2/extract/templates/{name}`. Read `published_version.input_schema` (required params and their exact names), `output_schema` (the fields you will get) and `samples`.
