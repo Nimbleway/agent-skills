@@ -107,7 +107,7 @@ Extraction Templates and Web Search Agents are distinct — an Extraction Templa
 - Use `AskUserQuestion` at every meaningful choice — never guess, never ask in prose.
 - **Ambiguous request** (no URL, vague topic): ask before running — "What would you like to do?" → Research & report / Search / Fetch URL / Discover URLs
 - **Gate B landed on a Web Search Agent at `high`+ effort**: offer the cost/latency fork — Researched report / Quick scan (see [Analyze & Route](#analyze--route))
-- **Before running a search** (if task maps to a specific focus mode): offer focus mode — General / News / Coding / Shopping / Academic / Social
+- **Before running a search** (if task maps to a specific focus mode): offer focus mode — General / News / Coding / Shopping / Academic / Social. Signed out on the free tier (only `nimble_search` and `nimble_extract` listed), skip this offer: the free Search ignores `focus`.
 - **After all tiers fail**: check investigation tools (`which browser-use`, `python3 -c "from playwright.sync_api..."`) and ask whether to investigate with browser-use, Playwright, or skip.
 - After presenting results, always close with: "Were these results what you needed?" → `Looks great!` / `Mostly good` / `Not quite` / `Skip feedback`
 
