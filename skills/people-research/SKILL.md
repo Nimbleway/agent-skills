@@ -73,6 +73,8 @@ Write down **full name + company + company domain** (and title or city if known)
 
 All six are templates in the **Go-to-market** section of the Nimble Web Search Agent gallery, each with a pre-run example answer. Each spec (skill, output schema, effort, example questions) is also in `agents/<agent_name>.json` next to this file, a snapshot of the gallery template (2026-11-12). `decision-maker-identification` and `social-media-monitor` are shared with account research, so their specs live in `account-deep-research/agents/`. If only this skill is installed, read them from `https://raw.githubusercontent.com/Nimbleway/agent-skills/main/skills/account-deep-research/agents/<agent_name>.json`. Read the matching file before the first run; its `suggested_questions` show the input format.
 
+**Signed out on the free tier** (`nimble_search` is listed but `nimble_agents_list` is not): Web Search Agents come with a free sign-in. Tell the user in one line: "Sign in to Nimble for free to run this: in Claude Code, run `/mcp`, select the Nimble server (`plugin:nimble:nimble`) and choose **Authenticate**; in other apps, open the Nimble server and choose **Connect** or **Sign in**." Wait for them to confirm. Never call a Nimble tool that isn't listed.
+
 **Get the agent into the account (reuse first):** an agent with the same `agent_name` already in the account (`nimble_agents_list`) → the Nimble gallery (`nimble_agent_templates_list`, then `nimble_agents_create(template=<name>, agent_name=<name>)`) → the bundled spec, if the gallery does not list it (an older deployment) (pass its `agent_name`, `display_name`, `description`, `use_case`, `effort`, `skill`, `output_schema` and `suggested_questions` unchanged). Create each agent once and reuse it.
 
 **Run it:**

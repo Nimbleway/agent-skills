@@ -37,7 +37,10 @@ In Cowork / claude.ai the plugin is often installed while its connector is not
 yet connected, so live data calls fail. **Confirming the connection is a required
 preflight step — not an error to react to mid-task.** When
 `mcp__plugin_nimble_nimble__*` tools are listed but you haven't confirmed the
-connector is live, run one read-only probe before any real work:
+connector is live, run one read-only probe before any real work
+(`nimble-web-expert` deliberately skips this probe: it runs Search/Extract
+directly and handles an auth error on that call in its `rules/setup.md`, so a
+free-tier user's first request needs no extra call. Keep the two different):
 
 - If `nimble_agents_list` is listed, a single call is the cheapest confirmation
   (only Search and Extract listed = free tier, signed out — see the table above). Success →

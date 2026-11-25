@@ -63,7 +63,7 @@ For a single closed fact, set `include_answer: true` (Nimble Answer) and still c
 - If the page comes back empty or truncated, retry with a JS-rendering driver (`vx8`) or a full-browser driver (`vx10`) before giving up; add `wait` (ms) for pages that load data late (many careers pages and ATS embeds do).
 - Use `country` (and `locale`) for region-specific pricing.
 - A PDF case study, annual report or deck can be parsed to markdown through the REST API or CLI with `file_parsing_options` (`{"mode": "light"}`); the MCP server does not expose that option.
-- On sites Nimble maintains a template for, use the template: it returns stable fields instead of page text. Find it with `nimble_extract_templates_list(query="<site>")`, inspect params with `nimble_extract_templates_get`, run with `nimble_extract_templates_run`. Prefer templates `managed_by: "nimble"`; community templates vary in quality.
+- On sites Nimble maintains a template for, use the template: it returns stable fields instead of page text. Find it with `nimble_extract_templates_list(query="<site>")`, inspect params with `nimble_extract_templates_get`, run with `nimble_extract_templates_run`. Prefer templates `managed_by: "nimble"`; community templates vary in quality. Signed out on the free tier (`nimble_extract_templates_list` not listed), Extract the page instead; never call a tool that isn't listed.
 
 ## Source priority
 
