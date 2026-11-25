@@ -11,7 +11,7 @@ description: |
   - Running Web Search Agents — open-ended research, enrichment, and dataset building with citations
   - Discovering URLs on a site before bulk extraction
   - Calling public REST/XHR API endpoints
-  - Web search and research (8 focus modes)
+  - Web search and structured company or creator discovery
   - Bulk crawling website sections
 
   Must be pre-installed and authenticated. Run `nimble --version` to verify (>= 1.2.0).
@@ -93,7 +93,7 @@ One skill, one taxonomy. Use Nimble's own product names precisely — never para
 
 | Capability             | What it is                                                                        | Command family              |
 | ---------------------- | --------------------------------------------------------------------------------- | --------------------------- |
-| **Search**             | Real-time web search — raw results (pages, snippets), 8 focus modes               | `nimble search`             |
+| **Search**             | Real-time web search — pages and snippets, or structured company and creator profiles               | `nimble search`             |
 | **Extract**            | Fetch + parse a single known URL (the one-off primitive)                          | `nimble extract`            |
 | **Extraction Template**| Reusable, site-specific structured scraper for a known item (by URL or identifier)| `nimble extract:templates`  |
 | **Web Search Agent**   | Open-ended research / enrichment / dataset building — discovers sources, synthesizes, cites | `nimble agents` / `agents:runs` |
@@ -107,7 +107,7 @@ Extraction Templates and Web Search Agents are distinct — an Extraction Templa
 - Use `AskUserQuestion` at every meaningful choice — never guess, never ask in prose.
 - **Ambiguous request** (no URL, vague topic): ask before running — "What would you like to do?" → Research & report / Search / Fetch URL / Discover URLs
 - **Gate B landed on a Web Search Agent at `high`+ effort**: offer the cost/latency fork — Researched report / Quick scan (see [Analyze & Route](#analyze--route))
-- **Before running a search** (if task maps to a specific focus mode): offer focus mode — General / News / Coding / Shopping / Academic / Social
+- **Before running a search** (if task maps to a specific focus mode): offer focus mode — General / News / Coding / Shopping / Academic / Social / Company / Creators
 - **After all tiers fail**: check investigation tools (`which browser-use`, `python3 -c "from playwright.sync_api..."`) and ask whether to investigate with browser-use, Playwright, or skip.
 - After presenting results, always close with: "Were these results what you needed?" → `Looks great!` / `Mostly good` / `Not quite` / `Skip feedback`
 
@@ -180,7 +180,9 @@ nimble extract:templates run --template <name> --params '{"key": "value"}'
 | compare, "best X", "which should I", "state of", recommend             | "pages/articles about", "links to"            |
 | enrich, build a list, dataset, "…with their pricing/headcount"         | latest news, recent posts, what's trending    |
 
-Structured rows about many entities → Web Search Agent with `enrichment` or `dataset_building`. See `references/nimble-agents/reference.md`.
+Structured rows about many entities → Web Search Agent with `enrichment` or `dataset_building`.
+
+When the request already calls for Search, use `focus: "company"` for company discovery by criteria, or `focus: "creators"` for Instagram/TikTok creator discovery by criteria. Use General to look up one known account. Focus selection does not change when to use a Web Search Agent. See `references/nimble-agents/reference.md`.
 
 ### Offer the fork when the answer is the expensive one
 
@@ -287,7 +289,7 @@ Load only when needed:
 | `references/nimble-extract-templates/reference.md`       | Step 0 — discover/inspect/run Extraction Templates for a known site           |
 | `references/nimble-agents/reference.md`                  | Web Search Agents — discovery, run lifecycle, authoring, trust/citations      |
 | `references/nimble-extract/reference.md`                 | Extract flags, render tiers, browser actions, network capture, parser schemas |
-| `references/nimble-search/reference.md`                  | Search flags, all 8 focus modes                                               |
+| `references/nimble-search/reference.md`                  | Search flags, focus modes and structured entities                                               |
 | `references/nimble-map/reference.md`                     | Map flags, response structure                                                 |
 | `references/nimble-crawl/reference.md`                   | Full async crawl workflow                                                     |
 | `references/nimble-tasks/reference.md`                   | Poll tasks/batches, fetch results — for async, batch, and crawl operations    |
