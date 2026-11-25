@@ -77,9 +77,10 @@ and wait — never call an unlisted tool to trigger sign-in:
 > Nimble server (`plugin:nimble:nimble`) and choose **Authenticate**. In other
 > apps, open the Nimble server or connector and choose **Connect** or **Sign in**.
 
-Give the same line when Search or Extract hits the daily free limit (the sign-up
-notice, then a sign-in request): the connector is connected, so don't send the
-user through the connector steps above. After sign-in every tool is listed;
+At the daily free limit, Search or Extract returns the server's own notice once:
+relay it as given, including its sign-up link, and don't add a second sign-in
+line. A sign-in request after that means the connector is connected: give the
+line above, not the connector steps. After sign-in every tool is listed;
 continue the task.
 
 ---
