@@ -21,7 +21,7 @@ They find different things. In Nimble's GTM guide, the agent found a company thr
 
 ## 1. Get the agents into the account
 
-**Signed out on the free tier.** If `NIMBLE_API_KEY` is not set and `nimble_search` is listed but `nimble_agents_list` is not, Web Search Agents come with a free sign-in. Tell the user in one line: "Sign in to Nimble for free to run this: in Claude Code, run `/mcp`, select the Nimble server (`plugin:nimble:nimble`) and choose **Authenticate**; in other apps, open the Nimble server and choose **Connect** or **Sign in**." Wait for them to confirm. Never call a Nimble tool that isn't listed.
+**Signed out on the free tier.** If `NIMBLE_API_KEY` is not set and `nimble_search` is listed but `nimble_agents_list` is not, Web Search Agents come with a free sign-in. Tell the user in one line: "Sign in to Nimble for free: in Claude Code run `/mcp`, select `plugin:nimble:nimble`, choose **Authenticate**; elsewhere use **Connect** or **Sign in** on the Nimble server." Wait for them to confirm. Never call a Nimble tool that isn't listed.
 
 These skills use six agents. Check in this order: an agent with the same `agent_name` already in the account (`nimble_agents_list`) → the Nimble gallery (`nimble_agent_templates_list`, then `nimble_agents_create(template=<name>, agent_name=<name>)`) → the bundled spec.
 

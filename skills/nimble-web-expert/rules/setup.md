@@ -73,9 +73,7 @@ the user to sign in). When the task needs Web Search Agents, Extraction
 Templates, Crawl or Map and those tools aren't listed, tell the user in one line
 and wait — never call an unlisted tool to trigger sign-in:
 
-> Sign in to Nimble for free to use this: in Claude Code, run `/mcp`, select the
-> Nimble server (`plugin:nimble:nimble`) and choose **Authenticate**. In other
-> apps, open the Nimble server or connector and choose **Connect** or **Sign in**.
+> Sign in to Nimble for free: in Claude Code run `/mcp`, select `plugin:nimble:nimble`, choose **Authenticate**; elsewhere use **Connect** or **Sign in** on the Nimble server.
 
 At the daily free limit, Search or Extract returns the server's own notice once:
 relay it as given, including its sign-up link, and don't add a second sign-in

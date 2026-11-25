@@ -129,7 +129,7 @@ The most common Cowork / claude.ai failure: the plugin is installed
 connected, so live data calls fail. **Check this before doing any work** — don't
 fire a data call and react to the error. If only `nimble_search` and
 `nimble_extract` are listed, the user is on Nimble's free tier, signed out: use
-them, and for anything else ask the user to sign in for free (Claude Code: `/mcp`, select the Nimble server `plugin:nimble:nimble`, choose **Authenticate**; other hosts: **Connect** or **Sign in** on the Nimble server) and wait. Never call a tool that isn't listed. Otherwise a single read-only `nimble_agents_list`
+them, and for anything else give the sign-in line from the free-tier row in `nimble-playbook.md` and wait. Never call a tool that isn't listed. Otherwise a single read-only `nimble_agents_list`
 probe confirms it: success = connected, proceed; auth/not-connected error or a
 response containing an OAuth authorization URL = not connected.
 

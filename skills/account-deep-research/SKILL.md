@@ -53,7 +53,7 @@ For more than a handful of accounts to enrich or a list headed for a CRM, hand o
 
 ## 3. Get the agent into the account (reuse first)
 
-**Signed out on the free tier.** If `NIMBLE_API_KEY` is not set and `nimble_search` is listed but `nimble_agents_list` is not, Web Search Agents come with a free sign-in. Tell the user in one line: "Sign in to Nimble for free to run this: in Claude Code, run `/mcp`, select the Nimble server (`plugin:nimble:nimble`) and choose **Authenticate**; in other apps, open the Nimble server and choose **Connect** or **Sign in**." Wait for them to confirm. Never call a Nimble tool that isn't listed.
+**Signed out on the free tier.** If `NIMBLE_API_KEY` is not set and `nimble_search` is listed but `nimble_agents_list` is not, Web Search Agents come with a free sign-in. Tell the user in one line: "Sign in to Nimble for free: in Claude Code run `/mcp`, select `plugin:nimble:nimble`, choose **Authenticate**; elsewhere use **Connect** or **Sign in** on the Nimble server." Wait for them to confirm. Never call a Nimble tool that isn't listed.
 
 Check in this order and stop at the first hit:
 
