@@ -22,7 +22,7 @@ Pick the path that matches your host:
 ```
 
 The Nimble plugin includes a `.mcp.json` that auto-registers as a Connector
-pointing at `https://mcp.nimbleway.com/mcp` over native HTTP with OAuth. After
+pointing at `https://mcp.nimbleway.com/free` over native HTTP with OAuth. After
 install, run `/mcp` once to authenticate in your browser — no API key needed.
 
 In claude.ai / Claude Cowork, the connector appears under
@@ -35,7 +35,7 @@ Verify:
 claude mcp list | grep nimble
 ```
 
-Expect: `plugin:nimble:nimble: https://mcp.nimbleway.com/mcp (HTTP) - ✓ Connected`
+Expect: `plugin:nimble:nimble: https://mcp.nimbleway.com/free (HTTP) - ✓ Connected`
 once authenticated (or `! Needs authentication` until you run `/mcp`).
 
 ### Plugin installed but connector not connected (Cowork / claude.ai)
