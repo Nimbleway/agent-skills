@@ -15,7 +15,10 @@ Detailed guide for selecting the right `--focus` for your search query.
 What are you searching for?
 |
 |-- A person? ................... --focus social  (+ parallel general)
-|-- A company/organization? ..... --focus general (+ parallel news)
+|-- A known company? ............ --focus general (+ news for recent events)
+|-- Companies by criteria? ..... focus: "company"
+|-- IG/TikTok creators by criteria? focus: "creators"
+|-- One exact social account? .. --focus general
 |-- Code, docs, or technical? ... --focus coding
 |-- Current events or news? ..... --focus news   (+ parallel social for reactions)
 |-- Research papers? ............ --focus academic
@@ -30,7 +33,10 @@ What are you searching for?
 | Query Intent              | Primary Focus | Secondary (parallel) | Why                                                                                                  |
 | ------------------------- | ------------- | -------------------- | ---------------------------------------------------------------------------------------------------- |
 | Research a **person**     | `social`      | `general`            | Social searches LinkedIn/X/YouTube directly via subagents; general covers blogs, news, company pages |
-| Research a **company**    | `general`     | `news`               | General for overview; news for recent developments                                                   |
+| Discover **companies by criteria** | `company` | — | Structured company profiles where available |
+| Discover **Instagram/TikTok creators by criteria** | `creators` | — | Matching creator profiles |
+| Look up **one known social account** | `general` | — | Use the name, handle or site |
+| Research a **known company** | `general` | `news` | General for the overview, News for recent developments |
 | Find **code/docs**        | `coding`      | —                    | Targets Stack Overflow, GitHub, docs sites                                                           |
 | Current **events**        | `news`        | `social`             | News for articles; social for reactions/commentary                                                   |
 | Find a **product/price**  | `shopping`    | —                    | Searches e-commerce sites                                                                            |
@@ -38,7 +44,7 @@ What are you searching for?
 | Find **research papers**  | `academic`    | —                    | Targets scholarly sources                                                                            |
 | **General/unsure**        | `general`     | —                    | Broad web search (default)                                                                           |
 
-**Always run parallel searches with multiple focus when depth matters.**
+For either structured discovery intent, start with one focused Search. Results are not an exhaustive list.
 
 ## Mode Details
 
@@ -48,6 +54,26 @@ Standard web search across all sources. Use when no specific mode applies or for
 
 - Best for: overviews, general questions, company pages, blogs
 - Speed: fastest (1-2s with `--search-depth lite`)
+
+### company
+
+Discover companies by industry, geography or business criteria. Profiles can include name, founding year, headcount, headquarters, revenue and funding when available. Use General for a known company's website or News for recent coverage.
+
+### creators
+
+Discover Instagram or TikTok accounts by niche, geography and follower range. Profiles can include platform, username, follower count, country, content categories and verification status. Narrow niches may return fewer profiles than requested. Use General for a named person's or business's specific account.
+
+### Authenticated MCP examples
+
+```json
+{"query":"B2B payment infrastructure companies headquartered in Europe","focus":"company","search_depth":"lite","max_results":2}
+```
+
+```json
+{"query":"Instagram fitness creators in Brazil with over 100k followers","focus":"creators","search_depth":"standard","max_results":2}
+```
+
+Read the profiles from `results[].entities`. For compatibility, see the [Search reference](reference.md#focus-modes).
 
 ### coding
 

@@ -2,13 +2,13 @@
 name: nimble-search-reference
 description: |
   Reference for nimble search command. Load when searching the live web.
-  Contains: all flags, 8 focus modes (general/coding/news/academic/shopping/social/geo/location),
+  Contains: all flags, focus modes including Company and Creators,
   search_depth modes (lite/fast/deep), response structure, credit costs.
 ---
 
 # nimble search — reference
 
-Real-time web search with 8 focus modes. Returns results with titles, URLs, and optionally full content and AI answers.
+Real-time web search with multiple focus modes. Returns results with titles, URLs, and optionally full content and AI answers.
 
 ## Table of Contents
 
@@ -62,6 +62,8 @@ CLI uses hyphens (`--search-depth`, `--include-answer`). SDK uses underscores (`
 | Mode       | Best for                            | Example query                            |
 | ---------- | ----------------------------------- | ---------------------------------------- |
 | `general`  | Broad web (default)                 | "best practices for X"                   |
+| `company`  | Discover companies by business criteria | "B2B payment infrastructure companies in Europe" |
+| `creators` | Discover Instagram/TikTok accounts by criteria | "Instagram fitness creators in Brazil with over 100k followers" |
 | `coding`   | Docs, code, Stack Overflow, GitHub  | "how to implement X in Python"           |
 | `news`     | Current events, breaking news       | "EU AI Act enforcement 2026"             |
 | `academic` | Research papers, scholarly articles | "transformer attention mechanisms paper" |
@@ -69,6 +71,8 @@ CLI uses hyphens (`--search-depth`, `--include-answer`). SDK uses underscores (`
 | `social`   | People, LinkedIn, X, YouTube        | "Jane Doe Head of Engineering"           |
 | `geo`      | Geographic and regional data        | "tech companies in Berlin"               |
 | `location` | Local businesses, restaurants       | "italian restaurants San Francisco"      |
+
+On authenticated Search, Company and Creators support `lite` and `standard`. With Creators, prefer Standard when the follower count, country or category criteria matter. For Company, omit date filters and use it only where effective Safe Search is off; never relax an account policy. See the [Search API reference](https://docs.nimbleway.com/api-reference/search/search) for current compatibility.
 
 ---
 
@@ -145,5 +149,6 @@ answer = resp.answer         # AI summary (if include_answer=True)
 | `results[].content`              | string | Page content — cached (`fast`) or real-time scraped (`deep`) |
 | `results[].metadata.position`    | int    | Result rank                                                  |
 | `results[].metadata.entity_type` | string | e.g. `OrganicResult`                                         |
+| `results[].entities`             | array  | Structured company or creator profiles where available       |
 | `answer`                         | string | AI summary (if `include_answer=True`)                        |
 | `request_id`                     | UUID   | Request identifier                                           |
