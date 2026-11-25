@@ -28,6 +28,7 @@ session and stick with it; don't re-probe on every command.
 | `nimble --version` (>= 1.2.0) and `NIMBLE_API_KEY` is set | CLI is ready | Bash `nimble ...` commands |
 | `claude mcp list 2>/dev/null \| grep -q "nimble"` (or first `mcp__plugin_nimble_nimble__*` call succeeds) | Plugin MCP is connected | `mcp__plugin_nimble_nimble__*` tools |
 | `mcp__plugin_nimble_nimble__*` tools are listed, but a read-only `nimble_agents_list` probe returns an auth / not-connected error or an OAuth authorization URL | Plugin is installed but the **connector isn't connected** (typical Cowork / claude.ai state) | **Stop — guide connector connection (below). Never invent an auth-completion flow.** |
+| Only `nimble_search` and `nimble_extract` are listed (no `nimble_agents_list`) | Nimble's **free tier, signed out**: Search and Extract work up to a daily free limit | Use them. If the task needs Web Search Agents, Extraction Templates, Crawl or Map, tell the user in one line to sign in for free (Claude Code: `/mcp`, select the Nimble server `plugin:nimble:nimble`, choose **Authenticate**; other hosts: **Connect** or **Sign in** on the Nimble server) and wait. Never call a tool that isn't listed |
 | None of the above | Stop — guide install (below) | — |
 
 ### Connector not connected (Cowork / claude.ai) — verify BEFORE working
@@ -38,7 +39,8 @@ preflight step — not an error to react to mid-task.** When
 `mcp__plugin_nimble_nimble__*` tools are listed but you haven't confirmed the
 connector is live, run one read-only probe before any real work:
 
-- A single `nimble_agents_list` call is the cheapest confirmation. Success →
+- If `nimble_agents_list` is listed, a single call is the cheapest confirmation
+  (only Search and Extract listed = free tier, signed out — see the table above). Success →
   connected, proceed. Auth / not-connected error, **or** a response containing an
   OAuth authorization URL → not connected.
 
