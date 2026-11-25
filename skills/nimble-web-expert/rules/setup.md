@@ -71,9 +71,12 @@ Signed out, `/free` lists only Search and Extract, which work up to a daily free
 limit (at the limit the first call returns a sign-up notice, then the server asks
 the user to sign in). When the task needs Web Search Agents, Extraction
 Templates, Crawl or Map and those tools aren't listed, tell the user in one line
-and wait — never call an unlisted tool to trigger sign-in:
+and wait — never call an unlisted tool to trigger sign-in.
+With no interactive user (`claude -p`, scheduled runs), say the step needs sign-in and continue on Search and Extract instead of waiting.
 
-> Sign in to Nimble for free: in Claude Code run `/mcp`, select `plugin:nimble:nimble`, choose **Authenticate**; elsewhere use **Connect** or **Sign in** on the Nimble server.
+The sign-in line:
+
+> Sign in to Nimble for free: in Claude Code run `/mcp`, select `plugin:nimble:nimble`, choose **Authenticate**; in Codex run `codex mcp login nimble`; elsewhere use **Connect** or **Sign in** on the Nimble server.
 
 At the daily free limit, Search or Extract returns the server's own notice once:
 relay it as given, including its sign-up link, and don't add a second sign-in

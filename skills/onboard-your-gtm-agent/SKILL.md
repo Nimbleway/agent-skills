@@ -81,7 +81,7 @@ While the user answers, check silently. This probe is the only Nimble call befor
 | - | - |
 | Either probe returns data | Step 5 |
 | A Nimble tool returns an auth error or an authorization URL | Step 4 |
-| `nimble_search` is listed but `nimble_agents_list` is not (Nimble's free tier, signed out) | Step 5. Route first; only if the chosen skill needs Web Search Agents or Extract Templates, give the sign-in line ("Sign in to Nimble for free: in Claude Code run `/mcp`, select `plugin:nimble:nimble`, choose **Authenticate**; elsewhere use **Connect** or **Sign in** on the Nimble server.") and wait. A fast-search request runs on Search and Extract with no sign-in |
+| `nimble_search` is listed but `nimble_agents_list` is not (Nimble's free tier, signed out) | Step 5. Route first; only if the chosen skill needs Web Search Agents or Extract Templates, give the sign-in line ("Sign in to Nimble for free: in Claude Code run `/mcp`, select `plugin:nimble:nimble`, choose **Authenticate**; in Codex run `codex mcp login nimble`; elsewhere use **Connect** or **Sign in** on the Nimble server.") and wait. A fast-search request runs on Search and Extract with no sign-in |
 | Nothing is installed and the user has no Nimble account | Step 3 |
 | Nothing is installed but the user has an account | Step 4 |
 
