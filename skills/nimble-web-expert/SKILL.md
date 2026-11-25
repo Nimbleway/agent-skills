@@ -107,7 +107,7 @@ Extraction Templates and Web Search Agents are distinct — an Extraction Templa
 - Use `AskUserQuestion` at every meaningful choice — never guess, never ask in prose.
 - **Ambiguous request** (no URL, vague topic): ask before running — "What would you like to do?" → Research & report / Search / Fetch URL / Discover URLs
 - **Gate B landed on a Web Search Agent at `high`+ effort**: offer the cost/latency fork — Researched report / Quick scan (see [Analyze & Route](#analyze--route))
-- **Before running a search** (if task maps to a specific focus mode): choose the best match from the [focus guide](references/nimble-search/search-focus-modes.md)
+- **Before running a search** (if task maps to a specific focus mode): offer focus mode — General / News / Coding / Shopping / Academic / Social / Company / Creators
 - **After all tiers fail**: check investigation tools (`which browser-use`, `python3 -c "from playwright.sync_api..."`) and ask whether to investigate with browser-use, Playwright, or skip.
 - After presenting results, always close with: "Were these results what you needed?" → `Looks great!` / `Mostly good` / `Not quite` / `Skip feedback`
 
@@ -180,7 +180,9 @@ nimble extract:templates run --template <name> --params '{"key": "value"}'
 | compare, "best X", "which should I", "state of", recommend             | "pages/articles about", "links to"            |
 | enrich, build a list, dataset, "…with their pricing/headcount"         | latest news, recent posts, what's trending    |
 
-For a quick shortlist of companies matching business criteria, use `nimble_search` with `focus: "company"`. For Instagram or TikTok creators matching niche, geography or follower criteria, use `focus: "creators"`. Use General to find one known account. Use a Web Search Agent for research or enrichment beyond the returned profiles. See `references/nimble-agents/reference.md`.
+Structured rows about many entities → Web Search Agent with `enrichment` or `dataset_building`.
+
+When the request already calls for Search, use `focus: "company"` for company discovery by criteria, or `focus: "creators"` for Instagram/TikTok creator discovery by criteria. Use General to look up one known account. Focus selection does not change when to use a Web Search Agent. See `references/nimble-agents/reference.md`.
 
 ### Offer the fork when the answer is the expensive one
 

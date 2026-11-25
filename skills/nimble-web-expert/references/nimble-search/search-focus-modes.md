@@ -44,7 +44,9 @@ What are you searching for?
 | Find **research papers**  | `academic`    | —                    | Targets scholarly sources                                                                            |
 | **General/unsure**        | `general`     | —                    | Broad web search (default)                                                                           |
 
-For either structured discovery intent, start with one focused Search. Results are not an exhaustive list.
+**Always run parallel searches with multiple focus when depth matters.**
+
+Company and Creators searches return matching profiles, not exhaustive lists. These modes apply after choosing Search; they do not replace a Web Search Agent for research, enrichment, or dataset building.
 
 ## Mode Details
 
