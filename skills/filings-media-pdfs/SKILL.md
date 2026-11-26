@@ -3,7 +3,7 @@ name: filings-media-pdfs
 description: Retrieve and parse documents and media for company investment research with Nimble. Use when the task involves a PDF, deck, spreadsheet or media file, such as reading an annual report, 10-K exhibit, investor presentation, earnings release, prospectus, credit agreement, merger agreement, short-seller report, regulator letter, financial supplement (XLSX), or court filing; turning it into markdown; pulling tables out of it; archiving a point-in-time copy; or downloading images, audio or video (webcast replays, product photos) to a file or an S3/GCS bucket. Uses Nimble Extract with file_parsing_options and the Nimble Media API.
 metadata:
   author: Nimbleway
-  version: 1.10.0
+  version: 1.11.0
   category: finance-research
 ---
 

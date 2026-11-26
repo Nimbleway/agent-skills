@@ -30,7 +30,7 @@ allowed-tools:
   - mcp__plugin_nimble_nimble__nimble_agents_runs_list
 metadata:
   author: Nimbleway
-  version: 1.10.0
+  version: 1.11.0
   category: finance-research
 ---
 

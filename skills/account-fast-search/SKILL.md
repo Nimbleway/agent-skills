@@ -3,7 +3,7 @@ name: account-fast-search
 description: "Fast, cited web lookups for go-to-market work with Nimble Search, Extract and Extract Templates. Use for quick questions a seller, SDR, RevOps or marketing person asks about an account, a person or a competitor — who holds a role, whether they raised, the latest news, open sales roles on their ATS, what is on their pricing or integrations page, a customer they announced, a G2 rating, an event they're sponsoring — where one to a few searches or known pages answer it in seconds. Covers query writing, source priority, date scoping, entity disambiguation and privacy-safe sourcing. Escalate to account-deep-research when the question needs many sources or a structured multi-part answer."
 metadata:
   author: Nimbleway
-  version: 1.10.0
+  version: 1.11.0
   category: gtm
 ---
 
